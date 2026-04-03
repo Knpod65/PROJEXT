@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a1628">
+<title>EMS — ระบบจัดการข้อสอบ คณะรัฐศาสตร์ฯ มช.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@300;400;600;700;900&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:       #0a1628;
+  --navy-mid:   #0f2040;
+  --navy-light: #1a3460;
+  --crimson:    #c41230;
+  --crimson-lt: rgba(196,18,48,.12);
+  --gold:       #c8952a;
+  --gold-lt:    rgba(200,149,42,.15);
+  --green:      #1a7a4a;
+  --text:       #f0f4f8;
+  --text-mid:   rgba(240,244,248,.65);
+  --text-muted: rgba(240,244,248,.38);
+  --surface:    rgba(255,255,255,.04);
+  --surface2:   rgba(255,255,255,.07);
+  --border:     rgba(255,255,255,.08);
+  --shadow:     0 8px 32px rgba(0,0,0,.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Background texture ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(196,18,48,.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(26,52,96,.4) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 60% 10%, rgba(200,149,42,.04) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── Grid lines ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none; z-index: 0;
+}
+
+/* ══ NAV ══════════════════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 40px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(10,22,40,.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+  display: flex; align-items: center; gap: 12px;
+  text-decoration: none;
+}
+.nav-brand .brand-icon {
+  width: 36px; height: 36px;
+  background: var(--crimson);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900;
+  color: #fff; font-family: 'Noto Serif Thai', serif;
+  flex-shrink: 0;
+}
+.nav-brand .brand-text {
+  display: flex; flex-direction: column;
+  line-height: 1.2;
+}
+.nav-brand .brand-main { font-size: 14px; font-weight: 700; color: var(--text); }
+.nav-brand .brand-sub  { font-size: 10px; color: var(--text-muted); letter-spacing: .3px; }
+
+.nav-right { display: flex; align-items: center; gap: 12px; }
+
+.nav-period-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 12px;
+  color: var(--text-mid);
+  display: none;
+}
+
+.btn-login {
+  background: var(--crimson);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-login:hover { background: #a50f28; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(196,18,48,.4); }
+
+.btn-student {
+  background: var(--surface2);
+  color: var(--text-mid);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-student:hover { background: var(--surface); color: var(--text); border-color: rgba(255,255,255,.15); }
+
+/* ══ HERO ═════════════════════════════════════════════════════ */
+.hero {
+  position: relative; z-index: 1;
+  padding: 140px 40px 60px;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.hero-left {}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(196,18,48,.12);
+  border: 1px solid rgba(196,18,48,.25);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,160,160,.9);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  animation: fadeUp .6s ease both;
+}
+
+.hero-title {
+  font-family: 'Noto Serif Thai', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  animation: fadeUp .6s .1s ease both;
+}
+
+.hero-title .accent {
+  color: var(--crimson);
+  position: relative;
+}
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--text-mid);
+  line-height: 1.7;
+  margin-bottom: 32px;
+  animation: fadeUp .6s .2s ease both;
+  max-width: 440px;
+}
+
+.hero-stats {
+  display: flex; gap: 28px;
+  animation: fadeUp .6s .3s ease both;
+}
+.hero-stat { text-align: center; }
+.hero-stat .val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 26px; font-weight: 500;
+  color: var(--text);
+  display: block;
+}
+.hero-stat .lbl {
+  font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-top: 2px; display: block;
+}
+
+/* Hero right: current status card */
+.hero-right {
+  animation: fadeUp .6s .2s ease both;
+}
+
+.status-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+.status-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--crimson), var(--gold));
+}
+
+.status-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin-bottom: 16px;
+}
+
+.current-step-badge {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  background: rgba(196,18,48,.1);
+  border: 1px solid rgba(196,18,48,.2);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.csb-icon { font-size: 24px; flex-shrink: 0; }
+.csb-text .csb-label { font-weight: 700; font-size: 15px; color: var(--text); }
+.csb-text .csb-desc  { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+
+.action-items { display: flex; flex-direction: column; gap: 8px; }
+.action-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.action-item .ai-role {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.role-admin   { background: rgba(196,18,48,.2); color: #f87171; }
+.role-teacher { background: rgba(200,149,42,.2); color: #fbbf24; }
+.role-staff   { background: rgba(26,122,74,.2);  color: #4ade80; }
+
+/* ══ TIMELINE ═════════════════════════════════════════════════ */
+.timeline-section {
+  position: relative; z-index: 1;
+  padding: 0 40px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 28px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after {
+  content: ''; flex: 1;
+  height: 1px; background: var(--border);
+}
+
+/* Horizontal scrollable timeline */
+.timeline-track {
+  position: relative;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.1) transparent;
+  cursor: grab;
+}
+.timeline-track:active { cursor: grabbing; }
+.timeline-track::-webkit-scrollbar { height: 3px; }
+.timeline-track::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+/* Connecting line */
+.timeline-track::before {
+  content: '';
+  position: absolute;
+  top: 36px; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--border), rgba(196,18,48,.3), var(--border));
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tl-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 148px;
+  padding: 0 12px;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  cursor: default;
+  transition: transform .2s;
+}
+.tl-step:hover { transform: translateY(-2px); }
+
+.tl-dot {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  border: 2px solid var(--border);
+  background: var(--navy-mid);
+  position: relative;
+  transition: all .25s;
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+/* States */
+.tl-step.done .tl-dot {
+  background: rgba(26,122,74,.15);
+  border-color: var(--green);
+}
+.tl-step.done .tl-dot::after {
+  content: '✓';
+  position: absolute;
+  bottom: -4px; right: -4px;
+  width: 20px; height: 20px;
+  background: var(--green);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--navy);
+}
+
+.tl-step.active .tl-dot {
+  background: rgba(196,18,48,.15);
+  border-color: var(--crimson);
+  box-shadow: 0 0 0 6px rgba(196,18,48,.08), 0 0 24px rgba(196,18,48,.2);
+  animation: pulse-dot 2s infinite;
+}
+.tl-step.active .tl-dot::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(196,18,48,.2);
+  animation: expand-ring 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(196,18,48,.08), 0 0 24px rgba(196,18,48,.2); }
+  50%       { box-shadow: 0 0 0 10px rgba(196,18,48,.04), 0 0 32px rgba(196,18,48,.3); }
+}
+@keyframes expand-ring {
+  0%   { opacity: .6; transform: scale(1); }
+  100% { opacity: 0;  transform: scale(1.5); }
+}
+
+.tl-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+.tl-step:not(.done):not(.active) .tl-label { color: var(--text-muted); }
+.tl-step.active .tl-label { color: var(--crimson); }
+
+.tl-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+  max-width: 120px;
+  white-space: normal;
+}
+.tl-step.active .tl-detail { color: rgba(255,160,160,.7); }
+
+.tl-progress-wrap {
+  width: 100%; max-width: 90px;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.tl-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--crimson), var(--gold));
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+
+/* ══ EXAM CALENDAR ════════════════════════════════════════════ */
+.exam-section {
+  position: relative; z-index: 1;
+  padding: 0 40px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.exam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.exam-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: all .2s;
+  cursor: default;
+}
+.exam-card:hover {
+  background: var(--surface2);
+  border-color: rgba(255,255,255,.12);
+  transform: translateY(-2px);
+}
+.exam-card .ec-course {
+  font-weight: 700; font-size: 14px;
+  color: var(--crimson);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.exam-card .ec-name {
+  font-size: 11px; color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.exam-card .ec-meta {
+  margin-top: 8px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.exam-card .ec-chip {
+  font-size: 10px;
+  background: var(--surface2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--text-mid);
+}
+
+/* ══ STUDENT SEARCH ═══════════════════════════════════════════ */
+.search-section {
+  position: relative; z-index: 1;
+  padding: 0 40px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.search-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.search-box h2 {
+  font-family: 'Noto Serif Thai', serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--text);
+}
+.search-box p {
+  font-size: 14px; color: var(--text-mid);
+  text-align: center;
+}
+.search-row {
+  display: flex; gap: 10px; width: 100%; max-width: 500px;
+}
+.search-input {
+  flex: 1;
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-family: inherit; font-size: 15px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 1px;
+}
+.search-input:focus { border-color: rgba(196,18,48,.5); }
+.search-input::placeholder { color: var(--text-muted); font-family: 'IBM Plex Sans Thai', sans-serif; letter-spacing: 0; }
+
+.btn-search {
+  background: var(--crimson);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.btn-search:hover { background: #a50f28; }
+
+.search-result {
+  width: 100%; max-width: 500px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.result-card {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.result-card .rc-course {
+  font-weight: 700; font-size: 15px; color: var(--crimson);
+}
+.result-card .rc-info {
+  margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;
+}
+.result-card .rc-chip {
+  font-size: 12px;
+  background: var(--surface2);
+  padding: 4px 12px; border-radius: 20px;
+  color: var(--text-mid);
+}
+.result-empty {
+  text-align: center; padding: 20px;
+  color: var(--text-muted); font-size: 14px;
+}
+
+/* ══ LOGIN MODAL ══════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  width: 360px;
+  max-width: 95vw;
+  position: relative;
+  animation: modalIn .25s ease;
+}
+@keyframes modalIn {
+  from { opacity:0; transform: scale(.95) translateY(10px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: none;
+  color: var(--text-muted); font-size: 20px;
+  cursor: pointer; padding: 4px;
+  transition: color .15s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-title {
+  font-family: 'Noto Serif Thai', serif;
+  font-size: 20px; font-weight: 700;
+  margin-bottom: 6px;
+}
+.modal-sub {
+  font-size: 13px; color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text-mid); margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  background: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-family: inherit; font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+}
+.form-input:focus { border-color: rgba(196,18,48,.5); }
+.btn-submit {
+  width: 100%; background: var(--crimson); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 12px; font-family: inherit;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-submit:hover { background: #a50f28; }
+.btn-submit.loading::after {
+  content: '';
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.login-error {
+  background: rgba(196,18,48,.12);
+  border: 1px solid rgba(196,18,48,.25);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px; color: #f87171;
+  margin-bottom: 12px;
+  display: none;
+}
+
+/* ══ FOOTER ═══════════════════════════════════════════════════ */
+footer {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--border);
+  padding: 24px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--text-muted);
+}
+
+/* ══ ANIMATIONS ═══════════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(20px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* ══ MOBILE ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  nav { padding: 0 16px; }
+  .nav-brand .brand-sub { display: none; }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 100px 16px 40px;
+    gap: 32px;
+    min-height: auto;
+  }
+  .hero-stats { gap: 20px; }
+  .hero-stat .val { font-size: 22px; }
+
+  .timeline-section, .exam-section, .search-section { padding: 0 16px 60px; }
+
+  .tl-step { min-width: 120px; }
+  .tl-dot  { width: 58px; height: 58px; font-size: 22px; }
+
+  footer { flex-direction: column; gap: 8px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══════════════════════════════════════════════════ -->
+<nav>
+  <a href="/" class="nav-brand">
+    <div class="brand-icon">POL</div>
+    <div class="brand-text">
+      <span class="brand-main">EMS</span>
+      <span class="brand-sub">คณะรัฐศาสตร์ฯ มช.</span>
+    </div>
+  </a>
+  <div class="nav-right">
+    <div class="nav-period-pill" id="nav-period"></div>
+    <button class="btn-student" onclick="scrollToSearch()">🔍 ค้นหาตารางสอบ</button>
+    <button class="btn-login" onclick="openLogin()">🔐 เข้าสู่ระบบ</button>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <span>●</span>
+      <span id="hero-period-label">ภาคการศึกษา ...</span>
+    </div>
+    <h1 class="hero-title">
+      ระบบจัดการ<br>
+      <span class="accent">ข้อสอบ</span> คณะ<br>
+      รัฐศาสตร์ฯ มช.
+    </h1>
+    <p class="hero-sub">
+      ศูนย์กลางการจัดสอบ ตั้งแต่รับข้อมูลวิชา ถึงพิมพ์ข้อสอบ
+      สำหรับอาจารย์ เจ้าหน้าที่ และนักศึกษา
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="val" id="stat-sections">—</span>
+        <span class="lbl">วิชา</span>
+      </div>
+      <div class="hero-stat">
+        <span class="val" id="stat-students">—</span>
+        <span class="lbl">นักศึกษา</span>
+      </div>
+      <div class="hero-stat">
+        <span class="val" id="stat-days">—</span>
+        <span class="lbl">วันสอบ</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="status-card">
+      <div class="status-card-title">สถานะปัจจุบัน</div>
+      <div class="current-step-badge" id="current-step-badge">
+        <span class="csb-icon">⏳</span>
+        <div class="csb-text">
+          <div class="csb-label">กำลังโหลด...</div>
+          <div class="csb-desc">—</div>
+        </div>
+      </div>
+      <div class="action-items" id="action-items">
+        <!-- filled by JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TIMELINE ═══════════════════════════════════════════════ -->
+<section class="timeline-section">
+  <div class="section-label">Timeline การจัดสอบ</div>
+  <div class="timeline-track" id="timeline-track">
+    <!-- skeleton -->
+    <div style="display:flex;gap:0;align-items:flex-start;padding:0 12px">
+      ${Array.from({length:7}).map(()=>`
+        <div style="min-width:148px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 12px">
+          <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.05)"></div>
+          <div style="width:70px;height:10px;background:rgba(255,255,255,.05);border-radius:4px"></div>
+          <div style="width:90px;height:8px;background:rgba(255,255,255,.03);border-radius:4px"></div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ UPCOMING EXAMS ═════════════════════════════════════════ -->
+<section class="exam-section" id="exam-section">
+  <div class="section-label">ตารางสอบที่กำลังจะมาถึง</div>
+  <div class="exam-grid" id="exam-grid">
+    <!-- filled by JS -->
+  </div>
+</section>
+
+<!-- ═══ STUDENT SEARCH ════════════════════════════════════════ -->
+<section class="search-section" id="search-section">
+  <div class="section-label">ค้นหาตารางสอบของนักศึกษา</div>
+  <div class="search-box">
+    <h2>🎓 ตารางสอบของฉัน</h2>
+    <p>พิมพ์รหัสนักศึกษาเพื่อดูตารางสอบทุกวิชา<br>ไม่ต้อง Login</p>
+    <div class="search-row">
+      <input id="student-input" class="search-input"
+        type="text" inputmode="numeric"
+        placeholder="รหัสนักศึกษา เช่น 630510123"
+        onkeydown="if(event.key==='Enter')searchStudent()">
+      <button class="btn-search" onclick="searchStudent()">ค้นหา</button>
+    </div>
+    <div class="search-result" id="search-result"></div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════ -->
+<footer>
+  <span>© 2568 คณะรัฐศาสตร์และรัฐประศาสนศาสตร์ มหาวิทยาลัยเชียงใหม่</span>
+  <span id="footer-period" style="color:rgba(255,255,255,.25)"></span>
+</footer>
+
+<!-- ═══ LOGIN MODAL ═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="login-modal" onclick="e=>{ if(e.target===this) closeLogin() }">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeLogin()">✕</button>
+    <div class="modal-title">เข้าสู่ระบบ</div>
+    <div class="modal-sub">สำหรับอาจารย์และเจ้าหน้าที่คณะ</div>
+    <div class="login-error" id="login-error"></div>
+    <div class="form-group">
+      <label class="form-label">ชื่อผู้ใช้</label>
+      <input id="login-user" class="form-input" type="text"
+        placeholder="username" autocomplete="username"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">รหัสผ่าน</label>
+      <input id="login-pass" class="form-input" type="password"
+        placeholder="••••••••"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-submit" id="login-btn" onclick="doLogin()">
+      เข้าสู่ระบบ
+    </button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════
+const API = '/api';
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadTimeline();
+  loadStats();
+  loadUpcomingExams();
+  checkExistingSession();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// TIMELINE
+// ═══════════════════════════════════════════════════════════════
+async function loadTimeline() {
+  try {
+    const data = await fetch(`${API}/public/timeline`).then(r => r.json());
+    if (!data.period) {
+      document.getElementById('timeline-track').innerHTML =
+        `<div style="padding:32px;color:rgba(255,255,255,.3);font-size:14px">ยังไม่มีรอบสอบที่ active</div>`;
+      return;
+    }
+
+    // Update hero period label
+    document.getElementById('hero-period-label').textContent =
+      `ภาคการศึกษา ${data.period.semester}/${data.period.academic_year}`;
+    document.getElementById('nav-period').textContent =
+      `ภาค ${data.period.semester}/${data.period.academic_year}`;
+    document.getElementById('nav-period').style.display = 'block';
+    document.getElementById('footer-period').textContent =
+      `EMS ${data.period.label}`;
+
+    // Current step badge
+    const currentStep = data.steps[data.current_step];
+    if (currentStep) {
+      document.getElementById('current-step-badge').innerHTML = `
+        <span class="csb-icon">${currentStep.icon}</span>
+        <div class="csb-text">
+          <div class="csb-label">${currentStep.label}</div>
+          <div class="csb-desc">${currentStep.detail || currentStep.desc}</div>
+        </div>
+      `;
+    }
+
+    // Action items (what needs to be done NOW)
+    const actionItems = buildActionItems(data);
+    document.getElementById('action-items').innerHTML = actionItems;
+
+    // Build timeline
+    const track = document.getElementById('timeline-track');
+    track.innerHTML = data.steps.map((step, i) => {
+      const isDone   = step.done;
+      const isActive = i === data.current_step && !isDone;
+      const isPast   = i < data.current_step;
+
+      let stateClass = '';
+      if (isDone || isPast) stateClass = 'done';
+      else if (isActive)    stateClass = 'active';
+
+      const progressBar = step.progress != null && isActive ? `
+        <div class="tl-progress-wrap">
+          <div class="tl-progress-fill" style="width:${step.progress}%"></div>
+        </div>
+      ` : '';
+
+      return `
+        <div class="tl-step ${stateClass}" title="${step.desc}">
+          <div class="tl-dot">${step.icon}</div>
+          <div class="tl-label">${step.label}</div>
+          <div class="tl-detail">${step.detail || step.desc}</div>
+          ${progressBar}
+        </div>
+      `;
+    }).join('');
+
+    // Scroll to active step
+    const activeEl = track.querySelector('.tl-step.active');
+    if (activeEl) {
+      setTimeout(() => {
+        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }, 500);
+    }
+
+    // Drag to scroll
+    enableDragScroll(track);
+
+  } catch(e) {
+    console.error('Timeline load failed:', e);
+  }
+}
+
+function buildActionItems(data) {
+  const s = data.stats;
+  const items = [];
+
+  if (data.current_step === 0 && s.total_sections === 0) {
+    items.push({ ico:'📥', text:'Admin: นำเข้าข้อมูลวิชาและนักศึกษา', role:'admin' });
+  }
+  if (data.current_step <= 1 && s.total_sections > 0) {
+    const remaining = s.total_sections - (s.submitted || 0);
+    if (remaining > 0)
+      items.push({ ico:'📋', text:`อาจารย์ ${remaining} วิชา ยังไม่กำหนดรูปแบบสอบ`, role:'teacher' });
+  }
+  if (data.current_step === 2) {
+    items.push({ ico:'🎯', text:'Admin: รัน Optimizer จัดห้องและกรรมการ', role:'admin' });
+  }
+  if (data.current_step === 3) {
+    const remaining = s.total_sections - (s.approved || 0);
+    if (remaining > 0)
+      items.push({ ico:'📄', text:`อาจารย์ ${remaining} วิชา ยังไม่อัปโหลดข้อสอบ`, role:'teacher' });
+    items.push({ ico:'✍️', text:'Admin: 4 ลายเซ็นอนุมัติตาราง', role:'admin' });
+  }
+  if (data.current_step === 4) {
+    items.push({ ico:'🖨️', text:'พิมพ์ข้อสอบและเตรียมส่งห้อง', role:'admin' });
+  }
+  if (data.current_step === 5) {
+    items.push({ ico:'👮', text:'Staff: check-in วันสอบ', role:'staff' });
+    items.push({ ico:'📚', text:'Teacher: ส่ง PDF ข้อสอบ', role:'teacher' });
+  }
+  if (!items.length) {
+    items.push({ ico:'✅', text:'ทุกขั้นตอนเสร็จสมบูรณ์', role:'admin' });
+  }
+
+  const roleClass = { admin:'role-admin', teacher:'role-teacher', staff:'role-staff' };
+  const roleLabel = { admin:'Admin', teacher:'อาจารย์', staff:'Staff' };
+
+  return items.slice(0, 4).map(item => `
+    <div class="action-item">
+      <span>${item.ico}</span>
+      <span style="flex:1;font-size:12px;color:var(--text-mid)">${item.text}</span>
+      <span class="ai-role ${roleClass[item.role]||'role-admin'}">${roleLabel[item.role]||item.role}</span>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════════
+async function loadStats() {
+  try {
+    const data = await fetch(`${API}/public/schedule/stats`).then(r => r.json());
+    animateNumber('stat-sections', data.total_schedules || 0);
+    animateNumber('stat-students', data.total_students  || 0);
+    animateNumber('stat-days',     data.exam_days       || 0);
+  } catch(e) {}
+}
+
+function animateNumber(id, target) {
+  const el = document.getElementById(id);
+  if (!el || !target) { if(el) el.textContent = target; return; }
+  const dur = 1200, start = Date.now();
+  const step = () => {
+    const t = Math.min((Date.now() - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(ease * target).toLocaleString('th-TH');
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UPCOMING EXAMS
+// ═══════════════════════════════════════════════════════════════
+async function loadUpcomingExams() {
+  try {
+    const data = await fetch(`${API}/public/schedule/upcoming?limit=12`).then(r => r.json());
+    const grid = document.getElementById('exam-grid');
+    const section = document.getElementById('exam-section');
+
+    if (!data.length) {
+      section.style.display = 'none';
+      return;
+    }
+
+    grid.innerHTML = data.map(s => `
+      <div class="exam-card">
+        <div class="ec-course">${s.course_id || '—'} ตอน ${s.section_no || '?'}</div>
+        <div class="ec-name">${s.course_name || ''}</div>
+        <div class="ec-meta">
+          ${s.exam_date  ? `<span class="ec-chip">📅 ${s.exam_date}</span>` : ''}
+          ${s.exam_time  ? `<span class="ec-chip">⏰ ${s.exam_time}</span>` : ''}
+          ${s.room_name  ? `<span class="ec-chip">🏛 ${s.room_name}</span>` : ''}
+          ${s.num_students ? `<span class="ec-chip">👥 ${s.num_students}</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('exam-section').style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STUDENT SEARCH
+// ═══════════════════════════════════════════════════════════════
+async function searchStudent() {
+  const sid = document.getElementById('student-input').value.trim();
+  const res = document.getElementById('search-result');
+  if (!sid) return;
+
+  res.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-muted)">กำลังค้นหา...</div>`;
+
+  try {
+    const data = await fetch(`${API}/public/schedule/${sid}`).then(r => {
+      if (!r.ok) throw new Error('ไม่พบข้อมูล');
+      return r.json();
+    });
+
+    if (!data.length) {
+      res.innerHTML = `<div class="result-empty">ไม่พบตารางสอบสำหรับรหัส ${sid}</div>`;
+      return;
+    }
+
+    res.innerHTML = data.map(d => `
+      <div class="result-card">
+        <div class="rc-course">${d.course_id} <span style="color:var(--text-mid);font-weight:400;font-size:13px">${d.course_name || ''}</span></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">ตอน ${d.section_no || '?'}</div>
+        <div class="rc-info">
+          ${d.exam_date  ? `<span class="rc-chip">📅 ${d.exam_date}</span>` : ''}
+          ${d.exam_time  ? `<span class="rc-chip">⏰ ${d.exam_time}</span>` : ''}
+          ${d.room_name  ? `<span class="rc-chip">🏛 ${d.room_name}</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    res.innerHTML = `<div class="result-empty">ไม่พบข้อมูล — ตรวจสอบรหัสนักศึกษาอีกครั้ง</div>`;
+  }
+}
+
+function scrollToSearch() {
+  document.getElementById('search-section').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => document.getElementById('student-input').focus(), 500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════════════
+function openLogin() {
+  document.getElementById('login-modal').classList.add('open');
+  setTimeout(() => document.getElementById('login-user').focus(), 100);
+}
+function closeLogin() {
+  document.getElementById('login-modal').classList.remove('open');
+}
+document.getElementById('login-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeLogin();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLogin();
+});
+
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const btn  = document.getElementById('login-btn');
+  const err  = document.getElementById('login-error');
+
+  if (!user || !pass) {
+    err.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
+    err.style.display = 'block'; return;
+  }
+
+  btn.classList.add('loading');
+  btn.textContent = '';
+  err.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.detail || 'เข้าสู่ระบบไม่สำเร็จ');
+
+    // บันทึก token แล้ว redirect ไปหน้า app
+    localStorage.setItem('ems_token', data.access_token);
+    window.location.href = '/app';
+
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+    btn.classList.remove('loading');
+    btn.textContent = 'เข้าสู่ระบบ';
+  }
+}
+
+function checkExistingSession() {
+  const token = localStorage.getItem('ems_token');
+  if (token) {
+    // ตรวจ token validity
+    fetch(`${API}/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(r => {
+      if (r.ok) window.location.href = '/app';
+      else localStorage.removeItem('ems_token');
+    }).catch(() => {});
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DRAG TO SCROLL
+// ═══════════════════════════════════════════════════════════════
+function enableDragScroll(el) {
+  let isDown = false, startX, scrollLeft;
+  el.addEventListener('mousedown', e => {
+    isDown = true; el.style.cursor = 'grabbing';
+    startX = e.pageX - el.offsetLeft;
+    scrollLeft = el.scrollLeft;
+  });
+  el.addEventListener('mouseleave', () => { isDown = false; el.style.cursor = 'grab'; });
+  el.addEventListener('mouseup',    () => { isDown = false; el.style.cursor = 'grab'; });
+  el.addEventListener('mousemove',  e => {
+    if (!isDown) return; e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    el.scrollLeft = scrollLeft - (x - startX) * 1.5;
+  });
+}
+</script>
+</body>
+</html>
