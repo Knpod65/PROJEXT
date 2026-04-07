@@ -2,18 +2,56 @@
 // EMS Frontend — Complete Role-Based Script
 // ══════════════════════════════════════════
 const API = '/api';
-let token = localStorage.getItem('ems_token') || '';
+
+// ── Security: HTML escaping ───────────────
+// ALWAYS use esc() when interpolating user/server data into innerHTML.
+// NEVER interpolate raw server/user data without esc().
+function esc(str) {
+  if (str === null || str === undefined) return '—';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// Safe text node setter — use instead of innerHTML for plain text
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value ?? '—';
+}
+
+// ── Auth state ────────────────────────────
+// SECURITY: Token is stored in HttpOnly cookie set by the server.
+// We do NOT store it in localStorage or JS variables.
+// fetch() sends cookies automatically with credentials: 'include'.
 let currentUser = null;
 let activePage = '';
 
 // ── API helpers ───────────────────────────
 async function api(method, path, body) {
-  const opts = { method, headers: {'Content-Type':'application/json'} };
-  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+  const opts = {
+    method,
+    credentials: 'include',  // send HttpOnly session cookie automatically
+    headers: {'Content-Type': 'application/json'},
+  };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(API + path, opts);
   if (res.status === 401) { doLogout(); return null; }
-  const data = await res.json().catch(()=>({}));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || 'เกิดข้อผิดพลาด');
+  return data;
+}
+
+async function apiUpload(path, formData) {
+  const res = await fetch(API + path, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,  // no Content-Type header — browser sets multipart boundary
+  });
+  if (res.status === 401) { doLogout(); return null; }
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || 'เกิดข้อผิดพลาด');
   return data;
 }
@@ -23,48 +61,66 @@ const put  = (p,b)=> api('PUT',p,b);
 const del  = p    => api('DELETE',p);
 
 // ── Auth ──────────────────────────────────
+// SECURITY: No token handling in JS — cookies are set/cleared by the server.
 async function doLogin() {
   const u = document.getElementById('l-user').value.trim();
   const p = document.getElementById('l-pass').value;
-  document.getElementById('l-err').style.display='none';
+  const errEl = document.getElementById('l-err');
+  errEl.style.display = 'none';
   try {
-    const data = await post('/auth/login',{username:u,password:p});
+    const data = await post('/auth/login', {username: u, password: p});
     if (!data) return;
-    token = data.access_token;
-    localStorage.setItem('ems_token',token);
+    // Server sets HttpOnly cookie — we only use the user object from the response body
     currentUser = data.user;
     initApp();
-  } catch(e) { document.getElementById('l-err').style.display='block'; }
+  } catch(e) {
+    errEl.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+    errEl.style.display = 'block';
+  }
 }
-document.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && document.getElementById('login-page').style.display!=='none') doLogin();
+document.addEventListener('keydown', e => {
+  const loginPage = document.getElementById('login-page');
+  if (e.key === 'Enter' && loginPage && loginPage.style.display !== 'none') doLogin();
 });
 async function doLogout() {
-  try { await post('/auth/logout',{}); } catch{}
-  token=''; currentUser=null;
-  localStorage.removeItem('ems_token');
+  try { await post('/auth/logout', {}); } catch(e) { /* best effort */ }
+  currentUser = null;
+  // No localStorage to clear — server clears the cookie via Set-Cookie: expires=past
   location.reload();
 }
 
 // ── Init ──────────────────────────────────
+// On page load: try to restore session from the HttpOnly cookie.
+// The cookie is sent automatically with fetch (credentials: 'include').
+// If the server returns 401, the user sees the login screen.
 async function initApp() {
-  if (!token) return;
   try {
     if (!currentUser) {
       currentUser = await get('/auth/me');
-      if (!currentUser) return;
+      if (!currentUser) { showLoginPage(); return; }
     }
-    document.getElementById('login-page').style.display='none';
-    document.getElementById('app').style.display='flex';
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
     updateNavForRole();
-    // Default page by role
     const eff = getEff();
-    if (eff === 'staff') navigate('dashboard');
+    if (eff === 'staff')   navigate('dashboard');
     else if (eff === 'teacher') navigate('schedule');
     else if (eff === 'student') navigate('student');
     else navigate('dashboard');
-  } catch { localStorage.removeItem('ems_token'); token=''; }
+  } catch {
+    // 401 or network error — show login
+    showLoginPage();
+  }
 }
+
+function showLoginPage() {
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  currentUser = null;
+}
+
+// Auto-initialize on load
+window.addEventListener('DOMContentLoaded', () => initApp());
 
 function getEff() {
   return currentUser?.effective_role || currentUser?.role || 'staff';
@@ -216,23 +272,23 @@ async function loadAdminDashboard() {
       <div class="stat-card">
         <div class="stat-icon" style="background:var(--crimson-lt)">📚</div>
         <div>
-          <div class="stat-val">${data.total_sections}</div>
+          <div class="stat-val">${parseInt(data.total_sections)||0}</div>
           <div class="stat-lbl">Sections ทั้งหมด</div>
           <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-          <div class="stat-sub">${data.scheduled_sections} จัดแล้ว (${pct}%)</div>
+          <div class="stat-sub">${parseInt(data.scheduled_sections)||0} จัดแล้ว (${pct}%)</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background:rgba(13,110,253,.08)">👨‍🎓</div>
-        <div><div class="stat-val">${data.total_students.toLocaleString()}</div><div class="stat-lbl">นักศึกษาทั้งหมด</div><div class="stat-sub">${data.total_teachers} อาจารย์</div></div>
+        <div><div class="stat-val">${(parseInt(data.total_students)||0).toLocaleString()}</div><div class="stat-lbl">นักศึกษาทั้งหมด</div><div class="stat-sub">${parseInt(data.total_teachers)||0} อาจารย์</div></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background:var(--gold-lt)">🖨️</div>
-        <div><div class="stat-val">${data.total_sheets.toLocaleString()}</div><div class="stat-lbl">แผ่นถ่ายเอกสารรวม</div><div class="stat-sub">฿${data.copy_cost.toLocaleString('th',{minimumFractionDigits:2})}</div></div>
+        <div><div class="stat-val">${(parseInt(data.total_sheets)||0).toLocaleString()}</div><div class="stat-lbl">แผ่นถ่ายเอกสารรวม</div><div class="stat-sub">฿${(parseFloat(data.copy_cost)||0).toLocaleString('th',{minimumFractionDigits:2})}</div></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background:var(--green-lt)">🏫</div>
-        <div><div class="stat-val">${data.rooms_in_use}</div><div class="stat-lbl">ห้องสอบที่ใช้</div><div class="stat-sub">${data.unscheduled_sections} sections ยังไม่ได้จัด</div></div>
+        <div><div class="stat-val">${parseInt(data.rooms_in_use)||0}</div><div class="stat-lbl">ห้องสอบที่ใช้</div><div class="stat-sub">${parseInt(data.unscheduled_sections)||0} sections ยังไม่ได้จัด</div></div>
       </div>
     </div>
     <div class="card">
@@ -347,15 +403,15 @@ async function loadSchedule() {
           return `
           <div class="sch-card ${mine?'my-schedule':''} ${swapped?'swapped-schedule':''}" onclick="openScheduleDetail(${s.id})">
             <div class="course-id">
-              ${s.course?.course_id||'—'} Sec ${s.section?.section_no||'—'}
+              ${esc(s.course?.course_id)} Sec ${esc(s.section?.section_no)}
               ${mine?'<span class="badge" style="font-size:10px;background:var(--crimson);color:#fff;margin-left:6px">คุมสอบ</span>':''}
               ${swapped?'<span class="badge badge-gold" style="font-size:10px;margin-left:6px">Swap ↔</span>':''}
             </div>
-            <div class="course-name">${s.course?.course_name_th||'—'}</div>
+            <div class="course-name">${esc(s.course?.course_name_th)}</div>
             <div class="info-row">
-              <span>⏰ ${s.exam_time}</span>
-              <span>🏫 ${s.room?.room_name||'—'}</span>
-              <span>👨‍🎓 ${s.section?.num_students||0} คน</span>
+              <span>⏰ ${esc(s.exam_time)}</span>
+              <span>🏫 ${esc(s.room?.room_name)}</span>
+              <span>👨‍🎓 ${parseInt(s.section?.num_students)||0} คน</span>
             </div>
             ${showSups?`<div class="sups">
               ${(s.supervisions||[]).map(sv=>`
@@ -608,19 +664,19 @@ async function searchStudent() {
       <div class="card" style="margin-bottom:14px"><div class="card-body" style="display:flex;align-items:center;gap:14px">
         <div style="width:44px;height:44px;background:var(--crimson-lt);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px">🎓</div>
         <div>
-          <div style="font-size:15px;font-weight:700">${data.full_name}</div>
-          <div style="font-size:12px;color:var(--text-muted)">รหัส: ${data.student_id} · ${data.major||'—'}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${data.faculty||''} · ${data.total_courses} วิชา</div>
+          <div style="font-size:15px;font-weight:700">${esc(data.full_name)}</div>
+          <div style="font-size:12px;color:var(--text-muted)">รหัส: ${esc(data.student_id)} · ${esc(data.major)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${esc(data.faculty)} · ${esc(data.total_courses)} วิชา</div>
         </div>
       </div></div>
       <div class="card"><div class="card-head"><h3>📅 ตารางสอบ</h3></div>
       <div class="table-wrap"><table>
         <thead><tr><th>รหัสวิชา</th><th>ชื่อวิชา</th><th>ตอน</th><th>วันสอบ</th><th>เวลา</th><th>ห้อง</th></tr></thead>
         <tbody>${data.exams.map(e=>`<tr>
-          <td class="td-mono" style="font-weight:700;color:var(--crimson)">${e.course_id}</td>
-          <td>${e.course_name}</td><td>${e.section_no}</td>
+          <td class="td-mono" style="font-weight:700;color:var(--crimson)">${esc(e.course_id)}</td>
+          <td>${esc(e.course_name)}</td><td>${esc(e.section_no)}</td>
           <td>${e.has_schedule?thDate(e.exam_date):'<span style="color:var(--text-muted)">ยังไม่กำหนด</span>'}</td>
-          <td>${e.exam_time||'—'}</td><td>${e.room}</td>
+          <td>${esc(e.exam_time)}</td><td>${esc(e.room)}</td>
         </tr>`).join()||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">ไม่พบวิชาสอบในคณะนี้</td></tr>'}
         </tbody>
       </table></div></div>`;
@@ -717,11 +773,11 @@ async function loadAvailableForSwap() {
     const users=await get('/swaps2/available-users/'+supId);
     if (!users?.length){el.innerHTML='<span style="color:var(--text-muted)">ไม่พบผู้ที่ว่างในเวลานั้น</span>';return;}
     el.innerHTML=users.map(u=>`
-      <div onclick="pickSwapUser(${u.id},this)" style="padding:8px 10px;cursor:pointer;border-radius:6px;border:1.5px solid transparent;display:flex;align-items:center;gap:8px;margin-bottom:3px">
-        <div style="flex:1"><strong>${u.full_name}</strong></div>
-        <span class="badge badge-gray" style="font-size:10px">${u.role}</span>
+      <div onclick="pickSwapUser(${parseInt(u.id)||0},this)" style="padding:8px 10px;cursor:pointer;border-radius:6px;border:1.5px solid transparent;display:flex;align-items:center;gap:8px;margin-bottom:3px">
+        <div style="flex:1"><strong>${esc(u.full_name)}</strong></div>
+        <span class="badge badge-gray" style="font-size:10px">${esc(u.role)}</span>
       </div>`).join('');
-  } catch(e){el.innerHTML=`<span style="color:var(--crimson)">${e.message}</span>`;}
+  } catch(e){el.innerHTML=`<span style="color:var(--crimson)">${esc(e.message)}</span>`;}
 }
 function pickSwapUser(id,el){
   selectedTargetUser=id;
@@ -843,11 +899,11 @@ async function loadSubmissions(){
     <div class="card"><div class="table-wrap"><table>
       <thead><tr><th>รหัสวิชา</th><th>ชื่อวิชา</th><th>ตอน</th><th>ประเภทสอบ</th><th>สถานะ</th><th>ส่งเมื่อ</th><th></th></tr></thead>
       <tbody>${data.length?data.map(s=>`<tr>
-        <td class="td-mono">${s.course_id||'—'}</td><td>${s.course_name||'—'}</td><td>${s.section_no||'—'}</td>
-        <td>${s.exam_type_choice||'—'}</td>
-        <td><span class="badge ${sb[s.status]||'badge-gray'}">${st[s.status]||s.status}</span></td>
+        <td class="td-mono">${esc(s.course_id)}</td><td>${esc(s.course_name)}</td><td>${esc(s.section_no)}</td>
+        <td>${esc(s.exam_type_choice)}</td>
+        <td><span class="badge ${sb[s.status]||'badge-gray'}">${esc(st[s.status]||s.status)}</span></td>
         <td>${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('th-TH'):'—'}</td>
-        <td><button class="btn btn-outline btn-sm" onclick="openSubmissionWizard(${s.section_id})">จัดการ</button></td>
+        <td><button class="btn btn-outline btn-sm" onclick="openSubmissionWizard(${parseInt(s.section_id)||0})">จัดการ</button></td>
       </tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">ยังไม่มีข้อสอบ</td></tr>'}
       </tbody>
     </table></div></div>
@@ -857,8 +913,8 @@ async function loadSubmissions(){
 async function loadPendingList(){
   const data=await get('/submissions/?status=submitted').catch(()=>[]);
   document.getElementById('pending-list').innerHTML=`<div class="table-wrap"><table><thead><tr><th>วิชา</th><th>ผู้ส่ง</th><th>ส่งเมื่อ</th><th></th></tr></thead><tbody>
-    ${data.map(s=>`<tr><td>${s.course_id} Sec${s.section_no}</td><td>${s.submitter||'—'}</td><td>${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('th-TH'):'—'}</td>
-    <td style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="approveSubm(${s.id},true)">✅ อนุมัติ</button><button class="btn btn-danger btn-sm" onclick="approveSubm(${s.id},false)">✕</button></td></tr>`).join('')}
+    ${data.map(s=>`<tr><td>${esc(s.course_id)} Sec${esc(s.section_no)}</td><td>${esc(s.submitter)}</td><td>${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('th-TH'):'—'}</td>
+    <td style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="approveSubm(${parseInt(s.id)||0},true)">✅ อนุมัติ</button><button class="btn btn-danger btn-sm" onclick="approveSubm(${parseInt(s.id)||0},false)">✕</button></td></tr>`).join('')}
   </tbody></table></div>`;
 }
 async function approveSubm(id,approve){
@@ -953,13 +1009,13 @@ async function runOptimizer(){
   btn.disabled=true;btn.innerHTML='⏳ กำลังคำนวณ...';
   try{const data=await post('/schedule/optimize',{semester:document.getElementById('opt-sem').value,academic_year:document.getElementById('opt-year').value,exam_type:'final'});
     res.innerHTML=`<div class="opt-result"><div style="font-weight:700;margin-bottom:10px;color:#fff">✅ เสร็จแล้ว</div>
-    <div class="opt-grid"><div class="opt-stat"><div class="val">${data.sections_assigned}</div><div class="lbl">จัดแล้ว</div></div>
-    <div class="opt-stat"><div class="val">${data.sections_total}</div><div class="lbl">ทั้งหมด</div></div>
-    <div class="opt-stat"><div class="val">${data.fairness_score}</div><div class="lbl">Fairness SD</div></div></div>
-    ${data.violations?.length?`<div style="margin-top:10px;font-size:12px;color:rgba(255,200,0,.8)">⚠️ ${data.violations.join('<br>')}</div>`:''}
+    <div class="opt-grid"><div class="opt-stat"><div class="val">${parseInt(data.sections_assigned)||0}</div><div class="lbl">จัดแล้ว</div></div>
+    <div class="opt-stat"><div class="val">${parseInt(data.sections_total)||0}</div><div class="lbl">ทั้งหมด</div></div>
+    <div class="opt-stat"><div class="val">${parseFloat(data.fairness_score||0).toFixed(2)}</div><div class="lbl">Fairness SD</div></div></div>
+    ${data.violations?.length?`<div style="margin-top:10px;font-size:12px;color:rgba(255,200,0,.8)">⚠️ ${data.violations.map(v=>esc(v)).join('<br>')}</div>`:''}
     </div>`;
     toast('Optimizer เสร็จแล้ว ✅','success');loadSchedule();
-  }catch(e){res.innerHTML=`<div class="opt-result">${e.message}</div>`;toast(e.message,'error');}
+  }catch(e){res.innerHTML=`<div class="opt-result">${esc(e.message)}</div>`;toast(e.message,'error');}
   btn.disabled=false;btn.innerHTML='🚀 Run Optimizer';
 }
 async function lockBaseline(){
@@ -980,13 +1036,13 @@ async function loadUsers(){
   document.getElementById('content').innerHTML=`<div class="card"><div class="table-wrap"><table>
     <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-สกุล</th><th>อีเมล</th><th>Role</th><th>สังกัด</th><th>สถานะ</th><th></th></tr></thead>
     <tbody>${data.map(u=>`<tr>
-      <td class="td-mono">${u.username}</td>
-      <td><strong>${u.full_name||'—'}</strong></td>
-      <td style="color:var(--text-muted)">${u.email}</td>
-      <td><span class="badge ${rb[u.role]||'badge-gray'}">${rl[u.role]||u.role}</span></td>
-      <td>${u.department||'—'}</td>
+      <td class="td-mono">${esc(u.username)}</td>
+      <td><strong>${esc(u.full_name)}</strong></td>
+      <td style="color:var(--text-muted)">${esc(u.email)}</td>
+      <td><span class="badge ${rb[u.role]||'badge-gray'}">${esc(rl[u.role]||u.role)}</span></td>
+      <td>${esc(u.department)}</td>
       <td><span class="badge ${u.is_active?'badge-green':'badge-gray'}">${u.is_active?'ใช้งาน':'ปิดใช้'}</span></td>
-      <td>${u.username!=='admin'?`<button class="btn btn-danger btn-icon btn-sm" onclick="deactivateUser(${u.id},'${u.full_name||u.username}')">🚫</button>`:''}
+      <td>${u.username!=='admin'?`<button class="btn btn-danger btn-icon btn-sm" onclick="deactivateUser(${parseInt(u.id)||0})">🚫</button>`:''}
       </td>
     </tr>`).join('')}</tbody>
   </table></div></div>`;
@@ -1009,8 +1065,9 @@ async function openAddUserModal(){
     try{await post('/users/',{username:document.getElementById('nu-u').value,password:document.getElementById('nu-p').value,full_name:document.getElementById('nu-n').value,email:document.getElementById('nu-e').value,role:document.getElementById('nu-r').value,department:document.getElementById('nu-d').value});closeModal();toast('เพิ่มสำเร็จ ✅','success');loadUsers();}catch(e){toast(e.message,'error');}
   }}]);
 }
-async function deactivateUser(id,name){
-  if(!confirm(`ยืนยันปิดใช้งาน "${name}"?`)) return;
+async function deactivateUser(id){
+  // Note: confirm() text is static — no user data interpolated (XSS safe)
+  if(!confirm('ยืนยันปิดใช้งานผู้ใช้นี้?')) return;
   try{await del(`/users/${id}`);toast('ปิดใช้งานแล้ว','success');loadUsers();}catch(e){toast(e.message,'error');}
 }
 

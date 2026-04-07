@@ -1552,8 +1552,8 @@ function updateNavForRole() {
   show('nav-workflow', isAdmin);
 
   // esq_head + secretary — เห็นทุกอย่าง (read-only)
-  const isViewAll = role === 'esq_head' || role === 'secretary';
-  const isDeptSup = role === 'dept_supervisor';
+  const isViewAll = u.role === 'esq_head' || u.role === 'secretary';
+  const isDeptSup = u.role === 'dept_supervisor';
   if (isViewAll) {
     // แสดงเมนู view-all แต่ซ่อน write actions
     document.querySelectorAll('.nav-item[id^="nav-"]').forEach(el => {
@@ -3482,7 +3482,7 @@ async function injectTimeline() {
 }
 
 
-async function loadAdminDashboard() {
+async function _loadAdminDashboardCore() {
   const data = await get('/dashboard/');
   if (!data) return;
   const pct = data.total_sections ? Math.round(data.scheduled_sections/data.total_sections*100) : 0;
@@ -3511,6 +3511,12 @@ async function loadAdminDashboard() {
         <div><div class="stat-val">${data.rooms_in_use}</div><div class="stat-lbl">ห้องสอบที่ใช้</div><div class="stat-sub">${data.unscheduled_sections} sections ยังไม่ได้จัด</div></div>
       </div>
     </div>
+    <div id="analytics-charts" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card" style="padding:20px"><div style="font-weight:600;margin-bottom:12px;font-size:14px">📤 สถานะการส่งข้อสอบ (อาจารย์)</div><canvas id="chart-submission" height="180"></canvas></div>
+      <div class="card" style="padding:20px"><div style="font-weight:600;margin-bottom:12px;font-size:14px">✅ การยืนยันกำกับสอบ (เจ้าหน้าที่)</div><canvas id="chart-supervision" height="180"></canvas></div>
+      <div class="card" style="padding:20px"><div style="font-weight:600;margin-bottom:12px;font-size:14px">🔄 คำขอสลับกะ</div><canvas id="chart-swap" height="180"></canvas></div>
+      <div class="card" style="padding:20px"><div style="font-weight:600;margin-bottom:12px;font-size:14px">🖨️ ค่าถ่ายเอกสารต่อห้องสอบ</div><canvas id="chart-copy" height="180"></canvas></div>
+    </div>
     <div class="card">
       <div class="card-head"><h3>📋 ประวัติการใช้งาน</h3><span class="badge badge-gray">${data.recent_logs.length} รายการ</span></div>
       <div style="max-height:320px;overflow-y:auto">
@@ -3528,6 +3534,98 @@ async function loadAdminDashboard() {
   `;
   // render timeline
   renderSemesterTimeline('tl-admin-container', 'admin');
+}
+
+// ── Mini chart renderer (pure Canvas — no external lib) ──────
+function _drawDonut(canvasId, segments, labels, colors) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 280; canvas.width = W; canvas.height = parseInt(canvas.getAttribute('height')) || 180;
+  const cx = W * 0.38, cy = canvas.height / 2, r = Math.min(cx, cy) - 10, ri = r * 0.55;
+  const total = segments.reduce((a,b)=>a+b,0);
+  if (!total) { ctx.fillStyle='#ccc'; ctx.font='13px sans-serif'; ctx.fillText('ไม่มีข้อมูล',cx-30,cy); return; }
+  let angle = -Math.PI/2;
+  segments.forEach((v,i) => {
+    const sweep = (v/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,angle,angle+sweep); ctx.closePath();
+    ctx.fillStyle=colors[i]; ctx.fill();
+    angle += sweep;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,ri,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.fillStyle='#333'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; ctx.fillText(total,cx,cy+5);
+  ctx.font='11px sans-serif'; ctx.fillText('รวม',cx,cy-9);
+  // legend
+  const lx = W*0.72, ly0 = cy - (segments.length*18)/2;
+  labels.forEach((lbl,i) => {
+    const y = ly0 + i*20;
+    ctx.fillStyle=colors[i]; ctx.fillRect(lx,y-9,12,12);
+    ctx.fillStyle='#333'; ctx.textAlign='left'; ctx.font='11px sans-serif';
+    ctx.fillText(`${lbl} (${segments[i]})`, lx+16, y+1);
+  });
+}
+
+function _drawBar(canvasId, labels, values, color='#8b0000') {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 280; canvas.width = W; canvas.height = parseInt(canvas.getAttribute('height')) || 180;
+  const pad = {t:10,b:40,l:10,r:10}, chartW = W-pad.l-pad.r, chartH = canvas.height-pad.t-pad.b;
+  const max = Math.max(...values,1);
+  const bw = Math.floor(chartW/labels.length)-6;
+  ctx.fillStyle='#f4f4f4'; ctx.fillRect(pad.l,pad.t,chartW,chartH);
+  values.forEach((v,i) => {
+    const bh = Math.round((v/max)*chartH);
+    const x = pad.l + i*(bw+6) + 3;
+    const y = pad.t + chartH - bh;
+    ctx.fillStyle=color; ctx.fillRect(x,y,bw,bh);
+    ctx.fillStyle='#333'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(v, x+bw/2, y-3);
+    // label — truncate if long
+    const lbl = labels[i].length>8 ? labels[i].slice(0,7)+'…' : labels[i];
+    ctx.fillText(lbl, x+bw/2, pad.t+chartH+14);
+  });
+}
+
+async function _renderAnalyticsCharts() {
+  const d = await get('/dashboard/analytics').catch(()=>null);
+  if (!d) return;
+  const CRIMSON='#8b0000', GOLD='#b8860b', GREEN='#198754', BLUE='#0d6efd', GRAY='#6c757d', ORANGE='#fd7e14';
+
+  // 1. Submission donut
+  const subMap = d.submission_status || {};
+  const subLabels = ['draft','pending','approved','rejected','revision'];
+  const subColors = [GRAY, GOLD, GREEN, CRIMSON, ORANGE];
+  const subVals = subLabels.map(k=>subMap[k]||0);
+  const subActive = subLabels.filter((_,i)=>subVals[i]>0);
+  const subColActive = subColors.filter((_,i)=>subVals[i]>0);
+  const subValActive = subVals.filter(v=>v>0);
+  // add teacher not-submitted
+  const ts = d.teacher_stats || {};
+  if (ts.not_submitted > 0) { subActive.push('ยังไม่ส่ง'); subColActive.push('#dee2e6'); subValActive.push(ts.not_submitted); }
+  _drawDonut('chart-submission', subValActive, subActive, subColActive);
+
+  // 2. Supervision donut
+  const sv = d.supervision_stats || {};
+  _drawDonut('chart-supervision',
+    [sv.confirmed||0, sv.pending||0],
+    ['ยืนยันแล้ว','รอยืนยัน'],
+    [GREEN, GRAY]
+  );
+
+  // 3. Swap donut
+  const swMap = d.swap_status || {};
+  const swKeys = Object.keys(swMap);
+  const swColors = {pending:GOLD, approved:GREEN, rejected:CRIMSON, cancelled:GRAY};
+  _drawDonut('chart-swap',
+    swKeys.map(k=>swMap[k]),
+    swKeys,
+    swKeys.map(k=>swColors[k]||BLUE)
+  );
+
+  // 4. Copy cost bar
+  const rooms = d.copy_per_room || [];
+  _drawBar('chart-copy', rooms.map(r=>r.room), rooms.map(r=>r.sheets), CRIMSON);
 }
 
 // ─────────────────────────────────────────
@@ -4850,7 +4948,7 @@ async function renderChecklist() {
 }
 
 // auto-load checklist ใน admin dashboard
-const _origLoadAdmin = loadAdminDashboard;
+// _origLoadAdmin is now _loadAdminDashboardCore (defined above)
 
 
 // ── Mobile modal drag-to-close ────────────────────────
@@ -6218,7 +6316,9 @@ async function injectTimeline() {
 
 
 async function loadAdminDashboard() {
-  await _origLoadAdmin();
+  await _loadAdminDashboardCore();
+  // render analytics charts (async, non-blocking)
+  setTimeout(() => _renderAnalyticsCharts(), 100);
   // โหลด checklist badge หลัง dashboard render
   setTimeout(async () => {
     const badge = document.getElementById('checklist-badge');
@@ -6633,7 +6733,7 @@ async function confirmManagerRole(emId) {
 async function loadCoExam() {
   const [groups, suggestions] = await Promise.all([
     get('/co-exam/').catch(()=>[]),
-    get('/co-exam/auto-detect').catch(()=>({suggestions:[]})),
+    post('/co-exam/auto-detect').catch(()=>({suggestions:[]})),
   ]);
   const suggs = suggestions?.suggestions || [];
 

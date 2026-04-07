@@ -21,7 +21,11 @@ import models
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # สร้าง tables + seed data
+    # Security: validate secrets before anything else
+    from security import validate_production_secrets
+    validate_production_secrets()
+
+    # Create tables + seed dev data
     Base.metadata.create_all(bind=engine)
     from seed import seed_data
     from sqlalchemy.orm import Session
@@ -61,8 +65,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
       - เพิ่มใน AuditLog ถ้า action สำคัญ
     """
     async def dispatch(self, request: StarletteRequest, call_next):
-        # correlation ID
-        req_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        # correlation ID — sanitize client-provided value to prevent log injection
+        client_req_id = request.headers.get("X-Request-ID", "")
+        import re
+        if client_req_id and re.match(r'^[a-zA-Z0-9\-]{1,64}$', client_req_id):
+            req_id = client_req_id
+        else:
+            req_id = str(uuid.uuid4())
         _request_id_var.set(req_id)
 
         start = time.perf_counter()
@@ -121,7 +130,8 @@ LOGIN_WINDOW  = int(os.getenv("LOGIN_RATE_WINDOW", "300"))  # วินาที
 class LoginRateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: StarletteRequest, call_next):
         if request.url.path == "/api/auth/login" and request.method == "POST":
-            ip = request.client.host if request.client else "unknown"
+            from security import get_real_ip
+            ip = get_real_ip(request)
             now = time.time()
             # ล้าง attempts เก่า
             _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < LOGIN_WINDOW]

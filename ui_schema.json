@@ -1,0 +1,546 @@
+{
+  "app": {
+    "name": "EMS — ระบบจัดการข้อสอบ",
+    "version": "2.0.0",
+    "base_url": "/api",
+    "auth": {
+      "type": "session_cookie",
+      "cookie_name": "ems_session",
+      "login_endpoint": "POST /api/auth/login",
+      "me_endpoint": "GET /api/auth/me",
+      "logout_endpoint": "POST /api/auth/logout"
+    },
+    "roles": ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
+    "theme": {
+      "primary": "#0f1b35",
+      "accent": "#c41230",
+      "background": "#f5f4f0",
+      "surface": "#ffffff",
+      "text": "#1a1a1a",
+      "font": "IBM Plex Sans Thai"
+    }
+  },
+  "pages": [
+    {
+      "name": "Login",
+      "route": "/app",
+      "auth_required": false,
+      "layout": "centered",
+      "components": [
+        {
+          "type": "logo",
+          "text": "EMS",
+          "subtitle": "ระบบจัดการข้อสอบ มช."
+        },
+        {
+          "type": "form",
+          "id": "login-form",
+          "endpoint": "POST /api/auth/login",
+          "fields": [
+            { "id": "username", "label": "ชื่อผู้ใช้", "type": "text", "required": true },
+            { "id": "password", "label": "รหัสผ่าน", "type": "password", "required": true }
+          ],
+          "submit": { "label": "เข้าสู่ระบบ", "style": "primary" },
+          "on_success": "navigate_to_dashboard",
+          "error_display": "inline"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "route": "/app/dashboard",
+      "auth_required": true,
+      "allowed_roles": ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "stat_grid",
+          "data_source": "GET /api/dashboard/",
+          "role_filter": ["admin", "esq_head", "secretary"],
+          "cards": [
+            { "field": "total_sections", "label": "Sections ทั้งหมด", "icon": "📚" },
+            { "field": "total_students", "label": "นักศึกษา", "icon": "👨‍🎓", "format": "number" },
+            { "field": "total_sheets",   "label": "แผ่นถ่ายเอกสาร", "icon": "🖨️", "format": "number" },
+            { "field": "rooms_in_use",   "label": "ห้องสอบที่ใช้", "icon": "🏫" }
+          ]
+        },
+        {
+          "type": "data_table",
+          "title": "กิจกรรมล่าสุด",
+          "role_filter": ["admin"],
+          "data_source": "GET /api/dashboard/",
+          "data_path": "recent_logs",
+          "columns": [
+            { "field": "action",     "label": "Action",   "type": "badge" },
+            { "field": "actor",      "label": "ผู้ทำ",    "type": "text" },
+            { "field": "table_name", "label": "Table",    "type": "text" },
+            { "field": "timestamp",  "label": "เวลา",     "type": "datetime" }
+          ],
+          "empty_message": "ยังไม่มีกิจกรรม"
+        },
+        {
+          "type": "stat_grid",
+          "title": "งานของฉัน",
+          "role_filter": ["staff"],
+          "data_source": "GET /api/swaps2/waiting",
+          "cards": [
+            { "field": "length", "label": "คำขอสลับรออยู่", "icon": "🔄" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ExamSchedule",
+      "route": "/app/schedule",
+      "auth_required": true,
+      "allowed_roles": ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "filter_bar",
+          "filters": [
+            { "id": "semester",      "type": "select", "options": ["1","2","summer"] },
+            { "id": "academic_year", "type": "text",   "placeholder": "2568" }
+          ]
+        },
+        {
+          "type": "grouped_list",
+          "data_source": "GET /api/schedule/",
+          "group_by": "exam_date",
+          "group_label_format": "date_th",
+          "item_card": {
+            "title": ["course.course_id", "section.section_no"],
+            "subtitle": "course.course_name_th",
+            "meta": ["exam_time", "room.room_name", "section.num_students"],
+            "badges": [
+              { "field": "is_my_supervision", "label": "คุมสอบ", "style": "crimson" },
+              { "field": "is_swapped",         "label": "Swap ↔", "style": "gold" }
+            ],
+            "actions": [
+              { "label": "รายละเอียด", "action": "open_detail", "param": "id" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submissions",
+      "route": "/app/submissions",
+      "auth_required": true,
+      "allowed_roles": ["admin", "esq_head", "secretary", "dept_supervisor", "teacher"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "data_table",
+          "title": "ข้อสอบของฉัน",
+          "data_source": "GET /api/submissions/",
+          "columns": [
+            { "field": "course_id",         "label": "รหัสวิชา",    "type": "mono" },
+            { "field": "course_name",        "label": "ชื่อวิชา",    "type": "text" },
+            { "field": "section_no",         "label": "ตอน",         "type": "text" },
+            { "field": "exam_type_choice",   "label": "ประเภทสอบ",   "type": "text" },
+            { "field": "status",             "label": "สถานะ",       "type": "status_badge",
+              "status_map": {
+                "draft":     { "label": "ฉบับร่าง",      "style": "gray" },
+                "submitted": { "label": "รอตรวจสอบ",    "style": "gold" },
+                "approved":  { "label": "อนุมัติแล้ว",  "style": "green" },
+                "rejected":  { "label": "ปฏิเสธ",       "style": "red" },
+                "released":  { "label": "Release แล้ว", "style": "navy" }
+              }
+            },
+            { "field": "submitted_at", "label": "ส่งเมื่อ", "type": "date" }
+          ],
+          "row_actions": [
+            { "label": "จัดการ", "action": "open_wizard", "param": "section_id" }
+          ],
+          "empty_message": "ยังไม่มีข้อสอบ"
+        },
+        {
+          "type": "data_table",
+          "title": "รออนุมัติ",
+          "role_filter": ["admin"],
+          "data_source": "GET /api/submissions/?status=submitted",
+          "columns": [
+            { "field": "course_id",   "label": "วิชา",   "type": "mono" },
+            { "field": "section_no",  "label": "ตอน",    "type": "text" },
+            { "field": "submitter",   "label": "ผู้ส่ง", "type": "text" },
+            { "field": "submitted_at","label": "ส่งเมื่อ","type": "date" }
+          ],
+          "row_actions": [
+            { "label": "✅ อนุมัติ",  "action": "approve", "param": "id", "style": "success" },
+            { "label": "✕ ปฏิเสธ",   "action": "reject",  "param": "id", "style": "danger" }
+          ]
+        }
+      ],
+      "modals": [
+        {
+          "id": "submission_wizard",
+          "title": "จัดการข้อสอบ",
+          "type": "multi_step",
+          "steps": [
+            {
+              "id": "step1",
+              "label": "ยืนยันวันสอบ",
+              "endpoint": "POST /api/submissions/step1-confirm",
+              "fields": [{ "id": "section_id", "type": "hidden" }],
+              "submit": { "label": "ยืนยัน", "style": "primary" }
+            },
+            {
+              "id": "step2",
+              "label": "ประเภทการสอบ",
+              "endpoint": "POST /api/submissions/step2-exam-type",
+              "fields": [
+                { "id": "section_id",       "type": "hidden" },
+                { "id": "exam_type_choice", "type": "select",
+                  "options": ["no_exam","online","onsite","outside_sched","in_class"],
+                  "required": true }
+              ],
+              "submit": { "label": "บันทึก", "style": "primary" }
+            },
+            {
+              "id": "step3",
+              "label": "อัปโหลด PDF",
+              "condition": "exam_type_choice === 'onsite'",
+              "endpoint": "POST /api/submissions/step3-upload/{section_id}",
+              "fields": [
+                { "id": "no_cover_page_confirmed", "type": "checkbox", "label": "ยืนยัน: ไม่มีหน้าปก" },
+                { "id": "file",                    "type": "file",     "accept": ".pdf" }
+              ],
+              "submit": { "label": "อัปโหลด", "style": "primary" }
+            },
+            {
+              "id": "step4",
+              "label": "สเปคการพิมพ์",
+              "condition": "exam_type_choice === 'onsite'",
+              "endpoint": "POST /api/submissions/step4-print-spec",
+              "fields": [
+                { "id": "print_duplex",     "type": "checkbox", "label": "พิมพ์หน้า-หลัง" },
+                { "id": "print_staple",     "type": "select",
+                  "options": ["none","corner_left","side_left","custom"], "label": "การเย็บ" },
+                { "id": "print_note",       "type": "textarea", "label": "หมายเหตุ", "max_length": 500 }
+              ],
+              "submit": { "label": "ยืนยันสเปค", "style": "primary" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "route": "/app/submissions/{id}/messages",
+      "auth_required": true,
+      "allowed_roles": ["admin", "esq_head", "secretary", "dept_supervisor", "teacher"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "message_thread",
+          "data_source": "GET /api/submissions/{submission_id}/messages",
+          "fields": ["sender", "sender_role", "message", "created_at", "is_read"],
+          "send_endpoint": "POST /api/submissions/{submission_id}/messages",
+          "send_field": "message",
+          "max_length": 2000,
+          "placeholder": "พิมพ์ข้อความ..."
+        }
+      ]
+    },
+    {
+      "name": "Swaps",
+      "route": "/app/swaps",
+      "auth_required": true,
+      "allowed_roles": ["admin", "staff", "teacher"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "tab_group",
+          "tabs": [
+            {
+              "id": "pending",
+              "label": "รออยู่",
+              "component": {
+                "type": "data_table",
+                "data_source": "GET /api/swaps2/waiting",
+                "columns": [
+                  { "field": "requester",       "label": "ผู้ขอ",     "type": "text" },
+                  { "field": "my_shift.date",   "label": "กะของฉัน", "type": "date" },
+                  { "field": "their_shift.date","label": "กะของเขา", "type": "date" },
+                  { "field": "message",          "label": "ข้อความ",  "type": "text" }
+                ],
+                "row_actions": [
+                  { "label": "✅ ยอมรับ",    "action": "accept_swap",  "param": "id", "style": "success" },
+                  { "label": "✕ ปฏิเสธ",    "action": "reject_swap",  "param": "id", "style": "danger" }
+                ]
+              }
+            },
+            {
+              "id": "my_requests",
+              "label": "คำขอของฉัน",
+              "component": {
+                "type": "data_table",
+                "data_source": "GET /api/swaps2/my",
+                "columns": [
+                  { "field": "target",           "label": "ขอกับ",    "type": "text" },
+                  { "field": "my_shift.date",    "label": "กะของฉัน","type": "date" },
+                  { "field": "their_shift.date", "label": "กะของเขา","type": "date" },
+                  { "field": "status",           "label": "สถานะ",    "type": "status_badge",
+                    "status_map": {
+                      "pending":   { "label": "รอตอบ",   "style": "gold" },
+                      "accepted":  { "label": "ตกลงแล้ว","style": "green" },
+                      "rejected":  { "label": "ปฏิเสธ",  "style": "red" },
+                      "cancelled": { "label": "ยกเลิก",  "style": "gray" }
+                    }
+                  }
+                ],
+                "row_actions": [
+                  { "label": "ยกเลิก", "action": "cancel_swap", "param": "id",
+                    "condition": "status === 'pending'", "style": "danger" }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "label": "➕ ขอสลับ",
+          "style": "primary",
+          "action": "open_swap_modal"
+        }
+      ],
+      "modals": [
+        {
+          "id": "new_swap",
+          "title": "ขอสลับกะคุมสอบ",
+          "endpoint": "POST /api/swaps2/",
+          "fields": [
+            { "id": "my_supervision_id", "label": "กะของฉัน",       "type": "select",
+              "data_source": "GET /api/swaps2/my-supervisions",
+              "option_value": "id", "option_label": "schedule_label" },
+            { "id": "target_user_id",    "label": "ขอสลับกับ",       "type": "user_picker",
+              "data_source": "GET /api/swaps2/available-users/{my_supervision_id}" },
+            { "id": "message",           "label": "ข้อความ (ไม่บังคับ)", "type": "textarea",
+              "max_length": 500, "required": false }
+          ],
+          "submit": { "label": "ส่งคำขอ", "style": "primary" }
+        }
+      ]
+    },
+    {
+      "name": "Checkins",
+      "route": "/app/checkins",
+      "auth_required": true,
+      "allowed_roles": ["admin", "staff", "teacher"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "data_table",
+          "title": "ตารางสอบที่ต้องดูแล",
+          "data_source": "GET /api/schedule/",
+          "columns": [
+            { "field": "section.course.course_name_th", "label": "วิชา",  "type": "text" },
+            { "field": "section.section_no",            "label": "ตอน",   "type": "text" },
+            { "field": "exam_date",                     "label": "วันที่", "type": "date" },
+            { "field": "exam_time",                     "label": "เวลา",  "type": "text" },
+            { "field": "room.room_name",                "label": "ห้อง",  "type": "text" }
+          ],
+          "row_actions": [
+            { "label": "📦 รับข้อสอบ", "action": "open_checkin", "params": ["id", "'receive_papers'"] },
+            { "label": "📍 Check-in",  "action": "open_checkin", "params": ["id", "'at_room'"] }
+          ]
+        }
+      ],
+      "modals": [
+        {
+          "id": "checkin_modal",
+          "title": "Check-in",
+          "endpoint": "POST /api/checkins/",
+          "fields": [
+            { "id": "schedule_id",      "type": "hidden" },
+            { "id": "checkin_type",     "type": "hidden" },
+            { "id": "students_present", "label": "นักศึกษาเข้าสอบ", "type": "number",
+              "condition": "checkin_type === 'at_room'" },
+            { "id": "late_count",       "label": "เข้าสาย",         "type": "number",
+              "condition": "checkin_type === 'at_room'", "default": 0 },
+            { "id": "notes",            "label": "หมายเหตุ",         "type": "textarea",
+              "required": false, "max_length": 1000 }
+          ],
+          "submit": { "label": "ยืนยัน Check-in", "style": "primary" }
+        }
+      ]
+    },
+    {
+      "name": "Scheduler",
+      "route": "/app/scheduler",
+      "auth_required": true,
+      "allowed_roles": ["admin"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "stat_grid",
+          "data_source": "GET /api/scheduler/status",
+          "cards": [
+            { "field": "digest_recipients.teachers_with_pending", "label": "อาจารย์รอ digest", "icon": "📧" },
+            { "field": "digest_recipients.staff_with_pending_swap","label": "Staff รอ swap",   "icon": "🔄" },
+            { "field": "reminder_tomorrow_exams",                  "label": "สอบพรุ่งนี้",    "icon": "📅" }
+          ]
+        },
+        {
+          "type": "action_card",
+          "title": "งานตามตาราง",
+          "actions": [
+            {
+              "label": "📧 ส่ง Daily Digest",
+              "description": "ส่งอีเมลสรุปรายวัน",
+              "endpoint": "POST /api/scheduler/daily-digest",
+              "require_confirm": true,
+              "auth": { "type": "query_param", "name": "secret", "source": "env" }
+            },
+            {
+              "label": "⏰ ส่ง Exam Reminder",
+              "description": "ส่งแจ้งเตือนผู้คุมสอบวันพรุ่งนี้",
+              "endpoint": "POST /api/scheduler/exam-reminder",
+              "require_confirm": true,
+              "auth": { "type": "query_param", "name": "secret", "source": "env" }
+            },
+            {
+              "label": "🚀 Run All Jobs",
+              "description": "รัน digest + reminder พร้อมกัน",
+              "endpoint": "POST /api/scheduler/run-all",
+              "require_confirm": true,
+              "auth": { "type": "bearer", "source": "session" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AuditLogs",
+      "route": "/app/audit-logs",
+      "auth_required": true,
+      "allowed_roles": ["admin"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "filter_bar",
+          "filters": [
+            { "id": "action",     "type": "text",   "placeholder": "EXAM_APPROVE" },
+            { "id": "actor_id",   "type": "number", "placeholder": "User ID" },
+            { "id": "table_name", "type": "text",   "placeholder": "exam_submissions" },
+            { "id": "from_date",  "type": "date" },
+            { "id": "to_date",    "type": "date" }
+          ]
+        },
+        {
+          "type": "data_table",
+          "data_source": "GET /api/exports/audit-logs",
+          "pagination": true,
+          "columns": [
+            { "field": "actor",      "label": "ผู้ทำ",     "type": "text" },
+            { "field": "action",     "label": "Action",    "type": "badge" },
+            { "field": "table_name", "label": "Table",     "type": "mono" },
+            { "field": "record_id",  "label": "Record ID", "type": "number" },
+            { "field": "timestamp",  "label": "เวลา",      "type": "datetime" },
+            { "field": "request_id", "label": "Request ID","type": "mono" }
+          ],
+          "empty_message": "ไม่มี audit logs"
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "route": "/app/users",
+      "auth_required": true,
+      "allowed_roles": ["admin"],
+      "layout": "app_shell",
+      "components": [
+        {
+          "type": "data_table",
+          "data_source": "GET /api/users/",
+          "columns": [
+            { "field": "username",  "label": "ชื่อผู้ใช้",  "type": "mono" },
+            { "field": "full_name", "label": "ชื่อ-นามสกุล","type": "text" },
+            { "field": "role",      "label": "สิทธิ์",       "type": "badge" },
+            { "field": "is_active", "label": "สถานะ",        "type": "boolean",
+              "true_label": "ใช้งาน", "false_label": "ปิดใช้" }
+          ],
+          "row_actions": [
+            { "label": "แก้ไข", "action": "edit_user", "param": "id" }
+          ],
+          "toolbar": [
+            { "label": "➕ เพิ่มผู้ใช้", "action": "open_create_user", "style": "primary" }
+          ]
+        }
+      ],
+      "modals": [
+        {
+          "id": "create_user",
+          "title": "เพิ่มผู้ใช้",
+          "endpoint": "POST /api/users/",
+          "fields": [
+            { "id": "username",  "label": "ชื่อผู้ใช้",  "type": "text",     "required": true },
+            { "id": "email",     "label": "อีเมล",        "type": "email",    "required": true },
+            { "id": "password",  "label": "รหัสผ่าน",    "type": "password", "required": true,
+              "min_length": 8 },
+            { "id": "full_name", "label": "ชื่อ-นามสกุล","type": "text" },
+            { "id": "role",      "label": "สิทธิ์",       "type": "select",
+              "options": ["admin","esq_head","secretary","dept_supervisor","staff","teacher"] }
+          ],
+          "submit": { "label": "สร้างผู้ใช้", "style": "primary" }
+        }
+      ]
+    },
+    {
+      "name": "StudentSearch",
+      "route": "/",
+      "auth_required": false,
+      "layout": "landing",
+      "components": [
+        {
+          "type": "search_form",
+          "title": "🎓 ค้นหาตารางสอบ",
+          "field": { "id": "student_id", "label": "รหัสนักศึกษา", "type": "text" },
+          "endpoint": "GET /api/public/schedule/{student_id}",
+          "result_component": {
+            "type": "profile_card",
+            "fields": ["full_name", "student_id", "major", "faculty"],
+            "table": {
+              "data_path": "exams",
+              "columns": [
+                { "field": "course_id",   "label": "รหัสวิชา", "type": "mono" },
+                { "field": "course_name", "label": "ชื่อวิชา", "type": "text" },
+                { "field": "section_no",  "label": "ตอน",      "type": "text" },
+                { "field": "exam_date",   "label": "วันสอบ",   "type": "date" },
+                { "field": "exam_time",   "label": "เวลา",     "type": "text" },
+                { "field": "room",        "label": "ห้อง",     "type": "text" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "api_contract": {
+    "authentication": {
+      "method": "HttpOnly Cookie (ems_session)",
+      "fallback": "Authorization: Bearer <token>",
+      "note": "Cookie is set on POST /api/auth/login. No token storage in JS needed."
+    },
+    "error_format": {
+      "status": 400,
+      "body": { "detail": "Human-readable Thai error message" }
+    },
+    "pagination": {
+      "query_params": ["page", "limit"],
+      "response": { "total": "int", "page": "int", "limit": "int", "pages": "int", "items": "array" }
+    },
+    "security_headers": [
+      "X-Content-Type-Options: nosniff",
+      "X-Frame-Options: SAMEORIGIN",
+      "Content-Security-Policy: default-src 'self'; ...",
+      "X-Request-ID: <uuid>"
+    ],
+    "rate_limits": {
+      "/api/auth/login": "5 requests/minute per IP",
+      "/api/":           "60 requests/minute per IP"
+    }
+  }
+}

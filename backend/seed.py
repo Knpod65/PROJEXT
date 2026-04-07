@@ -1,9 +1,24 @@
 """
 Seed data — ข้อมูลจริงจาก Personnel_120226.xlsx
 """
+from datetime import date as _date
 from sqlalchemy.orm import Session
 import models
 from auth_utils import hash_password
+
+
+def _parse_date(s: str) -> _date:
+    """
+    Parse date string to Python date object.
+    Handles Thai Buddhist Era years (e.g. "2569-03-23") by subtracting 543
+    to get Gregorian year for storage, OR treats as-is if year < 2100.
+
+    Actually: store as Gregorian directly — year 2569 BE = 2026 CE.
+    SQLAlchemy Date column needs a date object, not a string.
+    We store the BE year number directly (year 2569 is valid in Python/SQLite/Postgres).
+    """
+    parts = s.split("-")
+    return _date(int(parts[0]), int(parts[1]), int(parts[2]))
 
 
 def seed_data(db: Session):
@@ -232,7 +247,7 @@ def seed_data(db: Session):
         sch = models.ExamSchedule(
             section_id=section.id,
             room_id=room.id if room else None,
-            exam_date=ex_date, exam_time=ex_time,
+            exam_date=_parse_date(ex_date), exam_time=ex_time,
             exam_type=models.ExamType.final,
             status=models.ScheduleStatus.published,
             num_pages=pages, total_sheets=n_stu * pages,
@@ -264,4 +279,20 @@ def seed_data(db: Session):
             u.special_role = srole
     db.commit()
     print(f"  Special roles: {len(ROOM_KEEPERS)} room_keepers (ธีราภัณฑ์+ชนะชล)")
+
+    # ── Active Exam Period ────────────────────────────────────
+    if db.query(models.ExamPeriod).count() == 0:
+        admin = db.query(models.User).filter(models.User.username == "mathawee.m").first()
+        period = models.ExamPeriod(
+            academic_year = "2568",
+            semester      = "2",
+            exam_type     = "final",
+            label         = "ปลายภาค 2/2568",
+            is_active     = True,
+            created_by    = admin.id if admin else None,
+        )
+        db.add(period)
+        db.commit()
+        print("  Active period: ปลายภาค 2/2568 created")
+
     print("Seed completed: 82 users (2 admin, 1 esq_head, 1 secretary, 4 dept_supervisor, 30 staff, 44 teacher)")

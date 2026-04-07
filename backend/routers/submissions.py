@@ -641,12 +641,33 @@ def access_exam_file(
 
 
 # ── Messages: Teacher ↔ Admin ──────────────────────────────────
+
+def _assert_message_access(db: Session, submission_id: int, user: models.User):
+    """Raise 403/404 if user cannot access messages for this submission.
+    Teachers: only their own. Admin/esq_head/secretary/dept_supervisor: all."""
+    effective = get_effective_role(user)
+    sub = db.query(models.ExamSubmission).options(
+        joinedload(models.ExamSubmission.section)
+    ).filter(models.ExamSubmission.id == submission_id).first()
+    if not sub:
+        raise HTTPException(404, "ไม่พบ submission")
+    if effective == models.UserRole.teacher:
+        section = sub.section
+        if not section or section.teacher_id != user.id:
+            raise HTTPException(403, "ไม่มีสิทธิ์เข้าถึง submission นี้")
+    elif effective == models.UserRole.staff:
+        # staff ไม่มีสิทธิ์อ่าน/เขียน messages
+        raise HTTPException(403, "role นี้ไม่มีสิทธิ์ดู messages")
+    return sub
+
+
 @router.get("/{submission_id}/messages")
 def get_messages(
     submission_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    _assert_message_access(db, submission_id, current_user)
     msgs = db.query(models.ExamMessage).options(
         joinedload(models.ExamMessage.sender)
     ).filter(
@@ -672,10 +693,15 @@ def send_message(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    _assert_message_access(db, submission_id, current_user)
+    if not data.message or not data.message.strip():
+        raise HTTPException(400, "ข้อความไม่ควรว่าง")
+    if len(data.message) > 2000:
+        raise HTTPException(400, "ข้อความยาวเกิน 2000 ตัวอักษร")
     msg = models.ExamMessage(
         submission_id=submission_id,
         sender_id=current_user.id,
-        message=data.message,
+        message=data.message.strip(),
     )
     db.add(msg)
     db.commit()

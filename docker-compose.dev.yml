@@ -1,0 +1,49 @@
+# ══════════════════════════════════════════════════════
+# EMS — Local Development Compose
+# Usage: docker compose -f docker-compose.dev.yml up
+#
+# Features:
+#   - SQLite (no Postgres needed)
+#   - Hot reload via volume mount
+#   - No Nginx (direct FastAPI on port 8000)
+#   - Debug logging
+# ══════════════════════════════════════════════════════
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.local
+        required: false
+    environment:
+      DATABASE_URL: ""          # empty = use SQLite (ems.db)
+      ENV: development
+      SECRET_KEY: ${SECRET_KEY:-dev-only-secret-DO-NOT-USE-IN-PROD-32chars}
+      CRON_SECRET: ${CRON_SECRET:-dev-cron-secret}
+      TOKEN_EXPIRE_HOURS: "12"
+      APP_URL: "http://localhost:8000"
+      ALLOWED_ORIGINS: "http://localhost:8000,http://localhost:3000,http://127.0.0.1:8000"
+      LOG_LEVEL: "DEBUG"
+      JSON_LOGS: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Hot reload: mount source directly into container
+      - ./backend:/app:cached
+      - dev-uploads:/app/uploads
+      - dev-logs:/app/logs
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --reload-dir /app
+      --log-level debug
+
+volumes:
+  dev-uploads:
+  dev-logs:

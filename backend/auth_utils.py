@@ -3,12 +3,13 @@ Auth utilities
 - Password hashing (bcrypt)
 - JWT token (HS256)
 - Admin "view-as" impersonation
+- Dual-mode token extraction: HttpOnly cookie (preferred) + Bearer header (legacy)
 """
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from database import get_db
@@ -17,9 +18,8 @@ import models, os, hashlib
 _raw_secret = os.getenv("SECRET_KEY", "")
 if not _raw_secret:
     import sys
-    # Dev mode: warn แต่ไม่ crash (production ต้องตั้ง SECRET_KEY)
     _dev_secret = "ems_dev_only_DO_NOT_USE_IN_PRODUCTION_2025_change_me"
-    print("⚠  WARNING: SECRET_KEY not set — using insecure dev default. Set SECRET_KEY env var in production!", file=sys.stderr)
+    print("⚠  WARNING: SECRET_KEY not set — using insecure dev default.", file=sys.stderr)
     SECRET_KEY = _dev_secret
 else:
     SECRET_KEY = _raw_secret
@@ -27,7 +27,8 @@ else:
 ALGORITHM          = "HS256"
 TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "12"))
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+# Keep OAuth2PasswordBearer for OpenAPI docs / legacy Bearer clients
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 
 def hash_password(password: str) -> str:
@@ -73,14 +74,27 @@ def is_token_revoked(token: str, db: Session) -> bool:
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
+    bearer_token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> models.User:
+    """
+    Dual-mode token extraction:
+      1. HttpOnly cookie 'ems_session' (preferred — JS cannot read)
+      2. Authorization: Bearer <token> (legacy / API clients)
+    Cookie takes priority when both are present.
+    """
     credentials_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token ไม่ถูกต้องหรือหมดอายุ",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    # Try cookie first, then Bearer header
+    token = request.cookies.get("ems_session") or bearer_token
+    if not token:
+        raise credentials_exc
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: int = payload.get("sub")
@@ -89,7 +103,7 @@ def get_current_user(
     except JWTError:
         raise credentials_exc
 
-    # ตรวจ blacklist
+    # Check blacklist
     if is_token_revoked(token, db):
         raise credentials_exc
 

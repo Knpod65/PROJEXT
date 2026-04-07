@@ -15,7 +15,12 @@ CRON_SECRET = __import__("os").getenv("CRON_SECRET", "")
 
 
 def _check_cron(secret: str = ""):
-    if CRON_SECRET and secret != CRON_SECRET:
+    # SECURITY: require a non-empty CRON_SECRET to be set; reject empty/missing tokens.
+    # Old code: `if CRON_SECRET and secret != CRON_SECRET` silently bypassed the check
+    # when CRON_SECRET was empty (falsy short-circuit).
+    if not CRON_SECRET:
+        raise HTTPException(503, "CRON_SECRET not configured — scheduler endpoints disabled")
+    if secret != CRON_SECRET:
         raise HTTPException(403, "Invalid cron secret")
 
 

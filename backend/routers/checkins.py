@@ -118,6 +118,18 @@ def confirm_checkin_data(
     if not event:
         raise HTTPException(404, "ไม่พบ check-in event")
 
+    # SECURITY: verify caller is actually assigned to this schedule
+    is_supervisor = db.query(models.Supervision).filter(
+        models.Supervision.schedule_id == event.schedule_id,
+        models.Supervision.user_id == current_user.id,
+    ).first()
+    is_teacher = db.query(models.ExamSchedule).join(models.Section).filter(
+        models.ExamSchedule.id == event.schedule_id,
+        models.Section.teacher_id == current_user.id,
+    ).first()
+    if not is_supervisor and not is_teacher:
+        raise HTTPException(403, "คุณไม่ได้รับมอบหมายให้ดูแลการสอบนี้")
+
     # บันทึก confirmation ของ user นี้
     confirmations = event.confirmations or {}
     confirmations[str(current_user.id)] = datetime.now(timezone.utc).isoformat()
