@@ -1,0 +1,105 @@
+.page-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.stats-grid,
+.dashboard-charts,
+.summary-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.stats-grid,
+.dashboard-charts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.summary-box {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface2);
+  display: grid;
+  gap: 6px;
+}
+
+.summary-box span {
+  color: var(--text-mid);
+}
+
+.summary-box strong {
+  font-size: 1.2rem;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-heading h2 {
+  margin: 0;
+}
+
+.dashboard-skeleton {
+  height: 180px;
+}
+
+.dashboard-chart-skeleton,
+.card-skeleton,
+.page-loading__hero {
+  height: 220px;
+}
+
+.page-loading,
+.plain-list {
+  display: grid;
+  gap: 12px;
+}
+
+.page-loading__line {
+  height: 24px;
+}
+
+.signer-list,
+.activity-list,
+.student-result-list,
+.checkin-history {
+  display: grid;
+  gap: 12px;
+}
+
+.plain-list {
+  padding-left: 20px;
+}
+
+@media (max-width: 767px) {
+  .stats-grid,
+  .dashboard-charts,
+  .swap-card__shifts {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-bar,
+  .filter-bar__fields,
+  .filter-bar__actions,
+  .message-thread__composer,
+  .settings-row,
+  .inline-form,
+  .inline-actions {
+    display: grid;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    margin-top: auto;
+  }
+}
