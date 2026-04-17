@@ -5,7 +5,10 @@ export type UserRole =
   | "dept_supervisor"
   | "staff"
   | "teacher"
-  | "student";
+  | "student"
+  | "print_shop";
+
+export type RoleSelectionValue = UserRole | "governance";
 
 export interface UserMe {
   id: number;
@@ -13,8 +16,10 @@ export interface UserMe {
   email: string;
   full_name: string | null;
   role: UserRole;
+  active_role: UserRole;
   view_as_role: UserRole | null;
   effective_role: UserRole;
+  available_roles?: UserRole[] | null;
 }
 
 export interface UserOut {
@@ -333,6 +338,34 @@ export interface CopyCountSummary {
   grand_total: number;
   cost: number;
   sections_count: number;
+}
+
+export type PrintQueuePriority = "high" | "medium" | "standard";
+export type PrintQueueStatus = "queued" | "processing" | "completed" | "dispatched" | "delivered";
+
+export interface PrintQueueJob {
+  id: number;
+  submission_id: number | null;
+  course_code: string;
+  subject_name: string;
+  section: string;
+  room: string;
+  exam_date: string | null;
+  exam_time?: string | null;
+  students: number;
+  pages: number;
+  total_sheets: number;
+  priority: PrintQueuePriority;
+  status: PrintQueueStatus;
+  specs: string[];
+  notes?: string | null;
+  delivery_note?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  dispatched_at?: string | null;
+  delivered_at?: string | null;
+  created_at?: string | null;
+  assigned_to?: string | null;
 }
 
 export interface OptimizerResult {

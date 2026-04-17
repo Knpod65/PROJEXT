@@ -1,8 +1,8 @@
-import type { AuthResponse, UserMe, UserRole } from "@/types/api";
+import type { AuthResponse, RoleSelectionValue, UserMe, UserRole } from "@/types/api";
 import { get, post } from "./api";
 
-export function login(username: string, password: string) {
-  return post<AuthResponse>("/auth/login", { username, password });
+export function login(username: string, password: string, selectedRole: RoleSelectionValue) {
+  return post<AuthResponse>("/auth/login", { username, password, selected_role: selectedRole });
 }
 
 export function me() {
@@ -19,4 +19,3 @@ export function setViewAs(role: UserRole | null) {
     { role },
   );
 }
-

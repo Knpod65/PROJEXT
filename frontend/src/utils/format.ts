@@ -23,13 +23,14 @@ const thaiCurrency = new Intl.NumberFormat("th-TH", {
 const thaiNumber = new Intl.NumberFormat("th-TH");
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  admin: "ผู้ดูแลระบบ",
-  esq_head: "หัวหน้าหน่วย ESQ",
-  secretary: "เลขานุการ",
-  dept_supervisor: "หัวหน้าแผนก",
-  staff: "เจ้าหน้าที่",
-  teacher: "อาจารย์",
-  student: "นักศึกษา",
+  admin: "Administrator",
+  esq_head: "ESQ Head",
+  secretary: "Secretary",
+  dept_supervisor: "Department Supervisor",
+  staff: "Staff",
+  teacher: "Teacher",
+  student: "Student",
+  print_shop: "Print Shop",
 };
 
 export function formatDate(value?: string | null) {
@@ -64,5 +65,5 @@ export function formatPercent(value?: number | null) {
 export function formatDateRange(date?: string | null, time?: string | null) {
   const datePart = formatDate(date);
   if (!time) return datePart;
-  return `${datePart} • ${time}`;
+  return `${datePart} at ${time}`;
 }

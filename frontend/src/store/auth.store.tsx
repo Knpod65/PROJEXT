@@ -9,14 +9,17 @@ import {
 } from "react";
 
 import { login, logout, me, setViewAs } from "@/services/auth.service";
-import type { UserMe, UserRole } from "@/types/api";
+import type { RoleSelectionValue, UserMe, UserRole } from "@/types/api";
+import { getActiveRole, getAvailableRoles, storePendingRole } from "@/utils/roles";
 import { useUi } from "./ui.store";
 
 interface AuthContextValue {
   user: UserMe | null;
   loading: boolean;
   initialized: boolean;
-  signIn: (username: string, password: string) => Promise<UserMe>;
+  activeRole: UserRole | null;
+  availableRoles: UserRole[];
+  signIn: (username: string, password: string, selectedRole: RoleSelectionValue) => Promise<UserMe>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   switchViewAs: (role: UserRole | null) => Promise<void>;
@@ -33,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearSession = useCallback(() => {
     setUser(null);
+    storePendingRole(null);
     setLoading(false);
     setInitialized(true);
   }, []);
@@ -51,12 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(
-    async (username: string, password: string) => {
-      const response = await login(username, password);
+    async (username: string, password: string, selectedRole: RoleSelectionValue) => {
+      const response = await login(username, password, selectedRole);
       setUser(response.user);
+      storePendingRole(null);
       setInitialized(true);
       setLoading(false);
-      toast("เข้าสู่ระบบเรียบร้อย", "success");
+      toast("Signed in successfully.", "success");
       return response.user;
     },
     [toast],
@@ -69,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ignore logout errors and clear local session anyway.
     } finally {
       clearSession();
-      toast("ออกจากระบบแล้ว", "info");
+      toast("Signed out.", "info");
     }
   }, [clearSession, toast]);
 
@@ -77,37 +82,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (role: UserRole | null) => {
       await setViewAs(role);
       await refreshUser();
-      toast(role ? `สลับมุมมองเป็น ${role}` : "กลับสู่มุมมองของตัวเอง", "info");
+      toast(role ? `Previewing as ${role}.` : "Returned to the default admin preview.", "info");
     },
     [refreshUser, toast],
   );
 
   useEffect(() => {
-    refreshUser();
+    void refreshUser();
   }, [refreshUser]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
       clearSession();
-      toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่", "warning");
+      toast("Your session expired. Please sign in again.", "warning");
     };
 
     window.addEventListener("ems:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("ems:unauthorized", handleUnauthorized);
   }, [clearSession, toast]);
 
+  const availableRoles = useMemo(() => getAvailableRoles(user), [user]);
+  const activeRole = useMemo(() => getActiveRole(user), [user]);
+
   const value = useMemo(
     () => ({
       user,
       loading,
       initialized,
+      activeRole,
+      availableRoles,
       signIn,
       signOut,
       refreshUser,
       switchViewAs,
       clearSession,
     }),
-    [clearSession, initialized, loading, refreshUser, signIn, signOut, switchViewAs, user],
+    [activeRole, availableRoles, clearSession, initialized, loading, refreshUser, signIn, signOut, switchViewAs, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

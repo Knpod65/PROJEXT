@@ -1,10 +1,12 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { getPageConfig } from "@/config/navigation";
+import { getRoleSelectionEntry } from "@/components/role-entry/roleEntryConfig";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/store/auth.store";
-import { getDefaultRoute } from "@/utils/roles";
+import { getDefaultRoute, getPublicEntryRoute, getStoredPendingRole, hasRole } from "@/utils/roles";
 
 export function LoginPage() {
   const { signIn, user } = useAuth();
@@ -14,21 +16,49 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pendingRole = getStoredPendingRole();
+  const selectedEntry = useMemo(() => getRoleSelectionEntry(pendingRole), [pendingRole]);
 
   useEffect(() => {
     if (user) {
       navigate(getDefaultRoute(user), { replace: true });
+      return;
     }
-  }, [navigate, user]);
+
+    if (!pendingRole) {
+      navigate(getPublicEntryRoute(), {
+        replace: true,
+        state: (location.state as { from?: string } | null) ?? undefined,
+      });
+    }
+  }, [location.state, navigate, pendingRole, user]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!pendingRole) {
+      navigate("/role-selection", { replace: true });
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const signedInUser = await signIn(username, password);
-      const target = (location.state as { from?: string } | null)?.from ?? getDefaultRoute(signedInUser);
+      const signedInUser = await signIn(username, password, pendingRole);
+      const requestedPath = (location.state as { from?: string } | null)?.from;
+      const requestedRoutePath = requestedPath ? requestedPath.split(/[?#]/)[0] : undefined;
+      const requestedPage = requestedRoutePath ? getPageConfig(requestedRoutePath) : undefined;
+
+      const target =
+        requestedPath &&
+        requestedPage &&
+        (requestedPage.public ||
+          hasRole(signedInUser, requestedPage.roles, {
+            allowBaseAdminPreview: requestedPage.allowBaseAdminPreview,
+          }))
+          ? requestedPath
+          : getDefaultRoute(signedInUser);
+
       navigate(target || "/dashboard", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "เข้าสู่ระบบไม่สำเร็จ");
@@ -46,6 +76,14 @@ export function LoginPage() {
             <h1>ระบบจัดการข้อสอบ</h1>
             <p>คณะรัฐศาสตร์และรัฐประศาสนศาสตร์ มช.</p>
           </div>
+        </div>
+
+        <div className="login-card__meta">
+          <strong>{selectedEntry?.title ?? "Selected workspace"}</strong>
+          <p>{selectedEntry?.description ?? "Choose a role workspace before signing in."}</p>
+          <button className="sidebar__logout" type="button" onClick={() => navigate("/role-selection", { state: location.state ?? undefined })}>
+            Change role
+          </button>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -82,7 +120,8 @@ export function LoginPage() {
             type="button"
             variant="outline"
             onClick={() => {
-              window.location.href = "/api/auth/sso/login";
+              const query = pendingRole ? `?selected_role=${encodeURIComponent(pendingRole)}` : "";
+              window.location.href = `/api/auth/sso/login${query}`;
             }}
           >
             เข้าสู่ระบบด้วย CMU SSO
