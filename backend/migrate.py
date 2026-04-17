@@ -127,6 +127,14 @@ def run():
         except Exception as e:
             print(f"  ⏭  userrole enum: {e}")
 
+        try:
+            conn.execute(text(
+                "ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'print_shop'"
+            ))
+            print("  ✅ userrole enum: print_shop added")
+        except Exception as e:
+            print(f"  ⏭  userrole enum (print_shop): {e}")
+
         # ── 8. Course: เพิ่ม index ix_course_course_id ───────────
         conn.execute(text(
             "CREATE INDEX IF NOT EXISTS ix_course_course_id ON courses(course_id)"

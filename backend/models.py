@@ -18,6 +18,7 @@ class UserRole(str, enum.Enum):
     dept_supervisor  = "dept_supervisor"  # ภูษณิศา/พรชนก/รุ่งทิวา/ชนิกานต์ — view+edit แค่แผนกตัวเอง
     staff            = "staff"            # เจ้าหน้าที่ทั่วไป — คุมสอบ/swap/check-in
     teacher          = "teacher"          # อาจารย์ — จัดการข้อสอบของตัวเอง
+    print_shop       = "print_shop"       # dedicated print-queue and dispatch workflow
     student          = "student"          # นักศึกษา — ค้นหาตารางสอบ (no login)
 
 
@@ -319,6 +320,14 @@ class SubmissionStatus(str, enum.Enum):
     rejected  = "rejected"
     released  = "released"     # release ให้ printshop แล้ว
 
+
+class PrintJobStatus(str, enum.Enum):
+    queued     = "queued"
+    processing = "processing"
+    completed  = "completed"
+    dispatched = "dispatched"
+    delivered  = "delivered"
+
 class SwapStatus(str, enum.Enum):
     pending  = "pending"
     accepted = "accepted"
@@ -410,6 +419,7 @@ class ExamSubmission(Base):
                               back_populates="submission",
                               order_by="ExamSubmissionVersion.version")
     tokens     = relationship("ExamAccessToken", back_populates="submission")
+    print_jobs = relationship("PrintQueueJob", back_populates="submission")
 
     __table_args__ = (
         UniqueConstraint("section_id", name="uq_submission_section"),
@@ -484,6 +494,34 @@ class ExamAccessLog(Base):
 
 
 # ─── Swap Request ─────────────────────────────────────────────
+class PrintQueueJob(Base):
+    __tablename__ = "print_queue_jobs"
+    id            = Column(Integer, primary_key=True, index=True)
+    submission_id = Column(Integer, ForeignKey("exam_submissions.id"), nullable=False)
+    created_by    = Column(Integer, ForeignKey("users.id"), nullable=False)
+    assigned_to   = Column(Integer, ForeignKey("users.id"))
+    status        = Column(Enum(PrintJobStatus), default=PrintJobStatus.queued, nullable=False)
+    priority      = Column(String(20), default="standard", nullable=False)
+    release_token = Column(String(64), unique=True)
+    notes         = Column(Text)
+    delivery_note = Column(Text)
+    started_at    = Column(DateTime(timezone=True))
+    completed_at  = Column(DateTime(timezone=True))
+    dispatched_at = Column(DateTime(timezone=True))
+    delivered_at  = Column(DateTime(timezone=True))
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at    = Column(DateTime(timezone=True), onupdate=func.now())
+
+    submission    = relationship("ExamSubmission", back_populates="print_jobs")
+    creator       = relationship("User", foreign_keys=[created_by])
+    assignee      = relationship("User", foreign_keys=[assigned_to])
+
+    __table_args__ = (
+        UniqueConstraint("submission_id", name="uq_print_queue_submission"),
+        Index("ix_print_queue_status", "status"),
+    )
+
+
 class SwapRequest(Base):
     __tablename__ = "swap_requests"
     id             = Column(Integer, primary_key=True, index=True)

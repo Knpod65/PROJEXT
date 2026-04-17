@@ -6,7 +6,7 @@ Auth utilities
 - Dual-mode token extraction: HttpOnly cookie (preferred) + Bearer header (legacy)
 """
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Iterable, Optional
 from jose import JWTError, jwt
 import bcrypt
 from fastapi import Depends, HTTPException, Request, status
@@ -29,6 +29,7 @@ TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "12"))
 
 # Keep OAuth2PasswordBearer for OpenAPI docs / legacy Bearer clients
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
+GOVERNANCE_ROLE_KEY = "governance"
 
 
 def hash_password(password: str) -> str:
@@ -73,6 +74,52 @@ def is_token_revoked(token: str, db: Session) -> bool:
     ).first() is not None
 
 
+def get_available_roles(user: models.User) -> list[models.UserRole]:
+    if user.role == models.UserRole.admin:
+        return list(models.UserRole)
+    return [user.role]
+
+
+def _coerce_user_role(value: object) -> models.UserRole | None:
+    if isinstance(value, models.UserRole):
+        return value
+    if isinstance(value, str):
+        try:
+            return models.UserRole(value)
+        except ValueError:
+            return None
+    return None
+
+
+def resolve_active_role(user: models.User, selected_role: str) -> models.UserRole:
+    available_roles = get_available_roles(user)
+    requested = (selected_role or "").strip()
+
+    if not requested:
+        raise HTTPException(status_code=400, detail="selected_role is required")
+
+    if requested == GOVERNANCE_ROLE_KEY:
+        if user.role in (models.UserRole.esq_head, models.UserRole.secretary):
+            return user.role
+        if user.role == models.UserRole.admin:
+            return models.UserRole.esq_head
+        raise HTTPException(status_code=403, detail="The selected governance workspace is not available.")
+
+    requested_role = _coerce_user_role(requested)
+    if not requested_role:
+        raise HTTPException(status_code=400, detail="The selected role is invalid.")
+    if requested_role not in available_roles:
+        raise HTTPException(status_code=403, detail="The selected role is not permitted for this account.")
+    return requested_role
+
+
+def get_active_role(user: models.User) -> models.UserRole:
+    active_role = _coerce_user_role(getattr(user, "_active_role", None))
+    if active_role:
+        return active_role
+    return get_active_role(user)
+
+
 def get_current_user(
     request: Request,
     bearer_token: Optional[str] = Depends(oauth2_scheme),
@@ -100,6 +147,7 @@ def get_current_user(
         user_id: int = payload.get("sub")
         if user_id is None:
             raise credentials_exc
+        active_role = _coerce_user_role(payload.get("active_role"))
     except JWTError:
         raise credentials_exc
 
@@ -110,6 +158,9 @@ def get_current_user(
     user = db.query(models.User).filter(models.User.id == int(user_id)).first()
     if not user or not user.is_active:
         raise credentials_exc
+    if active_role and active_role not in get_available_roles(user):
+        raise credentials_exc
+    setattr(user, "_active_role", active_role or user.role)
     return user
 
 
@@ -117,16 +168,21 @@ def get_effective_role(user: models.User) -> models.UserRole:
     """role ที่ใช้งานจริง — ถ้า admin impersonate ใช้ view_as_role"""
     if user.role == models.UserRole.admin and user.view_as_role:
         return user.view_as_role
-    return user.role
+    return get_active_role(user)
 
 
-def require_admin(user: models.User = Depends(get_current_user)):
+def require_base_admin(user: models.User = Depends(get_current_user)):
     if user.role != models.UserRole.admin:
         raise HTTPException(status_code=403, detail="ต้องการสิทธิ์ admin")
     return user
 
+def require_admin(user: models.User = Depends(get_current_user)):
+    if get_effective_role(user) != models.UserRole.admin:
+        raise HTTPException(status_code=403, detail="ต้องการสิทธิ์ admin")
+    return user
+
 def require_staff_or_admin(user: models.User = Depends(get_current_user)):
-    if user.role not in (models.UserRole.admin, models.UserRole.staff):
+    if get_effective_role(user) not in (models.UserRole.admin, models.UserRole.staff):
         raise HTTPException(status_code=403, detail="ต้องการสิทธิ์ staff หรือ admin")
     return user
 
@@ -134,13 +190,18 @@ def require_staff_or_admin(user: models.User = Depends(get_current_user)):
 
 # ── Role helpers ─────────────────────────────────────────────
 
+def require_print_shop(user: models.User = Depends(get_current_user)):
+    if get_effective_role(user) != models.UserRole.print_shop:
+        raise HTTPException(status_code=403, detail="Print shop role required")
+    return user
+
 def is_view_all_role(user: "models.User") -> bool:
     """esq_head + secretary เห็นทุกอย่าง แต่ edit ไม่ได้"""
-    return user.role in (models.UserRole.esq_head, models.UserRole.secretary)
+    return get_effective_role(user) in (models.UserRole.esq_head, models.UserRole.secretary)
 
 def is_signer(user: "models.User") -> bool:
     """admin + esq_head + secretary ลงนามได้"""
-    return user.role in (
+    return get_effective_role(user) in (
         models.UserRole.admin,
         models.UserRole.esq_head,
         models.UserRole.secretary,
@@ -148,7 +209,7 @@ def is_signer(user: "models.User") -> bool:
 
 def require_view_all(user: "models.User" = Depends(get_current_user)):
     """เฉพาะ admin / esq_head / secretary"""
-    if user.role not in (
+    if get_effective_role(user) not in (
         models.UserRole.admin,
         models.UserRole.esq_head,
         models.UserRole.secretary,
@@ -158,7 +219,7 @@ def require_view_all(user: "models.User" = Depends(get_current_user)):
 
 def require_dept_or_admin(user: "models.User" = Depends(get_current_user)):
     """admin / dept_supervisor / esq_head / secretary"""
-    if user.role not in (
+    if get_effective_role(user) not in (
         models.UserRole.admin,
         models.UserRole.dept_supervisor,
         models.UserRole.esq_head,
@@ -175,13 +236,13 @@ def get_dept_filter(user: "models.User"):
     - teacher                      → dept_code ตัวเอง
     - staff                        → None (เห็นเฉพาะ schedule)
     """
-    if user.role in (
+    if get_effective_role(user) in (
         models.UserRole.admin,
         models.UserRole.esq_head,
         models.UserRole.secretary,
     ):
         return None   # ไม่ filter
-    if user.role in (models.UserRole.dept_supervisor, models.UserRole.teacher):
+    if get_effective_role(user) in (models.UserRole.dept_supervisor, models.UserRole.teacher):
         return user.dept_code
     return None
 
@@ -192,7 +253,7 @@ def require_read_only(user: "models.User" = Depends(get_current_user)):
     esq_head + secretary อ่านได้อย่างเดียว
     ใช้ใน endpoints ที่ต้องการ block การแก้ไข
     """
-    if user.role in (models.UserRole.esq_head, models.UserRole.secretary):
+    if get_effective_role(user) in (models.UserRole.esq_head, models.UserRole.secretary):
         raise HTTPException(403,
             "บัญชีนี้มีสิทธิ์อ่านอย่างเดียว — ไม่สามารถแก้ไขได้")
     return user
@@ -203,9 +264,9 @@ def require_can_edit(user: "models.User" = Depends(get_current_user)):
     แก้ไขได้: admin + teacher + dept_supervisor
     ไม่ได้: esq_head, secretary (read-only), staff (ไม่มี edit rights)
     """
-    if user.role in (models.UserRole.esq_head, models.UserRole.secretary):
+    if get_effective_role(user) in (models.UserRole.esq_head, models.UserRole.secretary):
         raise HTTPException(403, "บัญชีนี้มีสิทธิ์อ่านอย่างเดียว")
-    if user.role not in (
+    if get_effective_role(user) not in (
         models.UserRole.admin,
         models.UserRole.teacher,
         models.UserRole.dept_supervisor,
@@ -222,7 +283,7 @@ def is_eligible_supervisor(user: "models.User") -> bool:
       - ไม่ใช่เลขาคณะ (Faculty_Secretary)
       - ไม่ใช่ room_keeper (ธีราภัณฑ์ + ชนะชล — เปิด/ปิดห้อง)
     """
-    if user.role != models.UserRole.staff:
+    if get_effective_role(user) != models.UserRole.staff:
         return False
     if user.division == "Faculty_Secretary":
         return False
@@ -255,7 +316,7 @@ def show_in_fairness_stat(user: "models.User") -> bool:
     - นภาภรณ์ (esq_head role) — เห็นใน stat แต่ load = 0
     ใช้ใน UI แสดงว่า "ยกเว้น" ไม่ใช่ไม่มีตัวตน
     """
-    return user.role == models.UserRole.esq_head
+    return get_effective_role(user) == models.UserRole.esq_head
 
 
 def is_room_keeper(user: "models.User") -> bool:
@@ -277,17 +338,17 @@ def assert_dept_access(user: "models.User", dept_code: str):
     ตรวจว่า user มีสิทธิ์ดู/แก้ไขข้อมูลของ dept_code นี้
     Raises 403 ถ้าไม่มีสิทธิ์
     """
-    if user.role in (models.UserRole.admin,
+    if get_effective_role(user) in (models.UserRole.admin,
                      models.UserRole.esq_head,
                      models.UserRole.secretary):
         return   # เห็นทุก dept
-    if user.role == models.UserRole.dept_supervisor:
+    if get_effective_role(user) == models.UserRole.dept_supervisor:
         if user.dept_code != dept_code:
             raise HTTPException(403,
                 f"คุณมีสิทธิ์เข้าถึงเฉพาะภาควิชา {user.dept_code} เท่านั้น")
         return
     # teacher — เห็นเฉพาะ dept ตัวเอง
-    if user.role == models.UserRole.teacher:
+    if get_effective_role(user) == models.UserRole.teacher:
         if user.dept_code and user.dept_code != dept_code:
             raise HTTPException(403,
                 f"คุณมีสิทธิ์เข้าถึงเฉพาะภาควิชา {user.dept_code} เท่านั้น")

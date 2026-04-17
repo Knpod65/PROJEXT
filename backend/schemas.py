@@ -11,6 +11,7 @@ from models import UserRole, ExamType, QuestionType, ScheduleStatus
 class LoginRequest(BaseModel):
     username: str
     password: str
+    selected_role: str
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -23,8 +24,10 @@ class UserMe(BaseModel):
     email: str
     full_name: Optional[str]
     role: UserRole
+    active_role: UserRole
     view_as_role: Optional[UserRole]
     effective_role: UserRole   # role หลังจาก impersonate
+    available_roles: List[UserRole] = []
 
     class Config:
         from_attributes = True

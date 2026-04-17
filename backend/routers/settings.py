@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from auth_utils import log_action, require_admin
+from auth_utils import log_action, require_base_admin
 from database import get_db
 import models
 
@@ -49,7 +49,7 @@ def is_past_deadline(db: Session, key: str) -> bool:
 @router.get("/")
 def list_settings(
     db: Session = Depends(get_db),
-    _=Depends(require_admin),
+    _=Depends(require_base_admin),
 ):
     rows = db.query(models.SystemSetting).all()
     result = {}
@@ -69,7 +69,7 @@ def update_setting(
     value: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_base_admin),
 ):
     if key not in VALID_KEYS:
         raise HTTPException(400, f"key '{key}' not supported")

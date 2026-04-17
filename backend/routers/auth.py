@@ -12,10 +12,14 @@ from sqlalchemy.orm import Session
 from auth_utils import (
     DUMMY_PASSWORD_HASH,
     create_token,
+    get_active_role,
+    get_available_roles,
     get_current_user,
     get_effective_role,
     log_action,
     require_admin,
+    require_base_admin,
+    resolve_active_role,
     revoke_token,
     verify_password,
 )
@@ -26,6 +30,20 @@ import schemas
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 router = APIRouter()
+
+
+def _serialize_user_me(user: models.User) -> schemas.UserMe:
+    return schemas.UserMe(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role,
+        active_role=get_active_role(user),
+        view_as_role=user.view_as_role,
+        effective_role=get_effective_role(user),
+        available_roles=get_available_roles(user),
+    )
 
 
 @router.post("/login")
@@ -63,7 +81,9 @@ def login(data: schemas.LoginRequest, request: Request, response: Response,
         )
         raise HTTPException(status_code=401, detail="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
 
-    token = create_token({"sub": str(user.id)})
+    active_role = resolve_active_role(user, data.selected_role)
+    setattr(user, "_active_role", active_role)
+    token = create_token({"sub": str(user.id), "active_role": active_role.value})
 
     # Set HttpOnly cookie — JS cannot read this
     set_auth_cookie(response, token)
@@ -76,29 +96,13 @@ def login(data: schemas.LoginRequest, request: Request, response: Response,
         "access_token": token,
         "token_type": "bearer",
         "message": "ล็อกอินสำเร็จ — session cookie ถูกตั้งค่าแล้ว",
-        "user": schemas.UserMe(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            full_name=user.full_name,
-            role=user.role,
-            view_as_role=user.view_as_role,
-            effective_role=get_effective_role(user),
-        ),
+        "user": _serialize_user_me(user),
     }
 
 
 @router.get("/me", response_model=schemas.UserMe)
 def get_me(current_user: models.User = Depends(get_current_user)):
-    return schemas.UserMe(
-        id=current_user.id,
-        username=current_user.username,
-        email=current_user.email,
-        full_name=current_user.full_name,
-        role=current_user.role,
-        view_as_role=current_user.view_as_role,
-        effective_role=get_effective_role(current_user),
-    )
+    return _serialize_user_me(current_user)
 
 
 @router.post("/view-as")
@@ -106,7 +110,7 @@ def set_view_as(
     data: schemas.ViewAsRequest,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_base_admin),
 ):
     old_role = current_user.view_as_role
     current_user.view_as_role = data.role

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, case
 from database import get_db
 import models, schemas
-from auth_utils import get_current_user, require_admin
+from auth_utils import get_current_user, get_effective_role, require_admin
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ def get_dashboard(
 
     # Recent audit logs — only expose to admins
     recent_logs = []
-    if current_user.role == models.UserRole.admin:
+    if get_effective_role(current_user) == models.UserRole.admin:
         logs = db.query(models.AuditLog).order_by(
             models.AuditLog.timestamp.desc()
         ).limit(20).all()

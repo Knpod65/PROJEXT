@@ -106,6 +106,52 @@ def _save_version(db, sub, user, reason=""):
     sub.version = version_num
 
 
+def _get_print_priority(submission: models.ExamSubmission) -> str:
+    section = submission.section
+    students = section.num_students if section else 0
+    pages = 0
+    if submission.print_duplex and submission.a4_pages_count:
+        pages = submission.a4_pages_count
+    elif section and section.schedules:
+        pages = max((schedule.num_pages or 0) for schedule in section.schedules)
+
+    if students >= 120 or pages >= 15:
+        return "high"
+    if students >= 70 or pages >= 10:
+        return "medium"
+    return "standard"
+
+
+def _upsert_print_queue_job(
+    db: Session,
+    submission: models.ExamSubmission,
+    created_by: models.User,
+    release_token: str,
+):
+    job = db.query(models.PrintQueueJob).filter(
+        models.PrintQueueJob.submission_id == submission.id
+    ).first()
+
+    if not job:
+        job = models.PrintQueueJob(
+            submission_id=submission.id,
+            created_by=created_by.id,
+        )
+        db.add(job)
+
+    job.release_token = release_token
+    job.priority = _get_print_priority(submission)
+    if job.status == models.PrintJobStatus.delivered:
+        job.status = models.PrintJobStatus.queued
+        job.started_at = None
+        job.completed_at = None
+        job.dispatched_at = None
+        job.delivered_at = None
+        job.delivery_note = None
+
+    return job
+
+
 # ── Get submission status ──────────────────────────────────────
 @router.get("/section/{section_id}")
 def get_submission(
@@ -461,6 +507,7 @@ def release_to_printshop(
         ),
     )
     db.add(token)
+    _upsert_print_queue_job(db, sub, current_user, token_str)
     sub.status = models.SubmissionStatus.released
     _save_version(db, sub, current_user, "release ให้ printshop")
     db.commit()
@@ -469,7 +516,7 @@ def release_to_printshop(
     return {
         "success": True,
         "printshop_token": token_str,
-        "expires_in": "24 hours",
+        "expires_in": "72 hours",
         "max_uses": 1,
     }
 

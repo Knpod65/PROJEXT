@@ -112,6 +112,20 @@ def seed_data(db: Session):
         staff_objs[uname] = u
     db.flush()
 
+    db.add(models.User(
+        username="printshop.ops", email="printshop.ops@cmu.ac.th",
+        password_hash=hash_password("print123"),
+        role=models.UserRole.print_shop,
+        full_name="Print Shop Operator",
+        title="Mr.",
+        division="Print_Shop",
+        unit="Exam_Printing",
+        ext="053-940000",
+        mobile="080-0000000",
+        employee_id=999,
+    ))
+    db.flush()
+
     # ── Teachers ──────────────────────────────────────────────
     teacher_rows = [
         # GOV
@@ -295,4 +309,4 @@ def seed_data(db: Session):
         db.commit()
         print("  Active period: ปลายภาค 2/2568 created")
 
-    print("Seed completed: 82 users (2 admin, 1 esq_head, 1 secretary, 4 dept_supervisor, 30 staff, 44 teacher)")
+    print("Seed completed: 83 users (2 admin, 1 esq_head, 1 secretary, 4 dept_supervisor, 30 staff, 1 print_shop, 44 teacher)")
