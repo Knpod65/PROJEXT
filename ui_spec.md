@@ -5,6 +5,166 @@
 
 ---
 
+# UPDATE 2026-04-16 — Role Menu Alignment + Button Culling (Code-Based)
+
+## A) Login Standardization Rule (ทุก role)
+
+เป้าหมาย: หน้า Login ต้องใช้โครงสร้างเดียวกันทั้งหมด แล้วเปลี่ยนแค่:
+- Theme color token
+- Role title/label
+- Hero copy เล็กน้อย
+
+โครงสร้างกลางที่ต้องคงไว้:
+1. Header badge: Secure Portal Access
+2. Field 1: User ID/Email
+3. Field 2: Password + visibility toggle
+4. Optional remember checkbox
+5. Primary CTA 1 ปุ่ม
+6. Footer links
+
+หน้าที่ใช้เป็น baseline ได้ทันที:
+- stitch_role_based_exam_platform/admin_login/code.html
+- stitch_role_based_exam_platform/staff_login/code.html
+- stitch_role_based_exam_platform/supervisor_login/code.html
+- stitch_role_based_exam_platform/esq_authority_login/code.html
+
+หมายเหตุ: ร้านถ่ายเอกสารและนักศึกษาอยู่ในกลุ่มไม่ติดปัญหา ให้ใช้กติกาเดียวกันนี้โดยเปลี่ยนสี/ชื่อ role เท่านั้น
+
+## B) Sidebar Target Matrix (Source of Truth)
+
+### Staff (ต้องมี)
+- Dashboard
+- Exam Schedule
+- Swap Requests
+- Room Attendance
+- Check-ins
+
+### Teacher (ต้องมี)
+- Submission
+- Dashboard
+- Exam Schedule
+- Swap Requests
+- Room Attendance
+- Check-ins
+
+### Supervisor (ต้องมี)
+- Branch Audit Logs
+- Dashboard
+- Exam Schedule
+- Swap Requests
+- Room Attendance
+- Check-ins
+- Faculty Data Management
+- Dept Supervisor Reports
+- Supervisor Submission Oversight
+
+### ESQ (ต้องมี)
+- ESQ Logistics & Cost Approval
+- ESQ Financial & Personnel Master Oversight
+
+### Admin (ต้องมี)
+- Dashboard
+- Exam Schedule
+- Swap Requests
+- Room Attendance
+- Check-ins
+- Admin Audit Logs & Statistics
+- Admin System Health
+- Admin User Management (Excel Import)
+- Admin Check-in Feed (Operational)
+- Admin Student Management (Excel-First Enrollment)
+- Admin Submissions Oversight (Branch & Degree Level)
+- Admin Logistics Control Center
+- Faculty Exam Printing Oversight
+- Admin Course Management (with Edit Actions)
+- Admin Room Availability & Management
+- Admin Financial Oversight & Payouts
+- Admin Comprehensive Attendance Report
+- Admin Operations Command Dashboard
+- Admin Optimization Dashboard (Calendar View)
+- Admin Manual Subject Assignment
+- Admin Venue & Staff Allocation Matrix
+- Admin Settings (Term Management)
+- Admin Check-in Feed (Time-Locked)
+- Admin Swap Analytics Dashboard
+- Admin Attendance Anomaly Report
+- Admin Attendance Audit Log
+- Admin Audit & Compliance Dashboard
+
+## C) Core Page Unification Rule
+
+ภายใน role ให้ใช้โครงสร้างฟังก์ชันเดียวกันใน 4 หน้าหลักต่อไปนี้:
+1. Exam Schedule
+2. Swap Requests
+3. Room Attendance
+4. Check-ins
+
+อนุญาตให้ต่างได้เฉพาะ:
+- theme colors
+- role label text
+- data mock ของแต่ละ role
+
+## D) Button Culling Round 1 (จากโค้ดที่มีอยู่)
+
+### D1. ลบ/ยุบได้เลย (Low Risk)
+
+1. Language toggle ใน header ที่ซ้ำหลายหน้า
+- ตัวอย่าง:
+  - stitch_role_based_exam_platform/teacher_dashboard/code.html
+  - stitch_role_based_exam_platform/staff_check_ins/code.html
+  - stitch_role_based_exam_platform/staff_swap_requests_resolution/code.html
+- เหตุผล: เป็น global preference ควรอยู่หน้า Settings จุดเดียว
+
+2. Settings icon ซ้ำใน header เมื่อ sidebar มี Settings อยู่แล้ว
+- ตัวอย่าง:
+  - stitch_role_based_exam_platform/teacher_dashboard/code.html
+  - stitch_role_based_exam_platform/admin_dashboard/code.html
+- เหตุผล: ซ้ำหน้าที่นำทางและเพิ่ม visual noise
+
+3. ปุ่ม link เชิงนำทางซ้ำกับเมนูซ้าย
+- ตัวอย่าง:
+  - View Calendar / View All / View Schedule ใน dashboard หลายหน้า
+- เหตุผล: เข้าหน้าเดียวกันได้จาก sidebar อยู่แล้ว
+
+### D2. คงไว้ (จำเป็นต่อ flow)
+
+1. ปุ่ม action หลักต่อธุรกรรม
+- Submit Final, Approve, Reject, Export PDF, Filter
+- ตัวอย่าง:
+  - stitch_role_based_exam_platform/staff_attendance_report/code.html
+  - stitch_role_based_exam_platform/staff_swap_requests_resolution/code.html
+  - stitch_role_based_exam_platform/staff_exam_schedule_refactored/code.html
+
+2. ปุ่มสถานะเชิงปฏิบัติการที่ผูกงานจริง
+- Check-in, Update Record, Resolve state
+- เหตุผล: เป็น core operation ของ role นั้นๆ
+
+### D3. คลุมเครือ (ต้อง confirm ก่อนตัด)
+
+1. Generate Report / Schedule Audit / New Exam
+- เหตุผล: บางหน้าเป็น CTA สำคัญ แต่บางหน้าดูเป็น placeholder
+- แนวทาง: ถ้ายังไม่มี endpoint จริง ให้ยุบไว้หน้าเดียวก่อน
+
+2. icon-only buttons (more_horiz/more_vert)
+- เหตุผล: อาจมี intent ของ dropdown action ในอนาคต
+- แนวทาง: ถ้ายังไม่ bind event ให้ซ่อนชั่วคราวแทนลบทิ้งถาวร
+
+## E) Gaps Found from Current Code
+
+1. Teacher sidebar ยังไม่ครบตาม target (ยังไม่เห็น Room Attendance ชัดในบางหน้า)
+2. Supervisor sidebar แตกหลายแบบระหว่าง dashboard / reports / audit pages
+3. ESQ sidebar ปัจจุบันเป็น Governance model ที่ไม่ตรง target 2 รายการ
+4. Admin sidebar แตกหลาย architecture และยังไม่รวม 26 รายการตาม target เดียว
+
+## F) Implementation Order (ปลอดภัยสุด)
+
+1. ทำ Login template กลาง 1 แบบ แล้ว apply theme + role text
+2. ทำ Sidebar config per-role จาก matrix ด้านบน (single source)
+3. ค่อยยุบปุ่ม Low Risk ทั้งระบบ
+4. ทำรายการปุ่มคลุมเครือเพื่อ confirm กับเจ้าของระบบก่อนลบจริง
+
+---
+
 # 🧭 1. USER FLOWS
 
 ## 1.1 Admin Flow
