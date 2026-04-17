@@ -6,6 +6,7 @@ type ButtonVariant = "primary" | "navy" | "gold" | "outline" | "danger" | "ghost
 type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children?: ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;

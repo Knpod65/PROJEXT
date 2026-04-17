@@ -1,46 +1,55 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
-import type { UserRole } from "@/types/api";
 import { useAuth } from "@/store/auth.store";
 import { usePeriod } from "@/store/period.store";
+import { getRoleTheme } from "@/theme/roleThemes";
 import { formatRole } from "@/utils/format";
-import { canViewAs } from "@/utils/roles";
-
-import { Button } from "../ui/Button";
+import { getEffectiveRole } from "@/utils/roles";
+import { Icon } from "../ui/Icon";
 
 interface TopbarProps {
   title: string;
+  description?: string;
 }
 
-const viewAsRoles: UserRole[] = ["staff", "teacher", "student"];
-
-export function Topbar({ title }: TopbarProps) {
+export function Topbar({ description, title }: TopbarProps) {
   const { activePeriod } = usePeriod();
-  const { switchViewAs, user } = useAuth();
+  const { user } = useAuth();
+  const role = getEffectiveRole(user);
+  const theme = getRoleTheme(role);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
-  const currentRole = useMemo(() => formatRole(user?.view_as_role ?? user?.effective_role ?? user?.role), [user]);
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   return (
     <header className="topbar">
-      <div>
+      <div className="topbar__heading">
+        <span className="topbar__eyebrow">{theme.badgeLabel}</span>
         <h1 className="topbar__title">{title}</h1>
-        <p className="topbar__period">{activePeriod?.label ?? "ยังไม่มีรอบสอบที่ active"}</p>
+        <p className="topbar__description">{description ?? activePeriod?.label ?? "Exam operations workspace"}</p>
       </div>
 
       <div className="topbar__actions">
-        {canViewAs(user) ? (
-          <div className="topbar__viewas">
-            {viewAsRoles.map((role) => (
-              <Button key={role} size="sm" type="button" variant="ghost" onClick={() => void switchViewAs(role)}>
-                {formatRole(role)}
-              </Button>
-            ))}
+        <div className="topbar__status">
+          <div className="topbar__chip">
+            <Icon name="schedule" />
+            <span>{currentTime.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</span>
           </div>
-        ) : null}
+          <div className="topbar__chip topbar__chip--accent">
+            <Icon filled name={theme.brandIcon} />
+            <span>{formatRole(role)}</span>
+          </div>
+        </div>
 
         <div className="topbar__user">
           <strong>{user?.full_name ?? user?.username ?? "Guest"}</strong>
-          <span>{currentRole}</span>
+          <span>{user?.email ?? activePeriod?.label ?? "Exam Management System"}</span>
         </div>
       </div>
     </header>

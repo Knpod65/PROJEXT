@@ -1,61 +1,85 @@
 import { NavLink } from "react-router-dom";
 
-import { appPages } from "@/config/navigation";
+import { appPages, navGroupOrder } from "@/config/navigation";
 import { useAuth } from "@/store/auth.store";
-import { hasRole } from "@/utils/roles";
+import { usePeriod } from "@/store/period.store";
+import { getRoleTheme } from "@/theme/roleThemes";
+import { formatRole } from "@/utils/format";
+import { getEffectiveRole, hasRole } from "@/utils/roles";
 
-function groupPages() {
-  const groups = new Map<string, typeof appPages>();
-  appPages.forEach((page) => {
-    if (page.hidden || !page.navGroup) return;
-    const pages = groups.get(page.navGroup) ?? [];
-    pages.push(page);
-    groups.set(page.navGroup, pages);
-  });
-  return Array.from(groups.entries());
+import { Icon } from "../ui/Icon";
+
+function getGroupedPages(userRole: ReturnType<typeof getEffectiveRole>, user: ReturnType<typeof useAuth>["user"]) {
+  const visiblePages = appPages.filter(
+    (page) =>
+      !page.hidden &&
+      page.navGroup &&
+      hasRole(user, page.roles, { allowBaseAdminPreview: page.allowBaseAdminPreview }),
+  );
+
+  return navGroupOrder
+    .map((group) => ({
+      group,
+      pages: visiblePages.filter((page) => page.navGroup === group),
+    }))
+    .filter((entry) => entry.pages.length > 0 && Boolean(userRole));
 }
 
 export function Sidebar() {
   const { signOut, user } = useAuth();
-  const groupedPages = groupPages();
+  const { activePeriod } = usePeriod();
+  const role = getEffectiveRole(user);
+  const theme = getRoleTheme(role);
+  const groupedPages = getGroupedPages(role, user);
 
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
-        <div className="sidebar__logo">EMS</div>
-        <div>
-          <strong>Exam Management</strong>
-          <p>คณะรัฐศาสตร์ มช.</p>
+        <div className="sidebar__brand-icon">
+          <Icon filled name={theme.brandIcon} />
+        </div>
+        <div className="sidebar__brand-copy">
+          <strong>{theme.shellTitle}</strong>
+          <p>{theme.shellSubtitle}</p>
         </div>
       </div>
 
-      <nav className="sidebar__nav" aria-label="เมนูหลัก">
-        {groupedPages.map(([group, pages]) => {
-          const visiblePages = pages.filter((page) => hasRole(user, page.roles));
-          if (visiblePages.length === 0) return null;
+      <section className="sidebar__summary">
+        <span className="sidebar__eyebrow">Active period</span>
+        <strong>{activePeriod?.label ?? "No active exam period"}</strong>
+        <p>{user?.full_name ?? user?.username ?? "EMS operator"}</p>
+      </section>
 
-          return (
-            <div key={group} className="sidebar__group">
-              <p className="sidebar__group-title">{group}</p>
-              {visiblePages.map((page) => (
-                <NavLink
-                  key={page.key}
-                  className={({ isActive }) => (isActive ? "sidebar__link sidebar__link--active" : "sidebar__link")}
-                  to={page.path}
-                >
-                  <span>{page.icon}</span>
-                  <span>{page.title}</span>
-                </NavLink>
-              ))}
-            </div>
-          );
-        })}
+      <nav className="sidebar__nav" aria-label="Primary navigation">
+        {groupedPages.map(({ group, pages }) => (
+          <div key={group} className="sidebar__group">
+            <p className="sidebar__group-title">{group}</p>
+            {pages.map((page) => (
+              <NavLink
+                key={page.key}
+                className={({ isActive }) => (isActive ? "sidebar__link sidebar__link--active" : "sidebar__link")}
+                to={page.path}
+              >
+                <Icon className="sidebar__link-icon" name={page.icon} />
+                <span className="sidebar__link-copy">
+                  <strong>{page.title}</strong>
+                  <small>{page.description}</small>
+                </span>
+              </NavLink>
+            ))}
+          </div>
+        ))}
       </nav>
 
       <div className="sidebar__footer">
+        <div className="sidebar__footer-card">
+          <span className="sidebar__eyebrow">Current role</span>
+          <strong>{formatRole(role)}</strong>
+          <p>{theme.badgeLabel}</p>
+        </div>
         <button className="sidebar__logout" onClick={() => void signOut()} type="button">
-          <span>🚪</span>
-          <span>ออกจากระบบ</span>
+          <Icon name="logout" />
+          <span>Sign out</span>
         </button>
       </div>
     </aside>

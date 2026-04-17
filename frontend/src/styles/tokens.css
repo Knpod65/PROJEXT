@@ -1,30 +1,41 @@
 :root {
-  --navy: #0f1b35;
-  --navy-mid: #1a2d52;
-  --navy-light: #2a4278;
-  --crimson: #c41230;
-  --crimson-dk: #9a0d24;
-  --crimson-lt: rgba(196, 18, 48, 0.08);
-  --gold: #b8860b;
-  --gold-lt: rgba(184, 134, 11, 0.1);
-  --success: #198754;
-  --success-lt: rgba(26, 122, 74, 0.1);
-  --warning: #b8860b;
-  --error: #c41230;
+  --navy: #0f172a;
+  --navy-mid: #1e293b;
+  --navy-light: #334155;
+  --crimson: #dc2626;
+  --crimson-dk: #b91c1c;
+  --crimson-lt: rgba(220, 38, 38, 0.08);
+  --gold: #d97706;
+  --gold-lt: rgba(217, 119, 6, 0.1);
+  --success: #059669;
+  --success-lt: rgba(5, 150, 105, 0.12);
+  --warning: #d97706;
+  --error: #dc2626;
   --info: #0d6efd;
   --blue: #0d6efd;
-  --orange: #fd7e14;
-  --bg: #f5f4f0;
-  --surface: #ffffff;
-  --surface2: #f9f8f5;
-  --border: #e8e6e0;
-  --text: #1a1a1a;
-  --text-mid: #4a4a4a;
-  --text-muted: #888880;
-  --shadow-sm: 0 1px 4px rgba(15, 27, 53, 0.06);
-  --shadow: 0 2px 12px rgba(15, 27, 53, 0.08);
-  --shadow-lg: 0 8px 32px rgba(15, 27, 53, 0.14);
-  --radius: 8px;
+  --orange: #f97316;
+  --bg: #f5f4f1;
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface2: #f7f5f2;
+  --border: #e7e2da;
+  --text: #111827;
+  --text-mid: #4b5563;
+  --text-muted: #6b7280;
+  --shadow-sm: 0 8px 24px rgba(15, 23, 42, 0.04);
+  --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 28px 60px rgba(15, 23, 42, 0.16);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --role-accent: #0d6efd;
+  --role-accent-strong: #004cb6;
+  --role-accent-soft: rgba(13, 110, 253, 0.14);
+  --role-accent-text: #0f4eb3;
+  --role-sidebar-bg: #f6f3f2;
+  --role-sidebar-surface: #ffffff;
+  --role-sidebar-border: #e4e2e2;
+  --role-sidebar-text: #1f2937;
+  --role-sidebar-muted: #6b7280;
+  --role-canvas-glow: rgba(13, 110, 253, 0.12);
 }
 
 * {
@@ -38,11 +49,13 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(196, 18, 48, 0.06), transparent 30%),
-    radial-gradient(circle at top right, rgba(15, 27, 53, 0.08), transparent 24%),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.7), transparent 24%),
+    radial-gradient(circle at right top, rgba(17, 24, 39, 0.03), transparent 20%),
     var(--bg);
   color: var(--text);
-  font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
+  font-family: "Inter", "IBM Plex Sans Thai", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button,
@@ -50,6 +63,15 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button,
+input,
+select,
+textarea,
+a {
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 a {

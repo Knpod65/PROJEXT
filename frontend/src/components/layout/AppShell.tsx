@@ -1,26 +1,34 @@
 import type { ReactNode } from "react";
 
+import type { AppPageConfig } from "@/config/navigation";
 import { useAuth } from "@/store/auth.store";
+import { getRoleTheme, getRoleThemeStyle } from "@/theme/roleThemes";
+import { getEffectiveRole } from "@/utils/roles";
 
 import { MobileBottomNav } from "./MobileBottomNav";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
-import { ViewAsBanner } from "./ViewAsBanner";
 
 interface AppShellProps {
   title: string;
+  page?: AppPageConfig;
   children: ReactNode;
 }
 
-export function AppShell({ children, title }: AppShellProps) {
-  const { switchViewAs, user } = useAuth();
+export function AppShell({ children, page, title }: AppShellProps) {
+  const { user } = useAuth();
+  const role = getEffectiveRole(user);
+  const theme = getRoleTheme(role);
 
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      data-role={role ?? "guest"}
+      style={getRoleThemeStyle(theme)}
+    >
       <Sidebar />
       <div className="app-shell__main">
-        <Topbar title={title} />
-        {user?.view_as_role ? <ViewAsBanner role={user.view_as_role} onReset={() => void switchViewAs(null)} /> : null}
+        <Topbar description={page?.description} title={title} />
         <main className="app-shell__content">{children}</main>
       </div>
       <MobileBottomNav />

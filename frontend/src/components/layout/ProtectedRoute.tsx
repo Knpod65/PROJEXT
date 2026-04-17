@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { useAuth } from "@/store/auth.store";
+import { getPublicEntryRoute } from "@/utils/roles";
 import { Skeleton } from "../ui/Skeleton";
 
 export function ProtectedRoute() {
@@ -18,7 +19,13 @@ export function ProtectedRoute() {
   }
 
   if (!user) {
-    return <Navigate replace to="/login" state={{ from: location.pathname }} />;
+    return (
+      <Navigate
+        replace
+        to={getPublicEntryRoute()}
+        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+      />
+    );
   }
 
   return <Outlet />;

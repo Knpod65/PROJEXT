@@ -3,16 +3,82 @@
   gap: 16px;
 }
 
+.page-stack--spacious {
+  gap: 24px;
+}
+
+.page-hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--role-accent-soft) 88%, white 12%), transparent 34%),
+    rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(231, 226, 218, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.page-hero__eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: var(--role-accent-text);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.page-hero__title {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.9rem);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+}
+
+.page-hero__description {
+  max-width: 760px;
+  margin: 14px 0 0;
+  color: var(--text-mid);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.page-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stitch-metric-grid,
 .stats-grid,
 .dashboard-charts,
-.summary-grid {
+.summary-grid,
+.schedule-summary-grid,
+.submission-summary-grid,
+.operations-summary-grid {
   display: grid;
   gap: 16px;
 }
 
+.stitch-metric-grid,
 .stats-grid,
 .dashboard-charts {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.schedule-summary-grid,
+.submission-summary-grid,
+.operations-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dashboard-shell-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .summary-grid {
@@ -21,8 +87,8 @@
 
 .summary-box {
   padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  border: 1px solid rgba(231, 226, 218, 0.9);
+  border-radius: 16px;
   background: var(--surface2);
   display: grid;
   gap: 6px;
@@ -48,7 +114,7 @@
 }
 
 .dashboard-skeleton {
-  height: 180px;
+  height: 200px;
 }
 
 .dashboard-chart-skeleton,
@@ -79,20 +145,34 @@
   padding-left: 20px;
 }
 
-@media (max-width: 767px) {
-  .stats-grid,
-  .dashboard-charts,
-  .swap-card__shifts {
-    grid-template-columns: 1fr;
+@media (max-width: 1023px) {
+  .page-hero,
+  .page-hero__actions {
+    display: grid;
   }
 
+  .schedule-summary-grid,
+  .submission-summary-grid,
+  .operations-summary-grid,
+  .stitch-metric-grid,
+  .stats-grid,
+  .dashboard-charts,
+  .dashboard-shell-grid,
+  .swap-card__shifts,
+  .attendance-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
   .filter-bar,
   .filter-bar__fields,
   .filter-bar__actions,
   .message-thread__composer,
   .settings-row,
   .inline-form,
-  .inline-actions {
+  .inline-actions,
+  .view-toggle {
     display: grid;
   }
 

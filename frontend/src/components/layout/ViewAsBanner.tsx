@@ -11,9 +11,9 @@ interface ViewAsBannerProps {
 export function ViewAsBanner({ onReset, role }: ViewAsBannerProps) {
   return (
     <div className="view-as-banner">
-      <span>ดูในฐานะ: {formatRole(role)}</span>
+      <span>Viewing as: {formatRole(role)}</span>
       <Button size="sm" type="button" variant="ghost" onClick={onReset}>
-        กลับมุมมองตัวเอง
+        Return to my role
       </Button>
     </div>
   );

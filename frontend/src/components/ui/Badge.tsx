@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
 import { cx } from "@/utils/cx";
 
@@ -12,6 +12,7 @@ type BadgeVariant =
   | "orange";
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+  children?: ReactNode;
   variant?: BadgeVariant;
   size?: "sm" | "md";
 }
