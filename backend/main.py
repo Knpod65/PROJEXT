@@ -15,7 +15,7 @@ from database import engine, Base, get_db
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from cmu_sso import router as sso_router
-from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, imports, documents, period, external_exams, optimize_workflow, co_exam, exam_manager
+from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, imports, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing
 from routers import scheduler, exports_excel
 import models
 
@@ -183,6 +183,7 @@ app.include_router(dashboard.router, prefix="/api/dashboard",tags=["dashboard"])
 app.include_router(pdf.router,       prefix="/api/pdf",      tags=["pdf"])
 app.include_router(imports.router,   prefix="/api/import",   tags=["import"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
+app.include_router(printing.router, prefix="/api/printing", tags=["printing"])
 app.include_router(period.router,         prefix="/api/period",    tags=["period"])
 app.include_router(external_exams.router,      prefix="/api/external",  tags=["external"])
 app.include_router(optimize_workflow.router, prefix="/api/workflow",  tags=["workflow"])
