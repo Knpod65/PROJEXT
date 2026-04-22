@@ -242,7 +242,7 @@ export const th = {
   "public.studentSearch.faculty": "คณะ",
   "public.studentSearch.scheduled": "จัดตารางแล้ว",
   "public.studentSearch.room": "ห้อง: {value}",
-  "public.studentSearch.roomUnknown": "ยังไม่กำหนด",
+  "public.studentSearch.roomUnknown": "ยังไม่กำหนดห้องสอบ",
   "public.studentSearch.teacher": "อาจารย์: {value}",
   "public.studentSearch.teacherInline": "อาจารย์: {value}",
   "public.studentSearch.groupUnknown": "ยังไม่กำหนด",
@@ -254,7 +254,7 @@ export const th = {
   "public.studentSearch.table.courseCode": "รหัสวิชา",
   "public.studentSearch.table.courseName": "ชื่อวิชา",
   "public.studentSearch.table.section": "ตอน",
-  "public.studentSearch.table.room": "ห้อง",
+  "public.studentSearch.table.room": "ห้องสอบ",
   "public.studentSearch.table.seatGroup": "ที่นั่ง / กลุ่ม",
   "public.studentSearch.table.status": "สถานะ",
 

@@ -105,6 +105,7 @@ class SectionOut(BaseModel):
     academic_year: str
     course: Optional[CourseOut]
     teacher: Optional[UserOut]
+    teaching_room: Optional["RoomOut"] = None
     schedules: List["ScheduleOut"] = []  # midterm + final
     # helper: schedule = schedules[0] if schedules else None
 

@@ -75,10 +75,15 @@ function SectionCard({
             Section {section.section_no} · {section.num_students} students
           </span>
           {section.schedules && section.schedules.length > 0 && (
-            <span className="teacher-section-card__date">
-              <Icon name="event" /> {section.schedules[0].exam_date} {section.schedules[0].exam_time}
-              {section.schedules[0].room && ` · ${section.schedules[0].room.room_name}`}
-            </span>
+            <>
+              <span className="teacher-section-card__date">
+                <Icon name="event" /> {section.schedules[0].exam_date} {section.schedules[0].exam_time}
+                {` · Exam room: ${section.schedules[0].room?.room_name ?? "not assigned yet"}`}
+              </span>
+              <span className="teacher-section-card__meta">
+                Teaching room: {section.teaching_room?.room_name ?? "Not recorded"}
+              </span>
+            </>
           )}
         </div>
         <div className="teacher-section-card__right">

@@ -94,6 +94,7 @@ export interface SectionOut {
   academic_year: string;
   course?: CourseOut | null;
   teacher?: UserOut | null;
+  teaching_room?: RoomOut | null;
   schedules?: ScheduleOut[];
 }
 

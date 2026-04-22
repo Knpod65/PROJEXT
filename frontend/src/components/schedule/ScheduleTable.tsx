@@ -75,13 +75,18 @@ export function ScheduleTable({ items, subtitle, title }: ScheduleTableProps) {
           },
           {
             key: "room",
-            label: "Room",
+            label: "Exam room",
             width: "15%",
             minWidth: "150px",
             render: (schedule) => (
-              <div className="data-table__content data-table__content--truncate">
-                <strong>{schedule.room?.room_name ?? "Room pending"}</strong>
-                <p>{schedule.room?.building ?? "Building not assigned"}</p>
+              <div className="data-table__content">
+                <strong>{schedule.room?.room_name ?? "Exam room not assigned yet"}</strong>
+                <p>{schedule.room?.building ?? "Operational exam allocation"}</p>
+                <p>
+                  {schedule.section?.teaching_room?.room_name
+                    ? `Teaching room: ${schedule.section.teaching_room.room_name}`
+                    : "Teaching room not recorded"}
+                </p>
               </div>
             ),
           },

@@ -35,17 +35,18 @@ export function ScheduleCard({ actions, schedule }: ScheduleCardProps) {
   return (
     <Card
       className="schedule-card"
-      title={`${course?.course_id ?? "—"} ${course?.course_name_th ?? "ยังไม่ระบุชื่อวิชา"}`}
+      title={`${course?.course_id ?? "-"} ${course?.course_name_th ?? "Untitled course"}`}
       subtitle={formatDateRange(schedule.exam_date, schedule.exam_time)}
       actions={<Badge variant={statusVariant(schedule.status)}>{schedule.status ?? "draft"}</Badge>}
     >
       <div className="schedule-card__grid">
-        <span>ห้อง: {schedule.room?.room_name ?? "ยังไม่กำหนด"}</span>
-        <span>นศ.: {formatNumber(schedule.section?.num_students ?? 0)} คน</span>
-        <span>แผ่น: {formatNumber(schedule.total_sheets)} แผ่น</span>
-        <span>อาจารย์: {teacher?.full_name ?? "—"}</span>
+        <span>Exam room: {schedule.room?.room_name ?? "Exam room not assigned yet"}</span>
+        <span>Teaching room: {schedule.section?.teaching_room?.room_name ?? "Not recorded"}</span>
+        <span>Students: {formatNumber(schedule.section?.num_students ?? 0)}</span>
+        <span>Sheets: {formatNumber(schedule.total_sheets)}</span>
+        <span>Teacher: {teacher?.full_name ?? "-"}</span>
       </div>
-      {supervisors ? <p className="schedule-card__staff">ผู้คุมสอบ: {supervisors}</p> : null}
+      {supervisors ? <p className="schedule-card__staff">Invigilators: {supervisors}</p> : null}
       {actions ? <div className="schedule-card__actions">{actions}</div> : null}
     </Card>
   );

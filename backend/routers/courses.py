@@ -31,6 +31,7 @@ def list_sections(
     ).options(
         contains_eager(models.Section.course),
         joinedload(models.Section.teacher),
+        joinedload(models.Section.teaching_room),
         joinedload(models.Section.schedules).joinedload(models.ExamSchedule.room),
         joinedload(models.Section.schedules).joinedload(models.ExamSchedule.supervisions)
             .joinedload(models.Supervision.user),
@@ -69,6 +70,7 @@ def create_section(
     return db.query(models.Section).options(
         joinedload(models.Section.course),
         joinedload(models.Section.teacher),
+        joinedload(models.Section.teaching_room),
     ).filter(models.Section.id == section.id).first()
 
 
@@ -90,6 +92,7 @@ def update_section(
     return db.query(models.Section).options(
         joinedload(models.Section.course),
         joinedload(models.Section.teacher),
+        joinedload(models.Section.teaching_room),
         joinedload(models.Section.schedules),
     ).filter(models.Section.id == sid).first()
 

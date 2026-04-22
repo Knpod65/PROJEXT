@@ -31,6 +31,7 @@ def _build_schedule_query(
         joinedload(models.ExamSchedule.supervisions).joinedload(models.Supervision.user),
         joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
         joinedload(models.ExamSchedule.section).joinedload(models.Section.teacher),
+        joinedload(models.ExamSchedule.section).joinedload(models.Section.teaching_room),
     )
 
     if exam_date:
@@ -190,6 +191,16 @@ def _sch_to_dict(s: models.ExamSchedule) -> dict:
             "section_no": sec.section_no,
             "num_students": sec.num_students,
             "is_co_exam": sec.is_co_exam,
+            "teaching_room": (
+                {
+                    "id": sec.teaching_room.id,
+                    "room_name": sec.teaching_room.room_name,
+                    "capacity": sec.teaching_room.capacity,
+                    "building": sec.teaching_room.building,
+                }
+                if sec and sec.teaching_room
+                else None
+            ),
         } if sec else None,
         "course": {
             "course_id": course.course_id,

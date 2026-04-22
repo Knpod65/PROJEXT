@@ -236,7 +236,7 @@ function RoomAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] }
           <tr>
             <th>Date</th>
             <th>Time</th>
-            <th>Room</th>
+            <th>Exam room</th>
             <th>Course</th>
             <th>Section</th>
             <th>Students</th>
@@ -250,8 +250,11 @@ function RoomAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] }
               <td>{sch.exam_date}</td>
               <td>{sch.exam_time}</td>
               <td>
-                <strong>{sch.room?.room_name ?? "—"}</strong>
+                <strong>{sch.room?.room_name ?? "Exam room not assigned yet"}</strong>
                 {sch.room?.building && <small className="text-muted"> {sch.room.building}</small>}
+                {!sch.room?.building && sch.section?.teaching_room?.room_name && (
+                  <small className="text-muted"> Teaching room: {sch.section.teaching_room.room_name}</small>
+                )}
               </td>
               <td>{sch.section?.course?.course_id ?? "—"}</td>
               <td>§{sch.section?.section_no ?? "?"}</td>
@@ -315,7 +318,7 @@ function StaffAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] 
                 <div className="staff-slots">
                   {staff.slots.map((sch) => (
                     <span key={sch.id} className="staff-slot-tag">
-                      {sch.exam_date} {sch.exam_time} · {sch.room?.room_name ?? "?"}
+                      {sch.exam_date} {sch.exam_time} · Exam room: {sch.room?.room_name ?? "not assigned yet"}
                     </span>
                   ))}
                 </div>
@@ -471,7 +474,7 @@ export function OptimizerPage() {
           <span className="page-hero__eyebrow">Exam optimization</span>
           <h1 className="page-hero__title">Schedule & invigilator assignment</h1>
           <p className="page-hero__description">
-            Configure constraints, run the optimizer, then review room and staff assignments before confirming.
+            Configure constraints, run the optimizer, then review exam-room and staff assignments before confirming.
           </p>
         </div>
         <div className="page-hero__actions">
@@ -494,7 +497,7 @@ export function OptimizerPage() {
       )}
 
       {/* ── Run optimizer ── */}
-      <Card title="Run optimizer" subtitle="Assign rooms and invigilators for the selected term">
+      <Card title="Run optimizer" subtitle="Assign exam rooms and invigilators for the selected term">
         <div className="optimizer-run-row">
           <div className="form-field">
             <label htmlFor="opt-ay">Academic year</label>
@@ -561,11 +564,11 @@ export function OptimizerPage() {
       </Card>
 
       {/* ── Results: room & staff assignments ── */}
-      <Card title="Assignment results" subtitle="Current room and invigilator allocations for the active period">
+      <Card title="Assignment results" subtitle="Current exam-room and invigilator allocations for the active period">
         <Tabs
           activeKey={resultsTab}
           items={[
-            { key: "rooms", label: "Room assignments", badge: schedules.length || undefined },
+            { key: "rooms", label: "Exam room assignments", badge: schedules.length || undefined },
             { key: "staff", label: "Staff assignments" },
           ]}
           onChange={setResultsTab}

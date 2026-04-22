@@ -94,6 +94,7 @@ class Section(Base):
     course_id     = Column(Integer, ForeignKey("courses.id"), nullable=False)
     section_no    = Column(String(10), nullable=False)   # "1", "801", "701"
     teacher_id    = Column(Integer, ForeignKey("users.id"))
+    teaching_room_id = Column(Integer, ForeignKey("rooms.id"), nullable=True)
     num_students  = Column(Integer, default=0)
     is_thesis     = Column(Boolean, default=False)
     is_co_exam    = Column(Boolean, default=False)       # co=0 หลายตอนสอบด้วยกัน
@@ -105,6 +106,7 @@ class Section(Base):
 
     course        = relationship("Course", back_populates="sections")
     teacher       = relationship("User", back_populates="sections")
+    teaching_room = relationship("Room", back_populates="teaching_sections", foreign_keys=[teaching_room_id])
     schedules     = relationship("ExamSchedule", back_populates="section",
                                   cascade="all, delete-orphan")  # midterm + final
     questions     = relationship("Question", back_populates="section")
@@ -113,6 +115,7 @@ class Section(Base):
         UniqueConstraint("course_id", "section_no", "semester", "academic_year",
                          name="uq_section"),
         Index("ix_section_period", "semester", "academic_year"),
+        Index("ix_section_teaching_room", "teaching_room_id"),
     )
 
 
@@ -127,6 +130,7 @@ class Room(Base):
     is_active     = Column(Boolean, default=True)
 
     schedules     = relationship("ExamSchedule", back_populates="room")
+    teaching_sections = relationship("Section", back_populates="teaching_room", foreign_keys="[Section.teaching_room_id]")
 
 
 # ─── Exam Schedule (output ของ Optimizer) ────────────────────

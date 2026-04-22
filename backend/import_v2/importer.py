@@ -713,12 +713,14 @@ def _execute_opencourse(
 
         num_students = _safe_int(_pick_value(data, NUM_STUDENT_KEYS), default=0)
         teacher_id = _resolve_teacher_user_id(db, _pick_value(data, TEACHER_KEYS))
+        teaching_room = _get_or_create_room(db, data)
 
         if not section:
             section = models.Section(
                 course_id=course.id,
                 section_no=section_no,
                 teacher_id=teacher_id,
+                teaching_room_id=teaching_room.id if teaching_room else None,
                 num_students=num_students,
                 semester=semester,
                 academic_year=academic_year,
@@ -732,10 +734,11 @@ def _execute_opencourse(
             section.import_session_id = import_session.id
             if teacher_id:
                 section.teacher_id = teacher_id
+            if teaching_room:
+                section.teaching_room_id = teaching_room.id
             updated_sections += 1
 
         if exam_type in {"midterm", "final"}:
-            room = _get_or_create_room(db, data)
             exam_date, exam_time = _resolve_exam_fields(data, exam_type)
             if exam_date:
                 schedule = db.query(models.ExamSchedule).filter(
@@ -747,7 +750,7 @@ def _execute_opencourse(
                 if not schedule:
                     schedule = models.ExamSchedule(
                         section_id=section.id,
-                        room_id=room.id if room else None,
+                        room_id=None,
                         exam_date=exam_date,
                         exam_time=exam_time,
                         exam_type=getattr(models.ExamType, exam_type),
@@ -760,8 +763,6 @@ def _execute_opencourse(
                 else:
                     schedule.exam_date = exam_date
                     schedule.exam_time = exam_time
-                    if room:
-                        schedule.room_id = room.id
                     updated_schedules += 1
 
         imported_rows.add(row["_row"])

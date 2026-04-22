@@ -245,7 +245,7 @@ export const en = {
   "public.studentSearch.faculty": "Faculty",
   "public.studentSearch.scheduled": "Scheduled",
   "public.studentSearch.room": "Room: {value}",
-  "public.studentSearch.roomUnknown": "Not assigned yet",
+  "public.studentSearch.roomUnknown": "Exam room not assigned yet",
   "public.studentSearch.teacher": "Teacher: {value}",
   "public.studentSearch.teacherInline": "Teacher: {value}",
   "public.studentSearch.groupUnknown": "Not assigned",
@@ -257,7 +257,7 @@ export const en = {
   "public.studentSearch.table.courseCode": "Course Code",
   "public.studentSearch.table.courseName": "Course Name",
   "public.studentSearch.table.section": "Section",
-  "public.studentSearch.table.room": "Room",
+  "public.studentSearch.table.room": "Exam Room",
   "public.studentSearch.table.seatGroup": "Seat / Group",
   "public.studentSearch.table.status": "Status",
 

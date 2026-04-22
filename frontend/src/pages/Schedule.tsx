@@ -48,6 +48,7 @@ export function SchedulePage() {
         schedule.section?.course?.course_name_th,
         schedule.room?.room_name,
         schedule.room?.building,
+        schedule.section?.teaching_room?.room_name,
         schedule.section?.teacher?.full_name,
       ]
         .filter(Boolean)
@@ -62,7 +63,7 @@ export function SchedulePage() {
     const groups = new Map<string, ScheduleWithSection[]>();
 
     filteredSchedules.forEach((schedule) => {
-      const key = viewMode === "date" ? schedule.exam_date : schedule.room?.room_name ?? "Room pending";
+      const key = viewMode === "date" ? schedule.exam_date : schedule.room?.room_name ?? "Exam room not assigned yet";
       const items = groups.get(key) ?? [];
       items.push(schedule);
       groups.set(key, items);
@@ -74,7 +75,7 @@ export function SchedulePage() {
       subtitle:
         viewMode === "date"
           ? `${items.length} sessions scheduled for this date`
-          : `${items.length} sessions assigned to this room`,
+          : `${items.length} sessions assigned to this exam room`,
       items,
     }));
   }, [filteredSchedules, viewMode]);
@@ -121,7 +122,7 @@ export function SchedulePage() {
               Group by date
             </Button>
             <Button type="button" variant={viewMode === "room" ? "primary" : "ghost"} onClick={() => setViewMode("room")}>
-              Group by room
+              Group by exam room
             </Button>
           </div>
         }
@@ -130,7 +131,7 @@ export function SchedulePage() {
           <span>Search</span>
           <input
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search course, room, or teacher"
+            placeholder="Search course, exam room, teaching room, or teacher"
             value={searchQuery}
           />
         </label>
@@ -139,7 +140,7 @@ export function SchedulePage() {
           <input onChange={(event) => setSelectedDate(event.target.value)} type="date" value={selectedDate} />
         </label>
         <label className="filter-field">
-          <span>Room</span>
+          <span>Exam room</span>
           <select value={roomId} onChange={(event) => setRoomId(event.target.value)}>
             <option value="">All rooms</option>
             {(roomsState.data ?? []).map((room) => (
