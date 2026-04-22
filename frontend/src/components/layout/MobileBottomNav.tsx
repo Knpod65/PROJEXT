@@ -1,12 +1,14 @@
 import { NavLink } from "react-router-dom";
 
-import { appPages, mobilePageKeys } from "@/config/navigation";
+import { appPages, getPageTitle, mobilePageKeys } from "@/config/navigation";
+import { useI18n } from "@/i18n";
 import { useAuth } from "@/store/auth.store";
 import { hasRole } from "@/utils/roles";
 
 import { Icon } from "../ui/Icon";
 
 export function MobileBottomNav() {
+  useI18n();
   const { user } = useAuth();
   const pages = appPages.filter(
     (page) =>
@@ -19,11 +21,13 @@ export function MobileBottomNav() {
       {pages.map((page) => (
         <NavLink
           key={page.key}
-          className={({ isActive }) => (isActive ? "mobile-nav__item mobile-nav__item--active" : "mobile-nav__item")}
+          className={({ isActive }: { isActive: boolean }) =>
+            isActive ? "mobile-nav__item mobile-nav__item--active" : "mobile-nav__item"
+          }
           to={page.path}
         >
           <Icon className="mobile-nav__icon" name={page.icon} />
-          <span>{page.title}</span>
+          <span>{getPageTitle(page)}</span>
         </NavLink>
       ))}
     </nav>

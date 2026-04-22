@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { ToastViewport } from "@/components/ui/Toast";
 import { getPageConfig } from "@/config/navigation";
+import { useI18n } from "@/i18n";
 import { PeriodProvider } from "@/store/period.store";
 import { useAuth } from "@/store/auth.store";
 import type { UserRole } from "@/types/api";
@@ -19,7 +20,8 @@ import { CopyPage } from "@/pages/Copy";
 import { DashboardPage } from "@/pages/Dashboard";
 import { ExamManagerPage } from "@/pages/ExamManager";
 import { ExternalPage } from "@/pages/External";
-import { ImportPage } from "@/pages/Import";
+import { ImportV2Page } from "@/pages/ImportV2";
+import { ImportAuditPage } from "@/pages/ImportAudit";
 import { LoginPage } from "@/pages/Login";
 import { MyExamPage } from "@/pages/MyExam";
 import { OptimizerPage } from "@/pages/Optimizer";
@@ -31,16 +33,12 @@ import { RoomAttendancePage } from "@/pages/RoomAttendance";
 import { RoomManagementV2Page } from "@/pages/RoomManagementV2";
 import { SchedulePage } from "@/pages/Schedule";
 import { SectionsPage } from "@/pages/Sections";
-import { SettingsPage } from "@/pages/Settings";
 import { SettingsV2Page } from "@/pages/SettingsV2";
 import { StudentsV2Page } from "@/pages/StudentsV2";
 import { StudentSearchPage } from "@/pages/StudentSearch";
 import { SubmissionsPage } from "@/pages/Submissions";
-import { SwapsPage } from "@/pages/Swaps";
 import { SwapsV2Page } from "@/pages/SwapsV2";
-import { UsersPage } from "@/pages/Users";
 import { UsersV2Page } from "@/pages/UsersV2";
-import { WorkflowPage } from "@/pages/Workflow";
 import { WorkflowV2Page } from "@/pages/WorkflowV2";
 import { VenueManagementV2Page } from "@/pages/VenueManagementV2";
 
@@ -51,22 +49,24 @@ interface GuardedPageProps {
 }
 
 function GuardedPage({ children, roles, allowBaseAdminPreview }: GuardedPageProps) {
+  const { t } = useI18n();
   const { user } = useAuth();
 
   if (!hasRole(user, roles, { allowBaseAdminPreview })) {
-    return <EmptyState icon={<Icon name="shield" />} title="You do not have access to this page." />;
+    return <EmptyState icon={<Icon name="shield" />} title={t("app.unauthorized.title")} />;
   }
 
   return <>{children}</>;
 }
 
 function ProtectedAppLayout() {
+  const { t } = useI18n();
   const location = useLocation();
   const page = getPageConfig(location.pathname);
 
   return (
     <PeriodProvider>
-      <AppShell page={page} title={page?.title ?? "EMS Control Center"}>
+      <AppShell page={page} title={page?.title ?? t("app.shell.controlCenter")}>
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>
@@ -76,6 +76,7 @@ function ProtectedAppLayout() {
 }
 
 function StudentSearchRoute() {
+  const { t } = useI18n();
   const { initialized, loading, user } = useAuth();
 
   if (loading || !initialized) {
@@ -88,7 +89,7 @@ function StudentSearchRoute() {
 
   return (
     <PeriodProvider>
-      <AppShell title="Student Search">
+      <AppShell title={t("app.studentSearchTitle")}>
         <StudentSearchPage />
       </AppShell>
     </PeriodProvider>
@@ -106,6 +107,7 @@ function HomeRedirect() {
 }
 
 function NotFoundPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
 
   if (!user) {
@@ -114,11 +116,11 @@ function NotFoundPage() {
 
   return (
     <PeriodProvider>
-      <AppShell title="Page not found">
+      <AppShell title={t("app.notFound.title")}>
         <EmptyState
           icon={<Icon name="search_off" />}
-          title="We could not find that page."
-          description="Try the main navigation or go back to the dashboard."
+          title={t("app.notFound.heading")}
+          description={t("app.notFound.description")}
         />
       </AppShell>
     </PeriodProvider>
@@ -141,26 +143,27 @@ export function App() {
             <Route path="/submissions" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "teacher"]}><SubmissionsPage /></GuardedPage>} />
             <Route path="/attendance" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"]}><RoomAttendancePage /></GuardedPage>} />
             <Route path="/checkins" element={<GuardedPage roles={["admin", "dept_supervisor", "staff", "teacher"]}><CheckinsPage /></GuardedPage>} />
-            <Route path="/swaps" element={<GuardedPage roles={["admin", "dept_supervisor", "staff", "teacher"]}><SwapsPage /></GuardedPage>} />
-            <Route path="/swaps-v2" element={<GuardedPage roles={["admin"]}><SwapsV2Page /></GuardedPage>} />
+            <Route path="/swaps" element={<GuardedPage roles={["admin", "dept_supervisor", "staff", "teacher"]}><SwapsV2Page /></GuardedPage>} />
+            <Route path="/swaps-v2" element={<Navigate replace to="/swaps" />} />
             <Route path="/sections" element={<GuardedPage roles={["admin", "esq_head", "secretary", "staff", "teacher"]}><SectionsPage /></GuardedPage>} />
             <Route path="/copy" element={<GuardedPage roles={["admin", "staff"]}><CopyPage /></GuardedPage>} />
             <Route path="/print-queue" element={<GuardedPage roles={["print_shop"]}><PrintQueuePage /></GuardedPage>} />
-            <Route path="/workflow" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><WorkflowPage /></GuardedPage>} />
-            <Route path="/workflow-v2" element={<GuardedPage roles={["admin"]}><WorkflowV2Page /></GuardedPage>} />
+            <Route path="/workflow" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><WorkflowV2Page /></GuardedPage>} />
+            <Route path="/workflow-v2" element={<Navigate replace to="/workflow" />} />
             <Route path="/coexam" element={<GuardedPage roles={["admin"]}><CoExamPage /></GuardedPage>} />
             <Route path="/optimizer" element={<GuardedPage roles={["admin"]}><OptimizerPage /></GuardedPage>} />
-            <Route path="/printreview" element={<GuardedPage roles={["admin"]}><PrintReviewPage /></GuardedPage>} />
-            <Route path="/external" element={<GuardedPage roles={["admin"]}><ExternalPage /></GuardedPage>} />
-            <Route path="/import" element={<GuardedPage roles={["admin"]}><ImportPage /></GuardedPage>} />
+            <Route path="/printreview" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><PrintReviewPage /></GuardedPage>} />
+            <Route path="/external" element={<GuardedPage roles={["admin", "staff", "teacher"]}><ExternalPage /></GuardedPage>} />
+            <Route path="/import" element={<GuardedPage roles={["admin"]}><ImportV2Page /></GuardedPage>} />
+            <Route path="/import-audit" element={<GuardedPage roles={["admin"]}><ImportAuditPage /></GuardedPage>} />
             <Route path="/period" element={<GuardedPage roles={["admin"]}><PeriodPage /></GuardedPage>} />
-            <Route path="/settings" element={<GuardedPage roles={["admin"]} allowBaseAdminPreview><SettingsPage /></GuardedPage>} />
-            <Route path="/settings-v2" element={<GuardedPage roles={["admin"]} allowBaseAdminPreview><SettingsV2Page /></GuardedPage>} />
+            <Route path="/settings" element={<GuardedPage roles={["admin"]} allowBaseAdminPreview><SettingsV2Page /></GuardedPage>} />
+            <Route path="/settings-v2" element={<Navigate replace to="/settings" />} />
             <Route path="/rooms-v2" element={<GuardedPage roles={["admin"]}><RoomManagementV2Page /></GuardedPage>} />
             <Route path="/venues-v2" element={<GuardedPage roles={["admin"]}><VenueManagementV2Page /></GuardedPage>} />
             <Route path="/students-v2" element={<GuardedPage roles={["admin"]}><StudentsV2Page /></GuardedPage>} />
-            <Route path="/users" element={<GuardedPage roles={["admin"]}><UsersPage /></GuardedPage>} />
-            <Route path="/users-v2" element={<GuardedPage roles={["admin"]}><UsersV2Page /></GuardedPage>} />
+            <Route path="/users" element={<GuardedPage roles={["admin"]}><UsersV2Page /></GuardedPage>} />
+            <Route path="/users-v2" element={<Navigate replace to="/users" />} />
             <Route path="/myexam" element={<GuardedPage roles={["teacher"]}><MyExamPage /></GuardedPage>} />
             <Route path="/exammanager" element={<GuardedPage roles={["admin"]}><ExamManagerPage /></GuardedPage>} />
           </Route>

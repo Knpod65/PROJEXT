@@ -24,17 +24,6 @@ export const ROLE_HOME_ROUTE: Record<UserRole, string> = {
   print_shop: "/print-queue",
 };
 
-const FALLBACK_ROLE_SETS: Record<UserRole, UserRole[]> = {
-  admin: ALL_APP_ROLES,
-  esq_head: ["esq_head"],
-  secretary: ["secretary"],
-  dept_supervisor: ["dept_supervisor"],
-  staff: ["staff"],
-  teacher: ["teacher"],
-  student: ["student"],
-  print_shop: ["print_shop"],
-};
-
 interface RoleAccessOptions {
   allowBaseAdminPreview?: boolean;
 }
@@ -85,7 +74,9 @@ export function getAvailableRoles(user?: UserMe | null) {
   const source =
     Array.isArray(user.available_roles) && user.available_roles.length > 0
       ? user.available_roles.filter(isUserRole)
-      : FALLBACK_ROLE_SETS[user.role] ?? [user.role];
+      : isUserRole(user.role)
+        ? [user.role]
+        : [];
 
   return Array.from(new Set(source));
 }
@@ -111,16 +102,12 @@ export function getEffectiveRole(user?: UserMe | null) {
     return null;
   }
 
-  if (user.view_as_role && isUserRole(user.view_as_role)) {
-    return user.view_as_role;
+  if (isUserRole(user.effective_role)) {
+    return user.effective_role;
   }
 
   if (isUserRole(user.active_role)) {
     return user.active_role;
-  }
-
-  if (isUserRole(user.effective_role)) {
-    return user.effective_role;
   }
 
   return isUserRole(user.role) ? user.role : null;

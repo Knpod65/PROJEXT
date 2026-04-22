@@ -95,6 +95,7 @@ class Section(Base):
     section_no    = Column(String(10), nullable=False)   # "1", "801", "701"
     teacher_id    = Column(Integer, ForeignKey("users.id"))
     num_students  = Column(Integer, default=0)
+    is_thesis     = Column(Boolean, default=False)
     is_co_exam    = Column(Boolean, default=False)       # co=0 หลายตอนสอบด้วยกัน
     co_group_id   = Column(String(50))                   # group key สำหรับ co-exam
     semester      = Column(String(10), default="2")
@@ -955,6 +956,9 @@ class ExamPeriod(Base):
     exam_type     = Column(String(20), nullable=False)   # "midterm" | "final"
     label         = Column(String(100))                  # "ปลายภาค 2/2568"
     is_active     = Column(Boolean, default=False, nullable=False)
+    lifecycle_status = Column(String(20), default="draft", nullable=False)
+    archived_at   = Column(DateTime(timezone=True))
+    locked_at     = Column(DateTime(timezone=True))
     created_by    = Column(Integer, ForeignKey("users.id"))
     created_at    = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -982,6 +986,8 @@ class ImportSession(Base):
     last_updated     = Column(DateTime(timezone=True), onupdate=func.now())
 
     enrollments = relationship("EnrollmentRecord", back_populates="session")
+    row_logs = relationship("ImportRowLog", back_populates="session",
+                            cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint("academic_year", "semester", "exam_type",
@@ -1013,6 +1019,46 @@ class EnrollmentRecord(Base):
 # ══════════════════════════════════════════════════════════════
 # SQLAlchemy Events — ต้องอยู่หลัง class definitions ทั้งหมด
 # ══════════════════════════════════════════════════════════════
+
+class ImportRowLog(Base):
+    __tablename__ = "import_row_logs"
+    id              = Column(Integer, primary_key=True, index=True)
+    session_id      = Column(Integer, ForeignKey("import_sessions.id"), nullable=False)
+    row_number      = Column(Integer, nullable=False)
+    raw_data        = Column(JSON, nullable=False)
+    status          = Column(String(20), nullable=False)
+    error_code      = Column(String(20))
+    error_message   = Column(Text)
+    was_selected    = Column(Boolean)
+    was_imported    = Column(Boolean)
+    override_reason = Column(Text)
+    override_by     = Column(Integer, ForeignKey("users.id"))
+    override_at     = Column(DateTime(timezone=True))
+    # room_capacity audit fields — null for all other import types
+    change_type       = Column(String(20))   # "create" | "update" | "skip" | "blocked"
+    previous_capacity = Column(Integer)
+    new_capacity      = Column(Integer)
+    created_at      = Column(DateTime(timezone=True), server_default=func.now())
+
+    session = relationship("ImportSession", back_populates="row_logs")
+    override_user = relationship("User", foreign_keys=[override_by])
+
+    __table_args__ = (
+        Index("idx_import_row_logs_session", "session_id"),
+    )
+
+
+class LecturerNameMap(Base):
+    __tablename__ = "lecturer_name_map"
+    id           = Column(Integer, primary_key=True, index=True)
+    raw_name     = Column(String(300), unique=True, nullable=False)
+    teacher_id   = Column(Integer, ForeignKey("users.id"), nullable=False)
+    confirmed_by = Column(Integer, ForeignKey("users.id"))
+    confirmed_at = Column(DateTime(timezone=True))
+
+    teacher = relationship("User", foreign_keys=[teacher_id])
+    confirmer = relationship("User", foreign_keys=[confirmed_by])
+
 
 @event.listens_for(CoExamMember, "after_insert")
 @event.listens_for(CoExamMember, "after_delete")

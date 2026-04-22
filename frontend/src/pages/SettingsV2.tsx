@@ -1,12 +1,17 @@
 import { SettingsField } from "@/components/settings/SettingsField";
+import { SettingsRetentionPolicyPanel } from "@/components/settings/SettingsRetentionPolicyPanel";
 import { SettingsSection } from "@/components/settings/SettingsSection";
+import { SettingsTermPreviewPanel } from "@/components/settings/SettingsTermPreviewPanel";
 import { SettingsToggle } from "@/components/settings/SettingsToggle";
 import { SettingsViewAsSwitcher } from "@/components/settings/SettingsViewAsSwitcher";
 import { Button } from "@/components/ui/Button";
 import { useSettingsData } from "@/hooks/useSettingsData";
+import { useI18n } from "@/i18n";
 import { useUi } from "@/store/ui.store";
+import { formatRole } from "@/utils/format";
 
 export function SettingsV2Page() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const {
     accessSettings,
@@ -23,24 +28,24 @@ export function SettingsV2Page() {
   } = useSettingsData();
 
   const handleSaveDraft = (label: string) => {
-    toast(`${label} saved in preview mode.`, "success");
+    toast(t("settings.toastSaved", { label }), "success");
   };
 
   const handleSwitchViewAs = async (role: Parameters<typeof switchViewAs>[0]) => {
     try {
       await switchViewAs(role);
-      toast(`Now viewing as ${role}.`, "info");
+      toast(t("settings.viewAsSwitched", { role: formatRole(role) }), "info");
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Unable to switch view-as mode", "error");
+      toast(error instanceof Error ? error.message : t("errors.switchViewAs"), "error");
     }
   };
 
   const handleResetViewAs = async () => {
     try {
       await resetViewAs();
-      toast("Returned to the default admin preview.", "info");
+      toast(t("settings.viewAsReset"), "info");
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Unable to reset view-as mode", "error");
+      toast(error instanceof Error ? error.message : t("errors.resetViewAs"), "error");
     }
   };
 
@@ -48,25 +53,23 @@ export function SettingsV2Page() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">Settings and View-As V2</span>
-          <h1 className="page-hero__title">System settings preview</h1>
-          <p className="page-hero__description">
-            Mock configuration panels for admin review, paired with the existing auth-backed view-as flow so theme changes stay in sync with the shell.
-          </p>
+          <span className="page-hero__eyebrow">{t("settings.heroEyebrow")}</span>
+          <h1 className="page-hero__title">{t("settings.heroTitle")}</h1>
+          <p className="page-hero__description">{t("settings.heroDescription")}</p>
         </div>
         <div className="page-hero__actions">
           <Button type="button" variant="outline" onClick={handleResetViewAs}>
-            Reset View-As
+            {t("settings.resetViewAs")}
           </Button>
-          <Button type="button" onClick={() => handleSaveDraft("Settings draft")}>
-            Save Draft
+          <Button type="button" onClick={() => handleSaveDraft(t("settings.saveDraft"))}>
+            {t("settings.saveDraft")}
           </Button>
         </div>
       </section>
 
       <SettingsSection
-        title="View-As Mode"
-        description="Use the existing switchViewAs flow to preview how the shell and theme behave for each role."
+        title={t("settings.sections.viewAs.title")}
+        description={t("settings.sections.viewAs.description")}
       >
         <SettingsViewAsSwitcher
           activeRole={activeRole}
@@ -77,86 +80,109 @@ export function SettingsV2Page() {
         />
       </SettingsSection>
 
+      <SettingsSection
+        title={t("settings.sections.termPreview.title")}
+        description={t("settings.sections.termPreview.description")}
+      >
+        <SettingsTermPreviewPanel />
+      </SettingsSection>
+
+      <SettingsSection
+        title={t("settings.sections.retention.title")}
+        description={t("settings.sections.retention.description")}
+      >
+        <SettingsRetentionPolicyPanel />
+      </SettingsSection>
+
       <div className="dashboard-shell-grid">
         <SettingsSection
-          title="System Profile"
-          description="High-level institution metadata used by the admin workspace preview."
+          title={t("settings.sections.systemProfile.title")}
+          description={t("settings.sections.systemProfile.description")}
           actions={
-            <Button type="button" variant="ghost" onClick={() => handleSaveDraft("System profile")}>
-              Save
+            <Button type="button" variant="ghost" onClick={() => handleSaveDraft(t("settings.sections.systemProfile.title"))}>
+              {t("common.save")}
             </Button>
           }
         >
           <div className="settings-row" style={{ alignItems: "flex-start" }}>
-            <SettingsField label="System Name">
+            <SettingsField label={t("settings.systemName")}>
               <input value={generalSettings.systemName} onChange={(event) => updateGeneralSetting("systemName", event.target.value)} />
             </SettingsField>
-            <SettingsField label="Primary Contact Email">
+            <SettingsField label={t("settings.primaryContactEmail")}>
               <input
                 value={generalSettings.primaryContactEmail}
                 onChange={(event) => updateGeneralSetting("primaryContactEmail", event.target.value)}
               />
             </SettingsField>
-            <SettingsField label="Support Phone">
+            <SettingsField label={t("settings.supportPhone")}>
               <input value={generalSettings.supportPhone} onChange={(event) => updateGeneralSetting("supportPhone", event.target.value)} />
             </SettingsField>
           </div>
         </SettingsSection>
 
         <SettingsSection
-          title="Localization"
-          description="Language, timezone, and date-format preferences for the admin preview."
+          title={t("settings.sections.localization.title")}
+          description={t("settings.sections.localization.description")}
           actions={
-            <Button type="button" variant="ghost" onClick={() => handleSaveDraft("Localization")}>
-              Save
+            <Button type="button" variant="ghost" onClick={() => handleSaveDraft(t("settings.sections.localization.title"))}>
+              {t("common.save")}
             </Button>
           }
         >
           <div className="settings-row" style={{ alignItems: "flex-start" }}>
-            <SettingsField label="Default Language">
-              <select value={localizationSettings.language} onChange={(event) => updateLocalizationSetting("language", event.target.value)}>
-                <option>Thai (Standard)</option>
-                <option>English (United States)</option>
+            <SettingsField label={t("settings.defaultLanguage")}>
+              <select
+                value={localizationSettings.language}
+                onChange={(event) => updateLocalizationSetting("language", event.target.value as "th" | "en")}
+              >
+                <option value="th">{t("language.thai")}</option>
+                <option value="en">{t("language.english")}</option>
               </select>
             </SettingsField>
-            <SettingsField label="Timezone">
-              <select value={localizationSettings.timezone} onChange={(event) => updateLocalizationSetting("timezone", event.target.value)}>
-                <option>(GMT+07:00) Bangkok, Hanoi, Jakarta</option>
-                <option>(GMT+00:00) UTC</option>
+            <SettingsField label={t("settings.timezone")}>
+              <select
+                value={localizationSettings.timezone}
+                onChange={(event) => updateLocalizationSetting("timezone", event.target.value as "bangkok" | "utc")}
+              >
+                <option value="bangkok">{t("settings.localization.timezone.bangkok")}</option>
+                <option value="utc">{t("settings.localization.timezone.utc")}</option>
               </select>
             </SettingsField>
-            <SettingsField label="Date Format">
-              <select value={localizationSettings.dateFormat} onChange={(event) => updateLocalizationSetting("dateFormat", event.target.value)}>
-                <option>DD MMM YYYY</option>
-                <option>YYYY-MM-DD</option>
+            <SettingsField label={t("settings.dateFormat")}>
+              <select
+                value={localizationSettings.dateFormat}
+                onChange={(event) => updateLocalizationSetting("dateFormat", event.target.value as "compact" | "iso")}
+              >
+                <option value="compact">{t("settings.localization.dateFormat.compact")}</option>
+                <option value="iso">{t("settings.localization.dateFormat.iso")}</option>
               </select>
             </SettingsField>
           </div>
         </SettingsSection>
 
         <SettingsSection
-          title="Security & Access"
-          description="Preview-only access controls that mirror the institutional guardrail model."
+          title={t("settings.sections.security.title")}
+          description={t("settings.sections.security.description")}
           actions={
-            <Button type="button" variant="ghost" onClick={() => handleSaveDraft("Security settings")}>
-              Save
+            <Button type="button" variant="ghost" onClick={() => handleSaveDraft(t("settings.sections.security.title"))}>
+              {t("common.save")}
             </Button>
           }
         >
           <div style={{ display: "grid", gap: "12px" }}>
             <SettingsToggle
               checked={accessSettings.mfaEnabled}
-              description="Require a second verification step for high-risk actions."
-              label="Multi-factor authentication"
+              description={t("settings.security.mfaDescription")}
+              label={t("settings.security.mfa")}
               onChange={(checked) => updateAccessSetting("mfaEnabled", checked)}
             />
             <SettingsToggle
               checked={accessSettings.allowPreviewNotifications}
-              description="Show toast notices when preview mode actions are used."
-              label="Preview notifications"
+              description={t("settings.security.previewNotificationsDescription")}
+              label={t("settings.security.previewNotifications")}
               onChange={(checked) => updateAccessSetting("allowPreviewNotifications", checked)}
             />
-            <SettingsField label="Session timeout (minutes)">
+            <SettingsField label={t("settings.security.sessionTimeout")}>
               <input
                 inputMode="numeric"
                 min={15}
@@ -170,18 +196,16 @@ export function SettingsV2Page() {
         </SettingsSection>
 
         <SettingsSection
-          title="Theme Mapping"
-          description="Quick reference for the roleTheme mapping that drives the shell visuals."
+          title={t("settings.sections.theme.title")}
+          description={t("settings.sections.theme.description")}
           actions={
-            <Button type="button" variant="ghost" onClick={() => handleSaveDraft("Theme mapping")}>
-              Save
+            <Button type="button" variant="ghost" onClick={() => handleSaveDraft(t("settings.sections.theme.title"))}>
+              {t("common.save")}
             </Button>
           }
         >
           <div style={{ display: "grid", gap: "12px" }}>
-            <p style={{ margin: 0, color: "var(--text-mid)" }}>
-              The active theme is read from the same role-aware theme helper used by AppShell and Topbar, so view-as mode updates the chrome and accents together.
-            </p>
+            <p style={{ margin: 0, color: "var(--text-mid)" }}>{t("settings.theme.note")}</p>
             <div
               style={{
                 display: "grid",
@@ -190,15 +214,15 @@ export function SettingsV2Page() {
               }}
             >
               <div style={{ padding: "14px", borderRadius: "16px", background: "var(--surface2)" }}>
-                <span style={{ display: "block", color: "var(--text-mid)", fontSize: "0.78rem" }}>Active role</span>
-                <strong>{activeRole ?? "admin"}</strong>
+                <span style={{ display: "block", color: "var(--text-mid)", fontSize: "0.78rem" }}>{t("settings.theme.activeRole")}</span>
+                <strong>{activeRole ? formatRole(activeRole) : formatRole("admin")}</strong>
               </div>
               <div style={{ padding: "14px", borderRadius: "16px", background: "var(--surface2)" }}>
-                <span style={{ display: "block", color: "var(--text-mid)", fontSize: "0.78rem" }}>Accent</span>
+                <span style={{ display: "block", color: "var(--text-mid)", fontSize: "0.78rem" }}>{t("settings.theme.accent")}</span>
                 <strong>{activeTheme.accent}</strong>
               </div>
               <div style={{ padding: "14px", borderRadius: "16px", background: "var(--surface2)" }}>
-                <span style={{ display: "block", color: "var(--text-mid)", fontSize: "0.78rem" }}>Shell title</span>
+                <span style={{ display: "block", color: "var(--text-mid)", fontSize: "0.78rem" }}>{t("settings.theme.shellTitle")}</span>
                 <strong>{activeTheme.shellTitle}</strong>
               </div>
             </div>

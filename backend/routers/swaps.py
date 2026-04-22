@@ -11,6 +11,7 @@ import models
 from auth_utils import get_current_user, require_admin, log_action
 from routers.settings import get_setting, is_past_deadline
 from datetime import datetime, timezone
+from term_lifecycle import require_period_editable_for_values
 
 router = APIRouter()
 
@@ -119,6 +120,14 @@ def create_swap_request(
     if not my_sup:
         raise HTTPException(404, "ไม่พบตารางคุมสอบของคุณ")
 
+    if my_sup.schedule and my_sup.schedule.section:
+        require_period_editable_for_values(
+            db,
+            my_sup.schedule.section.academic_year,
+            my_sup.schedule.section.semester,
+            my_sup.schedule.exam_type.value if hasattr(my_sup.schedule.exam_type, "value") else my_sup.schedule.exam_type,
+        )
+
     target_sup = db.query(models.Supervision).options(
         joinedload(models.Supervision.user)
     ).filter(models.Supervision.id == data.target_supervision_id).first()
@@ -175,6 +184,14 @@ def respond_to_swap(
         raise HTTPException(403, "คุณไม่ใช่ผู้รับคำขอนี้")
     if swap.status != models.SwapStatus.pending:
         raise HTTPException(400, "คำขอนี้ตอบไปแล้ว")
+
+    if swap.requester_sup and swap.requester_sup.schedule and swap.requester_sup.schedule.section:
+        require_period_editable_for_values(
+            db,
+            swap.requester_sup.schedule.section.academic_year,
+            swap.requester_sup.schedule.section.semester,
+            swap.requester_sup.schedule.exam_type.value if hasattr(swap.requester_sup.schedule.exam_type, "value") else swap.requester_sup.schedule.exam_type,
+        )
 
     if data.accept:
         swap.status = models.SwapStatus.accepted
@@ -234,6 +251,14 @@ def cancel_swap(
         raise HTTPException(403, "ยกเลิกได้เฉพาะคำขอของตัวเอง")
     if swap.status != models.SwapStatus.pending:
         raise HTTPException(400, "ยกเลิกได้เฉพาะคำขอที่ยังรออยู่")
+
+    if swap.requester_sup and swap.requester_sup.schedule and swap.requester_sup.schedule.section:
+        require_period_editable_for_values(
+            db,
+            swap.requester_sup.schedule.section.academic_year,
+            swap.requester_sup.schedule.section.semester,
+            swap.requester_sup.schedule.exam_type.value if hasattr(swap.requester_sup.schedule.exam_type, "value") else swap.requester_sup.schedule.exam_type,
+        )
 
     swap.status = models.SwapStatus.cancelled
     if swap.requester_sup:

@@ -6,7 +6,7 @@ Auth utilities
 - Dual-mode token extraction: HttpOnly cookie (preferred) + Bearer header (legacy)
 """
 from datetime import datetime, timedelta, timezone
-from typing import Iterable, Optional
+from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
 from fastapi import Depends, HTTPException, Request, status
@@ -30,6 +30,7 @@ TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "12"))
 # Keep OAuth2PasswordBearer for OpenAPI docs / legacy Bearer clients
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 GOVERNANCE_ROLE_KEY = "governance"
+WORKSPACE_REJECTION_MESSAGE = "You are not assigned to this workspace. Please check your role and try again."
 
 
 def hash_password(password: str) -> str:
@@ -75,9 +76,19 @@ def is_token_revoked(token: str, db: Session) -> bool:
 
 
 def get_available_roles(user: models.User) -> list[models.UserRole]:
-    if user.role == models.UserRole.admin:
-        return list(models.UserRole)
     return [user.role]
+
+
+def build_workspace_rejection_detail(
+    user: models.User,
+    selected_role: str,
+) -> dict[str, object]:
+    return {
+        "code": "workspace_not_assigned",
+        "message": WORKSPACE_REJECTION_MESSAGE,
+        "selected_role": selected_role,
+        "assigned_roles": [role.value for role in get_available_roles(user)],
+    }
 
 
 def _coerce_user_role(value: object) -> models.UserRole | None:
@@ -101,15 +112,19 @@ def resolve_active_role(user: models.User, selected_role: str) -> models.UserRol
     if requested == GOVERNANCE_ROLE_KEY:
         if user.role in (models.UserRole.esq_head, models.UserRole.secretary):
             return user.role
-        if user.role == models.UserRole.admin:
-            return models.UserRole.esq_head
-        raise HTTPException(status_code=403, detail="The selected governance workspace is not available.")
+        raise HTTPException(
+            status_code=403,
+            detail=build_workspace_rejection_detail(user, requested),
+        )
 
     requested_role = _coerce_user_role(requested)
     if not requested_role:
         raise HTTPException(status_code=400, detail="The selected role is invalid.")
     if requested_role not in available_roles:
-        raise HTTPException(status_code=403, detail="The selected role is not permitted for this account.")
+        raise HTTPException(
+            status_code=403,
+            detail=build_workspace_rejection_detail(user, requested),
+        )
     return requested_role
 
 
@@ -117,7 +132,7 @@ def get_active_role(user: models.User) -> models.UserRole:
     active_role = _coerce_user_role(getattr(user, "_active_role", None))
     if active_role:
         return active_role
-    return get_active_role(user)
+    return user.role
 
 
 def get_current_user(

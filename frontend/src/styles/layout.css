@@ -228,6 +228,41 @@
   flex-wrap: wrap;
 }
 
+.language-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(231, 226, 218, 0.9);
+  box-shadow: var(--shadow-sm);
+}
+
+.language-toggle__button {
+  min-width: 42px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-mid);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.language-toggle__button:hover {
+  background: color-mix(in srgb, var(--role-accent-soft) 48%, white 52%);
+  color: var(--role-accent-text);
+}
+
+.language-toggle__button--active {
+  background: color-mix(in srgb, var(--role-accent-soft) 76%, white 24%);
+  color: var(--role-accent-text);
+}
+
 .topbar__viewas,
 .topbar__status {
   display: flex;
@@ -360,6 +395,12 @@
   width: min(100%, 560px);
 }
 
+.login-card__language {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .login-card__brand {
   display: flex;
   align-items: center;
@@ -391,6 +432,12 @@
 
 .public-search__hero h1 {
   margin-top: 0;
+}
+
+.public-search__language {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
 }
 
 .app-shell .public-search {

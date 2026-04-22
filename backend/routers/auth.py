@@ -82,6 +82,8 @@ def login(data: schemas.LoginRequest, request: Request, response: Response,
         raise HTTPException(status_code=401, detail="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
 
     active_role = resolve_active_role(user, data.selected_role)
+    if user.view_as_role is not None:
+        user.view_as_role = None
     setattr(user, "_active_role", active_role)
     token = create_token({"sub": str(user.id), "active_role": active_role.value})
 

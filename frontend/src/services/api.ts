@@ -1,3 +1,5 @@
+import { translate, translateApiMessage } from "@/i18n";
+
 export class ApiError extends Error {
   status: number;
   data: unknown;
@@ -35,6 +37,35 @@ function buildUrl(path: string, query?: Record<string, Primitive>) {
   }
 
   return `${url.pathname}${url.search}`;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function readStringField(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function extractErrorMessage(payload: unknown) {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const detail = payload.detail;
+  if (typeof detail === "string" && detail.trim()) {
+    return detail;
+  }
+
+  if (isRecord(detail)) {
+    const detailMessage = readStringField(detail, "message");
+    if (detailMessage) {
+      return detailMessage;
+    }
+  }
+
+  return readStringField(payload, "message");
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
@@ -79,10 +110,10 @@ export async function request<T>(
   const payload = await parseResponse<unknown>(response).catch(() => undefined);
 
   if (!response.ok) {
-    const detail =
-      typeof payload === "object" && payload && "detail" in payload
-        ? String((payload as { detail: unknown }).detail)
-        : `Request failed with status ${response.status}`;
+    const rawDetail = extractErrorMessage(payload);
+    const detail = rawDetail
+      ? translateApiMessage(rawDetail)
+      : translate("errors.requestFailed", { status: response.status });
 
     if (response.status === 401) {
       window.dispatchEvent(new Event("ems:unauthorized"));
@@ -105,4 +136,3 @@ export const put = <T>(path: string, body?: unknown, options?: Omit<RequestOptio
 
 export const del = <T>(path: string, options?: Omit<RequestOptions, "body" | "formData">) =>
   request<T>("DELETE", path, options);
-

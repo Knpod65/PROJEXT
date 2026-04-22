@@ -15,6 +15,7 @@ from auth_utils import get_current_user, log_action, require_admin
 from database import get_db
 import models
 from routers.settings import get_setting, is_past_deadline
+from term_lifecycle import require_period_editable_for_values
 
 router = APIRouter()
 
@@ -177,6 +178,52 @@ def _notify_swap_response(
         )
     except Exception:
         pass
+
+
+@router.get("/my-supervisions")
+def my_supervisions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Return the current user's active supervision slots for swap creation."""
+    sups = (
+        db.query(models.Supervision)
+        .options(
+            joinedload(models.Supervision.schedule)
+            .joinedload(models.ExamSchedule.section)
+            .joinedload(models.Section.course),
+            joinedload(models.Supervision.schedule)
+            .joinedload(models.ExamSchedule.room),
+        )
+        .filter(models.Supervision.user_id == current_user.id)
+        .join(models.ExamSchedule)
+        .order_by(models.ExamSchedule.exam_date, models.ExamSchedule.exam_time)
+        .all()
+    )
+
+    result = []
+    for sup in sups:
+        sch = sup.schedule
+        if not sch:
+            continue
+        result.append(
+            {
+                "supervision_id": sup.id,
+                "schedule_id": sch.id,
+                "exam_date": sch.exam_date,
+                "exam_time": sch.exam_time,
+                "course": (
+                    sch.section.course.course_id
+                    if sch.section and sch.section.course
+                    else None
+                ),
+                "room": sch.room.room_name if sch.room else None,
+                "section_no": sch.section.section_no if sch.section else None,
+                "swap_requested": sup.swap_requested,
+                "is_swapped": sup.is_swapped,
+            }
+        )
+    return result
 
 
 @router.get("/available-users/{supervision_id}")
@@ -355,6 +402,14 @@ def create_swap(
     if not my_sup or not my_sup.schedule:
         raise HTTPException(404, "ไม่พบตารางคุมสอบของคุณ")
 
+    if my_sup.schedule.section:
+        require_period_editable_for_values(
+            db,
+            my_sup.schedule.section.academic_year,
+            my_sup.schedule.section.semester,
+            my_sup.schedule.exam_type.value if hasattr(my_sup.schedule.exam_type, "value") else my_sup.schedule.exam_type,
+        )
+
     if data.target_user_id == current_user.id:
         raise HTTPException(400, "ไม่สามารถส่งคำขอให้ตัวเองได้")
 
@@ -425,6 +480,14 @@ def respond_swap(
     if swap.status != models.SwapStatus.pending:
         raise HTTPException(400, "คำขอนี้ตอบไปแล้ว")
 
+    if swap.requester_sup and swap.requester_sup.schedule and swap.requester_sup.schedule.section:
+        require_period_editable_for_values(
+            db,
+            swap.requester_sup.schedule.section.academic_year,
+            swap.requester_sup.schedule.section.semester,
+            swap.requester_sup.schedule.exam_type.value if hasattr(swap.requester_sup.schedule.exam_type, "value") else swap.requester_sup.schedule.exam_type,
+        )
+
     accepted = _resolve_swap_accept(data)
     swap.responded_at = datetime.now(timezone.utc)
 
@@ -490,6 +553,14 @@ def cancel_swap(
     if current_user.role != models.UserRole.admin and swap.requester_id != current_user.id:
         raise HTTPException(403, "ไม่มีสิทธิ์ยกเลิกคำขอนี้")
 
+    if swap.requester_sup and swap.requester_sup.schedule and swap.requester_sup.schedule.section:
+        require_period_editable_for_values(
+            db,
+            swap.requester_sup.schedule.section.academic_year,
+            swap.requester_sup.schedule.section.semester,
+            swap.requester_sup.schedule.exam_type.value if hasattr(swap.requester_sup.schedule.exam_type, "value") else swap.requester_sup.schedule.exam_type,
+        )
+
     swap.status = models.SwapStatus.cancelled
     swap.responded_at = datetime.now(timezone.utc)
     _clear_swap_flags(swap)
@@ -511,6 +582,14 @@ def emergency_substitute(
     ).first()
     if not schedule:
         raise HTTPException(404, "ไม่พบตารางสอบ")
+
+    if schedule.section:
+        require_period_editable_for_values(
+            db,
+            schedule.section.academic_year,
+            schedule.section.semester,
+            schedule.exam_type.value if hasattr(schedule.exam_type, "value") else schedule.exam_type,
+        )
 
     if current_user.role != models.UserRole.admin:
         is_assigned = db.query(models.Supervision).filter(
@@ -561,6 +640,7 @@ def lock_baseline(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    require_period_editable_for_values(db, academic_year, semester)
     db.query(models.SupervisionBaseline).delete()
 
     supervisions = db.query(models.Supervision).join(

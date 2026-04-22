@@ -8,10 +8,17 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useUsersData } from "@/hooks/useUsersData";
+import { useI18n } from "@/i18n";
+import { logout } from "@/services/auth.service";
+import { useAuth } from "@/store/auth.store";
 import { useUi } from "@/store/ui.store";
+import type { UserRole } from "@/types/api";
+import { formatRole } from "@/utils/format";
 
 export function UsersV2Page() {
+  const { t } = useI18n();
   const { toast } = useUi();
+  const { clearSession, user: currentUser } = useAuth();
   const {
     activeFilter,
     deactivateUser,
@@ -27,10 +34,12 @@ export function UsersV2Page() {
     setQuery,
     setRoleFilter,
     stats,
+    updateUserRole,
   } = useUsersData();
 
   const [pendingDeactivateId, setPendingDeactivateId] = useState<number | null>(null);
   const [deactivating, setDeactivating] = useState(false);
+  const [savingRoleId, setSavingRoleId] = useState<number | null>(null);
 
   const handleDeactivate = (userId: number) => {
     setPendingDeactivateId(userId);
@@ -41,34 +50,59 @@ export function UsersV2Page() {
     setDeactivating(true);
     try {
       await deactivateUser(pendingDeactivateId);
-      toast(`Deactivated user #${pendingDeactivateId}`, "success");
+      toast(t("users.toastDeactivated", { id: pendingDeactivateId }), "success");
       setPendingDeactivateId(null);
       await reload();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Unable to deactivate user", "error");
+      toast(err instanceof Error ? err.message : t("errors.unexpected"), "error");
     } finally {
       setDeactivating(false);
     }
   };
 
   const handlePreviewAction = (label: string) => {
-    toast(`${label} is a Milestone 4 preview action.`, "info");
+    toast(t("users.previewAction", { label }), "info");
+  };
+
+  const handleRoleUpdate = async (userId: number, role: UserRole) => {
+    setSavingRoleId(userId);
+    try {
+      await updateUserRole(userId, role);
+
+      if (currentUser?.id === userId && currentUser.role !== role) {
+        try {
+          await logout();
+        } catch {
+          // The backend may already reject the old session after the role change.
+        }
+
+        toast(t("users.roleUpdatedCurrentSession", { role: formatRole(role) }), "success");
+        clearSession();
+        return;
+      }
+
+      toast(t("users.roleUpdated", { id: userId, role: formatRole(role) }), "success");
+      await reload();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : t("errors.unexpected"), "error");
+      throw err;
+    } finally {
+      setSavingRoleId(null);
+    }
   };
 
   return (
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">Admin User Management (V2)</span>
-          <h1 className="page-hero__title">User management and role oversight</h1>
-          <p className="page-hero__description">
-            Stitch-based V2 user control surface for account visibility, role breakdown, and safe administrative actions.
-          </p>
-          {error ? <p className="page-hero__description">Data load warning: {error}</p> : null}
+          <span className="page-hero__eyebrow">{t("users.heroEyebrow")}</span>
+          <h1 className="page-hero__title">{t("users.heroTitle")}</h1>
+          <p className="page-hero__description">{t("users.heroDescription")}</p>
+          {error ? <p className="page-hero__description">{t("users.loadWarning", { message: error })}</p> : null}
         </div>
         <div className="page-hero__actions">
-          <Button type="button" variant="outline" onClick={() => handlePreviewAction("Excel import")}>Import from Excel</Button>
-          <Button type="button" onClick={() => handlePreviewAction("Create user")}>Add New User</Button>
+          <Button type="button" variant="outline" onClick={() => handlePreviewAction(t("users.importExcel"))}>{t("users.importExcel")}</Button>
+          <Button type="button" onClick={() => handlePreviewAction(t("users.addUser"))}>{t("users.addUser")}</Button>
         </div>
       </section>
 
@@ -85,18 +119,23 @@ export function UsersV2Page() {
       />
 
       <div className="dashboard-shell-grid">
-        <Card title="User Registry" subtitle="Read/write preview for account status management">
-          <UsersTableV2 rows={rows} onDeactivate={handleDeactivate} />
-          {loading ? <p>Loading users...</p> : null}
+        <Card title={t("users.registryTitle")} subtitle={t("users.registrySubtitle")}>
+          <UsersTableV2
+            rows={rows}
+            savingRoleId={savingRoleId}
+            onDeactivate={handleDeactivate}
+            onUpdateRole={handleRoleUpdate}
+          />
+          {loading ? <p>{t("users.loading")}</p> : null}
         </Card>
         <UserRoleBreakdown rows={roleBreakdown} />
       </div>
 
       <ConfirmDialog
         open={pendingDeactivateId !== null}
-        title="Deactivate user"
-        description={`This will immediately revoke access for user #${pendingDeactivateId}. The account can be reactivated, but the user will be signed out of any active sessions.`}
-        confirmLabel="Deactivate"
+        title={t("users.deactivateTitle")}
+        description={t("users.deactivateDescription", { id: pendingDeactivateId ?? "-" })}
+        confirmLabel={t("users.deactivateConfirm")}
         variant="danger"
         loading={deactivating}
         onConfirm={() => void handleConfirmDeactivate()}

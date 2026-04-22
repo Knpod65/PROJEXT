@@ -1,0 +1,12 @@
+
+> ems-frontend@0.1.0 dev
+> vite --host 0.0.0.0 --port 3000 --host 127.0.0.1 --port 3000
+
+Re-optimizing dependencies because lockfile has changed
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m291[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m3000[22m/[39m
+[2m10:04:19[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Dashboard.tsx[22m
+[2m10:04:19[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/store/auth.store.tsx[22m
+[2m10:04:19[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/pages/Login.tsx, /src/components/layout/MobileBottomNav.tsx, /src/components/layout/Sidebar.tsx[22m

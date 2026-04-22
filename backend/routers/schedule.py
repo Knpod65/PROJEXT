@@ -11,6 +11,7 @@ from auth_utils import (
     get_effective_role, log_action, get_dept_filter, is_view_all_role
 )
 from collections import defaultdict
+from term_lifecycle import require_period_editable_for_values
 
 router = APIRouter()
 
@@ -229,6 +230,12 @@ def create_schedule(
     if not section:
         raise HTTPException(404, "ไม่พบ section")
 
+    require_period_editable_for_values(
+        db,
+        section.academic_year,
+        section.semester,
+        data.exam_type.value if hasattr(data.exam_type, "value") else data.exam_type,
+    )
     total_sheets = section.num_students * data.num_pages
     sch = models.ExamSchedule(
         **data.model_dump(),
@@ -258,6 +265,17 @@ def update_schedule(
     sch = db.query(models.ExamSchedule).filter(models.ExamSchedule.id == sid).first()
     if not sch:
         raise HTTPException(404, "ไม่พบตารางสอบ")
+
+    section = sch.section or db.query(models.Section).filter(
+        models.Section.id == sch.section_id
+    ).first()
+    if section:
+        require_period_editable_for_values(
+            db,
+            section.academic_year,
+            section.semester,
+            sch.exam_type.value if hasattr(sch.exam_type, "value") else sch.exam_type,
+        )
 
     for k, v in data.model_dump(exclude_none=True).items():
         setattr(sch, k, v)
@@ -289,6 +307,16 @@ def delete_schedule(
     sch = db.query(models.ExamSchedule).filter(models.ExamSchedule.id == sid).first()
     if not sch:
         raise HTTPException(404, "ไม่พบตารางสอบ")
+    section = sch.section or db.query(models.Section).filter(
+        models.Section.id == sch.section_id
+    ).first()
+    if section:
+        require_period_editable_for_values(
+            db,
+            section.academic_year,
+            section.semester,
+            sch.exam_type.value if hasattr(sch.exam_type, "value") else sch.exam_type,
+        )
     db.delete(sch)
     db.commit()
     log_action(db, current_user, "DELETE_SCHEDULE", "exam_schedules", sid, request=request)
@@ -308,6 +336,17 @@ def assign_supervision(
     sch = db.query(models.ExamSchedule).filter(models.ExamSchedule.id == sid).first()
     if not sch:
         raise HTTPException(404, "ไม่พบตารางสอบ")
+
+    section = sch.section or db.query(models.Section).filter(
+        models.Section.id == sch.section_id
+    ).first()
+    if section:
+        require_period_editable_for_values(
+            db,
+            section.academic_year,
+            section.semester,
+            sch.exam_type.value if hasattr(sch.exam_type, "value") else sch.exam_type,
+        )
 
     existing = db.query(models.Supervision).filter(
         models.Supervision.schedule_id == sid,
@@ -342,6 +381,17 @@ def remove_supervision(
     ).first()
     if not sup:
         raise HTTPException(404, "ไม่พบข้อมูลกรรมการ")
+    schedule = sup.schedule or db.query(models.ExamSchedule).filter(
+        models.ExamSchedule.id == sid
+    ).first()
+    section = schedule.section if schedule else None
+    if section:
+        require_period_editable_for_values(
+            db,
+            section.academic_year,
+            section.semester,
+            schedule.exam_type.value if hasattr(schedule.exam_type, "value") else schedule.exam_type,
+        )
     db.delete(sup)
     db.commit()
     return {"success": True}
@@ -407,6 +457,13 @@ def run_optimizer(
         has_ortools = True
     except ImportError:
         has_ortools = False
+
+    require_period_editable_for_values(
+        db,
+        data.academic_year,
+        data.semester,
+        data.exam_type.value if hasattr(data.exam_type, "value") else data.exam_type,
+    )
 
     sections = db.query(models.Section).filter(
         models.Section.semester == data.semester,

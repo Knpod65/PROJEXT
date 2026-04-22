@@ -10,21 +10,22 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
     "paths": {
       "@/*": ["src/*"]
     }
   },
   "include": ["src"],
+  "exclude": ["src/types/environment-shims.d.ts"],
   "references": [
     {
       "path": "./tsconfig.node.json"
     }
   ]
 }
-

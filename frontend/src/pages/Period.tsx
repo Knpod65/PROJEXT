@@ -1,4 +1,5 @@
-import { useCallback, useState, type FormEvent } from "react";
+import type React from "react";
+import { useCallback, useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -18,7 +19,7 @@ export function PeriodPage() {
     label: "",
   });
 
-  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
+  const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
       await createPeriod(form);

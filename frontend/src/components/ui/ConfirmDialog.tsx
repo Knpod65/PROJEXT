@@ -1,3 +1,5 @@
+import { useI18n } from "@/i18n";
+
 import { Button } from "./Button";
 import { Modal } from "./Modal";
 
@@ -23,8 +25,8 @@ interface ConfirmDialogProps {
  * Always pass a clear, consequence-describing `description` to the user.
  */
 export function ConfirmDialog({
-  cancelLabel = "Cancel",
-  confirmLabel = "Confirm",
+  cancelLabel,
+  confirmLabel,
   description,
   loading = false,
   onCancel,
@@ -33,6 +35,8 @@ export function ConfirmDialog({
   title,
   variant = "primary",
 }: ConfirmDialogProps) {
+  const { t } = useI18n();
+
   return (
     <Modal
       open={open}
@@ -41,10 +45,10 @@ export function ConfirmDialog({
       footer={
         <div className="inline-actions">
           <Button type="button" variant="ghost" disabled={loading} onClick={onCancel}>
-            {cancelLabel}
+            {cancelLabel ?? t("common.cancel")}
           </Button>
           <Button type="button" variant={variant} loading={loading} onClick={onConfirm}>
-            {confirmLabel}
+            {confirmLabel ?? t("common.confirm")}
           </Button>
         </div>
       }

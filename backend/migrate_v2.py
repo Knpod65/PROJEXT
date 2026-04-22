@@ -565,6 +565,18 @@ def run():
             "ix_exam_manager_section")
 
 
+        # ════════════════════════════════════════════════════
+        # STEP 11: import_row_logs — room_capacity audit columns
+        # ════════════════════════════════════════════════════
+        print("\n[11] import_row_logs — room_capacity audit columns")
+        rc_cols = [
+            ("change_type",        "VARCHAR(20)"),
+            ("previous_capacity",  "INTEGER"),
+            ("new_capacity",       "INTEGER"),
+        ]
+        for col, defn in rc_cols:
+            add_column(conn, "import_row_logs", col, defn)
+
         print("\n" + "=" * 60)
         if all_ok:
             print("✅ Migration v2 COMPLETE — all checks passed")

@@ -7,8 +7,10 @@ export interface SectionFilters {
   academic_year?: string;
 }
 
+type QueryValue = string | number | boolean | null | undefined;
+
 export function listSections(filters: SectionFilters = {}) {
-  return get<SectionOut[]>("/courses/sections", { query: filters });
+  return get<SectionOut[]>("/courses/sections", { query: filters as Record<string, QueryValue> });
 }
 
 export function createSection(body: Record<string, unknown>) {

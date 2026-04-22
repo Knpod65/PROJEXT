@@ -36,6 +36,7 @@ from auth_utils import (
     require_admin, get_current_user, log_action, hash_password, get_effective_role,
     SIGN_ORDER_USERNAMES, is_signer
 )
+from term_lifecycle import ensure_period_record_editable, require_active_period_for_mutation
 
 router = APIRouter()
 
@@ -270,7 +271,7 @@ def add_unavailability(
     db:   Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    p = db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
+    p = require_active_period_for_mutation(db)
     if not p:
         raise HTTPException(400, "ไม่มี active period")
 
@@ -320,7 +321,11 @@ def delete_unavailability(
     ).first()
     if not row:
         raise HTTPException(404, "ไม่พบ")
-    db.delete(row)
+    period = db.query(models.ExamPeriod).filter(
+        models.ExamPeriod.id == row.exam_period_id
+    ).first()
+    ensure_period_record_editable(period)
+    db.delete(row)  # term editability already checked
     db.commit()
     log_action(db, current_user, "DELETE_UNAVAILABILITY", "staff_unavailability",
                record_id=unavail_id, request=request)
@@ -393,6 +398,7 @@ def init_session(
     db:      Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    p = require_active_period_for_mutation(db)
     """เรียกหลัง optimize เสร็จ — reset session เป็น draft"""
     p = db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
     if not p:
@@ -428,6 +434,7 @@ def sign_session(
     db:      Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    p = require_active_period_for_mutation(db)
     """
     กดลายเซ็น — ต้องเป็นคนที่ถึงลำดับ และยังไม่เคยกด
     round=1: ก่อน swap → บันทึก baseline stats เมื่อครบ
@@ -505,6 +512,7 @@ def open_swap(
     db:      Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    p = require_active_period_for_mutation(db)
     """Admin เปิด swap period หลัง round 1 ครบ"""
     p = db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
     if not p:
@@ -602,6 +610,7 @@ def add_room_unavailability(
     db:   Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    p = require_active_period_for_mutation(db)
     p = db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
     if not p:
         raise HTTPException(400, "ไม่มี active period")
@@ -649,6 +658,10 @@ def delete_room_unavailability(
     ).first()
     if not row:
         raise HTTPException(404, "ไม่พบ")
+    period = db.query(models.ExamPeriod).filter(
+        models.ExamPeriod.id == row.exam_period_id
+    ).first()
+    ensure_period_record_editable(period)
     db.delete(row)
     db.commit()
     log_action(db, current_user, "DELETE_ROOM_UNAVAILABILITY", "room_unavailability",
@@ -728,6 +741,7 @@ def acquire_edit_lock(
     db:      Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    require_active_period_for_mutation(db)
     """
     Admin ขอ lock ก่อนเริ่มแก้ตาราง
     - ถ้าไม่มีใครถือ lock → ได้ lock ทันที
@@ -757,6 +771,7 @@ def release_edit_lock(
     db:      Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    require_active_period_for_mutation(db)
     """Admin ปล่อย lock เมื่อแก้เสร็จ"""
     sess = _get_active_session(db)
     if sess:
@@ -769,6 +784,7 @@ def heartbeat_lock(
     db:  Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    require_active_period_for_mutation(db)
     """ต่ออายุ lock (frontend เรียกทุก 60 วิ ขณะกำลังแก้อยู่)"""
     sess = _get_active_session(db)
     if sess and sess.edit_lock_user_id == current_user.id:
@@ -864,6 +880,7 @@ def add_suggestion(
     db:   Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    p = require_active_period_for_mutation(db)
     """
     ส่งข้อเสนอแนะระหว่าง approve — เฉพาะ esq_head, secretary, admin
     Admin จะเห็นข้อเสนอแนะทั้งหมดในหน้า confirm

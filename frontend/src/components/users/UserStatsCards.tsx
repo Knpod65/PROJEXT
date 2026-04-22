@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { useI18n } from "@/i18n";
 import type { UserStats } from "@/hooks/useUsersData";
 
 interface UserStatsCardsProps {
@@ -7,25 +8,27 @@ interface UserStatsCardsProps {
 }
 
 export function UserStatsCards({ stats }: UserStatsCardsProps) {
+  const { t } = useI18n();
+
   return (
     <div className="summary-grid">
-      <Card title="Total Users" actions={<Badge variant="blue">{stats.total}</Badge>}>
-        <p>Registered accounts across all roles.</p>
+      <Card title={t("users.stats.total")} actions={<Badge variant="blue">{stats.total}</Badge>}>
+        <p>{t("users.stats.totalDescription")}</p>
       </Card>
-      <Card title="Active Users" actions={<Badge variant="green">{stats.active}</Badge>}>
-        <p>Accounts currently enabled for sign-in.</p>
+      <Card title={t("users.stats.active")} actions={<Badge variant="green">{stats.active}</Badge>}>
+        <p>{t("users.stats.activeDescription")}</p>
       </Card>
-      <Card title="Inactive Users" actions={<Badge variant="gray">{stats.inactive}</Badge>}>
-        <p>Accounts that were deactivated from operations.</p>
+      <Card title={t("users.stats.inactive")} actions={<Badge variant="gray">{stats.inactive}</Badge>}>
+        <p>{t("users.stats.inactiveDescription")}</p>
       </Card>
-      <Card title="Active Faculty" actions={<Badge variant="gold">{stats.teachers}</Badge>}>
-        <p>Teacher-role accounts available this cycle.</p>
+      <Card title={t("users.stats.faculty")} actions={<Badge variant="gold">{stats.teachers}</Badge>}>
+        <p>{t("users.stats.facultyDescription")}</p>
       </Card>
-      <Card title="Admin Seats" actions={<Badge variant="navy">{stats.admins}</Badge>}>
-        <p>Administrative operators with elevated access.</p>
+      <Card title={t("users.stats.admins")} actions={<Badge variant="navy">{stats.admins}</Badge>}>
+        <p>{t("users.stats.adminsDescription")}</p>
       </Card>
-      <Card title="Review Queue" actions={<Badge variant="orange">{stats.pendingApprovals}</Badge>}>
-        <p>Preview placeholder for registration approval workflow.</p>
+      <Card title={t("users.stats.queue")} actions={<Badge variant="orange">{stats.pendingApprovals}</Badge>}>
+        <p>{t("users.stats.queueDescription")}</p>
       </Card>
     </div>
   );

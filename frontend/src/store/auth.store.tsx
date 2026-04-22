@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { useI18n } from "@/i18n";
 import { login, logout, me, setViewAs } from "@/services/auth.service";
 import type { RoleSelectionValue, UserMe, UserRole } from "@/types/api";
 import { getActiveRole, getAvailableRoles, storePendingRole } from "@/utils/roles";
@@ -28,7 +29,32 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const AUTH_BOOTSTRAP_HINT_KEY = "ems.auth_hint";
+const PUBLIC_BOOTSTRAP_PATHS = new Set(["/", "/role-selection", "/login", "/student-search"]);
+
+function getAuthBootstrapHint() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.localStorage.getItem(AUTH_BOOTSTRAP_HINT_KEY) === "1";
+}
+
+function setAuthBootstrapHint(enabled: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (enabled) {
+    window.localStorage.setItem(AUTH_BOOTSTRAP_HINT_KEY, "1");
+    return;
+  }
+
+  window.localStorage.removeItem(AUTH_BOOTSTRAP_HINT_KEY);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const { toast } = useUi();
   const [user, setUser] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearSession = useCallback(() => {
     setUser(null);
+    setAuthBootstrapHint(false);
     storePendingRole(null);
     setLoading(false);
     setInitialized(true);
@@ -46,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const currentUser = await me();
       setUser(currentUser);
+      storePendingRole(null);
     } catch {
       setUser(null);
     } finally {
@@ -58,13 +86,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (username: string, password: string, selectedRole: RoleSelectionValue) => {
       const response = await login(username, password, selectedRole);
       setUser(response.user);
+      setAuthBootstrapHint(true);
       storePendingRole(null);
       setInitialized(true);
       setLoading(false);
-      toast("Signed in successfully.", "success");
+      toast(t("errors.signedInSuccess"), "success");
       return response.user;
     },
-    [toast],
+    [t, toast],
   );
 
   const signOut = useCallback(async () => {
@@ -74,32 +103,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ignore logout errors and clear local session anyway.
     } finally {
       clearSession();
-      toast("Signed out.", "info");
+      toast(t("errors.signedOut"), "info");
     }
-  }, [clearSession, toast]);
+  }, [clearSession, t, toast]);
 
   const switchViewAs = useCallback(
     async (role: UserRole | null) => {
       await setViewAs(role);
       await refreshUser();
-      toast(role ? `Previewing as ${role}.` : "Returned to the default admin preview.", "info");
+      toast(role ? t("settings.viewAsSwitched", { role }) : t("settings.viewAsReset"), "info");
     },
-    [refreshUser, toast],
+    [refreshUser, t, toast],
   );
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const currentPath = window.location.pathname;
+      if (PUBLIC_BOOTSTRAP_PATHS.has(currentPath) && !getAuthBootstrapHint()) {
+        setUser(null);
+        setLoading(false);
+        setInitialized(true);
+        return;
+      }
+    }
+
     void refreshUser();
   }, [refreshUser]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
       clearSession();
-      toast("Your session expired. Please sign in again.", "warning");
+      toast(t("errors.sessionExpired"), "warning");
     };
 
     window.addEventListener("ems:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("ems:unauthorized", handleUnauthorized);
-  }, [clearSession, toast]);
+  }, [clearSession, t, toast]);
 
   const availableRoles = useMemo(() => getAvailableRoles(user), [user]);
   const activeRole = useMemo(() => getActiveRole(user), [user]);

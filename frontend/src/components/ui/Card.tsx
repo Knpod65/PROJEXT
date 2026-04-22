@@ -2,7 +2,7 @@ import type { HTMLAttributes, ReactNode } from "react";
 
 import { cx } from "@/utils/cx";
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
+interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   children?: ReactNode;
   title?: ReactNode;
   subtitle?: ReactNode;

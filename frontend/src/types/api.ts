@@ -219,16 +219,17 @@ export interface PublicStudentSchedule {
   full_name: string;
   major?: string | null;
   faculty?: string | null;
+  term_label?: string | null;
   total_courses: number;
   exams: Array<{
     course_id: string;
     course_name: string;
     section_no: string;
-    num_students: number;
     teacher: string;
     exam_date?: string | null;
     exam_time?: string | null;
     room?: string | null;
+    seat_group?: string | null;
     status: string;
     has_schedule: boolean;
   }>;
@@ -242,6 +243,81 @@ export interface PeriodItem {
   label: string;
   is_active: boolean;
   stats?: Record<string, unknown>;
+}
+
+export type TermLifecycleStatus = "draft" | "active" | "archived" | "locked";
+
+export interface TermLifecyclePreviewItem {
+  id: number;
+  academic_year: string;
+  semester: string;
+  exam_type: string;
+  label?: string | null;
+  is_active: boolean;
+  lifecycle_status: TermLifecycleStatus;
+  is_historical: boolean;
+  is_editable: boolean;
+  is_read_only: boolean;
+  status_summary: string;
+  preview_summary: string;
+  archived_at?: string | null;
+  locked_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface TermSettingsPreview {
+  current_active_term?: TermLifecyclePreviewItem | null;
+  latest_term?: TermLifecyclePreviewItem | null;
+  latest_historical_term?: TermLifecyclePreviewItem | null;
+  selected_term?: TermLifecyclePreviewItem | null;
+  available_terms: TermLifecyclePreviewItem[];
+  default_preview_term_id?: number | null;
+  selected_term_status?: TermLifecycleStatus | null;
+  selected_term_editable: boolean;
+  selected_term_read_only: boolean;
+  plain_language_summary: string;
+  historical_visibility_summary: string;
+}
+
+export type ExamFileRetentionMode = "manual" | "semester_end" | "academic_year_end" | "years";
+
+export interface RetentionPolicyPlainLanguage {
+  exam_file_retention_summary: string;
+  archive_summary: string;
+  destruction_summary: string;
+  historical_visibility_summary: string;
+}
+
+export interface RetentionPolicy {
+  exam_file_retention_mode: ExamFileRetentionMode;
+  exam_file_retention_years?: number | null;
+  exam_file_destroy_requires_approval: boolean;
+  exam_file_archive_before_destroy: boolean;
+  retain_import_audit_logs_years: number;
+  retain_import_raw_files: boolean;
+  parsed_snapshot_storage: string;
+  historical_term_data_retained_indefinitely: boolean;
+  plain_language: RetentionPolicyPlainLanguage;
+}
+
+export interface RetentionPolicyUpdateInput {
+  exam_file_retention_mode: ExamFileRetentionMode;
+  exam_file_retention_years?: number | null;
+  exam_file_destroy_requires_approval: boolean;
+  exam_file_archive_before_destroy: boolean;
+  retain_import_audit_logs_years: number;
+  retain_import_raw_files: boolean;
+  historical_term_data_retained_indefinitely: boolean;
+}
+
+export interface PeriodCloseResponse {
+  success: boolean;
+  period_id: number;
+  previous_lifecycle_status?: TermLifecycleStatus | null;
+  new_lifecycle_status?: TermLifecycleStatus | null;
+  locked_at?: string | null;
+  plain_language_summary: string;
+  blocking_reasons: string[];
 }
 
 export interface CoExamGroup {
@@ -313,13 +389,161 @@ export interface SignerInfo {
 
 export interface ImportSession {
   id: number;
+  import_session_id?: number;
+  import_type?: string;
   academic_year: string;
   semester: string;
   exam_type: string;
+  imported_by?: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  status?: string;
+  total_rows?: number;
+  valid_rows?: number;
+  warning_rows?: number;
+  error_rows?: number;
+  imported_rows?: number;
+  skipped_rows?: number;
   opencourse_rows: number;
   enrollment_rows: number;
   created_at?: string | null;
   last_updated?: string | null;
+}
+
+export interface ImportAuditIssueSummaryItem {
+  code: string | null;
+  message: string | null;
+  count: number;
+}
+
+export interface ImportAuditSessionDetail {
+  session: ImportSession;
+  issue_summary: ImportAuditIssueSummaryItem[];
+}
+
+export interface ImportAuditRowLog {
+  id: number;
+  row_number: number;
+  status: string;
+  error_code?: string | null;
+  error_message?: string | null;
+  was_selected: boolean;
+  was_imported: boolean;
+  override_reason?: string | null;
+  raw_data: Record<string, unknown>;
+  raw_data_preview: string;
+  created_at?: string | null;
+}
+
+export interface ImportAuditRowLogList {
+  session_id: number;
+  total_rows: number;
+  rows: ImportAuditRowLog[];
+}
+
+export type ImportV2Type = "opencourse" | "personnel" | "employee" | "enrollment" | "room_capacity";
+export type ImportV2OverridePolicy = "allowed" | "disallowed" | "requires_mapping";
+export type ImportV2RowStatus = "valid" | "warning" | "error";
+
+export interface ImportV2TermContext {
+  academic_year?: string | null;
+  semester?: string | null;
+  exam_type?: string | null;
+}
+
+export interface ImportV2IssueSummaryItem {
+  code: string;
+  message: string;
+  count: number;
+}
+
+export interface ImportV2OverrideRequestItem {
+  row: number;
+  reason: string;
+}
+
+export interface ImportV2ValidationRow {
+  _row: number;
+  status: ImportV2RowStatus;
+  errors: string[];
+  warnings: string[];
+  error_codes: string[];
+  warning_codes: string[];
+  can_override: boolean;
+  override_policy: ImportV2OverridePolicy;
+  selected: boolean;
+  override_required: boolean;
+  override_reason?: string | null;
+  historical_mode: boolean;
+  import_term_context: ImportV2TermContext;
+  data: Record<string, unknown>;
+}
+
+export interface ImportV2PreviewResponse {
+  file_token: string;
+  file_name: string;
+  academic_year: string;
+  semester: string;
+  exam_type: string;
+  total_rows: number;
+  sample_rows: Array<Record<string, unknown>>;
+}
+
+export interface ImportV2ValidationResponse {
+  total_rows: number;
+  valid_count: number;
+  warning_count: number;
+  error_count: number;
+  error_summary: ImportV2IssueSummaryItem[];
+  warning_summary: ImportV2IssueSummaryItem[];
+  rows: ImportV2ValidationRow[];
+}
+
+export interface ImportV2PrepareResponse {
+  import_type: ImportV2Type;
+  academic_year: string;
+  semester: string;
+  exam_type?: string | null;
+  historical_mode: boolean;
+  total_rows: number;
+  selected_count: number;
+  skipped_count: number;
+  override_count: number;
+  error_blocking_count: number;
+  rows_preview: ImportV2ValidationRow[];
+}
+
+export interface ImportV2SessionPlan {
+  import_type: ImportV2Type;
+  academic_year: string;
+  semester: string;
+  exam_type?: string | null;
+  historical_mode: boolean;
+  source_filename?: string | null;
+  confirmed_by: number;
+  dry_run: boolean;
+}
+
+export interface ImportV2ConfirmCheckResponse {
+  total_rows: number;
+  selected_count: number;
+  blocked_count: number;
+  override_count: number;
+  importable_count: number;
+  non_importable_count: number;
+  blocking_reasons: ImportV2IssueSummaryItem[];
+  ready_for_execution: boolean;
+  session_plan?: ImportV2SessionPlan | null;
+}
+
+export interface ImportV2ExecuteResponse {
+  success: boolean;
+  total_rows: number;
+  imported_count: number;
+  skipped_count: number;
+  override_count: number;
+  import_session_id: number;
+  summary: Record<string, unknown>;
 }
 
 export interface CopyCountSummary {

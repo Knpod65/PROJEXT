@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { translate } from "@/i18n";
 import type { UserRole } from "@/types/api";
 
 export interface RoleTheme {
@@ -21,13 +22,11 @@ export interface RoleTheme {
   canvasGlow: string;
 }
 
-const roleThemes: Record<UserRole, RoleTheme> = {
+interface RoleThemeDefinition extends Omit<RoleTheme, "label" | "shellTitle" | "shellSubtitle" | "badgeLabel"> {}
+
+const roleThemes: Record<UserRole, RoleThemeDefinition> = {
   admin: {
     role: "admin",
-    label: "Admin",
-    shellTitle: "Admin Master",
-    shellSubtitle: "Institutional oversight and exam command",
-    badgeLabel: "ADMIN",
     brandIcon: "account_balance",
     accent: "#0d6efd",
     accentStrong: "#004cb6",
@@ -42,10 +41,6 @@ const roleThemes: Record<UserRole, RoleTheme> = {
   },
   esq_head: {
     role: "esq_head",
-    label: "ESQ Head",
-    shellTitle: "Governance Desk",
-    shellSubtitle: "Institutional approvals, registry checks, and final visibility",
-    badgeLabel: "ESQ HEAD",
     brandIcon: "gavel",
     accent: "#4f46e5",
     accentStrong: "#3730a3",
@@ -60,10 +55,6 @@ const roleThemes: Record<UserRole, RoleTheme> = {
   },
   secretary: {
     role: "secretary",
-    label: "Secretary",
-    shellTitle: "Governance Desk",
-    shellSubtitle: "Institutional approvals, registry checks, and final visibility",
-    badgeLabel: "SECRETARY",
     brandIcon: "gavel",
     accent: "#0f766e",
     accentStrong: "#115e59",
@@ -78,10 +69,6 @@ const roleThemes: Record<UserRole, RoleTheme> = {
   },
   dept_supervisor: {
     role: "dept_supervisor",
-    label: "Department Supervisor",
-    shellTitle: "Department Oversight",
-    shellSubtitle: "Faculty coverage, compliance, and session visibility",
-    badgeLabel: "SUPERVISOR",
     brandIcon: "supervisor_account",
     accent: "#7c3aed",
     accentStrong: "#6d28d9",
@@ -96,10 +83,6 @@ const roleThemes: Record<UserRole, RoleTheme> = {
   },
   staff: {
     role: "staff",
-    label: "Staff",
-    shellTitle: "Staff Portal",
-    shellSubtitle: "Logistics, venue coverage, and room operations",
-    badgeLabel: "STAFF",
     brandIcon: "badge",
     accent: "#f59e0b",
     accentStrong: "#d97706",
@@ -114,10 +97,6 @@ const roleThemes: Record<UserRole, RoleTheme> = {
   },
   teacher: {
     role: "teacher",
-    label: "Teacher",
-    shellTitle: "Editorial Authority",
-    shellSubtitle: "Teaching duties, submissions, and exam coordination",
-    badgeLabel: "TEACHER",
     brandIcon: "school",
     accent: "#059669",
     accentStrong: "#047857",
@@ -132,10 +111,6 @@ const roleThemes: Record<UserRole, RoleTheme> = {
   },
   student: {
     role: "student",
-    label: "Student",
-    shellTitle: "Student Search",
-    shellSubtitle: "Exam lookup and session visibility",
-    badgeLabel: "STUDENT",
     brandIcon: "person_search",
     accent: "#475569",
     accentStrong: "#334155",
@@ -150,10 +125,6 @@ const roleThemes: Record<UserRole, RoleTheme> = {
   },
   print_shop: {
     role: "print_shop",
-    label: "Print Shop",
-    shellTitle: "Editorial Ops",
-    shellSubtitle: "Queue orchestration, dispatch, and production tracking",
-    badgeLabel: "PRINT SHOP",
     brandIcon: "print",
     accent: "#475569",
     accentStrong: "#334155",
@@ -171,11 +142,15 @@ const roleThemes: Record<UserRole, RoleTheme> = {
 const fallbackTheme = roleThemes.admin;
 
 export function getRoleTheme(role?: UserRole | null) {
-  if (!role) {
-    return fallbackTheme;
-  }
+  const theme = role ? roleThemes[role] ?? fallbackTheme : fallbackTheme;
 
-  return roleThemes[role] ?? fallbackTheme;
+  return {
+    ...theme,
+    label: translate(`roles.${theme.role}`),
+    shellTitle: translate(`roleThemes.${theme.role}.shellTitle`),
+    shellSubtitle: translate(`roleThemes.${theme.role}.shellSubtitle`),
+    badgeLabel: translate(`roleThemes.${theme.role}.badgeLabel`),
+  };
 }
 
 export function getRoleThemeStyle(theme: RoleTheme) {

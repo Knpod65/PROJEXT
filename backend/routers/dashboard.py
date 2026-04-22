@@ -121,14 +121,14 @@ def get_analytics(
 
     # ── 5. Copy cost per room (top 10) ────────────────────────
     room_rows = db.query(
-        models.Room.name,
+        models.Room.room_name,
         func.sum(models.ExamSchedule.total_sheets).label("sheets"),
     ).join(models.ExamSchedule, models.ExamSchedule.room_id == models.Room.id)\
      .group_by(models.Room.id)\
      .order_by(func.sum(models.ExamSchedule.total_sheets).desc())\
      .limit(10).all()
     copy_per_room = [
-        {"room": r.name, "sheets": int(r.sheets or 0), "cost": int(r.sheets or 0) * 0.50}
+        {"room": r.room_name, "sheets": int(r.sheets or 0), "cost": int(r.sheets or 0) * 0.50}
         for r in room_rows
     ]
 

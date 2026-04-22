@@ -13,8 +13,10 @@ export interface ScheduleFilters {
   limit?: number;
 }
 
+type QueryValue = string | number | boolean | null | undefined;
+
 export function listSchedules(filters: ScheduleFilters = {}) {
-  return get<ScheduleWithSection[]>("/schedule", { query: filters });
+  return get<ScheduleWithSection[]>("/schedule", { query: filters as Record<string, QueryValue> });
 }
 
 export function getRooms() {
@@ -38,4 +40,3 @@ export function runOptimizer(body: {
 }) {
   return post("/schedule/optimize", body);
 }
-

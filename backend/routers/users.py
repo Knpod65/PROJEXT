@@ -59,13 +59,16 @@ def update_user(
     user = db.query(models.User).filter(models.User.id == uid).first()
     if not user:
         raise HTTPException(status_code=404, detail="ไม่พบผู้ใช้")
+    updates = data.model_dump(exclude_none=True)
     old = {"role": str(user.role), "is_active": user.is_active}
-    for field, val in data.model_dump(exclude_none=True).items():
+    for field, val in updates.items():
         setattr(user, field, val)
+    if data.role and data.role != models.UserRole.admin:
+        user.view_as_role = None
     db.commit()
     db.refresh(user)
     log_action(db, current_user, "UPDATE_USER", "users", uid,
-               old_values=old, new_values=data.model_dump(exclude_none=True),
+               old_values=old, new_values=updates,
                request=request)
     return user
 

@@ -6,9 +6,10 @@ interface SettingsToggleProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   rightSlot?: ReactNode;
+  disabled?: boolean;
 }
 
-export function SettingsToggle({ checked, description, label, onChange, rightSlot }: SettingsToggleProps) {
+export function SettingsToggle({ checked, description, disabled = false, label, onChange, rightSlot }: SettingsToggleProps) {
   return (
     <div
       style={{
@@ -19,6 +20,7 @@ export function SettingsToggle({ checked, description, label, onChange, rightSlo
         padding: "14px 16px",
         borderRadius: "16px",
         background: "var(--surface2)",
+        opacity: disabled ? 0.75 : 1,
       }}
     >
       <div style={{ display: "grid", gap: "4px" }}>
@@ -30,6 +32,7 @@ export function SettingsToggle({ checked, description, label, onChange, rightSlo
         <input
           aria-label={label}
           checked={checked}
+          disabled={disabled}
           onChange={(event) => onChange(event.target.checked)}
           style={{ width: "18px", height: "18px", accentColor: "var(--role-accent)" }}
           type="checkbox"

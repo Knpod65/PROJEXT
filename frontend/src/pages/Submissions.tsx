@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { SubmissionSummaryCard } from "@/components/submissions/SubmissionSummaryCard";
@@ -91,7 +92,7 @@ export function SubmissionsPage() {
     [items],
   );
 
-  const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected || !messageText.trim()) return;
 

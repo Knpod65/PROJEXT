@@ -1,162 +1,323 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { SwapFilters } from "@/components/swaps/SwapFilters";
-import { SwapRequestTable } from "@/components/swaps/SwapRequestTable";
-import { SwapStatsCards } from "@/components/swaps/SwapStatsCards";
+import { SwapCreateModal } from "@/components/swaps/SwapCreateModal";
+import { SwapRespondModal } from "@/components/swaps/SwapRespondModal";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useSwapsData } from "@/hooks/useSwapsData";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Icon } from "@/components/ui/Icon";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Tabs } from "@/components/ui/Tabs";
+import { useSwapsLive, type SwapsTab } from "@/hooks/useSwapsLive";
+import type { MySupervisionSlot } from "@/services/swap.service";
 import { useAuth } from "@/store/auth.store";
 import { useUi } from "@/store/ui.store";
+import type { SwapItem } from "@/types/api";
+import { formatDateTime } from "@/utils/format";
 import { getEffectiveRole } from "@/utils/roles";
 
-function roleCopy(viewRole: "admin" | "staff" | "teacher") {
-  if (viewRole === "teacher") {
-    return {
-      eyebrow: "Teacher swaps",
-      title: "My swap requests",
-      description: "Simple request and status tracking view for teacher-side swap coordination.",
-      cardSubtitle: "Teacher mode: simple request tracking and withdraw action",
-      primaryAction: "Create Request",
-    };
+function SwapStatusBadge({ status }: { status: string }) {
+  const cls = `swap-badge swap-badge--${status}`;
+  return <span className={cls}>{status}</span>;
+}
+
+function ShiftCell({ shift }: { shift: SwapItem["my_shift"] }) {
+  if (!shift) return <span className="text-muted">—</span>;
+  return (
+    <div className="swap-shift-mini">
+      <strong>{shift.course ?? "?"} §{shift.section_no ?? "?"}</strong>
+      <span>{shift.date ?? "?"} {shift.time ?? "?"}</span>
+      <span className="text-muted">{shift.room ?? "?"}</span>
+    </div>
+  );
+}
+
+function SwapRow({
+  swap,
+  isIncoming,
+  onCancel,
+  onRespond,
+}: {
+  swap: SwapItem;
+  isIncoming: boolean;
+  onCancel: (id: number) => void;
+  onRespond: (swap: SwapItem) => void;
+}) {
+  const canCancel = swap.status === "pending" && swap.is_requester;
+
+  return (
+    <tr>
+      <td>
+        <SwapStatusBadge status={swap.status} />
+      </td>
+      <td>
+        <div className="swap-party">
+          <strong>{swap.requester_name ?? "—"}</strong>
+          <span className="text-muted">{swap.is_requester ? "You" : "Requester"}</span>
+        </div>
+      </td>
+      <td><ShiftCell shift={swap.my_shift} /></td>
+      <td><ShiftCell shift={swap.their_shift} /></td>
+      <td>
+        <div className="swap-party">
+          <strong>{swap.target_name ?? "—"}</strong>
+        </div>
+      </td>
+      <td>
+        {swap.message ? <span className="text-muted">{swap.message}</span> : <span className="text-muted">—</span>}
+        {swap.reject_reason ? (
+          <span className="swap-reject-reason">{swap.reject_reason}</span>
+        ) : null}
+      </td>
+      <td className="text-muted">{swap.created_at ? formatDateTime(swap.created_at) : "—"}</td>
+      <td>
+        <div className="inline-actions">
+          {isIncoming && swap.status === "pending" && (
+            <Button type="button" size="sm" onClick={() => onRespond(swap)}>
+              Respond
+            </Button>
+          )}
+          {canCancel && (
+            <Button type="button" size="sm" variant="ghost" onClick={() => onCancel(swap.id)}>
+              Cancel
+            </Button>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function SwapTable({
+  rows,
+  isIncoming,
+  onCancel,
+  onRespond,
+}: {
+  rows: SwapItem[];
+  isIncoming: boolean;
+  onCancel: (id: number) => void;
+  onRespond: (swap: SwapItem) => void;
+}) {
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        icon={<Icon name="swap_horiz" />}
+        title="No swap requests here."
+        description="Requests will appear once they are created or received."
+      />
+    );
   }
 
-  if (viewRole === "staff") {
-    return {
-      eyebrow: "Staff resolution queue",
-      title: "Department swap queue",
-      description: "Operational review mode for approving or rejecting pending swap requests.",
-      cardSubtitle: "Staff mode: queue triage and resolution actions",
-      primaryAction: "Refresh Queue",
-    };
-  }
-
-  return {
-    eyebrow: "Admin swap command",
-    title: "System-wide swap management",
-    description: "Stitch-based admin oversight view for queue triage, staffing risk checks, and final actions.",
-    cardSubtitle: "Preview mode — actions update local state only, no API calls are made",
-    primaryAction: "Export Queue",
-  };
+  return (
+    <div className="table-wrap">
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>From</th>
+            <th>Their slot</th>
+            <th>Your slot</th>
+            <th>To</th>
+            <th>Note</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((swap) => (
+            <SwapRow
+              key={swap.id}
+              swap={swap}
+              isIncoming={isIncoming}
+              onCancel={onCancel}
+              onRespond={onRespond}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function SwapsV2Page() {
   const { toast } = useUi();
   const { user } = useAuth();
   const role = getEffectiveRole(user);
+  const isAdmin = role === "admin";
+
   const {
-    approveSwap,
-    escalateSwap,
-    priorityFilter,
-    query,
-    requestSwap,
-    rejectSwap,
-    resetFilters,
-    rows,
-    setPriorityFilter,
-    setQuery,
-    setStatusFilter,
+    busy,
+    doCancel,
+    doCreate,
+    doRespond,
+    error,
+    history,
+    incoming,
+    load,
+    loadMySupervisions,
+    loading,
+    mine,
+    setTab,
     stats,
-    statusFilter,
-    viewRole,
-    withdrawSwap,
-  } = useSwapsData(role);
+    tab,
+  } = useSwapsLive();
 
-  const content = roleCopy(viewRole);
+  const [showCreate, setShowCreate] = useState(false);
+  const [respondTarget, setRespondTarget] = useState<SwapItem | null>(null);
+  const [mySlots, setMySlots] = useState<MySupervisionSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
-  const [pendingAction, setPendingAction] = useState<{ id: number; action: "approve" | "reject" } | null>(null);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  // Approve and reject are irreversible status changes — require confirmation.
-  const handleApprove = (id: number) => setPendingAction({ id, action: "approve" });
-  const handleReject = (id: number) => setPendingAction({ id, action: "reject" });
-
-  const handleConfirmAction = () => {
-    if (!pendingAction) return;
-    if (pendingAction.action === "approve") {
-      approveSwap(pendingAction.id);
-      toast(`Approved swap request #${pendingAction.id}`, "success");
-    } else {
-      rejectSwap(pendingAction.id);
-      toast(`Rejected swap request #${pendingAction.id}`, "warning");
+  const handleOpenCreate = async () => {
+    setShowCreate(true);
+    setLoadingSlots(true);
+    try {
+      const slots = await loadMySupervisions();
+      setMySlots(slots);
+    } catch {
+      setMySlots([]);
+    } finally {
+      setLoadingSlots(false);
     }
-    setPendingAction(null);
   };
 
-  const handleEscalate = (id: number) => {
-    escalateSwap(id);
-    toast(`Escalated swap request #${id} for review`, "info");
-  };
-
-  const handleWithdraw = (id: number) => {
-    withdrawSwap(id);
-    toast(`Withdrawn swap request #${id}`, "warning");
-  };
-
-  const handlePrimaryAction = () => {
-    if (viewRole === "teacher") {
-      requestSwap();
-      toast("Created a new test swap request", "success");
-      return;
+  const handleCreate = async (supervisionId: number, targetUserId: number, message?: string) => {
+    try {
+      await doCreate(supervisionId, targetUserId, message);
+      setShowCreate(false);
+      toast("Swap request sent.", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to create swap.", "error");
     }
-
-    toast("Queue refreshed by filters", "info");
   };
+
+  const handleRespond = async (swapId: number, accept: boolean, reason?: string) => {
+    try {
+      await doRespond(swapId, accept, reason);
+      setRespondTarget(null);
+      toast(accept ? "Swap accepted." : "Swap rejected.", accept ? "success" : "warning");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to respond to swap.", "error");
+    }
+  };
+
+  const handleCancel = async (swapId: number) => {
+    try {
+      await doCancel(swapId);
+      toast("Swap request cancelled.", "warning");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to cancel swap.", "error");
+    }
+  };
+
+  const tabItems = [
+    { key: "mine" as SwapsTab, label: "My Requests", badge: stats.pendingMine || undefined },
+    { key: "incoming" as SwapsTab, label: "Incoming", badge: stats.incomingCount || undefined },
+    { key: "history" as SwapsTab, label: "History" },
+  ];
+
+  const activeRows = tab === "mine" ? mine : tab === "incoming" ? incoming : history;
+  const isIncomingTab = tab === "incoming";
 
   return (
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">{content.eyebrow}</span>
-          <h1 className="page-hero__title">{content.title}</h1>
-          <p className="page-hero__description">{content.description}</p>
+          <span className="page-hero__eyebrow">Swap requests</span>
+          <h1 className="page-hero__title">Invigilation swap coordination</h1>
+          <p className="page-hero__description">
+            Request, review, and resolve duty swaps. Approved swaps update the live schedule automatically.
+          </p>
         </div>
         <div className="page-hero__actions">
-          <Button type="button" variant="outline" onClick={resetFilters}>
-            Clear Filters
+          <Button type="button" variant="outline" onClick={() => void load()} disabled={loading}>
+            Refresh
           </Button>
-          <Button type="button" onClick={handlePrimaryAction}>{content.primaryAction}</Button>
+          {!isAdmin && (
+            <Button type="button" onClick={() => void handleOpenCreate()}>
+              Request swap
+            </Button>
+          )}
         </div>
       </section>
 
-      <SwapStatsCards mode={viewRole} stats={stats} />
+      <div className="stitch-metric-grid">
+        <article className="dashboard-metric dashboard-metric--accent">
+          <div className="dashboard-metric__icon"><Icon name="pending_actions" /></div>
+          <div className="dashboard-metric__body">
+            <p className="dashboard-metric__label">Pending mine</p>
+            <strong className="dashboard-metric__value">{stats.pendingMine}</strong>
+          </div>
+        </article>
+        <article className="dashboard-metric dashboard-metric--warning">
+          <div className="dashboard-metric__icon"><Icon name="inbox" /></div>
+          <div className="dashboard-metric__body">
+            <p className="dashboard-metric__label">Incoming requests</p>
+            <strong className="dashboard-metric__value">{stats.incomingCount}</strong>
+          </div>
+        </article>
+        <article className="dashboard-metric dashboard-metric--neutral">
+          <div className="dashboard-metric__icon"><Icon name="history" /></div>
+          <div className="dashboard-metric__body">
+            <p className="dashboard-metric__label">Total my requests</p>
+            <strong className="dashboard-metric__value">{stats.totalMine}</strong>
+          </div>
+        </article>
+        <article className="dashboard-metric dashboard-metric--success">
+          <div className="dashboard-metric__icon"><Icon name="task_alt" /></div>
+          <div className="dashboard-metric__body">
+            <p className="dashboard-metric__label">Resolved</p>
+            <strong className="dashboard-metric__value">{stats.historyCount}</strong>
+          </div>
+        </article>
+      </div>
 
-      <SwapFilters
-        query={query}
-        statusFilter={statusFilter}
-        priorityFilter={priorityFilter}
-        onQueryChange={setQuery}
-        onStatusChange={setStatusFilter}
-        onPriorityChange={setPriorityFilter}
-        onReset={resetFilters}
-      />
+      {error && (
+        <Card title="Error loading swaps">
+          <p className="import-issue import-issue--error">{error}</p>
+          <Button type="button" variant="ghost" onClick={() => void load()}>Retry</Button>
+        </Card>
+      )}
 
-      <Card
-        title="Swap Request Queue"
-        subtitle={content.cardSubtitle}
-      >
-        <SwapRequestTable
-          mode={viewRole}
-          rows={rows}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          onEscalate={handleEscalate}
-          onWithdraw={handleWithdraw}
+      <Card title="Swap requests">
+        <Tabs
+          activeKey={tab}
+          items={tabItems}
+          onChange={(key) => setTab(key as SwapsTab)}
         />
+
+        {loading ? (
+          <div className="page-stack">
+            {[0, 1, 2].map((i) => <Skeleton key={i} className="dashboard-skeleton" />)}
+          </div>
+        ) : (
+          <SwapTable
+            rows={activeRows}
+            isIncoming={isIncomingTab}
+            onCancel={(id) => void handleCancel(id)}
+            onRespond={(swap) => setRespondTarget(swap)}
+          />
+        )}
       </Card>
 
-      <ConfirmDialog
-        open={pendingAction !== null}
-        title={pendingAction?.action === "approve" ? "Approve swap request" : "Reject swap request"}
-        description={
-          pendingAction?.action === "approve"
-            ? `Approving swap request #${pendingAction?.id} will confirm the coverage change. This action updates the record status and cannot be undone from this view.`
-            : `Rejecting swap request #${pendingAction?.id} will notify the requester and close the request. This action cannot be undone from this view.`
-        }
-        confirmLabel={pendingAction?.action === "approve" ? "Approve" : "Reject"}
-        variant={pendingAction?.action === "approve" ? "primary" : "danger"}
-        onConfirm={handleConfirmAction}
-        onCancel={() => setPendingAction(null)}
+      <SwapCreateModal
+        open={showCreate}
+        supervisions={mySlots}
+        loadingSlots={loadingSlots}
+        busy={busy}
+        onClose={() => setShowCreate(false)}
+        onSubmit={(supId, targetId, msg) => void handleCreate(supId, targetId, msg)}
+      />
+
+      <SwapRespondModal
+        swap={respondTarget}
+        busy={busy}
+        onClose={() => setRespondTarget(null)}
+        onRespond={(id, accept, reason) => void handleRespond(id, accept, reason)}
       />
     </div>
   );

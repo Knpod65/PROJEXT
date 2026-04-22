@@ -4,6 +4,7 @@ import type { RoleTheme } from "@/theme/roleThemes";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useI18n } from "@/i18n";
 
 import type { ViewAsOption } from "@/hooks/useSettingsData";
 
@@ -16,6 +17,8 @@ interface SettingsViewAsSwitcherProps {
 }
 
 export function SettingsViewAsSwitcher({ activeRole, activeTheme, onReset, onSelectRole, options }: SettingsViewAsSwitcherProps) {
+  const { t } = useI18n();
+
   return (
     <div style={{ display: "grid", gap: "16px" }}>
       <div
@@ -31,14 +34,12 @@ export function SettingsViewAsSwitcher({ activeRole, activeTheme, onReset, onSel
         }}
       >
         <div style={{ display: "grid", gap: "6px" }}>
-          <Badge variant="blue" size="sm">View-As Preview</Badge>
-          <strong>{activeRole ? `Current preview: ${formatRole(activeRole)}` : "Viewing in default admin mode"}</strong>
-          <span style={{ color: "var(--text-mid)", fontSize: "0.9rem" }}>
-            Switching here uses the admin preview flow, so the theme and shell update together without changing the locked production role flow.
-          </span>
+          <Badge variant="blue" size="sm">{t("settings.viewAs.badge")}</Badge>
+          <strong>{activeRole ? t("settings.viewAs.currentPreview", { role: formatRole(activeRole) }) : t("settings.viewAs.defaultPreview")}</strong>
+          <span style={{ color: "var(--text-mid)", fontSize: "0.9rem" }}>{t("settings.viewAs.description")}</span>
         </div>
         <Button type="button" variant="ghost" onClick={onReset}>
-          Reset Preview
+          {t("settings.viewAs.reset")}
         </Button>
       </div>
 
@@ -58,7 +59,7 @@ export function SettingsViewAsSwitcher({ activeRole, activeTheme, onReset, onSel
               <div style={{ display: "grid", gap: "6px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                   <Badge variant={option.active ? "blue" : "gray"} size="sm">
-                    {option.active ? "Active" : "Preview"}
+                    {option.active ? t("settings.viewAs.active") : t("settings.viewAs.preview")}
                   </Badge>
                   <strong>{option.label}</strong>
                 </div>
@@ -89,7 +90,7 @@ export function SettingsViewAsSwitcher({ activeRole, activeTheme, onReset, onSel
                 onClick={() => onSelectRole(option.role)}
                 fullWidth
               >
-                {option.active ? "Currently selected" : `View as ${option.label}`}
+                {option.active ? t("settings.viewAs.currentlySelected") : t("settings.viewAs.viewAsRole", { role: option.label })}
               </Button>
             </div>
           </article>
@@ -106,11 +107,11 @@ export function SettingsViewAsSwitcher({ activeRole, activeTheme, onReset, onSel
           border: "1px solid rgba(231, 226, 218, 0.78)",
         }}
       >
-        <strong style={{ color: activeTheme.accentText }}>Role theme preview</strong>
+        <strong style={{ color: activeTheme.accentText }}>{t("settings.viewAs.themePreview")}</strong>
         <div style={{ display: "grid", gap: "6px", color: "var(--text-mid)" }}>
-          <span>Accent: {activeTheme.accent}</span>
-          <span>Sidebar: {activeTheme.sidebarBg}</span>
-          <span>Canvas glow: {activeTheme.canvasGlow}</span>
+          <span>{t("settings.viewAs.themeAccent", { value: activeTheme.accent })}</span>
+          <span>{t("settings.viewAs.themeSidebar", { value: activeTheme.sidebarBg })}</span>
+          <span>{t("settings.viewAs.themeCanvasGlow", { value: activeTheme.canvasGlow })}</span>
         </div>
       </div>
     </div>

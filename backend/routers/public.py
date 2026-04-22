@@ -3,11 +3,142 @@ Public Router — ไม่ต้อง login
 นักศึกษาค้นหาตารางสอบด้วยรหัสนักศึกษา
 """
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 from database import get_db
 import models
 
 router = APIRouter()
+
+
+def _get_active_period(db: Session):
+    return db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
+
+
+def _load_enrollment_records(
+    db: Session,
+    student_id: str,
+    active_period: models.ExamPeriod | None,
+):
+    query = db.query(models.EnrollmentRecord).filter(
+        models.EnrollmentRecord.student_id == student_id
+    )
+
+    if active_period:
+        query = query.join(
+            models.Section,
+            models.EnrollmentRecord.section_id == models.Section.id,
+        ).filter(
+            models.Section.semester == active_period.semester,
+            models.Section.academic_year == active_period.academic_year,
+        )
+
+    return query.options(
+        joinedload(models.EnrollmentRecord.section)
+            .joinedload(models.Section.course),
+        joinedload(models.EnrollmentRecord.section)
+            .joinedload(models.Section.teacher),
+        joinedload(models.EnrollmentRecord.section)
+            .selectinload(models.Section.schedules)
+            .joinedload(models.ExamSchedule.room),
+    ).order_by(
+        models.EnrollmentRecord.import_session_id.desc(),
+        models.EnrollmentRecord.id.desc(),
+    ).all()
+
+
+def _load_legacy_enrollments(
+    db: Session,
+    student_id: str,
+    active_period: models.ExamPeriod | None,
+):
+    query = db.query(models.Enrollment).filter(
+        models.Enrollment.student_id == student_id
+    )
+
+    if active_period:
+        query = query.join(
+            models.Section,
+            models.Enrollment.section_id == models.Section.id,
+        ).filter(
+            models.Section.semester == active_period.semester,
+            models.Section.academic_year == active_period.academic_year,
+        )
+
+    return query.options(
+        joinedload(models.Enrollment.section)
+            .joinedload(models.Section.course),
+        joinedload(models.Enrollment.section)
+            .joinedload(models.Section.teacher),
+        joinedload(models.Enrollment.section)
+            .selectinload(models.Section.schedules)
+            .joinedload(models.ExamSchedule.room),
+        joinedload(models.Enrollment.student),
+    ).order_by(models.Enrollment.id.desc()).all()
+
+
+def _serialize_schedule_status(schedule: models.ExamSchedule | None) -> str:
+    if not schedule or not schedule.status:
+        return "not_scheduled"
+    return getattr(schedule.status, "value", str(schedule.status))
+
+
+def _is_schedule_for_active_period(
+    schedule: models.ExamSchedule,
+    active_period: models.ExamPeriod | None,
+) -> bool:
+    if not active_period:
+        return True
+
+    schedule_exam_type = getattr(schedule.exam_type, "value", schedule.exam_type)
+    return schedule_exam_type == active_period.exam_type
+
+
+def _serialize_exam_rows(records, active_period: models.ExamPeriod | None):
+    results = []
+    seen_sections: set[int] = set()
+
+    for record in records:
+        sec = record.section
+        if not sec or sec.id in seen_sections:
+            continue
+
+        seen_sections.add(sec.id)
+        course = sec.course
+        teacher = sec.teacher
+        schedules = [
+            schedule
+            for schedule in (sec.schedules or [])
+            if _is_schedule_for_active_period(schedule, active_period)
+        ]
+        schedules.sort(key=lambda item: (item.exam_date is None, item.exam_date or "9999-12-31", item.exam_time or ""))
+
+        if not schedules:
+            schedules = [None]
+
+        for schedule in schedules:
+            results.append({
+                "course_id": course.course_id if course else "-",
+                "course_name": (course.course_name_th or course.course_name_en) if course else "-",
+                "section_no": sec.section_no,
+                "teacher": teacher.full_name if teacher and teacher.full_name else "-",
+                "exam_date": str(schedule.exam_date) if schedule and schedule.exam_date else None,
+                "exam_time": schedule.exam_time if schedule else None,
+                "room": schedule.room.room_name if schedule and schedule.room else None,
+                "seat_group": sec.co_group_id,
+                "status": _serialize_schedule_status(schedule),
+                "has_schedule": schedule is not None,
+            })
+
+    results.sort(
+        key=lambda item: (
+            item["exam_date"] is None,
+            item["exam_date"] or "9999-12-31",
+            item["exam_time"] or "",
+            item["course_id"],
+            item["section_no"],
+        )
+    )
+    return results
 
 
 @router.get("/schedule/{student_id}")
@@ -16,57 +147,59 @@ def student_schedule(student_id: str, db: Session = Depends(get_db)):
     นักศึกษาพิมพ์รหัสนักศึกษา → ได้ตารางสอบทุกวิชาที่ลงทะเบียน
     ไม่ต้อง login
     """
-    student = db.query(models.Student).filter(
-        models.Student.student_id == student_id.strip()
+    normalized_student_id = student_id.strip()
+    active_period = _get_active_period(db)
+    enrollment_records = _load_enrollment_records(db, normalized_student_id, active_period)
+    schedule_period = active_period if enrollment_records else None
+
+    if not enrollment_records and active_period:
+        enrollment_records = _load_enrollment_records(db, normalized_student_id, None)
+
+    legacy_student = db.query(models.Student).filter(
+        models.Student.student_id == normalized_student_id
     ).first()
+    legacy_enrollments = []
 
-    if not student:
-        raise HTTPException(status_code=404, detail="ไม่พบรหัสนักศึกษานี้ในระบบ")
+    if not enrollment_records:
+        legacy_enrollments = _load_legacy_enrollments(db, normalized_student_id, active_period)
+        if legacy_enrollments:
+            schedule_period = active_period
+        if not legacy_enrollments and active_period:
+            legacy_enrollments = _load_legacy_enrollments(db, normalized_student_id, None)
+            schedule_period = None
 
-    enrollments = db.query(models.Enrollment).filter(
-        models.Enrollment.student_id == student_id
-    ).options(
-        joinedload(models.Enrollment.section)
-            .joinedload(models.Section.course),
-        joinedload(models.Enrollment.section)
-            .joinedload(models.Section.teacher),
-        joinedload(models.Enrollment.section)
-            .joinedload(models.Section.schedules)
-            .joinedload(models.ExamSchedule.room),
-    ).all()
+    if not legacy_student and not enrollment_records and not legacy_enrollments:
+        raise HTTPException(status_code=404, detail="Student ID was not found in the current exam records.")
 
-    results = []
-    for enroll in enrollments:
-        sec = enroll.section
-        if not sec:
-            continue
-        course  = sec.course
-        teacher = sec.teacher
-        sch     = sec.schedules[0] if sec.schedules else None
-
-        results.append({
-            "course_id":      course.course_id if course else "—",
-            "course_name":    course.course_name_th if course else "—",
-            "section_no":     sec.section_no,
-            "num_students":   sec.num_students,
-            "teacher":        teacher.full_name if teacher else "—",
-            "exam_date":      sch.exam_date if sch else None,
-            "exam_time":      sch.exam_time if sch else None,
-            "room":           sch.room.room_name if sch and sch.room else "—",
-            "status":         sch.status if sch else "ยังไม่กำหนด",
-            "has_schedule":   sch is not None,
-        })
-
-    # เรียงตามวันสอบ
-    results.sort(key=lambda x: (x["exam_date"] or "9999", x["exam_time"] or ""))
+    profile_source = enrollment_records[0] if enrollment_records else None
+    legacy_profile = legacy_enrollments[0].student if legacy_enrollments else None
+    exam_rows = _serialize_exam_rows(enrollment_records or legacy_enrollments, schedule_period)
 
     return {
-        "student_id": student.student_id,
-        "full_name":  student.full_name,
-        "major":      student.major,
-        "faculty":    student.faculty,
-        "total_courses": len(results),
-        "exams": results,
+        "student_id": normalized_student_id,
+        "full_name": (
+            legacy_student.full_name if legacy_student and legacy_student.full_name
+            else legacy_profile.full_name if legacy_profile and legacy_profile.full_name
+            else profile_source.student_name if profile_source and profile_source.student_name
+            else normalized_student_id
+        ),
+        "major": (
+            legacy_student.major if legacy_student and legacy_student.major
+            else profile_source.major if profile_source and profile_source.major
+            else None
+        ),
+        "faculty": (
+            legacy_student.faculty if legacy_student and legacy_student.faculty
+            else profile_source.faculty_name if profile_source and profile_source.faculty_name
+            else None
+        ),
+        "term_label": (
+            active_period.label if active_period and active_period.label
+            else f"{active_period.exam_type} {active_period.semester}/{active_period.academic_year}" if active_period
+            else None
+        ),
+        "total_courses": len({(row["course_id"], row["section_no"]) for row in exam_rows}),
+        "exams": exam_rows,
     }
 
 
@@ -312,4 +445,3 @@ def get_timeline(db: Session = Depends(get_db)):
             "locked":            locked,
         },
     }
-

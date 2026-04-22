@@ -1,4 +1,5 @@
 import type { UserRole } from "@/types/api";
+import { translateWithFallback } from "@/i18n";
 
 export interface AppPageConfig {
   key: string;
@@ -8,15 +9,18 @@ export interface AppPageConfig {
   icon: string;
   roles?: UserRole[];
   public?: boolean;
-  navGroup?: string;
+  navGroup?: NavGroupKey;
   mobile?: boolean;
   hidden?: boolean;
   allowBaseAdminPreview?: boolean;
 }
 
-export const navGroupOrder = ["Command", "Teaching", "Operations", "System"];
+export type NavGroupKey = "dashboard" | "operations" | "examManagement" | "people" | "system";
+
+export const navGroupOrder: NavGroupKey[] = ["dashboard", "operations", "examManagement", "people", "system"];
 
 export const appPages: AppPageConfig[] = [
+  // ── Dashboard group ───────────────────────────────────────────
   {
     key: "dashboard",
     title: "Dashboard",
@@ -24,7 +28,7 @@ export const appPages: AppPageConfig[] = [
     path: "/dashboard",
     icon: "dashboard",
     roles: ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
-    navGroup: "Command",
+    navGroup: "dashboard",
     mobile: true,
   },
   {
@@ -34,7 +38,7 @@ export const appPages: AppPageConfig[] = [
     path: "/schedule",
     icon: "event_note",
     roles: ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
-    navGroup: "Command",
+    navGroup: "dashboard",
     mobile: true,
   },
   {
@@ -44,7 +48,7 @@ export const appPages: AppPageConfig[] = [
     path: "/submissions",
     icon: "description",
     roles: ["admin", "esq_head", "secretary", "dept_supervisor", "teacher"],
-    navGroup: "Command",
+    navGroup: "dashboard",
     mobile: true,
   },
   {
@@ -54,7 +58,7 @@ export const appPages: AppPageConfig[] = [
     path: "/attendance",
     icon: "assignment_ind",
     roles: ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
-    navGroup: "Command",
+    navGroup: "dashboard",
     mobile: true,
   },
   {
@@ -64,26 +68,102 @@ export const appPages: AppPageConfig[] = [
     path: "/checkins",
     icon: "how_to_reg",
     roles: ["admin", "dept_supervisor", "staff", "teacher"],
-    navGroup: "Command",
+    navGroup: "dashboard",
     mobile: true,
   },
   {
     key: "swaps",
     title: "Swap Requests",
-    description: "Coverage changes, handoffs, and supervision swap coordination.",
+    description: "Coverage changes, swap coordination, and conflict resolution.",
     path: "/swaps",
     icon: "swap_horiz",
     roles: ["admin", "dept_supervisor", "staff", "teacher"],
-    navGroup: "Command",
+    navGroup: "dashboard",
+  },
+
+  // ── Operations group ──────────────────────────────────────────
+  {
+    key: "workflow",
+    title: "Workflow",
+    description: "Approval pipeline, signature flow, and period release readiness.",
+    path: "/workflow",
+    icon: "approval",
+    roles: ["admin", "esq_head", "secretary"],
+    navGroup: "operations",
   },
   {
-    key: "swaps-v2",
-    title: "Swaps (V2)",
-    description: "Temporary Stitch-based swaps preview for admin validation.",
-    path: "/swaps-v2",
-    icon: "swap_horiz",
+    key: "copy",
+    title: "Copy Count",
+    description: "Sheet counts, copy cost, and print workload tracking.",
+    path: "/copy",
+    icon: "content_copy",
     roles: ["admin"],
-    navGroup: "Command",
+    navGroup: "operations",
+  },
+  {
+    key: "print-queue",
+    title: "Print Queue",
+    description: "Print-shop batches, delivery status, and supply readiness.",
+    path: "/print-queue",
+    icon: "print",
+    roles: ["print_shop"],
+    navGroup: "operations",
+  },
+  {
+    key: "printreview",
+    title: "Print Review",
+    description: "Pre-print verification, submission approval, and print handoff.",
+    path: "/printreview",
+    icon: "fact_check",
+    roles: ["admin", "esq_head", "secretary"],
+    navGroup: "operations",
+  },
+  {
+    key: "coexam",
+    title: "Co-Exam",
+    description: "Shared-exam planning and group alignment controls.",
+    path: "/coexam",
+    icon: "groups",
+    roles: ["admin"],
+    navGroup: "operations",
+  },
+  {
+    key: "optimizer",
+    title: "Optimizer",
+    description: "Scheduling optimization, fairness checks, and assignment automation.",
+    path: "/optimizer",
+    icon: "query_stats",
+    roles: ["admin"],
+    navGroup: "operations",
+  },
+  {
+    key: "rooms-v2",
+    title: "Rooms",
+    description: "Room capacity, active status, and date blocking for optimizer input.",
+    path: "/rooms-v2",
+    icon: "meeting_room",
+    roles: ["admin"],
+    navGroup: "operations",
+  },
+  {
+    key: "external",
+    title: "External Exams",
+    description: "Special exam sessions managed outside the standard timetable.",
+    path: "/external",
+    icon: "language",
+    roles: ["admin", "staff", "teacher"],
+    navGroup: "operations",
+  },
+
+  // ── Exam Management group ─────────────────────────────────────
+  {
+    key: "sections",
+    title: "Sections",
+    description: "Course sections, enrollments, and assigned teaching records.",
+    path: "/sections",
+    icon: "menu_book",
+    roles: ["admin", "esq_head", "secretary", "staff", "teacher"],
+    navGroup: "examManagement",
   },
   {
     key: "myexam",
@@ -92,16 +172,87 @@ export const appPages: AppPageConfig[] = [
     path: "/myexam",
     icon: "assignment",
     roles: ["teacher"],
-    navGroup: "Teaching",
+    navGroup: "examManagement",
   },
   {
-    key: "sections",
-    title: "Sections",
-    description: "Course sections, enrollments, and assigned teaching records.",
-    path: "/sections",
-    icon: "menu_book",
-    roles: ["admin", "esq_head", "secretary", "staff", "teacher"],
-    navGroup: "Teaching",
+    key: "import",
+    title: "Import Data",
+    description: "Bulk data intake for terms, sections, and enrollment records.",
+    path: "/import",
+    icon: "upload_file",
+    roles: ["admin"],
+    navGroup: "examManagement",
+  },
+  {
+    key: "import-audit",
+    title: "Import Audit",
+    description: "Session-level and row-level audit review for import executions.",
+    path: "/import-audit",
+    icon: "manage_search",
+    roles: ["admin"],
+    navGroup: "examManagement",
+  },
+
+  // ── People group ──────────────────────────────────────────────
+  {
+    key: "users",
+    title: "Users",
+    description: "User accounts, role management, and access administration.",
+    path: "/users",
+    icon: "manage_accounts",
+    roles: ["admin"],
+    navGroup: "people",
+  },
+
+  // ── System group ──────────────────────────────────────────────
+  {
+    key: "period",
+    title: "Exam Periods",
+    description: "Term management, active windows, and period switching.",
+    path: "/period",
+    icon: "calendar_month",
+    roles: ["admin"],
+    navGroup: "system",
+  },
+  {
+    key: "settings",
+    title: "Settings",
+    description: "System configuration, retention policy, term preview, and access controls.",
+    path: "/settings",
+    icon: "settings",
+    roles: ["admin"],
+    navGroup: "system",
+    allowBaseAdminPreview: true,
+  },
+  {
+    key: "exammanager",
+    title: "Exam Manager",
+    description: "Manual ownership assignment for exam workflows.",
+    path: "/exammanager",
+    icon: "assignment_add",
+    roles: ["admin"],
+    navGroup: "system",
+    hidden: true,
+  },
+
+  // ── Hidden utility pages (routes still registered, not in nav) ─
+  {
+    key: "venues-v2",
+    title: "Venues",
+    description: "Venue management.",
+    path: "/venues-v2",
+    icon: "domain",
+    roles: ["admin"],
+    hidden: true,
+  },
+  {
+    key: "students-v2",
+    title: "Students",
+    description: "Student record management.",
+    path: "/students-v2",
+    icon: "school",
+    roles: ["admin"],
+    hidden: true,
   },
   {
     key: "student-search",
@@ -111,171 +262,6 @@ export const appPages: AppPageConfig[] = [
     icon: "person_search",
     roles: ["student"],
     public: true,
-    navGroup: "Teaching",
-  },
-  {
-    key: "copy",
-    title: "Copy Count",
-    description: "Sheet counts, copy cost, and print workload tracking.",
-    path: "/copy",
-    icon: "print",
-    roles: ["admin", "staff"],
-    navGroup: "Operations",
-  },
-  {
-    key: "print-queue",
-    title: "Print Queue",
-    description: "Print-shop batches, delivery status, and supply readiness.",
-    path: "/print-queue",
-    icon: "print",
-    roles: ["print_shop"],
-    navGroup: "Operations",
-  },
-  {
-    key: "workflow",
-    title: "Workflow",
-    description: "Signature flow, approvals, and period release readiness.",
-    path: "/workflow",
-    icon: "approval",
-    roles: ["admin", "esq_head", "secretary"],
-    navGroup: "Operations",
-  },
-  {
-    key: "workflow-v2",
-    title: "Workflow (V2)",
-    description: "Temporary Stitch-based workflow preview for admin validation.",
-    path: "/workflow-v2",
-    icon: "approval",
-    roles: ["admin"],
-    navGroup: "Operations",
-  },
-  {
-    key: "coexam",
-    title: "Co-Exam",
-    description: "Shared-exam planning and group alignment controls.",
-    path: "/coexam",
-    icon: "groups",
-    roles: ["admin"],
-    navGroup: "Operations",
-  },
-  {
-    key: "optimizer",
-    title: "Optimizer",
-    description: "Scheduling optimization, fairness checks, and assignment automation.",
-    path: "/optimizer",
-    icon: "query_stats",
-    roles: ["admin"],
-    navGroup: "Operations",
-  },
-  {
-    key: "printreview",
-    title: "Print Review",
-    description: "Pre-print verification and output quality review.",
-    path: "/printreview",
-    icon: "fact_check",
-    roles: ["admin"],
-    navGroup: "Operations",
-  },
-  {
-    key: "external",
-    title: "External Exams",
-    description: "Special exam sessions managed outside the standard timetable.",
-    path: "/external",
-    icon: "language",
-    roles: ["admin"],
-    navGroup: "Operations",
-  },
-  {
-    key: "import",
-    title: "Import Data",
-    description: "Bulk data intake for terms, sections, and enrollment records.",
-    path: "/import",
-    icon: "upload_file",
-    roles: ["admin"],
-    navGroup: "System",
-  },
-  {
-    key: "period",
-    title: "Exam Periods",
-    description: "Term management, active windows, and period switching.",
-    path: "/period",
-    icon: "calendar_month",
-    roles: ["admin"],
-    navGroup: "System",
-  },
-  {
-    key: "settings",
-    title: "Settings",
-    description: "System configuration, guardrails, and support options.",
-    path: "/settings",
-    icon: "settings",
-    roles: ["admin"],
-    navGroup: "System",
-    allowBaseAdminPreview: true,
-  },
-  {
-    key: "settings-v2",
-    title: "Settings (V2)",
-    description: "Temporary Stitch-based settings and view-as preview for admin validation.",
-    path: "/settings-v2",
-    icon: "settings",
-    roles: ["admin"],
-    navGroup: "System",
-    allowBaseAdminPreview: true,
-  },
-  {
-    key: "users",
-    title: "Users",
-    description: "User access, role assignment, and account administration.",
-    path: "/users",
-    icon: "manage_accounts",
-    roles: ["admin"],
-    navGroup: "System",
-  },
-  {
-    key: "students-v2",
-    title: "Students (V2)",
-    description: "Temporary Stitch-based student management preview for admin validation.",
-    path: "/students-v2",
-    icon: "school",
-    roles: ["admin"],
-    navGroup: "System",
-  },
-  {
-    key: "rooms-v2",
-    title: "Rooms (V2)",
-    description: "Temporary Stitch-based room availability preview for admin validation.",
-    path: "/rooms-v2",
-    icon: "meeting_room",
-    roles: ["admin"],
-    navGroup: "System",
-  },
-  {
-    key: "venues-v2",
-    title: "Venues (V2)",
-    description: "Temporary Stitch-based venue management preview for admin validation.",
-    path: "/venues-v2",
-    icon: "domain",
-    roles: ["admin"],
-    navGroup: "System",
-  },
-  {
-    key: "users-v2",
-    title: "Users (V2)",
-    description: "Temporary Stitch-based user management preview for admin validation.",
-    path: "/users-v2",
-    icon: "manage_accounts",
-    roles: ["admin"],
-    navGroup: "System",
-  },
-  {
-    key: "exammanager",
-    title: "Exam Manager",
-    description: "Manual ownership assignment for exam workflows.",
-    path: "/exammanager",
-    icon: "assignment_add",
-    roles: ["admin"],
-    navGroup: "System",
     hidden: true,
   },
   {
@@ -302,4 +288,16 @@ export const mobilePageKeys = ["dashboard", "schedule", "submissions", "attendan
 
 export function getPageConfig(pathname: string) {
   return appPages.find((page) => page.path === pathname);
+}
+
+export function getPageTitle(page: AppPageConfig) {
+  return translateWithFallback(`navigation.pages.${page.key}.title`, page.title);
+}
+
+export function getPageDescription(page: AppPageConfig) {
+  return translateWithFallback(`navigation.pages.${page.key}.description`, page.description);
+}
+
+export function getNavGroupLabel(group: NavGroupKey) {
+  return translateWithFallback(`navigation.groups.${group}`, group);
 }

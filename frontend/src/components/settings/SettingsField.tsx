@@ -1,11 +1,11 @@
-import type { LabelHTMLAttributes, ReactNode } from "react";
+import type React from "react";
 
 import { cx } from "@/utils/cx";
 
-interface SettingsFieldProps extends LabelHTMLAttributes<HTMLLabelElement> {
+interface SettingsFieldProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   label: string;
   helper?: string;
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export function SettingsField({ children, className, helper, label, ...props }: SettingsFieldProps) {

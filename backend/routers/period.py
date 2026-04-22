@@ -10,6 +10,7 @@ Period Router — จัดการ Exam Period (รอบสอบ)
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, text
 from pydantic import BaseModel
@@ -17,7 +18,21 @@ from typing import Optional
 from datetime import datetime, timedelta, timezone
 from database import get_db
 import models
+import schemas
 from auth_utils import require_admin, get_current_user, log_action
+from term_lifecycle import (
+    TERM_STATUS_ACTIVE,
+    TERM_STATUS_DRAFT,
+    get_close_blocking_reasons,
+    get_active_period as get_active_period_record,
+    get_all_periods,
+    get_period_status,
+    mark_period_active,
+    mark_period_archived,
+    mark_period_locked,
+    period_to_dict,
+    period_summary,
+)
 import os, shutil
 
 router = APIRouter()
@@ -44,10 +59,7 @@ def list_periods(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    periods = db.query(models.ExamPeriod).order_by(
-        models.ExamPeriod.academic_year.desc(),
-        models.ExamPeriod.semester.desc(),
-    ).all()
+    periods = get_all_periods(db)
 
     return [_period_dict(p, db) for p in periods]
 
@@ -58,9 +70,7 @@ def get_active_period(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    p = db.query(models.ExamPeriod).filter(
-        models.ExamPeriod.is_active == True
-    ).first()
+    p = get_active_period_record(db)
     if not p:
         raise HTTPException(404, "ยังไม่มี active period — Admin ต้องสร้างก่อน")
     return _period_dict(p, db)
@@ -92,6 +102,7 @@ def create_period(
         exam_type     = data.exam_type,
         label         = label,
         is_active     = False,
+        lifecycle_status = TERM_STATUS_DRAFT,
         created_by    = current_user.id,
     )
     db.add(period)
@@ -121,10 +132,11 @@ def activate_period(
 
     # Atomic activation: deactivate ทั้งหมด แล้ว activate ใน 1 transaction
     # ป้องกัน race condition: ใช้ UPDATE ไม่ใช่ read-modify-write
-    from sqlalchemy import text as _text
-    db.execute(_text(
-        "UPDATE exam_periods SET is_active = (id = :pid)"
-    ), {"pid": period.id})
+    for item in db.query(models.ExamPeriod).all():
+        if item.id == period.id:
+            mark_period_active(item)
+        elif item.is_active or item.lifecycle_status == TERM_STATUS_ACTIVE:
+            mark_period_archived(item)
 
     # อัปเดต system_settings ให้ตรงกัน
     _update_setting(db, "current_semester",      period.semester,      current_user.id)
@@ -135,6 +147,63 @@ def activate_period(
                record_id=period.id, request=request)
 
     return {"status": "ok", "active_period": _period_dict(period, db)}
+
+
+@router.post("/{period_id}/close", response_model=schemas.PeriodCloseResponse)
+def close_period(
+    period_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    period = db.query(models.ExamPeriod).filter(
+        models.ExamPeriod.id == period_id
+    ).first()
+
+    previous_status = get_period_status(period) if period else None
+    blockers = get_close_blocking_reasons(period)
+    if blockers:
+        return JSONResponse(
+            status_code=400 if period else 404,
+            content={
+                "success": False,
+                "period_id": period_id,
+                "previous_lifecycle_status": previous_status,
+                "new_lifecycle_status": previous_status,
+                "locked_at": period.locked_at.isoformat() if period and period.locked_at else None,
+                "plain_language_summary": (
+                    "This term cannot be closed yet."
+                    if period
+                    else "Selected term was not found."
+                ),
+                "blocking_reasons": blockers,
+            },
+        )
+
+    mark_period_locked(period)
+    db.commit()
+    db.refresh(period)
+
+    log_action(
+        db,
+        current_user,
+        "CLOSE_PERIOD",
+        "exam_periods",
+        record_id=period.id,
+        old_values={"lifecycle_status": previous_status},
+        new_values={"lifecycle_status": period.lifecycle_status, "locked_at": period.locked_at.isoformat() if period.locked_at else None},
+        request=request,
+    )
+
+    return {
+        "success": True,
+        "period_id": period.id,
+        "previous_lifecycle_status": previous_status,
+        "new_lifecycle_status": period.lifecycle_status,
+        "locked_at": period.locked_at.isoformat() if period.locked_at else None,
+        "plain_language_summary": period_summary(period),
+        "blocking_reasons": [],
+    }
 
 
 # ── POST /api/period/rollover ────────────────────────────────
@@ -178,6 +247,7 @@ def rollover_period(
             exam_type     = data.new_exam_type,
             label         = label,
             is_active     = False,
+            lifecycle_status = TERM_STATUS_DRAFT,
             created_by    = current_user.id,
         )
         db.add(new_period)
@@ -232,10 +302,11 @@ def rollover_period(
             db.flush()
 
     # 3. Atomic activation — ป้องกัน race condition
-    from sqlalchemy import text as _text
-    db.execute(_text(
-        "UPDATE exam_periods SET is_active = (id = :pid)"
-    ), {"pid": new_period.id})
+    for item in db.query(models.ExamPeriod).all():
+        if item.id == new_period.id:
+            mark_period_active(item)
+        elif item.is_active or item.lifecycle_status == TERM_STATUS_ACTIVE:
+            mark_period_archived(item)
 
     # 4. อัปเดต settings
     _update_setting(db, "current_semester",          data.new_semester,      current_user.id)
@@ -319,15 +390,7 @@ def period_stats(
 
 # ── helpers ───────────────────────────────────────────────────
 def _period_dict(p: "models.ExamPeriod", db: Session) -> dict:
-    return {
-        "id":           p.id,
-        "academic_year": p.academic_year,
-        "semester":     p.semester,
-        "exam_type":    p.exam_type,
-        "label":        p.label,
-        "is_active":    p.is_active,
-        "created_at":   p.created_at.isoformat() if p.created_at else None,
-    }
+    return period_to_dict(p)
 
 
 def _update_setting(db: Session, key: str, value, user_id: int):

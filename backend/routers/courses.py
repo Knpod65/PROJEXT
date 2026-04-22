@@ -112,8 +112,15 @@ def delete_section(
 
 # ── Rooms ─────────────────────────────────────────────────────
 @router.get("/rooms", response_model=List[schemas.RoomOut])
-def list_rooms(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    return db.query(models.Room).filter(models.Room.is_active == True).all()
+def list_rooms(
+    include_inactive: bool = Query(False),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    q = db.query(models.Room)
+    if not include_inactive:
+        q = q.filter(models.Room.is_active == True)
+    return q.order_by(models.Room.room_name).all()
 
 
 @router.post("/rooms", response_model=schemas.RoomOut)
@@ -128,4 +135,25 @@ def create_room(
     db.commit()
     db.refresh(room)
     log_action(db, current_user, "CREATE_ROOM", "rooms", room.id, request=request)
+    return room
+
+
+@router.put("/rooms/{room_id}", response_model=schemas.RoomOut)
+def update_room(
+    room_id: int,
+    data: schemas.RoomUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if not room:
+        raise HTTPException(404, "ไม่พบห้องสอบ")
+    payload = data.model_dump(exclude_unset=True)
+    for field, value in payload.items():
+        setattr(room, field, value)
+    db.commit()
+    db.refresh(room)
+    log_action(db, current_user, "UPDATE_ROOM", "rooms", room.id,
+               new_values=payload, request=request)
     return room

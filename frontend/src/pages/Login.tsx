@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { getPageConfig } from "@/config/navigation";
 import { getRoleSelectionEntry } from "@/components/role-entry/roleEntryConfig";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { useI18n } from "@/i18n";
 import { useAuth } from "@/store/auth.store";
 import { getDefaultRoute, getPublicEntryRoute, getStoredPendingRole, hasRole } from "@/utils/roles";
 
 export function LoginPage() {
+  const { language, t } = useI18n();
   const { signIn, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -17,7 +21,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pendingRole = getStoredPendingRole();
-  const selectedEntry = useMemo(() => getRoleSelectionEntry(pendingRole), [pendingRole]);
+  const selectedEntry = useMemo(() => getRoleSelectionEntry(pendingRole), [language, pendingRole]);
 
   useEffect(() => {
     if (user) {
@@ -33,7 +37,7 @@ export function LoginPage() {
     }
   }, [location.state, navigate, pendingRole, user]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!pendingRole) {
       navigate("/role-selection", { replace: true });
@@ -61,7 +65,7 @@ export function LoginPage() {
 
       navigate(target || "/dashboard", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "เข้าสู่ระบบไม่สำเร็จ");
+      setError(err instanceof Error ? err.message : t("errors.loginFailed"));
     } finally {
       setLoading(false);
     }
@@ -70,40 +74,44 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <Card className="login-card">
+        <div className="login-card__language">
+          <LanguageToggle />
+        </div>
+
         <div className="login-card__brand">
           <div className="login-card__logo">EMS</div>
           <div>
-            <h1>ระบบจัดการข้อสอบ</h1>
-            <p>คณะรัฐศาสตร์และรัฐประศาสนศาสตร์ มช.</p>
+            <h1>{t("auth.login.heading")}</h1>
+            <p>{t("auth.login.subheading")}</p>
           </div>
         </div>
 
         <div className="login-card__meta">
-          <strong>{selectedEntry?.title ?? "Selected workspace"}</strong>
-          <p>{selectedEntry?.description ?? "Choose a role workspace before signing in."}</p>
+          <strong>{selectedEntry?.title ?? t("auth.login.selectedWorkspace")}</strong>
+          <p>{selectedEntry?.description ?? t("auth.login.selectedWorkspaceDescription")}</p>
           <button className="sidebar__logout" type="button" onClick={() => navigate("/role-selection", { state: location.state ?? undefined })}>
-            Change role
+            {t("auth.login.changeRole")}
           </button>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label className="form-field">
-            <span>ชื่อผู้ใช้</span>
+            <span>{t("auth.login.username")}</span>
             <input
               autoComplete="username"
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="firstname.lastname"
+              placeholder={t("auth.login.usernamePlaceholder")}
               required
               value={username}
             />
           </label>
 
           <label className="form-field">
-            <span>รหัสผ่าน</span>
+            <span>{t("auth.login.password")}</span>
             <input
               autoComplete="current-password"
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
+              placeholder={t("auth.login.passwordPlaceholder")}
               required
               type="password"
               value={password}
@@ -113,7 +121,7 @@ export function LoginPage() {
           {error ? <p className="form-error">{error}</p> : null}
 
           <Button fullWidth loading={loading} type="submit">
-            เข้าสู่ระบบ
+            {t("auth.login.submit")}
           </Button>
           <Button
             fullWidth
@@ -124,7 +132,7 @@ export function LoginPage() {
               window.location.href = `/api/auth/sso/login${query}`;
             }}
           >
-            เข้าสู่ระบบด้วย CMU SSO
+            {t("auth.login.sso")}
           </Button>
         </form>
       </Card>

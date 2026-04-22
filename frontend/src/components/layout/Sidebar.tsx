@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 
-import { appPages, navGroupOrder } from "@/config/navigation";
+import { appPages, getNavGroupLabel, getPageDescription, getPageTitle, navGroupOrder } from "@/config/navigation";
+import { useI18n } from "@/i18n";
 import { useAuth } from "@/store/auth.store";
 import { usePeriod } from "@/store/period.store";
 import { getRoleTheme } from "@/theme/roleThemes";
@@ -26,6 +27,7 @@ function getGroupedPages(userRole: ReturnType<typeof getEffectiveRole>, user: Re
 }
 
 export function Sidebar() {
+  const { t } = useI18n();
   const { signOut, user } = useAuth();
   const { activePeriod } = usePeriod();
   const role = getEffectiveRole(user);
@@ -45,25 +47,27 @@ export function Sidebar() {
       </div>
 
       <section className="sidebar__summary">
-        <span className="sidebar__eyebrow">Active period</span>
-        <strong>{activePeriod?.label ?? "No active exam period"}</strong>
-        <p>{user?.full_name ?? user?.username ?? "EMS operator"}</p>
+        <span className="sidebar__eyebrow">{t("common.activePeriod")}</span>
+        <strong>{activePeriod?.label ?? t("common.noActiveExamPeriod")}</strong>
+        <p>{user?.full_name ?? user?.username ?? t("common.operator")}</p>
       </section>
 
       <nav className="sidebar__nav" aria-label="Primary navigation">
         {groupedPages.map(({ group, pages }) => (
           <div key={group} className="sidebar__group">
-            <p className="sidebar__group-title">{group}</p>
+            <p className="sidebar__group-title">{getNavGroupLabel(group)}</p>
             {pages.map((page) => (
               <NavLink
                 key={page.key}
-                className={({ isActive }) => (isActive ? "sidebar__link sidebar__link--active" : "sidebar__link")}
+                className={({ isActive }: { isActive: boolean }) =>
+                  isActive ? "sidebar__link sidebar__link--active" : "sidebar__link"
+                }
                 to={page.path}
               >
                 <Icon className="sidebar__link-icon" name={page.icon} />
                 <span className="sidebar__link-copy">
-                  <strong>{page.title}</strong>
-                  <small>{page.description}</small>
+                  <strong>{getPageTitle(page)}</strong>
+                  <small>{getPageDescription(page)}</small>
                 </span>
               </NavLink>
             ))}
@@ -73,13 +77,13 @@ export function Sidebar() {
 
       <div className="sidebar__footer">
         <div className="sidebar__footer-card">
-          <span className="sidebar__eyebrow">Current role</span>
+          <span className="sidebar__eyebrow">{t("common.currentRole")}</span>
           <strong>{formatRole(role)}</strong>
           <p>{theme.badgeLabel}</p>
         </div>
         <button className="sidebar__logout" onClick={() => void signOut()} type="button">
           <Icon name="logout" />
-          <span>Sign out</span>
+          <span>{t("common.signOut")}</span>
         </button>
       </div>
     </aside>

@@ -1,7 +1,9 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import React from "react";
+
+import { translate } from "@/i18n";
 
 interface ErrorBoundaryProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -16,7 +18,7 @@ interface ErrorBoundaryState {
  *
  * Hooks cannot catch render-phase errors, so this must remain a class component.
  */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -26,7 +28,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
     // Forward to a real error reporting service (e.g. Sentry) once integrated.
     console.error("[EMS] Unhandled component error:", error, info.componentStack);
   }
@@ -57,11 +59,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             }}
           >
             <span style={{ fontSize: "2rem" }} aria-hidden="true">⚠</span>
-            <h2 style={{ margin: 0 }}>Something went wrong</h2>
-            <p style={{ margin: 0, color: "var(--text-mid, #666)" }}>
-              An unexpected error occurred on this page. Your session is still active
-              — you can try again or navigate to another section.
-            </p>
+            <h2 style={{ margin: 0 }}>{translate("layout.errorBoundary.title")}</h2>
+            <p style={{ margin: 0, color: "var(--text-mid, #666)" }}>{translate("layout.errorBoundary.description")}</p>
             {this.state.error ? (
               <p
                 style={{
@@ -80,10 +79,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 type="button"
                 onClick={this.handleReset}
               >
-                Try again
+                {translate("common.tryAgain")}
               </button>
               <a className="ui-button ui-button--ghost ui-button--md" href="/dashboard">
-                Go to dashboard
+                {translate("common.goToDashboard")}
               </a>
             </div>
           </div>

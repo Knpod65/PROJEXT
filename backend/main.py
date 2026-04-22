@@ -15,7 +15,7 @@ from database import engine, Base, get_db
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from cmu_sso import router as sso_router
-from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, imports, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing
+from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, imports, imports_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing
 from routers import scheduler, exports_excel
 import models
 
@@ -182,6 +182,7 @@ app.include_router(schedule.router,  prefix="/api/schedule", tags=["schedule"])
 app.include_router(dashboard.router, prefix="/api/dashboard",tags=["dashboard"])
 app.include_router(pdf.router,       prefix="/api/pdf",      tags=["pdf"])
 app.include_router(imports.router,   prefix="/api/import",   tags=["import"])
+app.include_router(imports_v2.router, prefix="/api/import/v2", tags=["import-v2"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(printing.router, prefix="/api/printing", tags=["printing"])
 app.include_router(period.router,         prefix="/api/period",    tags=["period"])
@@ -236,7 +237,7 @@ async def unhandled_exception_handler(request: FastAPIRequest, exc: Exception):
     )
 
 # ── Serve landing page ─────────────────────────────────────────
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 import os as _os
 
 @app.get("/")
@@ -265,10 +266,35 @@ def health_check(db: Session = Depends(get_db)):
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=503, content={"status": "error", "detail": str(e)})
 
+# Route cache: maps "/api/X" → "/api/X/" when a slash-version exists.
+# Starlette's redirect_slashes can't fire because this catch-all matches first.
+# We replicate that behaviour here, but only for GET requests to /api/* paths.
+_api_slash_cache: dict[str, str | None] = {}
+
+def _find_slash_route(app_routes: list, path: str) -> str | None:
+    slash = path.rstrip("/") + "/"
+    for route in app_routes:
+        rp = getattr(route, "path", "")
+        rm = getattr(route, "methods", None) or set()
+        if rp == slash and "GET" in rm:
+            return slash
+    return None
+
 @app.get("/{full_path:path}")
-async def serve_spa(full_path: str):
+async def serve_spa(full_path: str, request: FastAPIRequest):
     normalized = full_path.lstrip("/")
-    if normalized.startswith("api/"):
+    if normalized.startswith("api/") or normalized == "api":
+        req_path = "/" + normalized
+        # Cache lookup so we only scan routes once per path
+        if req_path not in _api_slash_cache:
+            _api_slash_cache[req_path] = _find_slash_route(request.app.routes, req_path)
+        slash_path = _api_slash_cache[req_path]
+        if slash_path:
+            qs = str(request.query_params)
+            return RedirectResponse(
+                url=slash_path + (f"?{qs}" if qs else ""),
+                status_code=307,
+            )
         return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
     path = _os.path.join(_os.path.dirname(__file__), "static", "index.html")

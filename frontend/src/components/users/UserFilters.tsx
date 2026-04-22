@@ -1,7 +1,9 @@
 import type { FormEvent } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { useI18n } from "@/i18n";
 import type { UserRole } from "@/types/api";
+import { formatRole, formatTranslatedValue } from "@/utils/format";
 
 interface UserFiltersProps {
   query: string;
@@ -13,6 +15,8 @@ interface UserFiltersProps {
   onReset: () => void;
 }
 
+const roleOptions: UserRole[] = ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher", "student", "print_shop"];
+
 export function UserFilters({
   activeFilter,
   onActiveChange,
@@ -22,55 +26,54 @@ export function UserFilters({
   query,
   roleFilter,
 }: UserFiltersProps) {
+  const { t } = useI18n();
+
   return (
-    <section className="filter-bar" aria-label="User filters">
+    <section className="filter-bar" aria-label={t("users.filtersAria")}>
       <div className="filter-bar__fields">
         <label className="filter-field">
-          <span>Search</span>
+          <span>{t("common.search")}</span>
           <input
             type="text"
             value={query}
             onChange={(event: FormEvent<HTMLInputElement>) => onQueryChange(event.currentTarget.value)}
-            placeholder="Name, username, email, department"
+            placeholder={t("users.filters.searchPlaceholder")}
           />
         </label>
 
         <label className="filter-field">
-          <span>Role</span>
+          <span>{t("common.role")}</span>
           <select
             value={roleFilter}
             onChange={(event: FormEvent<HTMLSelectElement>) => onRoleChange(event.currentTarget.value as "all" | UserRole)}
           >
-            <option value="all">All roles</option>
-            <option value="admin">Admin</option>
-            <option value="esq_head">ESQ Head</option>
-            <option value="secretary">Secretary</option>
-            <option value="dept_supervisor">Dept Supervisor</option>
-            <option value="staff">Staff</option>
-            <option value="teacher">Teacher</option>
-            <option value="student">Student</option>
-            <option value="print_shop">Print Shop</option>
+            <option value="all">{t("common.allRoles")}</option>
+            {roleOptions.map((role) => (
+              <option key={role} value={role}>
+                {formatRole(role)}
+              </option>
+            ))}
           </select>
         </label>
 
         <label className="filter-field">
-          <span>Status</span>
+          <span>{t("common.status")}</span>
           <select
             value={activeFilter}
             onChange={(event: FormEvent<HTMLSelectElement>) =>
               onActiveChange(event.currentTarget.value as "all" | "active" | "inactive")
             }
           >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="all">{t("common.allStatuses")}</option>
+            <option value="active">{formatTranslatedValue("status", "active")}</option>
+            <option value="inactive">{formatTranslatedValue("status", "inactive")}</option>
           </select>
         </label>
       </div>
 
       <div className="filter-bar__actions">
         <Button type="button" variant="outline" onClick={onReset}>
-          Reset Filters
+          {t("users.filters.reset")}
         </Button>
       </div>
     </section>

@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent } from "react";
+import type React from "react";
+import { useMemo, useState } from "react";
 
 import { OperationsSummaryCard } from "@/components/attendance/OperationsSummaryCard";
 import { RoomOperationsTable } from "@/components/attendance/RoomOperationsTable";
@@ -46,7 +47,7 @@ export function CheckinsPage() {
   const confirmedCount = rows.filter((row) => row.events[0]?.confirmed || row.events[0]?.confirmed_by_all).length;
   const pendingCount = rows.filter((row) => row.events[0] && !row.events[0]?.confirmed && !row.events[0]?.confirmed_by_all).length;
 
-  const handleCreateCheckin = async (event: FormEvent<HTMLFormElement>) => {
+  const handleCreateCheckin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedSchedule) return;
 

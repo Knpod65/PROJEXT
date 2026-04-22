@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAsyncData } from "@/hooks/useAsyncData";
+import { useI18n } from "@/i18n";
 import { getDashboardAnalytics, getDashboardStats } from "@/services/dashboard.service";
 import { useAuth } from "@/store/auth.store";
 import { formatCurrency, formatNumber, formatPercent, formatRole } from "@/utils/format";
@@ -20,33 +21,35 @@ import { getEffectiveRole } from "@/utils/roles";
 function buildOverviewHighlights(
   roleLabel: string,
   stats: Awaited<ReturnType<typeof getDashboardStats>>,
+  t: ReturnType<typeof useI18n>["t"],
 ): DashboardHighlightItem[] {
   const scheduledPercent = stats.total_sections ? (stats.scheduled_sections / stats.total_sections) * 100 : 0;
 
   return [
     {
       icon: "event_note",
-      label: "Scheduled sections",
+      label: t("dashboard.scheduledSections"),
       value: formatNumber(stats.scheduled_sections),
-      note: `${formatPercent(scheduledPercent)} of all sections are already placed.`,
+      note: t("dashboard.scheduledSectionsNote", { percent: formatPercent(scheduledPercent) }),
     },
     {
       icon: "meeting_room",
-      label: "Rooms in use",
+      label: t("dashboard.roomsInUse"),
       value: formatNumber(stats.rooms_in_use),
-      note: `${roleLabel} workspace is tracking live room utilization.`,
+      note: t("dashboard.roomUtilizationNote", { role: roleLabel }),
     },
     {
       icon: "print",
-      label: "Copy workload",
+      label: t("dashboard.copyWorkload"),
       value: formatNumber(stats.total_sheets),
-      note: `${formatCurrency(stats.copy_cost)} total estimated print cost.`,
+      note: t("dashboard.copyWorkloadNote", { cost: formatCurrency(stats.copy_cost) }),
     },
   ];
 }
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { user } = useAuth();
   const role = getEffectiveRole(user);
 
@@ -73,7 +76,7 @@ export function DashboardPage() {
     return (
       <EmptyState
         icon={<Icon name="warning" />}
-        title="Dashboard data could not be loaded."
+        title={t("dashboard.loadErrorTitle")}
         description={statsState.error ?? undefined}
       />
     );
@@ -83,21 +86,19 @@ export function DashboardPage() {
   const analytics = analyticsState.data;
   const scheduledPercent = stats.total_sections ? (stats.scheduled_sections / stats.total_sections) * 100 : 0;
   const roleLabel = formatRole(role);
-  const overviewHighlights = buildOverviewHighlights(roleLabel, stats);
+  const overviewHighlights = buildOverviewHighlights(roleLabel, stats, t);
 
   return (
     <div className="page-stack page-stack--spacious">
       <section className="page-hero page-hero--dashboard">
         <div>
-          <span className="page-hero__eyebrow">Refined oversight console</span>
-          <h2 className="page-hero__title">Exam operations at a glance</h2>
-          <p className="page-hero__description">
-            The chosen Stitch dashboard is now mapped onto live EMS data so each role gets a cleaner command view without losing the existing academic relationships.
-          </p>
+          <span className="page-hero__eyebrow">{t("dashboard.eyebrow")}</span>
+          <h2 className="page-hero__title">{t("dashboard.title")}</h2>
+          <p className="page-hero__description">{t("dashboard.description")}</p>
         </div>
         <div className="page-hero__actions">
           <Button iconLeft={<Icon name="event_note" />} type="button" onClick={() => navigate("/schedule")}>
-            Open master schedule
+            {t("dashboard.openMasterSchedule")}
           </Button>
           <Button
             iconLeft={<Icon name="assignment_ind" />}
@@ -105,53 +106,85 @@ export function DashboardPage() {
             variant="outline"
             onClick={() => navigate("/attendance")}
           >
-            Room attendance
+            {t("dashboard.roomAttendance")}
           </Button>
         </div>
       </section>
 
       <section className="stitch-metric-grid">
         <DashboardMetricCard
-          hint={`${formatNumber(stats.scheduled_sections)} scheduled (${formatPercent(scheduledPercent)})`}
+          hint={`${formatNumber(stats.scheduled_sections)} (${formatPercent(scheduledPercent)})`}
           icon="event_note"
-          label="Total sections"
+          label={t("dashboard.totalSections")}
           value={formatNumber(stats.total_sections)}
         />
         <DashboardMetricCard
-          hint={`${formatNumber(stats.total_teachers)} faculty records`}
+          hint={t("dashboard.facultyRecordsHint", { count: formatNumber(stats.total_teachers) })}
           icon="school"
-          label="Students covered"
+          label={t("dashboard.studentsCovered")}
           tone="neutral"
           value={formatNumber(stats.total_students)}
         />
         <DashboardMetricCard
-          hint={`${formatCurrency(stats.copy_cost)} print estimate`}
+          hint={t("dashboard.printEstimateHint", { cost: formatCurrency(stats.copy_cost) })}
           icon="print"
-          label="Sheets required"
+          label={t("dashboard.sheetsRequired")}
           tone="warning"
           value={formatNumber(stats.total_sheets)}
         />
         <DashboardMetricCard
-          hint={`${formatNumber(stats.unscheduled_sections)} sections still open`}
+          hint={t("dashboard.unscheduledHint", { count: formatNumber(stats.unscheduled_sections) })}
           icon="meeting_room"
-          label="Rooms in use"
+          label={t("dashboard.roomsInUse")}
           tone="success"
           value={formatNumber(stats.rooms_in_use)}
         />
       </section>
 
-      <section className="dashboard-shell-grid">
-        <Card subtitle={`${roleLabel} operations summary`} title="Command highlights">
-          <DashboardHighlights items={overviewHighlights} />
-        </Card>
+      {role === "admin" && analytics ? (
+        <>
+          <section className="stitch-metric-grid">
+            <DashboardMetricCard
+              icon="swap_horiz"
+              label={t("dashboard.pendingSwaps")}
+              value={formatNumber(analytics.swap_status["pending"] ?? 0)}
+              hint={t("dashboard.pendingSwapsHint")}
+              tone={(analytics.swap_status["pending"] ?? 0) > 0 ? "warning" : "success"}
+              onClick={() => navigate("/swaps")}
+            />
+            <DashboardMetricCard
+              icon="description"
+              label={t("dashboard.submissionsNeeded")}
+              value={formatNumber(analytics.teacher_stats.not_submitted)}
+              hint={t("dashboard.submissionsNeededHint", {
+                submitted: formatNumber(analytics.teacher_stats.submitted),
+                total: formatNumber(analytics.teacher_stats.submitted + analytics.teacher_stats.not_submitted),
+              })}
+              tone={analytics.teacher_stats.not_submitted > 0 ? "warning" : "success"}
+              onClick={() => navigate("/submissions")}
+            />
+            <DashboardMetricCard
+              icon="pending_actions"
+              label={t("dashboard.unconfirmedInvigilators")}
+              value={formatNumber(analytics.supervision_stats.pending)}
+              hint={t("dashboard.unconfirmedInvigilatorsHint", {
+                count: formatNumber(analytics.supervision_stats.confirmed),
+              })}
+              tone={analytics.supervision_stats.pending > 0 ? "warning" : "success"}
+              onClick={() => navigate("/checkins")}
+            />
+            <DashboardMetricCard
+              icon="event_busy"
+              label={t("dashboard.unscheduledSections")}
+              value={formatNumber(stats.unscheduled_sections)}
+              hint={stats.unscheduled_sections === 0 ? t("dashboard.unscheduledSectionsReady") : t("dashboard.unscheduledSectionsReview")}
+              tone={stats.unscheduled_sections > 0 ? "warning" : "success"}
+              onClick={() => navigate("/optimizer")}
+            />
+          </section>
 
-        <Card subtitle="Most recent changes across the current period" title="Recent activity">
-          <DashboardActivityFeed items={stats.recent_logs} />
-        </Card>
-
-        {role === "admin" && analytics ? (
-          <>
-            <Card subtitle="Submission queue across the institution" title="Submission status">
+          <section className="dashboard-shell-grid">
+            <Card subtitle={t("dashboard.submissionStatusSubtitle")} title={t("dashboard.submissionStatus")}>
               <DonutChart
                 centerLabel="Total"
                 colors={["#6c757d", "#f59e0b", "#059669", "#dc2626", "#0d6efd"]}
@@ -160,34 +193,7 @@ export function DashboardPage() {
               />
             </Card>
 
-            <Card subtitle="Confirmed vs pending invigilation" title="Coverage confirmations">
-              <DashboardHighlights
-                items={[
-                  {
-                    icon: "verified",
-                    label: "Confirmed",
-                    value: formatNumber(analytics.supervision_stats.confirmed),
-                    note: "Supervision slots that have already confirmed coverage.",
-                  },
-                  {
-                    icon: "pending_actions",
-                    label: "Pending",
-                    value: formatNumber(analytics.supervision_stats.pending),
-                    note: "Assignments still waiting for an explicit confirmation.",
-                  },
-                  {
-                    icon: "swap_horiz",
-                    label: "Swap requests",
-                    value: formatNumber(
-                      Object.values(analytics.swap_status).reduce((total, item) => total + item, 0),
-                    ),
-                    note: "Requests that may affect room readiness and duty balance.",
-                  },
-                ]}
-              />
-            </Card>
-
-            <Card subtitle="Highest print load by room" title="Copy workload">
+            <Card subtitle={t("dashboard.copyWorkload")} title={t("dashboard.copyWorkload")}>
               <BarChart
                 color="#0d6efd"
                 labels={analytics.copy_per_room.slice(0, 5).map((item) => item.room)}
@@ -195,7 +201,7 @@ export function DashboardPage() {
               />
             </Card>
 
-            <Card subtitle="Open vs resolved swap requests" title="Swap mix">
+            <Card subtitle={t("dashboard.swapMixSubtitle")} title={t("dashboard.swapMix")}>
               <DonutChart
                 centerLabel="Swaps"
                 colors={["#f59e0b", "#059669", "#dc2626", "#6b7280"]}
@@ -203,68 +209,92 @@ export function DashboardPage() {
                 values={Object.values(analytics.swap_status)}
               />
             </Card>
-          </>
-        ) : (
-          <>
-            <Card subtitle="Operational focus built from the chosen Stitch layout" title={`${roleLabel} focus`}>
-              <DashboardHighlights
-                items={[
-                  {
-                    icon: "fact_check",
-                    label: "Scheduled progress",
-                    value: formatPercent(scheduledPercent),
-                    note: "Use this to judge how ready your current role view is for the period.",
-                  },
-                  {
-                    icon: "groups",
-                    label: "Teaching coverage",
-                    value: formatNumber(stats.total_teachers),
-                    note: "Faculty records currently linked into the exam period.",
-                  },
-                  {
-                    icon: "assignment_ind",
-                    label: "Next action",
-                    value: stats.unscheduled_sections === 0 ? "Ready" : "Review",
-                    note:
-                      stats.unscheduled_sections === 0
-                        ? "Scheduling looks complete from the current data snapshot."
-                        : `${formatNumber(stats.unscheduled_sections)} sections still need follow-up.`,
-                  },
-                ]}
-              />
-            </Card>
 
-            <Card subtitle="Quick route into the first reusable EMS page families" title="Jump to work">
-              <div className="dashboard-quick-actions">
-                <Button
-                  iconLeft={<Icon name="description" />}
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/submissions")}
-                >
-                  Review submissions
-                </Button>
-                <Button
-                  iconLeft={<Icon name="how_to_reg" />}
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/checkins")}
-                >
-                  Open check-ins
-                </Button>
-                <Button
-                  iconLeft={<Icon name="event_note" />}
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/schedule")}
-                >
-                  Review schedule
-                </Button>
-              </div>
+            <div className="dashboard-activity-wrapper">
+              <Card subtitle={t("dashboard.recentActivitySubtitleAdmin")} title={t("dashboard.recentActivity")}>
+                <DashboardActivityFeed items={stats.recent_logs} maxItems={8} />
+              </Card>
+              <Button
+                iconLeft={<Icon name="manage_search" />}
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/import-audit")}
+              >
+                {t("dashboard.fullAuditLog")}
+              </Button>
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className="dashboard-shell-grid">
+          <Card subtitle={t("dashboard.commandHighlightsSubtitle", { role: roleLabel })} title={t("dashboard.commandHighlights")}>
+            <DashboardHighlights items={overviewHighlights} />
+          </Card>
+
+          <div className="dashboard-activity-wrapper">
+            <Card subtitle={t("dashboard.recentActivitySubtitle")} title={t("dashboard.recentActivity")}>
+              <DashboardActivityFeed items={stats.recent_logs} maxItems={8} />
             </Card>
-          </>
-        )}
-      </section>
+          </div>
+
+          <Card subtitle={t("dashboard.operationalFocus")} title={t("dashboard.roleFocus", { role: roleLabel })}>
+            <DashboardHighlights
+              items={[
+                {
+                  icon: "fact_check",
+                  label: t("dashboard.scheduledProgress"),
+                  value: formatPercent(scheduledPercent),
+                  note: t("dashboard.scheduledProgressNote"),
+                },
+                {
+                  icon: "groups",
+                  label: t("dashboard.teachingCoverage"),
+                  value: formatNumber(stats.total_teachers),
+                  note: t("dashboard.teachingCoverageNote"),
+                },
+                {
+                  icon: "assignment_ind",
+                  label: t("dashboard.nextAction"),
+                  value: stats.unscheduled_sections === 0 ? t("dashboard.nextActionReady") : t("dashboard.nextActionReview"),
+                  note:
+                    stats.unscheduled_sections === 0
+                      ? t("dashboard.nextActionReadyNote")
+                      : t("dashboard.nextActionReviewNote", { count: formatNumber(stats.unscheduled_sections) }),
+                },
+              ]}
+            />
+          </Card>
+
+          <Card subtitle={t("dashboard.jumpToWorkSubtitle")} title={t("dashboard.jumpToWork")}>
+            <div className="dashboard-quick-actions">
+              <Button
+                iconLeft={<Icon name="description" />}
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/submissions")}
+              >
+                {t("dashboard.reviewSubmissions")}
+              </Button>
+              <Button
+                iconLeft={<Icon name="how_to_reg" />}
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/checkins")}
+              >
+                {t("dashboard.openCheckins")}
+              </Button>
+              <Button
+                iconLeft={<Icon name="event_note" />}
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/schedule")}
+              >
+                {t("dashboard.reviewSchedule")}
+              </Button>
+            </div>
+          </Card>
+        </section>
+      )}
     </div>
   );
 }

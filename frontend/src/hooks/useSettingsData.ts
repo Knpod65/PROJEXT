@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { type AppLanguage, useI18n } from "@/i18n";
 import { useAuth } from "@/store/auth.store";
 import type { RoleTheme } from "@/theme/roleThemes";
 import { getRoleTheme } from "@/theme/roleThemes";
@@ -13,9 +14,9 @@ interface GeneralSettingsDraft {
 }
 
 interface LocalizationSettingsDraft {
-  language: string;
-  timezone: string;
-  dateFormat: string;
+  language: AppLanguage;
+  timezone: "bangkok" | "utc";
+  dateFormat: "compact" | "iso";
 }
 
 interface AccessSettingsDraft {
@@ -34,27 +35,10 @@ export interface ViewAsOption {
 
 const previewRoles: UserRole[] = ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher", "student", "print_shop"];
 
-const roleDescriptions: Record<UserRole, string> = {
-  admin: "Full institutional oversight and configuration control.",
-  esq_head: "Executive quality and reporting perspective.",
-  secretary: "Coordination desk and approval pacing view.",
-  dept_supervisor: "Department-level supervision and readiness view.",
-  staff: "Operations and logistics support perspective.",
-  teacher: "Teaching and exam coordination perspective.",
-  student: "Public-facing exam visibility perspective.",
-  print_shop: "Dedicated production queue, dispatch, and printing workflow preview.",
-};
-
 const initialGeneralSettings: GeneralSettingsDraft = {
   systemName: "Editorial Authority EMS",
   primaryContactEmail: "admin@institution.edu",
   supportPhone: "+66 2 000 0000",
-};
-
-const initialLocalizationSettings: LocalizationSettingsDraft = {
-  language: "Thai (Standard)",
-  timezone: "(GMT+07:00) Bangkok, Hanoi, Jakarta",
-  dateFormat: "DD MMM YYYY",
 };
 
 const initialAccessSettings: AccessSettingsDraft = {
@@ -64,23 +48,32 @@ const initialAccessSettings: AccessSettingsDraft = {
 };
 
 export function useSettingsData() {
+  const { language, setLanguage, t } = useI18n();
   const { switchViewAs, user } = useAuth();
   const activeRole = getEffectiveRole(user);
   const activeTheme = getRoleTheme(activeRole);
   const [generalSettings, setGeneralSettings] = useState(initialGeneralSettings);
-  const [localizationSettings, setLocalizationSettings] = useState(initialLocalizationSettings);
+  const [localizationSettings, setLocalizationSettings] = useState<LocalizationSettingsDraft>({
+    language,
+    timezone: "bangkok",
+    dateFormat: "compact",
+  });
   const [accessSettings, setAccessSettings] = useState(initialAccessSettings);
+
+  useEffect(() => {
+    setLocalizationSettings((current) => ({ ...current, language }));
+  }, [language]);
 
   const viewAsOptions = useMemo<ViewAsOption[]>(
     () =>
       previewRoles.map((role) => ({
         role,
         label: getRoleTheme(role).label,
-        description: roleDescriptions[role],
+        description: t(`settings.previewRole.${role}`),
         theme: getRoleTheme(role),
         active: activeRole === role,
       })),
-    [activeRole],
+    [activeRole, t],
   );
 
   const updateGeneralSetting = <Key extends keyof GeneralSettingsDraft>(key: Key, value: GeneralSettingsDraft[Key]) => {
@@ -92,6 +85,10 @@ export function useSettingsData() {
     value: LocalizationSettingsDraft[Key],
   ) => {
     setLocalizationSettings((current) => ({ ...current, [key]: value }));
+
+    if (key === "language") {
+      setLanguage(value as AppLanguage);
+    }
   };
 
   const updateAccessSetting = <Key extends keyof AccessSettingsDraft>(key: Key, value: AccessSettingsDraft[Key]) => {

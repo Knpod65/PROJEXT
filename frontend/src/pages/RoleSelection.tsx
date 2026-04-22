@@ -4,10 +4,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { RoleSelectionCard } from "@/components/role-entry/RoleSelectionCard";
 import { getRoleSelectionEntries, type RoleEntryKey } from "@/components/role-entry/roleEntryConfig";
 import { Button } from "@/components/ui/Button";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { useI18n } from "@/i18n";
 import { useAuth } from "@/store/auth.store";
 import { getDefaultRoute, getStoredPendingRole, storePendingRole } from "@/utils/roles";
 
 export function RoleSelectionPage() {
+  const { language, t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,7 +19,7 @@ export function RoleSelectionPage() {
     return pendingRole ?? null;
   });
 
-  const entries = useMemo(() => getRoleSelectionEntries(), []);
+  const entries = useMemo(() => getRoleSelectionEntries(), [language]);
 
   useEffect(() => {
     if (user) {
@@ -42,23 +45,21 @@ export function RoleSelectionPage() {
       <div className="role-entry-shell">
         <section className="page-hero">
           <div>
-            <span className="page-hero__eyebrow">Production Role Entry</span>
-            <h1 className="page-hero__title">Choose your workspace before sign-in</h1>
-            <p className="page-hero__description">
-              Select the role experience you intend to enter. The login step will validate this choice and lock the
-              resulting session to the matching workspace.
-            </p>
+            <span className="page-hero__eyebrow">{t("auth.roleSelection.eyebrow")}</span>
+            <h1 className="page-hero__title">{t("auth.roleSelection.title")}</h1>
+            <p className="page-hero__description">{t("auth.roleSelection.description")}</p>
           </div>
           <div className="page-hero__actions">
+            <LanguageToggle />
             <div className="role-entry-user">
-              <strong>EMS role validation</strong>
-              <span>Role selection happens before authentication in the production flow.</span>
-              <small>Admin preview switching stays inside settings only after login.</small>
+              <strong>{t("auth.roleSelection.validationTitle")}</strong>
+              <span>{t("auth.roleSelection.validationDescription")}</span>
+              <small>{t("auth.roleSelection.validationNote")}</small>
             </div>
           </div>
         </section>
 
-        <section className="role-entry-grid" aria-label="Role selection">
+        <section className="role-entry-grid" aria-label={t("auth.roleSelection.aria")}>
           {entries.map((entry) => (
             <RoleSelectionCard
               key={entry.key}
@@ -70,16 +71,13 @@ export function RoleSelectionPage() {
         </section>
 
         <div className="role-entry-actions">
-          <p className="role-entry-note">
-            This pre-login role choice captures user intent first. Authentication then confirms whether the selected
-            workspace is allowed for the signed-in account.
-          </p>
+          <p className="role-entry-note">{t("auth.roleSelection.note")}</p>
           <div className="inline-actions">
             <Button type="button" variant="outline" onClick={() => navigate("/student-search")}>
-              Public Student Search
+              {t("auth.roleSelection.publicSearch")}
             </Button>
             <Button disabled={!selectedEntryKey} type="button" onClick={handleContinue}>
-              Continue to sign in
+              {t("auth.roleSelection.continue")}
             </Button>
           </div>
         </div>

@@ -5,9 +5,9 @@ Import Router — นำเข้าข้อมูลจากไฟล์ท�
   GET  /api/import/sessions     — รายการ session ที่ import แล้ว
 """
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, case, func
 from typing import Optional
 from database import get_db
 import models
@@ -15,8 +15,65 @@ from auth_utils import require_admin
 from datetime import datetime, timezone
 import pandas as pd
 import io, re
+from term_lifecycle import require_period_editable_for_values
 
 router = APIRouter()
+
+
+def _detect_import_type(session: models.ImportSession) -> str:
+    if (session.opencourse_rows or 0) > 0 and (session.enrollment_rows or 0) > 0:
+        return "mixed"
+    if (session.opencourse_rows or 0) > 0:
+        return "opencourse"
+    if (session.enrollment_rows or 0) > 0:
+        return "enrollment"
+    return "personnel_or_employee"
+
+
+def _status_from_counts(total_rows: int, imported_rows: int, skipped_rows: int, error_rows: int) -> str:
+    if total_rows == 0:
+        return "no_logs"
+    if imported_rows == 0 and error_rows > 0:
+        return "blocked"
+    if skipped_rows > 0:
+        return "completed_with_skips"
+    return "completed"
+
+
+def _build_session_audit_payload(
+    session: models.ImportSession,
+    user_lookup: dict[int, str],
+    counts: dict[str, int],
+) -> dict:
+    total_rows = counts.get("total_rows", 0)
+    valid_rows = counts.get("valid_rows", 0)
+    warning_rows = counts.get("warning_rows", 0)
+    error_rows = counts.get("error_rows", 0)
+    imported_rows = counts.get("imported_rows", 0)
+    skipped_rows = counts.get("skipped_rows", 0)
+
+    return {
+        "import_session_id": session.id,
+        "id": session.id,
+        "import_type": _detect_import_type(session),
+        "academic_year": session.academic_year,
+        "semester": session.semester,
+        "exam_type": session.exam_type,
+        "imported_by": user_lookup.get(session.created_by, "unknown"),
+        "started_at": session.created_at.isoformat() if session.created_at else None,
+        "completed_at": session.last_updated.isoformat() if session.last_updated else None,
+        "created_at": session.created_at.isoformat() if session.created_at else None,
+        "last_updated": session.last_updated.isoformat() if session.last_updated else None,
+        "opencourse_rows": session.opencourse_rows,
+        "enrollment_rows": session.enrollment_rows,
+        "total_rows": total_rows,
+        "valid_rows": valid_rows,
+        "warning_rows": warning_rows,
+        "error_rows": error_rows,
+        "imported_rows": imported_rows,
+        "skipped_rows": skipped_rows,
+        "status": _status_from_counts(total_rows, imported_rows, skipped_rows, error_rows),
+    }
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -131,6 +188,8 @@ async def import_opencourse(
         raise HTTPException(400, "exam_type ต้องเป็น 'midterm' หรือ 'final'")
     if semester not in ("1", "2"):
         raise HTTPException(400, "semester ต้องเป็น '1' หรือ '2'")
+
+    require_period_editable_for_values(db, academic_year, semester, exam_type)
 
     df = read_uploaded_file(file)
     df = normalize_cols(df)
@@ -308,6 +367,8 @@ async def import_enrollment(
     """
     if exam_type not in ("midterm", "final"):
         raise HTTPException(400, "exam_type ต้องเป็น 'midterm' หรือ 'final'")
+
+    require_period_editable_for_values(db, academic_year, semester, exam_type)
 
     content = await file.read()
     fname   = file.filename.lower()
@@ -519,19 +580,222 @@ def list_import_sessions(
     sessions = db.query(models.ImportSession).order_by(
         models.ImportSession.created_at.desc()
     ).all()
+
+    if not sessions:
+        return []
+
+    session_ids = [s.id for s in sessions]
+    creator_ids = list({s.created_by for s in sessions if s.created_by is not None})
+
+    user_lookup = {
+        u.id: (u.full_name or u.username or "unknown")
+        for u in db.query(models.User).filter(models.User.id.in_(creator_ids)).all()
+    } if creator_ids else {}
+
+    grouped_rows = db.query(
+        models.ImportRowLog.session_id,
+        models.ImportRowLog.status,
+        func.count(models.ImportRowLog.id),
+    ).filter(
+        models.ImportRowLog.session_id.in_(session_ids)
+    ).group_by(
+        models.ImportRowLog.session_id,
+        models.ImportRowLog.status,
+    ).all()
+
+    grouped_selected_imported = db.query(
+        models.ImportRowLog.session_id,
+        func.sum(case((models.ImportRowLog.was_imported == True, 1), else_=0)),
+        func.sum(case((models.ImportRowLog.was_imported == False, 1), else_=0)),
+    ).filter(
+        models.ImportRowLog.session_id.in_(session_ids)
+    ).group_by(
+        models.ImportRowLog.session_id,
+    ).all()
+
+    count_map: dict[int, dict[str, int]] = {sid: {
+        "total_rows": 0,
+        "valid_rows": 0,
+        "warning_rows": 0,
+        "error_rows": 0,
+        "imported_rows": 0,
+        "skipped_rows": 0,
+    } for sid in session_ids}
+
+    for session_id, status, count in grouped_rows:
+        stats = count_map.setdefault(session_id, {
+            "total_rows": 0,
+            "valid_rows": 0,
+            "warning_rows": 0,
+            "error_rows": 0,
+            "imported_rows": 0,
+            "skipped_rows": 0,
+        })
+        stats["total_rows"] += int(count or 0)
+        if status == "valid":
+            stats["valid_rows"] += int(count or 0)
+        elif status == "warning":
+            stats["warning_rows"] += int(count or 0)
+        elif status == "error":
+            stats["error_rows"] += int(count or 0)
+
+    for session_id, imported_count, skipped_count in grouped_selected_imported:
+        stats = count_map.setdefault(session_id, {
+            "total_rows": 0,
+            "valid_rows": 0,
+            "warning_rows": 0,
+            "error_rows": 0,
+            "imported_rows": 0,
+            "skipped_rows": 0,
+        })
+        stats["imported_rows"] = int(imported_count or 0)
+        stats["skipped_rows"] = int(skipped_count or 0)
+
     return [
-        {
-            "id":               s.id,
-            "academic_year":    s.academic_year,
-            "semester":         s.semester,
-            "exam_type":        s.exam_type,
-            "opencourse_rows":  s.opencourse_rows,
-            "enrollment_rows":  s.enrollment_rows,
-            "created_at":       s.created_at.isoformat() if s.created_at else None,
-            "last_updated":     s.last_updated.isoformat() if s.last_updated else None,
-        }
+        _build_session_audit_payload(s, user_lookup, count_map.get(s.id, {}))
         for s in sessions
     ]
+
+
+@router.get("/sessions/{session_id}/audit")
+def session_audit_detail(
+    session_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(require_admin),
+):
+    sess = db.query(models.ImportSession).filter(models.ImportSession.id == session_id).first()
+    if not sess:
+        raise HTTPException(404, "ไม่พบ session")
+
+    creator = None
+    if sess.created_by:
+        creator = db.query(models.User).filter(models.User.id == sess.created_by).first()
+
+    user_lookup = {
+        sess.created_by: (creator.full_name or creator.username) if creator else "unknown"
+    } if sess.created_by else {}
+
+    grouped_rows = db.query(
+        models.ImportRowLog.status,
+        func.count(models.ImportRowLog.id),
+    ).filter(
+        models.ImportRowLog.session_id == session_id
+    ).group_by(
+        models.ImportRowLog.status,
+    ).all()
+
+    imported_skipped = db.query(
+        func.sum(case((models.ImportRowLog.was_imported == True, 1), else_=0)),
+        func.sum(case((models.ImportRowLog.was_imported == False, 1), else_=0)),
+    ).filter(
+        models.ImportRowLog.session_id == session_id
+    ).first()
+
+    issue_rows = db.query(
+        models.ImportRowLog.error_code,
+        models.ImportRowLog.error_message,
+        func.count(models.ImportRowLog.id),
+    ).filter(
+        models.ImportRowLog.session_id == session_id,
+        models.ImportRowLog.error_code.isnot(None),
+    ).group_by(
+        models.ImportRowLog.error_code,
+        models.ImportRowLog.error_message,
+    ).order_by(
+        func.count(models.ImportRowLog.id).desc(),
+        models.ImportRowLog.error_code.asc(),
+    ).all()
+
+    counts = {
+        "total_rows": 0,
+        "valid_rows": 0,
+        "warning_rows": 0,
+        "error_rows": 0,
+        "imported_rows": int((imported_skipped[0] if imported_skipped else 0) or 0),
+        "skipped_rows": int((imported_skipped[1] if imported_skipped else 0) or 0),
+    }
+
+    for status, count in grouped_rows:
+        c = int(count or 0)
+        counts["total_rows"] += c
+        if status == "valid":
+            counts["valid_rows"] += c
+        elif status == "warning":
+            counts["warning_rows"] += c
+        elif status == "error":
+            counts["error_rows"] += c
+
+    return {
+        "session": _build_session_audit_payload(sess, user_lookup, counts),
+        "issue_summary": [
+            {
+                "code": code,
+                "message": message,
+                "count": int(count or 0),
+            }
+            for code, message, count in issue_rows
+        ],
+    }
+
+
+@router.get("/sessions/{session_id}/rows")
+def session_row_logs(
+    session_id: int,
+    status: Optional[str] = Query(default=None),
+    error_code: Optional[str] = Query(default=None),
+    q: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db),
+    _=Depends(require_admin),
+):
+    sess = db.query(models.ImportSession).filter(models.ImportSession.id == session_id).first()
+    if not sess:
+        raise HTTPException(404, "ไม่พบ session")
+
+    query = db.query(models.ImportRowLog).filter(models.ImportRowLog.session_id == session_id)
+
+    if status:
+        query = query.filter(models.ImportRowLog.status == status)
+    if error_code:
+        query = query.filter(models.ImportRowLog.error_code == error_code)
+
+    row_logs = query.order_by(models.ImportRowLog.row_number.asc()).all()
+
+    keyword = (q or "").strip().lower()
+    rows = []
+    for row in row_logs:
+        raw_data = row.raw_data or {}
+        raw_values_text = " ".join(str(value) for value in raw_data.values()).lower() if isinstance(raw_data, dict) else str(raw_data).lower()
+
+        if keyword:
+            row_number_text = str(row.row_number)
+            searchable = " ".join([
+                row_number_text,
+                str(row.error_code or ""),
+                str(row.error_message or ""),
+                raw_values_text,
+            ]).lower()
+            if keyword not in searchable:
+                continue
+
+        rows.append({
+            "id": row.id,
+            "row_number": row.row_number,
+            "status": row.status,
+            "error_code": row.error_code,
+            "error_message": row.error_message,
+            "was_selected": bool(row.was_selected),
+            "was_imported": bool(row.was_imported),
+            "override_reason": row.override_reason,
+            "raw_data": raw_data,
+            "raw_data_preview": raw_values_text[:280],
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+        })
+
+    return {
+        "session_id": session_id,
+        "total_rows": len(rows),
+        "rows": rows,
+    }
 
 
 @router.get("/sessions/{session_id}/summary")

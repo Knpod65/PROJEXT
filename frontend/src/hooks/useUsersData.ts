@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { useAsyncData } from "@/hooks/useAsyncData";
-import { deactivateUser, listUsers } from "@/services/users.service";
+import { deactivateUser, listUsers, updateUser } from "@/services/users.service";
 import type { UserOut, UserRole } from "@/types/api";
 
 export interface UserStats {
@@ -86,5 +86,6 @@ export function useUsersData() {
     resetFilters,
     reload: state.reload,
     deactivateUser,
+    updateUserRole: (userId: number, role: UserRole) => updateUser(userId, { role }),
   };
 }
