@@ -151,7 +151,7 @@ export const appPages: AppPageConfig[] = [
     description: "Special exam sessions managed outside the standard timetable.",
     path: "/external",
     icon: "language",
-    roles: ["admin", "staff", "teacher"],
+    roles: ["admin", "staff"],
     navGroup: "operations",
   },
 
@@ -162,7 +162,7 @@ export const appPages: AppPageConfig[] = [
     description: "Course sections, enrollments, and assigned teaching records.",
     path: "/sections",
     icon: "menu_book",
-    roles: ["admin", "esq_head", "secretary", "staff", "teacher"],
+    roles: ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
     navGroup: "examManagement",
   },
   {
@@ -226,13 +226,12 @@ export const appPages: AppPageConfig[] = [
   },
   {
     key: "exammanager",
-    title: "Exam Manager",
-    description: "Manual ownership assignment for exam workflows.",
+    title: "Course Ownership",
+    description: "Department-scoped teacher responsibility assignment for each exam cycle.",
     path: "/exammanager",
     icon: "assignment_add",
-    roles: ["admin"],
-    navGroup: "system",
-    hidden: true,
+    roles: ["admin", "dept_supervisor"],
+    navGroup: "examManagement",
   },
 
   // ── Hidden utility pages (routes still registered, not in nav) ─

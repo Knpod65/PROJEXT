@@ -37,6 +37,7 @@ from auth_utils import (
     SIGN_ORDER_USERNAMES, is_signer
 )
 from term_lifecycle import ensure_period_record_editable, require_active_period_for_mutation
+from time_ranges import normalize_time_range, normalize_time_value, parse_time_range
 
 router = APIRouter()
 
@@ -561,7 +562,34 @@ class RoomUnavailCreate(BaseModel):
     room_id:    int
     block_date: str
     block_time: Optional[str] = None   # None = ทั้งวัน
+    start_time: Optional[str] = None
+    end_time:   Optional[str] = None
     reason:     Optional[str] = None
+
+
+def _normalize_room_block_fields(data: RoomUnavailCreate) -> tuple[Optional[str], Optional[str], Optional[str]]:
+    start_time = normalize_time_value(data.start_time)
+    end_time = normalize_time_value(data.end_time)
+    block_time = data.block_time.strip() if isinstance(data.block_time, str) and data.block_time.strip() else None
+
+    if start_time or end_time:
+        if not start_time or not end_time:
+            raise HTTPException(400, "ต้องระบุทั้ง start_time และ end_time ให้ครบ")
+        normalized_block = normalize_time_range(start_time, end_time)
+        if not normalized_block:
+            raise HTTPException(400, "ช่วงเวลาไม่ถูกต้อง")
+        return normalized_block, start_time, end_time
+
+    if block_time:
+        normalized_block = normalize_time_range(block_time)
+        if normalized_block is None:
+            raise HTTPException(400, "block_time ไม่ถูกต้อง")
+        parsed = parse_time_range(normalized_block)
+        start_time = parsed[0] if parsed else None
+        end_time = parsed[1] if parsed else None
+        return normalized_block, start_time, end_time
+
+    return None, None, None
 
 
 @router.get("/room-unavailability/")
@@ -595,7 +623,9 @@ def list_room_unavailability(
             "room_name":  r.room.room_name if r.room else None,
             "capacity":   r.room.capacity  if r.room else None,
             "block_date": r.block_date,
-            "block_time": r.block_time,
+            "block_time": normalize_time_range(r.start_time, r.end_time) or normalize_time_range(r.block_time) or r.block_time,
+            "start_time": normalize_time_value(r.start_time) or (parse_time_range(r.block_time)[0] if r.block_time and parse_time_range(r.block_time) else None),
+            "end_time":   normalize_time_value(r.end_time) or (parse_time_range(r.block_time)[1] if r.block_time and parse_time_range(r.block_time) else None),
             "all_day":    r.block_time is None,
             "reason":     r.reason,
         }
@@ -615,12 +645,14 @@ def add_room_unavailability(
     if not p:
         raise HTTPException(400, "ไม่มี active period")
 
+    normalized_block_time, start_time, end_time = _normalize_room_block_fields(data)
+
     existing = db.query(models.RoomUnavailability).filter(
         and_(
             models.RoomUnavailability.room_id        == data.room_id,
             models.RoomUnavailability.exam_period_id == p.id,
             models.RoomUnavailability.block_date     == data.block_date,
-            models.RoomUnavailability.block_time     == data.block_time,
+            models.RoomUnavailability.block_time     == normalized_block_time,
         )
     ).first()
     if existing:
@@ -630,7 +662,9 @@ def add_room_unavailability(
         room_id        = data.room_id,
         exam_period_id = p.id,
         block_date     = data.block_date,
-        block_time     = data.block_time,
+        block_time     = normalized_block_time,
+        start_time     = start_time,
+        end_time       = end_time,
         reason         = data.reason,
         created_by     = current_user.id,
     )
@@ -641,7 +675,7 @@ def add_room_unavailability(
     log_action(db, current_user, "ADD_ROOM_UNAVAILABILITY", "room_unavailability",
                record_id=row.id,
                new_values={"room": room.room_name if room else data.room_id,
-                           "date": data.block_date, "time": data.block_time},
+                           "date": data.block_date, "time": normalized_block_time},
                request=request)
     return {"id": row.id, "status": "added"}
 

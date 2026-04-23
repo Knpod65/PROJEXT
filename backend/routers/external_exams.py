@@ -24,6 +24,7 @@ import models
 from auth_utils import require_admin, require_staff_or_admin, get_current_user, log_action
 from collections import defaultdict
 import statistics
+from time_ranges import normalize_time_range
 
 router = APIRouter()
 
@@ -101,6 +102,7 @@ def _exam_dict(exam: models.ExternalExam) -> dict:
                 "id":          s.id,
                 "user_id":     s.user_id,
                 "full_name":   s.user.full_name if s.user else None,
+                "user_name":   s.user.full_name if s.user else None,
                 "slot_order":  s.slot_order,
                 "compensation":s.compensation,
                 "confirmed":   s.confirmed,
@@ -175,49 +177,137 @@ def _is_excluded(user: models.User) -> bool:
 
 
 def _get_eligible_staff(db: Session, exam: models.ExternalExam) -> List[models.User]:
-    """
-    ดึง staff ที่สามารถคุมสอบ external ได้:
-    - role = staff เท่านั้น
-    - ไม่ใช่ เลขาคณะ / esq_head / dept_supervisor / Head_of_Unit
-    - is_active = True
-    - ไม่มี conflict วัน+เวลาเดียวกัน
-    - ยังไม่ได้ assign ใน exam นี้
-    """
-    already_assigned = {s.user_id for s in exam.supervisions}
-
-    # conflict ภายใน (internal supervision)
-    conflicted = set()
-    same_day_internal = db.query(models.Supervision.user_id).join(
-        models.ExamSchedule,
-        models.Supervision.schedule_id == models.ExamSchedule.id
-    ).filter(
-        models.ExamSchedule.exam_date == exam.exam_date,
-        models.ExamSchedule.exam_time == exam.exam_time,
-    ).all()
-    conflicted.update(r[0] for r in same_day_internal)
-
-    # conflict external อื่น
-    same_day_ext = db.query(models.ExternalSupervision.user_id).join(
-        models.ExternalExam,
-        models.ExternalSupervision.external_exam_id == models.ExternalExam.id
-    ).filter(
-        models.ExternalExam.exam_date == exam.exam_date,
-        models.ExternalExam.exam_time == exam.exam_time,
-        models.ExternalExam.id != exam.id,
-    ).all()
-    conflicted.update(r[0] for r in same_day_ext)
-
-    all_staff = db.query(models.User).filter(
-        models.User.role      == models.UserRole.staff,
-        models.User.is_active == True,
-    ).all()
-
+    preview = _build_assignment_preview(db, exam)
+    eligible_ids = {row["user_id"] for row in preview["eligible_candidates"]}
     return [
-        u for u in all_staff
-        if not _is_excluded(u)
-        and u.id not in already_assigned
-        and u.id not in conflicted
+        user
+        for user in db.query(models.User).filter(
+            models.User.role == models.UserRole.staff,
+            models.User.is_active == True,
+        ).all()
+        if user.id in eligible_ids
     ]
+
+
+def _build_assignment_preview(db: Session, exam: models.ExternalExam) -> dict:
+    normalized_exam_time = normalize_time_range(exam.exam_time) or exam.exam_time
+    already_assigned = {s.user_id for s in exam.supervisions}
+    acc_load = _get_accumulated_load(db)
+
+    internal_conflicts = {
+        row[0]
+        for row in db.query(models.Supervision.user_id).join(
+            models.ExamSchedule,
+            models.Supervision.schedule_id == models.ExamSchedule.id,
+        ).filter(
+            models.ExamSchedule.exam_date == exam.exam_date,
+            models.ExamSchedule.exam_time == exam.exam_time,
+        ).all()
+    }
+    external_conflicts = {
+        row[0]
+        for row in db.query(models.ExternalSupervision.user_id).join(
+            models.ExternalExam,
+            models.ExternalSupervision.external_exam_id == models.ExternalExam.id,
+        ).filter(
+            models.ExternalExam.exam_date == exam.exam_date,
+            models.ExternalExam.exam_time == exam.exam_time,
+            models.ExternalExam.id != exam.id,
+        ).all()
+    }
+
+    unavailable_by_user: dict[int, str] = {}
+    for user_id, block_time in db.query(
+        models.StaffUnavailability.user_id,
+        models.StaffUnavailability.block_time,
+    ).filter(
+        models.StaffUnavailability.exam_period_id == exam.exam_period_id,
+        models.StaffUnavailability.block_date == exam.exam_date,
+    ).all():
+        if block_time is None:
+            unavailable_by_user[user_id] = "Unavailable all day"
+            continue
+        if normalize_time_range(block_time) == normalized_exam_time:
+            unavailable_by_user[user_id] = f"Unavailable at {normalized_exam_time}"
+
+    all_staff = [
+        user
+        for user in db.query(models.User).filter(
+            models.User.role == models.UserRole.staff,
+            models.User.is_active == True,
+        ).order_by(models.User.full_name).all()
+    ]
+
+    eligible_candidates = []
+    conflicted_staff = []
+    excluded_staff = []
+    assigned_staff = []
+
+    for user in all_staff:
+        payload = {
+            "user_id": user.id,
+            "full_name": user.full_name,
+            "division": user.division,
+            "unit": user.unit,
+            "total_load": acc_load.get(user.id, 0),
+        }
+        if _is_excluded(user):
+            excluded_staff.append({**payload, "reason": "Excluded by role/division rule"})
+            continue
+        if user.id in already_assigned:
+            assigned_staff.append(payload)
+            continue
+        if user.id in unavailable_by_user:
+            conflicted_staff.append({**payload, "reason": unavailable_by_user[user.id], "conflict_type": "staff_unavailability"})
+            continue
+        if user.id in internal_conflicts:
+            conflicted_staff.append({**payload, "reason": "Already assigned to an internal exam at this time", "conflict_type": "internal_exam"})
+            continue
+        if user.id in external_conflicts:
+            conflicted_staff.append({**payload, "reason": "Already assigned to another external exam at this time", "conflict_type": "external_exam"})
+            continue
+        eligible_candidates.append(payload)
+
+    eligible_candidates.sort(key=lambda row: (row["total_load"], row["user_id"]))
+
+    needed_count = max(exam.invigilators_needed - len(exam.supervisions), 0)
+    recommended_assignment = eligible_candidates[:needed_count]
+    candidate_pool = [row["total_load"] for row in eligible_candidates + conflicted_staff + assigned_staff]
+    projected_pool = candidate_pool.copy()
+    for row in recommended_assignment:
+        projected_pool.append(row["total_load"] + 1)
+
+    current_score = round(statistics.stdev(candidate_pool), 2) if len(candidate_pool) > 1 else 0.0
+    projected_score = round(statistics.stdev(projected_pool), 2) if len(projected_pool) > 1 else current_score
+
+    warnings = []
+    shortage_count = max(needed_count - len(eligible_candidates), 0)
+    if needed_count == 0:
+        warnings.append("This external exam already has enough assigned staff.")
+    if shortage_count > 0:
+        warnings.append(
+            f"Only {len(eligible_candidates)} eligible staff are available, but {needed_count} are required."
+        )
+
+    return {
+        "exam": _exam_dict(exam),
+        "allocation_mode": "staff_only",
+        "required_count": exam.invigilators_needed,
+        "assigned_count": len(exam.supervisions),
+        "needed_count": needed_count,
+        "shortage_count": shortage_count,
+        "eligible_candidates": eligible_candidates,
+        "recommended_assignment": recommended_assignment,
+        "conflicted_staff": conflicted_staff,
+        "excluded_staff": excluded_staff,
+        "assigned_staff": assigned_staff,
+        "fairness": {
+            "current_score": current_score,
+            "projected_score": projected_score,
+        },
+        "warnings": warnings,
+        "note": "External exam optimization assigns staff only. It does not assign rooms.",
+    }
 
 
 # ══════════════════════════════════════════════════════════════
@@ -228,7 +318,7 @@ def _get_eligible_staff(db: Session, exam: models.ExternalExam) -> List[models.U
 def list_external_exams(
     period_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_staff_or_admin),
 ):
     if period_id:
         q = db.query(models.ExternalExam).filter(
@@ -284,9 +374,19 @@ def create_external_exam(
 def get_external_exam(
     exam_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_staff_or_admin),
 ):
     return _exam_dict(_load_exam(db, exam_id))
+
+
+@router.post("/{exam_id}/assign-preview")
+def preview_auto_assign(
+    exam_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    exam = _load_exam(db, exam_id)
+    return _build_assignment_preview(db, exam)
 
 
 @router.put("/{exam_id}")
@@ -335,7 +435,7 @@ def auto_assign(
     compensation: float = 300.0,
     request: Request = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_staff_or_admin),
 ):
     """
     Auto-assign กรรมการคุมสอบโดยใช้ fairness จาก accumulated load
@@ -347,61 +447,44 @@ def auto_assign(
     """
     exam = _load_exam(db, exam_id)
 
-    if len(exam.supervisions) >= exam.invigilators_needed:
-        raise HTTPException(400,
-            f"กรรมการครบแล้ว {len(exam.supervisions)}/{exam.invigilators_needed} คน — ลบออกก่อนถ้าต้องการ assign ใหม่")
+    preview = _build_assignment_preview(db, exam)
+    need = preview["needed_count"]
+    if need <= 0:
+        raise HTTPException(400, preview["warnings"][0] if preview["warnings"] else "This external exam already has enough assigned staff.")
+    if preview["shortage_count"] > 0:
+        raise HTTPException(400, preview["warnings"][0] if preview["warnings"] else "Not enough eligible staff are available.")
 
-    need = exam.invigilators_needed - len(exam.supervisions)
-
-    # accumulated load ทุก period
-    acc_load = _get_accumulated_load(db)
-
-    # eligible staff (ไม่ conflict, ไม่ได้ assign แล้ว)
-    eligible = _get_eligible_staff(db, exam)
-
-    if len(eligible) < need:
-        raise HTTPException(400,
-            f"Staff ที่ว่างมีแค่ {len(eligible)} คน แต่ต้องการ {need} คน")
-
-    # เรียงจาก load น้อยสุด (fairness)
-    eligible.sort(key=lambda u: (acc_load.get(u.id, 0), u.id))
-
-    # เลือก
     next_slot = len(exam.supervisions) + 1
     assigned  = []
-    for user in eligible[:need]:
+    for candidate in preview["recommended_assignment"]:
         db.add(models.ExternalSupervision(
             external_exam_id = exam.id,
-            user_id          = user.id,
+            user_id          = candidate["user_id"],
             slot_order       = next_slot,
             compensation     = compensation,
             confirmed        = False,
             assigned_by      = "auto",
         ))
         assigned.append({
-            "user_id":     user.id,
-            "full_name":   user.full_name,
-            "load_before": acc_load.get(user.id, 0),
+            "user_id":     candidate["user_id"],
+            "full_name":   candidate["full_name"],
+            "load_before": candidate["total_load"],
         })
         next_slot += 1
 
     db.commit()
 
-    # fairness score หลัง assign
-    loads_after = [acc_load.get(u["user_id"], 0) + 1 for u in assigned]
-    all_loads   = list(acc_load.values())
-    fairness    = round(statistics.stdev(all_loads), 2) if len(all_loads) > 1 else 0.0
-
     log_action(db, current_user, "AUTO_ASSIGN_EXTERNAL", "external_exams",
                record_id=exam_id,
                new_values={"assigned": [a["full_name"] for a in assigned],
-                           "fairness_score": fairness},
+                           "fairness_score": preview["fairness"]["projected_score"]},
                request=request)
 
     return {
         "status":         "ok",
         "assigned":       assigned,
-        "fairness_score": fairness,
+        "fairness_score": preview["fairness"]["projected_score"],
+        "preview":        _build_assignment_preview(db, _load_exam(db, exam_id)),
         "exam":           _exam_dict(_load_exam(db, exam_id)),
     }
 
@@ -412,17 +495,21 @@ def manual_assign(
     data: ManualAssignRequest,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_staff_or_admin),
 ):
     """กำหนดกรรมการเองโดยระบุ user_ids"""
     exam = _load_exam(db, exam_id)
     already = {s.user_id for s in exam.supervisions}
+    preview = _build_assignment_preview(db, exam)
+    eligible_ids = {row["user_id"] for row in preview["eligible_candidates"]}
 
     added = []
     next_slot = len(exam.supervisions) + 1
     for uid in data.user_ids:
         if uid in already:
             continue
+        if uid not in eligible_ids:
+            raise HTTPException(400, f"user_id {uid} is not eligible for this slot")
         user = db.query(models.User).filter(models.User.id == uid).first()
         if not user:
             continue
@@ -450,7 +537,7 @@ def remove_supervision(
     user_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_staff_or_admin),
 ):
     sup = db.query(models.ExternalSupervision).filter(
         and_(
@@ -534,7 +621,7 @@ def get_leaderboard(
 def conflict_check(
     exam_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_staff_or_admin),
 ):
     """ดูว่า staff คนไหนว่าง/ติดในวันเวลานั้น"""
     exam     = _load_exam(db, exam_id)

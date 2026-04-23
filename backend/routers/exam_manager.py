@@ -20,8 +20,26 @@ from typing import Optional, List
 from datetime import datetime, timezone
 from database import get_db
 import models
-from auth_utils import (require_admin, get_current_user, log_action,
-                        get_effective_role, get_dept_filter, is_view_all_role)
+from academic_groups import build_course_group_clause, can_access_academic_group, normalize_academic_group_code
+from auth_utils import (
+    require_admin,
+    require_dept_or_admin,
+    get_current_user,
+    log_action,
+    get_effective_role,
+    get_dept_filter,
+    is_view_all_role,
+    assert_dept_access,
+)
+from exam_ownership import (
+    OWNER_SOURCE_AUTO,
+    OWNER_SOURCE_MANUAL,
+    build_owner_map,
+    get_assignment_status,
+    get_teacher_owned_section_ids,
+    normalize_owner_exam_type,
+    upsert_section_owner,
+)
 
 router = APIRouter()
 
@@ -32,6 +50,12 @@ class ProposeManagerRequest(BaseModel):
     exam_type:   str          # "midterm" | "final"
     manager_id:  Optional[int] = None   # None = เสนอตัวเอง
     note:        Optional[str] = None
+
+
+class SectionOwnershipUpdateRequest(BaseModel):
+    midterm_manager_id: Optional[int] = None
+    final_manager_id: Optional[int] = None
+    note: Optional[str] = None
 
 
 class MaterialRequest(BaseModel):
@@ -60,19 +84,18 @@ def _can_manage_section(db, user: models.User, section: models.Section) -> bool:
         return False
     # dept_supervisor — จัดการได้เฉพาะแผนกตัวเอง
     if user.role == models.UserRole.dept_supervisor:
-        main_teacher = db.query(models.User).filter(
-            models.User.id == section.teacher_id
-        ).first() if section.teacher_id else None
-        return (main_teacher is not None and
-                user.dept_code is not None and
-                main_teacher.dept_code == user.dept_code)
+        return can_access_academic_group(user.dept_code, _section_department_code(section))
     # teacher — main teacher หรือ co-teacher (dept เดียวกัน)
     if section.teacher_id == user.id:
         return True
     main_teacher = db.query(models.User).filter(
         models.User.id == section.teacher_id
     ).first() if section.teacher_id else None
-    if main_teacher and user.dept_code and main_teacher.dept_code == user.dept_code:
+    if (
+        main_teacher
+        and normalize_academic_group_code(user.dept_code)
+        and can_access_academic_group(user.dept_code, main_teacher.dept_code)
+    ):
         return True
     return False
 
@@ -81,7 +104,7 @@ def _manager_dict(em: models.SectionExamManager) -> dict:
     return {
         "id":           em.id,
         "section_id":   em.section_id,
-        "exam_type":    em.exam_type,
+        "exam_type":    normalize_owner_exam_type(em.exam_type),
         "manager_id":   em.manager_id,
         "manager_name": em.manager.full_name if em.manager else None,
         "proposed_by":  em.proposed_by,
@@ -90,7 +113,20 @@ def _manager_dict(em: models.SectionExamManager) -> dict:
         "confirmed_by": em.confirmed_by,
         "confirmer_name":em.confirmer.full_name if em.confirmer else None,
         "confirmed_at": em.confirmed_at.isoformat() if em.confirmed_at else None,
+        "assignment_source": em.assignment_source or OWNER_SOURCE_MANUAL,
+        "assignment_status": get_assignment_status(em),
         "note":         em.note,
+    }
+
+
+def _teacher_dict(user: models.User | None) -> dict | None:
+    if not user:
+        return None
+    return {
+        "id": user.id,
+        "full_name": user.full_name,
+        "email": user.email,
+        "dept_code": normalize_academic_group_code(user.dept_code),
     }
 
 
@@ -117,9 +153,142 @@ def _material_dict(mat: models.ExamMaterialRequest) -> dict:
     }
 
 
+def _section_department_code(section: models.Section) -> str | None:
+    if section.course and section.course.academic_group:
+        return section.course.academic_group
+    if section.teacher and section.teacher.dept_code:
+        return normalize_academic_group_code(section.teacher.dept_code)
+    if section.course and section.course.department:
+        return normalize_academic_group_code(section.course.department)
+    return None
+
+
+def _validate_teacher_candidate(
+    db: Session,
+    teacher_id: int | None,
+    *,
+    dept_code: str | None = None,
+    section_group: str | None = None,
+) -> models.User | None:
+    if teacher_id is None:
+        return None
+
+    teacher = db.query(models.User).filter(
+        models.User.id == teacher_id,
+        models.User.role == models.UserRole.teacher,
+        models.User.is_active == True,
+    ).first()
+    if not teacher:
+        raise HTTPException(400, "Responsible teacher must be an active teacher account.")
+    normalized_dept_code = normalize_academic_group_code(dept_code)
+    normalized_teacher_group = normalize_academic_group_code(teacher.dept_code)
+    normalized_section_group = normalize_academic_group_code(section_group)
+    if (
+        normalized_dept_code
+        and normalized_section_group != "ALL"
+        and normalized_teacher_group != normalized_dept_code
+    ):
+        raise HTTPException(400, "Department supervisors can assign teachers only within their own department.")
+    return teacher
+
+
 # ══════════════════════════════════════════════════════════════
 # EXAM MANAGER — co-teacher designation
 # ══════════════════════════════════════════════════════════════
+
+@router.put("/section/{section_id}/ownership")
+def update_section_ownership(
+    section_id: int,
+    data: SectionOwnershipUpdateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_dept_or_admin),
+):
+    section = db.query(models.Section).options(
+        joinedload(models.Section.course),
+        joinedload(models.Section.teacher),
+    ).filter(models.Section.id == section_id).first()
+    if not section:
+        raise HTTPException(404, "ไม่พบ section")
+
+    dept_scope = normalize_academic_group_code(current_user.dept_code) if current_user.role == models.UserRole.dept_supervisor else None
+    section_dept = _section_department_code(section)
+    if dept_scope:
+        if not section_dept:
+            raise HTTPException(400, "This section has no department scope for supervisor assignment.")
+        assert_dept_access(current_user, section_dept)
+
+    midterm_teacher = _validate_teacher_candidate(
+        db,
+        data.midterm_manager_id,
+        dept_code=dept_scope,
+        section_group=section_dept,
+    )
+    final_teacher = _validate_teacher_candidate(
+        db,
+        data.final_manager_id,
+        dept_code=dept_scope,
+        section_group=section_dept,
+    )
+
+    old_rows = db.query(models.SectionExamManager).options(
+        joinedload(models.SectionExamManager.manager),
+        joinedload(models.SectionExamManager.proposer),
+        joinedload(models.SectionExamManager.confirmer),
+    ).filter(
+        models.SectionExamManager.section_id == section_id,
+        models.SectionExamManager.exam_type.in_(["midterm", "final"]),
+    ).all()
+    old_values = {row.exam_type: _manager_dict(row) for row in old_rows}
+
+    upsert_section_owner(
+        db,
+        section=section,
+        exam_type="midterm",
+        manager_id=midterm_teacher.id if midterm_teacher else None,
+        actor_id=current_user.id,
+        note=data.note,
+        assignment_source=OWNER_SOURCE_MANUAL,
+    )
+    upsert_section_owner(
+        db,
+        section=section,
+        exam_type="final",
+        manager_id=final_teacher.id if final_teacher else None,
+        actor_id=current_user.id,
+        note=data.note,
+        assignment_source=OWNER_SOURCE_MANUAL,
+    )
+    db.commit()
+
+    updated_rows = db.query(models.SectionExamManager).options(
+        joinedload(models.SectionExamManager.manager),
+        joinedload(models.SectionExamManager.proposer),
+        joinedload(models.SectionExamManager.confirmer),
+    ).filter(
+        models.SectionExamManager.section_id == section_id,
+        models.SectionExamManager.exam_type.in_(["midterm", "final"]),
+    ).all()
+    new_values = {row.exam_type: _manager_dict(row) for row in updated_rows}
+
+    log_action(
+        db,
+        current_user,
+        "UPDATE_SECTION_OWNERSHIP",
+        "section_exam_managers",
+        record_id=section_id,
+        old_values=old_values,
+        new_values=new_values,
+        request=request,
+    )
+
+    return {
+        "section_id": section_id,
+        "midterm": next((_manager_dict(row) for row in updated_rows if row.exam_type == "midterm"), None),
+        "final": next((_manager_dict(row) for row in updated_rows if row.exam_type == "final"), None),
+        "complete": len(updated_rows) == 2 and all(row.confirmed for row in updated_rows),
+        "message": "Ownership assignments updated.",
+    }
 
 @router.post("/propose")
 def propose_manager(
@@ -191,6 +360,7 @@ def propose_manager(
         confirmed   = auto_confirm,
         confirmed_by= current_user.id if auto_confirm else None,
         confirmed_at= datetime.now(timezone.utc) if auto_confirm else None,
+        assignment_source=OWNER_SOURCE_AUTO if auto_confirm and manager_id == section.teacher_id else OWNER_SOURCE_MANUAL,
         note        = data.note,
     )
     db.add(em)
@@ -275,7 +445,7 @@ def reassign_manager(
     data: ProposeManagerRequest,
     request: Request,
     db:   Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_dept_or_admin),
 ):
     """Admin เปลี่ยนผู้รับผิดชอบ"""
     em = db.query(models.SectionExamManager).filter(
@@ -298,6 +468,7 @@ def reassign_manager(
     em.confirmed_by = current_user.id
     em.confirmed_at = datetime.now(timezone.utc)
     em.note         = data.note or em.note
+    em.assignment_source = OWNER_SOURCE_MANUAL
     db.commit()
 
     _ensure_submission(db, em.section_id, data.manager_id)
@@ -358,7 +529,7 @@ def get_overview(
     academic_year: Optional[str] = None,
     unassigned_only: bool = False,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_dept_or_admin),
 ):
     """
     ภาพรวมทุก section — ใครได้รับมอบหมายแล้ว ใครยังไม่ได้
@@ -378,6 +549,7 @@ def get_overview(
     q = db.query(models.Section).options(
         joinedload(models.Section.course),
         joinedload(models.Section.teacher),
+        joinedload(models.Section.teaching_room),
     ).filter(
         and_(
             models.Section.semester      == semester,
@@ -386,52 +558,83 @@ def get_overview(
     )
     # dept_supervisor เห็นแค่แผนกตัวเอง
     if dept_filter:
-        q = q.join(
-            models.User, models.Section.teacher_id == models.User.id, isouter=True
-        ).filter(models.User.dept_code == dept_filter)
-    sections = q.all()
-
-    managers_map = {}
-    all_managers = db.query(models.SectionExamManager).filter(
-        models.SectionExamManager.section_id.in_([s.id for s in sections])
-    ).options(
-        joinedload(models.SectionExamManager.manager)
-    ).all()
-    for em in all_managers:
-        managers_map.setdefault(em.section_id, {})[em.exam_type] = em
+        group_clause = build_course_group_clause(models.Course.course_id, dept_filter)
+        if group_clause is None:
+            sections = []
+        else:
+            q = q.join(
+                models.Course, models.Section.course_id == models.Course.id
+            ).filter(group_clause)
+            sections = q.order_by(models.Section.id.asc()).all()
+    else:
+        sections = q.order_by(models.Section.id.asc()).all()
+    owner_map, created = build_owner_map(
+        db,
+        sections,
+        ["midterm", "final"],
+        auto_create=True,
+        actor_id=current_user.id,
+    )
+    if created:
+        db.commit()
 
     result = []
+    ready_count = 0
+    needs_attention_count = 0
+    auto_assigned_count = 0
+    manual_assigned_count = 0
     for sec in sections:
-        mgrs = managers_map.get(sec.id, {})
-        mid  = mgrs.get("midterm")
-        fin  = mgrs.get("final")
+        mid = owner_map.get((sec.id, "midterm"))
+        fin = owner_map.get((sec.id, "final"))
+        mid_status = get_assignment_status(mid)
+        fin_status = get_assignment_status(fin)
+        both_ok = bool(mid and mid.confirmed and fin and fin.confirmed)
+        needs_attention = any(status_name in {"needs_attention", "pending"} for status_name in (mid_status, fin_status))
+
+        if both_ok:
+            ready_count += 1
+        if needs_attention:
+            needs_attention_count += 1
+        if any(status_name == "manual_assigned" for status_name in (mid_status, fin_status)):
+            manual_assigned_count += 1
+        if all(status_name == "auto_assigned" for status_name in (mid_status, fin_status)):
+            auto_assigned_count += 1
+
         row = {
             "section_id":    sec.id,
             "course_id":     sec.course.course_id   if sec.course else None,
             "course_name":   sec.course.course_name_th if sec.course else None,
             "section_no":    sec.section_no,
+            "department":    _section_department_code(sec),
+            "academic_group": _section_department_code(sec),
+            "imported_teachers": [_teacher_dict(sec.teacher)] if sec.teacher else [],
             "main_teacher":  sec.teacher.full_name  if sec.teacher else None,
             "num_students":  sec.num_students,
+            "teaching_room": sec.teaching_room.room_name if sec.teaching_room else None,
             "midterm": _manager_dict(mid) if mid else None,
             "final":   _manager_dict(fin) if fin else None,
             "midterm_ok": mid.confirmed if mid else False,
             "final_ok":   fin.confirmed if fin else False,
-            "both_ok":    (mid.confirmed if mid else False) and (fin.confirmed if fin else False),
+            "both_ok":    both_ok,
+            "needs_attention": needs_attention,
         }
         if unassigned_only and row["both_ok"]:
             continue
         result.append(row)
 
     total = len(sections)
-    assigned = sum(1 for r in result if r["both_ok"])
 
     return {
         "semester":     semester,
         "academic_year":academic_year,
         "total":        total,
-        "assigned":     assigned,
-        "unassigned":   total - assigned,
-        "pct_complete": round(assigned / total * 100, 1) if total else 0,
+        "assigned":     ready_count,
+        "unassigned":   total - ready_count,
+        "ready_count":  ready_count,
+        "needs_attention_count": needs_attention_count,
+        "auto_assigned_count": auto_assigned_count,
+        "manual_assigned_count": manual_assigned_count,
+        "pct_complete": round(ready_count / total * 100, 1) if total else 0,
         "sections":     result,
     }
 
@@ -458,21 +661,55 @@ def get_my_sections(
     if not p:
         return {"sections": [], "pending_confirm": []}
 
+    try:
+        active_exam_type = normalize_owner_exam_type(p.exam_type)
+    except ValueError:
+        active_exam_type = None
+
     # sections ที่รับผิดชอบ:
-    # - teacher: เฉพาะ section ที่ตัวเองเป็น main teacher
+    # - teacher: เฉพาะ section ที่ถูก assign ให้ใน active exam cycle
     # - dept_supervisor: ทุก section ในแผนกตัวเอง
     if current_user.role == models.UserRole.dept_supervisor and current_user.dept_code:
-        my_sections = db.query(models.Section).options(
+        group_clause = build_course_group_clause(models.Course.course_id, current_user.dept_code)
+        base_query = db.query(models.Section).options(
             joinedload(models.Section.course),
-        ).join(
-            models.User, models.Section.teacher_id == models.User.id, isouter=True
         ).filter(
             and_(
-                models.User.dept_code        == current_user.dept_code,
-                models.Section.semester      == p.semester,
+                models.Section.semester == p.semester,
                 models.Section.academic_year == p.academic_year,
             )
-        ).all()
+        )
+        if group_clause is None:
+            my_sections = []
+        else:
+            my_sections = base_query.join(
+                models.Course, models.Section.course_id == models.Course.id
+            ).filter(group_clause).all()
+    elif current_user.role == models.UserRole.teacher:
+        owned_section_ids, _ = get_teacher_owned_section_ids(
+            db,
+            current_user.id,
+            p.semester,
+            p.academic_year,
+        )
+        if owned_section_ids is None:
+            my_sections = db.query(models.Section).options(
+                joinedload(models.Section.course),
+            ).filter(
+                and_(
+                    models.Section.teacher_id == current_user.id,
+                    models.Section.semester == p.semester,
+                    models.Section.academic_year == p.academic_year,
+                )
+            ).all()
+        elif owned_section_ids:
+            my_sections = db.query(models.Section).options(
+                joinedload(models.Section.course),
+            ).filter(
+                models.Section.id.in_(owned_section_ids)
+            ).all()
+        else:
+            my_sections = []
     else:
         my_sections = db.query(models.Section).options(
             joinedload(models.Section.course),
@@ -496,31 +733,48 @@ def get_my_sections(
         )
     ).all()
 
-    # manager status ของ sections ตัวเอง
-    my_sec_ids = [s.id for s in my_sections]
-    managers = db.query(models.SectionExamManager).filter(
-        models.SectionExamManager.section_id.in_(my_sec_ids)
-    ).options(
-        joinedload(models.SectionExamManager.manager)
-    ).all() if my_sec_ids else []
-
-    mgr_map = {}
-    for em in managers:
-        mgr_map.setdefault(em.section_id, {})[em.exam_type] = em
+    owner_map, created = build_owner_map(
+        db,
+        my_sections,
+        ["midterm", "final"],
+        auto_create=True,
+        actor_id=current_user.id,
+    )
+    if created:
+        db.commit()
 
     result = []
     for sec in my_sections:
-        mgrs = mgr_map.get(sec.id, {})
+        mid_owner = owner_map.get((sec.id, "midterm"))
+        final_owner = owner_map.get((sec.id, "final"))
+        needs_action = (
+            not (
+                (
+                    active_exam_type == "midterm"
+                    and mid_owner is not None
+                    and mid_owner.confirmed
+                )
+                or (
+                    active_exam_type == "final"
+                    and final_owner is not None
+                    and final_owner.confirmed
+                )
+            )
+            if active_exam_type
+            else not (
+                (mid_owner is not None and mid_owner.confirmed)
+                and (final_owner is not None and final_owner.confirmed)
+            )
+        )
         result.append({
             "section_id":  sec.id,
             "course_id":   sec.course.course_id    if sec.course else None,
             "course_name": sec.course.course_name_th if sec.course else None,
             "section_no":  sec.section_no,
             "num_students":sec.num_students,
-            "midterm":     _manager_dict(mgrs["midterm"]) if "midterm" in mgrs else None,
-            "final":       _manager_dict(mgrs["final"])   if "final"   in mgrs else None,
-            "needs_action":not (("midterm" in mgrs and mgrs["midterm"].confirmed) and
-                                ("final"   in mgrs and mgrs["final"].confirmed)),
+            "midterm":     _manager_dict(mid_owner) if mid_owner else None,
+            "final":       _manager_dict(final_owner) if final_owner else None,
+            "needs_action": needs_action,
         })
 
     return {

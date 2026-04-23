@@ -141,7 +141,7 @@ def _serialize_exam_rows(records, active_period: models.ExamPeriod | None):
     return results
 
 
-@router.get("/schedule/{student_id}")
+@router.get("/schedule/student/{student_id}")
 def student_schedule(student_id: str, db: Session = Depends(get_db)):
     """
     นักศึกษาพิมพ์รหัสนักศึกษา → ได้ตารางสอบทุกวิชาที่ลงทะเบียน
@@ -275,6 +275,12 @@ def upcoming_schedules(
         }
         for s in scheds
     ]
+
+
+@router.get("/schedule/{student_id}", include_in_schema=False)
+def student_schedule_legacy(student_id: str, db: Session = Depends(get_db)):
+    # Backward-compatible path for older clients.
+    return student_schedule(student_id, db)
 
 
 # ── GET /api/public/timeline ──────────────────────────────────

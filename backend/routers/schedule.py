@@ -6,14 +6,31 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from database import get_db
 import models, schemas
+from academic_groups import build_course_group_clause
 from auth_utils import (
     get_current_user, require_staff_or_admin, require_admin,
     get_effective_role, log_action, get_dept_filter, is_view_all_role
 )
 from collections import defaultdict
+from exam_ownership import get_active_exam_period, get_teacher_owned_section_ids
 from term_lifecycle import require_period_editable_for_values
+from time_ranges import normalize_time_range, parse_time_range, ranges_overlap
 
 router = APIRouter()
+
+
+def _schedule_time_bounds(exam_time: Optional[str], start: Optional[str] = None, end: Optional[str] = None):
+    if start and end:
+        return start, end
+    return parse_time_range(exam_time)
+
+
+def _normalize_schedule_time_fields(exam_time: Optional[str]):
+    start, end = parse_time_range(exam_time)
+    return {
+        "exam_time_start": start,
+        "exam_time_end": end,
+    }
 
 
 def _build_schedule_query(
@@ -45,12 +62,32 @@ def _build_schedule_query(
             raise HTTPException(400, f"status ไม่ถูกต้อง: {status}")
 
     if effective == models.UserRole.teacher:
-        q = q.join(models.Section).filter(models.Section.teacher_id == current_user.id)
+        active_period = get_active_exam_period(db)
+        q = q.join(models.Section)
+        if active_period:
+            owned_section_ids, _ = get_teacher_owned_section_ids(
+                db,
+                current_user.id,
+                active_period.semester,
+                active_period.academic_year,
+            )
+            if owned_section_ids is None:
+                q = q.filter(models.Section.teacher_id == current_user.id)
+            elif not owned_section_ids:
+                q = q.filter(models.Section.id.in_([-1]))
+            else:
+                q = q.filter(models.Section.id.in_(owned_section_ids))
+        else:
+            q = q.filter(models.Section.teacher_id == current_user.id)
     elif dept_filter:
-        q = q.join(models.Section).join(
-            models.User,
-            models.Section.teacher_id == models.User.id,
-        ).filter(models.User.dept_code == dept_filter)
+        group_clause = build_course_group_clause(models.Course.course_id, dept_filter)
+        if group_clause is not None:
+            q = q.join(models.Section).join(
+                models.Course,
+                models.Section.course_id == models.Course.id,
+            ).filter(group_clause)
+        else:
+            q = q.filter(models.ExamSchedule.id.in_([-1]))
 
     return q
 
@@ -66,7 +103,7 @@ def _load_unavailability_maps(db: Session, data: schemas.OptimizerRequest):
         return {}, {}
 
     staff_map = defaultdict(set)
-    room_map = defaultdict(set)
+    room_map = defaultdict(list)
 
     for row in db.query(models.StaffUnavailability).filter(
         models.StaffUnavailability.exam_period_id == period.id
@@ -76,7 +113,19 @@ def _load_unavailability_maps(db: Session, data: schemas.OptimizerRequest):
     for row in db.query(models.RoomUnavailability).filter(
         models.RoomUnavailability.exam_period_id == period.id
     ).all():
-        room_map[row.room_id].add((str(row.block_date), row.block_time or None))
+        start_time = getattr(row, "start_time", None)
+        end_time = getattr(row, "end_time", None)
+        if not (start_time and end_time):
+            start_time, end_time = parse_time_range(row.block_time)
+        room_map[row.room_id].append(
+            {
+                "date": str(row.block_date),
+                "block_time": row.block_time or None,
+                "start_time": start_time,
+                "end_time": end_time,
+                "all_day": row.block_time is None and not start_time and not end_time,
+            }
+        )
 
     return staff_map, room_map
 
@@ -89,12 +138,29 @@ def _is_staff_unavailable(unavail_map, user_id: int, block_date, block_time: Opt
     return (key_date, block_time) in blocked or (key_date, None) in blocked
 
 
-def _is_room_unavailable(room_unavail_map, room_id: int, block_date, block_time: Optional[str]) -> bool:
+def _is_room_unavailable(
+    room_unavail_map,
+    room_id: int,
+    block_date,
+    block_time: Optional[str],
+    block_start: Optional[str] = None,
+    block_end: Optional[str] = None,
+) -> bool:
     if not room_unavail_map:
         return False
-    blocked = room_unavail_map.get(room_id, set())
+    blocked = room_unavail_map.get(room_id, [])
     key_date = str(block_date)
-    return (key_date, block_time) in blocked or (key_date, None) in blocked
+    slot_start, slot_end = _schedule_time_bounds(block_time, block_start, block_end)
+    for row in blocked:
+        if row["date"] != key_date:
+            continue
+        if row["all_day"]:
+            return True
+        if row["block_time"] == block_time and row["block_time"] is not None:
+            return True
+        if ranges_overlap(slot_start, slot_end, row["start_time"], row["end_time"]):
+            return True
+    return False
 
 def _get_schedule(section, exam_type=None):
     """Helper: ดึง ExamSchedule จาก section.schedules (list)
@@ -250,6 +316,7 @@ def create_schedule(
     total_sheets = section.num_students * data.num_pages
     sch = models.ExamSchedule(
         **data.model_dump(),
+        **_normalize_schedule_time_fields(data.exam_time),
         total_sheets=total_sheets,
     )
     db.add(sch)
@@ -290,6 +357,10 @@ def update_schedule(
 
     for k, v in data.model_dump(exclude_none=True).items():
         setattr(sch, k, v)
+    if data.exam_time is not None:
+        time_fields = _normalize_schedule_time_fields(data.exam_time)
+        sch.exam_time_start = time_fields["exam_time_start"]
+        sch.exam_time_end = time_fields["exam_time_end"]
 
     # คำนวณ total_sheets ใหม่
     if data.num_pages is not None:
@@ -416,16 +487,29 @@ def copy_count_summary(
     db: Session = Depends(get_db),
     _=Depends(get_current_user)
 ):
-    schedules = db.query(models.ExamSchedule).join(models.Section).filter(
+    schedules = db.query(models.ExamSchedule).join(models.Section).options(
+        joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
+        joinedload(models.ExamSchedule.room),
+    ).filter(
         models.Section.semester == semester,
         models.Section.academic_year == academic_year,
     ).all()
+
+    section_ids = [schedule.section_id for schedule in schedules]
+    submission_map = {}
+    if section_ids:
+        submissions = db.query(models.ExamSubmission).options(
+            joinedload(models.ExamSubmission.material_request),
+        ).filter(models.ExamSubmission.section_id.in_(section_ids)).all()
+        submission_map = {submission.section_id: submission for submission in submissions}
 
     rows = []
     total = 0
     for s in schedules:
         sec = s.section
         course = sec.course if sec else None
+        submission = submission_map.get(sec.id if sec else -1)
+        material_request = submission.material_request if submission else None
         rows.append({
             "course_id": course.course_id if course else "",
             "course_name_th": course.course_name_th if course else "",
@@ -434,7 +518,20 @@ def copy_count_summary(
             "num_pages": s.num_pages,
             "total_sheets": s.total_sheets,
             "exam_date": s.exam_date,
+            "exam_time": s.exam_time,
             "room": s.room.room_name if s.room else "",
+            "print_duplex": bool(submission.print_duplex) if submission else False,
+            "print_staple": submission.print_staple if submission and submission.print_staple else "none",
+            "print_staple_page": submission.print_staple_page if submission else None,
+            "print_note": submission.print_note if submission else None,
+            "a4_pages_count": submission.a4_pages_count if submission else 0,
+            "answer_formats": submission.answer_formats if submission else [],
+            "answer_paper_sheets": material_request.answer_paper_sheets if material_request else 0,
+            "answer_paper_staple": material_request.answer_paper_staple if material_request else False,
+            "answer_booklet_count": material_request.answer_booklet_count if material_request else 0,
+            "omr_sheet_count": material_request.omr_sheet_count if material_request else 0,
+            "scratch_paper_sheets": material_request.scratch_paper_sheets if material_request else 0,
+            "special_note": material_request.special_note if material_request else None,
         })
         total += s.total_sheets
 
@@ -617,6 +714,8 @@ def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_u
             room_id=assigned_room.id,
             exam_date=assigned_slot[0],
             exam_time=assigned_slot[1],
+            exam_time_start=parse_time_range(assigned_slot[1])[0],
+            exam_time_end=parse_time_range(assigned_slot[1])[1],
             exam_type=data.exam_type,
             status=models.ScheduleStatus.draft,
             num_pages=1,
@@ -697,6 +796,8 @@ def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_u
                     room_id      = assigned_room.id,
                     exam_date    = assigned_slot[0],
                     exam_time    = assigned_slot[1],
+                    exam_time_start = parse_time_range(assigned_slot[1])[0],
+                    exam_time_end = parse_time_range(assigned_slot[1])[1],
                     exam_type    = data.exam_type,
                     status       = models.ScheduleStatus.draft,
                     num_pages    = 1,
@@ -898,6 +999,8 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
                         room_id=room.id,
                         exam_date=slot[0],
                         exam_time=slot[1],
+                        exam_time_start=parse_time_range(slot[1])[0],
+                        exam_time_end=parse_time_range(slot[1])[1],
                         exam_type=data.exam_type,
                         status=models.ScheduleStatus.draft,
                         num_pages=1,

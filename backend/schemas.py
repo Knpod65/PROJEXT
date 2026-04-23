@@ -1,7 +1,7 @@
 """
 Schemas — Pydantic v2 request/response models
 """
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from typing import Optional, List, Any, Dict, Literal
 from datetime import datetime, date
 from models import UserRole, ExamType, QuestionType, ScheduleStatus
@@ -12,6 +12,16 @@ class LoginRequest(BaseModel):
     username: str
     password: str
     selected_role: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_selected_role(cls, value: Any):
+        # Backward-compat: legacy clients may send `role` instead of `selected_role`.
+        if isinstance(value, dict):
+            selected_role = value.get("selected_role")
+            if selected_role in (None, "") and value.get("role") not in (None, ""):
+                value = {**value, "selected_role": value.get("role")}
+        return value
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -36,18 +46,23 @@ class UserMe(BaseModel):
 # ─── Users ────────────────────────────────────────────────────
 class UserCreate(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     password: str
     role: UserRole = UserRole.staff
     full_name: Optional[str] = None
     department: Optional[str] = None
+    is_active: bool = True
 
 class UserUpdate(BaseModel):
+    username: Optional[str] = None
     full_name: Optional[str] = None
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     department: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
 
 class UserOut(BaseModel):
     id: int
@@ -75,6 +90,8 @@ class CourseOut(BaseModel):
     course_name_en: Optional[str]
     credits: int
     department: Optional[str]
+    academic_group: Optional[str] = None
+    academic_group_label: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -103,6 +120,8 @@ class SectionOut(BaseModel):
     co_group_id: Optional[str]
     semester: str
     academic_year: str
+    academic_group: Optional[str] = None
+    academic_group_label: Optional[str] = None
     course: Optional[CourseOut]
     teacher: Optional[UserOut]
     teaching_room: Optional["RoomOut"] = None

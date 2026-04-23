@@ -8,6 +8,8 @@ export interface RoomUnavailabilityRecord {
   capacity: number | null;
   block_date: string;
   block_time: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
   all_day: boolean;
   reason: string | null;
 }
@@ -51,6 +53,8 @@ export function addRoomUnavailability(data: {
   room_id: number;
   block_date: string;
   block_time?: string;
+  start_time?: string;
+  end_time?: string;
   reason?: string;
 }) {
   return post<{ id: number; status: string }>("/workflow/room-unavailability/", data);

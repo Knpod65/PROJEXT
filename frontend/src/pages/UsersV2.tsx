@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { UserEditorModal, type UserEditorValues } from "@/components/users/UserEditorModal";
 import { UserFilters } from "@/components/users/UserFilters";
 import { UserRoleBreakdown } from "@/components/users/UserRoleBreakdown";
 import { UserStatsCards } from "@/components/users/UserStatsCards";
@@ -12,8 +13,13 @@ import { useI18n } from "@/i18n";
 import { logout } from "@/services/auth.service";
 import { useAuth } from "@/store/auth.store";
 import { useUi } from "@/store/ui.store";
-import type { UserRole } from "@/types/api";
+import type { UserOut } from "@/types/api";
 import { formatRole } from "@/utils/format";
+
+type PendingAction =
+  | { type: "status"; user: UserOut }
+  | { type: "delete"; user: UserOut }
+  | null;
 
 export function UsersV2Page() {
   const { t } = useI18n();
@@ -21,7 +27,8 @@ export function UsersV2Page() {
   const { clearSession, user: currentUser } = useAuth();
   const {
     activeFilter,
-    deactivateUser,
+    createUser,
+    deleteUser,
     error,
     loading,
     query,
@@ -34,62 +41,128 @@ export function UsersV2Page() {
     setQuery,
     setRoleFilter,
     stats,
-    updateUserRole,
+    updateUser,
+    updateUserStatus,
   } = useUsersData();
 
-  const [pendingDeactivateId, setPendingDeactivateId] = useState<number | null>(null);
-  const [deactivating, setDeactivating] = useState(false);
-  const [savingRoleId, setSavingRoleId] = useState<number | null>(null);
+  const [editorUser, setEditorUser] = useState<UserOut | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [busyUserId, setBusyUserId] = useState<number | null>(null);
 
-  const handleDeactivate = (userId: number) => {
-    setPendingDeactivateId(userId);
-  };
-
-  const handleConfirmDeactivate = async () => {
-    if (pendingDeactivateId === null) return;
-    setDeactivating(true);
-    try {
-      await deactivateUser(pendingDeactivateId);
-      toast(t("users.toastDeactivated", { id: pendingDeactivateId }), "success");
-      setPendingDeactivateId(null);
-      await reload();
-    } catch (err) {
-      toast(err instanceof Error ? err.message : t("errors.unexpected"), "error");
-    } finally {
-      setDeactivating(false);
+  const closeEditor = () => {
+    if (savingUser) {
+      return;
     }
+    setEditorOpen(false);
+    setEditorUser(null);
   };
 
-  const handlePreviewAction = (label: string) => {
-    toast(t("users.previewAction", { label }), "info");
-  };
-
-  const handleRoleUpdate = async (userId: number, role: UserRole) => {
-    setSavingRoleId(userId);
+  const forceSessionReset = async () => {
     try {
-      await updateUserRole(userId, role);
+      await logout();
+    } catch {
+      // Ignore API logout failures and clear the local session anyway.
+    }
+    clearSession();
+  };
 
-      if (currentUser?.id === userId && currentUser.role !== role) {
-        try {
-          await logout();
-        } catch {
-          // The backend may already reject the old session after the role change.
+  const handleSaveUser = async (values: UserEditorValues) => {
+    setSavingUser(true);
+    try {
+      if (editorUser) {
+        await updateUser(editorUser.id, {
+          username: values.username,
+          email: values.email,
+          full_name: values.full_name,
+          department: values.department || null,
+          role: values.role,
+          is_active: values.is_active,
+        });
+
+        const affectsCurrentSession =
+          currentUser?.id === editorUser.id &&
+          (currentUser.role !== values.role || !values.is_active);
+
+        if (affectsCurrentSession) {
+          toast(t("users.roleUpdatedCurrentSession", { role: formatRole(values.role) }), "success");
+          await forceSessionReset();
+          return;
         }
 
-        toast(t("users.roleUpdatedCurrentSession", { role: formatRole(role) }), "success");
-        clearSession();
-        return;
+        toast(t("users.toastUpdated", { id: editorUser.id }), "success");
+      } else {
+        await createUser({
+          username: values.username,
+          email: values.email,
+          full_name: values.full_name,
+          department: values.department || null,
+          role: values.role,
+          password: values.password,
+          is_active: values.is_active,
+        });
+        toast(t("users.toastCreated", { username: values.username }), "success");
       }
 
-      toast(t("users.roleUpdated", { id: userId, role: formatRole(role) }), "success");
+      closeEditor();
       await reload();
     } catch (err) {
       toast(err instanceof Error ? err.message : t("errors.unexpected"), "error");
       throw err;
     } finally {
-      setSavingRoleId(null);
+      setSavingUser(false);
     }
   };
+
+  const handleConfirmAction = async () => {
+    if (!pendingAction) {
+      return;
+    }
+
+    const { type, user } = pendingAction;
+    setBusyUserId(user.id);
+    try {
+      if (type === "status") {
+        const nextActive = !user.is_active;
+        await updateUserStatus(user.id, nextActive);
+        if (currentUser?.id === user.id && !nextActive) {
+          toast(t("users.roleUpdatedCurrentSession", { role: formatRole(user.role) }), "info");
+          await forceSessionReset();
+          return;
+        }
+
+        toast(
+          nextActive
+            ? t("users.toastActivated", { id: user.id })
+            : t("users.toastDeactivated", { id: user.id }),
+          "success",
+        );
+      }
+
+      if (type === "delete") {
+        await deleteUser(user.id);
+        toast(t("users.toastDeleted", { id: user.id }), "success");
+      }
+
+      setPendingAction(null);
+      await reload();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : t("errors.unexpected"), "error");
+    } finally {
+      setBusyUserId(null);
+    }
+  };
+
+  const pendingTitle =
+    pendingAction?.type === "delete" ? t("users.deleteTitle") : t("users.statusTitle");
+  const pendingDescription =
+    pendingAction?.type === "delete"
+      ? t("users.deleteDescription", { id: pendingAction.user.id })
+      : t("users.statusDescription", {
+          id: pendingAction?.user.id ?? "-",
+          status: pendingAction?.user.is_active ? t("common.inactive") : t("common.active"),
+        });
 
   return (
     <div className="page-stack page-stack--spacious">
@@ -101,8 +174,18 @@ export function UsersV2Page() {
           {error ? <p className="page-hero__description">{t("users.loadWarning", { message: error })}</p> : null}
         </div>
         <div className="page-hero__actions">
-          <Button type="button" variant="outline" onClick={() => handlePreviewAction(t("users.importExcel"))}>{t("users.importExcel")}</Button>
-          <Button type="button" onClick={() => handlePreviewAction(t("users.addUser"))}>{t("users.addUser")}</Button>
+          <Button type="button" variant="outline" onClick={() => void reload()}>
+            {t("common.refresh")}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              setEditorUser(null);
+              setEditorOpen(true);
+            }}
+          >
+            {t("users.addUser")}
+          </Button>
         </div>
       </section>
 
@@ -122,24 +205,42 @@ export function UsersV2Page() {
         <Card title={t("users.registryTitle")} subtitle={t("users.registrySubtitle")}>
           <UsersTableV2
             rows={rows}
-            savingRoleId={savingRoleId}
-            onDeactivate={handleDeactivate}
-            onUpdateRole={handleRoleUpdate}
+            busyUserId={busyUserId}
+            onEdit={(user) => {
+              setEditorUser(user);
+              setEditorOpen(true);
+            }}
+            onToggleStatus={(user) => setPendingAction({ type: "status", user })}
+            onDelete={(user) => setPendingAction({ type: "delete", user })}
           />
           {loading ? <p>{t("users.loading")}</p> : null}
         </Card>
         <UserRoleBreakdown rows={roleBreakdown} />
       </div>
 
+      <UserEditorModal
+        open={editorOpen}
+        user={editorUser}
+        saving={savingUser}
+        onClose={closeEditor}
+        onSave={handleSaveUser}
+      />
+
       <ConfirmDialog
-        open={pendingDeactivateId !== null}
-        title={t("users.deactivateTitle")}
-        description={t("users.deactivateDescription", { id: pendingDeactivateId ?? "-" })}
-        confirmLabel={t("users.deactivateConfirm")}
-        variant="danger"
-        loading={deactivating}
-        onConfirm={() => void handleConfirmDeactivate()}
-        onCancel={() => setPendingDeactivateId(null)}
+        open={pendingAction !== null}
+        title={pendingTitle}
+        description={pendingDescription}
+        confirmLabel={
+          pendingAction?.type === "delete"
+            ? t("users.deleteConfirm")
+            : pendingAction?.user.is_active
+              ? t("users.deactivateConfirm")
+              : t("users.activateConfirm")
+        }
+        variant={pendingAction?.type === "delete" ? "danger" : "primary"}
+        loading={busyUserId !== null}
+        onConfirm={() => void handleConfirmAction()}
+        onCancel={() => setPendingAction(null)}
       />
     </div>
   );

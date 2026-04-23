@@ -48,7 +48,7 @@ export function getSubmissionForSection(sectionId: number) {
 
 export function step1ConfirmDate(sectionId: number) {
   return post<{ success: boolean; step: number; next: string }>(
-    "/submissions/step1-confirm-date",
+    "/submissions/step1-confirm",
     { section_id: sectionId },
   );
 }

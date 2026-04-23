@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session, joinedload, contains_eager
 from typing import List, Optional
 from database import get_db
 import models, schemas
-from auth_utils import get_current_user, require_admin, require_staff_or_admin, log_action
+from academic_groups import build_course_group_clause
+from auth_utils import get_current_user, require_admin, require_staff_or_admin, log_action, get_dept_filter
+from exam_ownership import get_teacher_owned_section_ids
 
 router = APIRouter()
 
@@ -25,6 +27,7 @@ def list_sections(
 ):
     from auth_utils import get_effective_role
     effective = get_effective_role(current_user)
+    dept_filter = get_dept_filter(current_user)
 
     q = db.query(models.Section).join(
         models.Course, models.Section.course_id == models.Course.id, isouter=True
@@ -42,7 +45,23 @@ def list_sections(
 
     # Teacher เห็นเฉพาะวิชาตัวเอง
     if effective == models.UserRole.teacher:
-        q = q.filter(models.Section.teacher_id == current_user.id)
+        owned_section_ids, _ = get_teacher_owned_section_ids(
+            db,
+            current_user.id,
+            semester,
+            academic_year,
+        )
+        if owned_section_ids is None:
+            q = q.filter(models.Section.teacher_id == current_user.id)
+        elif not owned_section_ids:
+            return []
+        else:
+            q = q.filter(models.Section.id.in_(owned_section_ids))
+    elif effective == models.UserRole.dept_supervisor:
+        group_clause = build_course_group_clause(models.Course.course_id, dept_filter)
+        if group_clause is None:
+            return []
+        q = q.filter(group_clause)
 
     if search:
         q = q.filter(

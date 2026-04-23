@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 import enum
+from academic_groups import academic_group_label, get_academic_group_code_from_course_id
 
 
 class UserRole(str, enum.Enum):
@@ -88,6 +89,15 @@ class Course(Base):
     )
 
 
+    @property
+    def academic_group(self) -> str | None:
+        return get_academic_group_code_from_course_id(self.course_id)
+
+    @property
+    def academic_group_label(self) -> str | None:
+        return academic_group_label(self.academic_group)
+
+
 class Section(Base):
     __tablename__ = "sections"
     id            = Column(Integer, primary_key=True, index=True)
@@ -120,6 +130,17 @@ class Section(Base):
 
 
 # ─── Rooms ───────────────────────────────────────────────────
+    @property
+    def academic_group(self) -> str | None:
+        if self.course:
+            return self.course.academic_group
+        return None
+
+    @property
+    def academic_group_label(self) -> str | None:
+        return academic_group_label(self.academic_group)
+
+
 class Room(Base):
     __tablename__ = "rooms"
     id            = Column(Integer, primary_key=True, index=True)
@@ -658,6 +679,8 @@ class RoomUnavailability(Base):
     exam_period_id= Column(Integer, ForeignKey("exam_periods.id"), nullable=False)
     block_date    = Column(String(20), nullable=False)   # "2026-03-23"
     block_time    = Column(String(20), nullable=True)    # "09.00-12.00" | NULL=ทั้งวัน
+    start_time    = Column(String(8), nullable=True)
+    end_time      = Column(String(8), nullable=True)
     reason        = Column(String(300))
     created_by    = Column(Integer, ForeignKey("users.id"))
     created_at    = Column(DateTime(timezone=True), server_default=func.now())
@@ -694,6 +717,7 @@ class SectionExamManager(Base):
     confirmed       = Column(Boolean, default=False)       # อีกฝ่าย confirm แล้ว
     confirmed_by    = Column(Integer, ForeignKey("users.id"), nullable=True)
     confirmed_at    = Column(DateTime(timezone=True), nullable=True)
+    assignment_source = Column(String(20), default="manual", nullable=False)
     note            = Column(Text)                         # หมายเหตุการมอบหมาย
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 

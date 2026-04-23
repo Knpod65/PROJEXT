@@ -145,7 +145,7 @@ export function App() {
             <Route path="/checkins" element={<GuardedPage roles={["admin", "dept_supervisor", "staff", "teacher"]}><CheckinsPage /></GuardedPage>} />
             <Route path="/swaps" element={<GuardedPage roles={["admin", "dept_supervisor", "staff", "teacher"]}><SwapsV2Page /></GuardedPage>} />
             <Route path="/swaps-v2" element={<Navigate replace to="/swaps" />} />
-            <Route path="/sections" element={<GuardedPage roles={["admin", "esq_head", "secretary", "staff", "teacher"]}><SectionsPage /></GuardedPage>} />
+            <Route path="/sections" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"]}><SectionsPage /></GuardedPage>} />
             <Route path="/copy" element={<GuardedPage roles={["admin", "staff"]}><CopyPage /></GuardedPage>} />
             <Route path="/print-queue" element={<GuardedPage roles={["print_shop"]}><PrintQueuePage /></GuardedPage>} />
             <Route path="/workflow" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><WorkflowV2Page /></GuardedPage>} />
@@ -153,7 +153,7 @@ export function App() {
             <Route path="/coexam" element={<GuardedPage roles={["admin"]}><CoExamPage /></GuardedPage>} />
             <Route path="/optimizer" element={<GuardedPage roles={["admin"]}><OptimizerPage /></GuardedPage>} />
             <Route path="/printreview" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><PrintReviewPage /></GuardedPage>} />
-            <Route path="/external" element={<GuardedPage roles={["admin", "staff", "teacher"]}><ExternalPage /></GuardedPage>} />
+            <Route path="/external" element={<GuardedPage roles={["admin", "staff"]}><ExternalPage /></GuardedPage>} />
             <Route path="/import" element={<GuardedPage roles={["admin"]}><ImportV2Page /></GuardedPage>} />
             <Route path="/import-audit" element={<GuardedPage roles={["admin"]}><ImportAuditPage /></GuardedPage>} />
             <Route path="/period" element={<GuardedPage roles={["admin"]}><PeriodPage /></GuardedPage>} />
@@ -165,7 +165,7 @@ export function App() {
             <Route path="/users" element={<GuardedPage roles={["admin"]}><UsersV2Page /></GuardedPage>} />
             <Route path="/users-v2" element={<Navigate replace to="/users" />} />
             <Route path="/myexam" element={<GuardedPage roles={["teacher"]}><MyExamPage /></GuardedPage>} />
-            <Route path="/exammanager" element={<GuardedPage roles={["admin"]}><ExamManagerPage /></GuardedPage>} />
+            <Route path="/exammanager" element={<GuardedPage roles={["admin", "dept_supervisor"]}><ExamManagerPage /></GuardedPage>} />
           </Route>
         </Route>
 

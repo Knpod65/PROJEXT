@@ -1426,12 +1426,13 @@ const patch= (p,b)=> api('PATCH',p,b);
 async function doLogin() {
   const u = document.getElementById('l-user').value.trim();
   const p = document.getElementById('l-pass').value;
+  const selectedRole = document.getElementById('l-role')?.value || 'admin';
   if (!u || !p) return;
   const btn = document.getElementById('login-btn');
   document.getElementById('l-err').style.display='none';
   if (btn) { btn.classList.add('loading'); btn.disabled=true; }
   try {
-    const data = await post('/auth/login',{username:u,password:p});
+    const data = await post('/auth/login',{username:u,password:p,selected_role:selectedRole});
     if (!data) return;
     token = data.access_token;
     localStorage.setItem('ems_token',token);

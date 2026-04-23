@@ -1,37 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
+  applyExternalExamAssignment,
   createExternalExam,
   deleteExternalExam,
   listExternalExams,
+  previewExternalExamAssignment,
   updateExternalExam,
 } from "@/services/external.service";
-import { post } from "@/services/api";
 import { useAuth } from "@/store/auth.store";
 import { useUi } from "@/store/ui.store";
-import type { ExternalExam } from "@/types/api";
+import type { ExternalExam, ExternalExamAssignmentPreview } from "@/types/api";
 import { getEffectiveRole } from "@/utils/roles";
-
-// ── Status badge ───────────────────────────────────────────────
-
-function ExamStatusBadge({ status }: { status: string | undefined }) {
-  const s = status ?? "draft";
-  const map: Record<string, string> = {
-    draft: "ext-badge ext-badge--draft",
-    confirmed: "ext-badge ext-badge--confirmed",
-    completed: "ext-badge ext-badge--completed",
-    cancelled: "ext-badge ext-badge--cancelled",
-  };
-  return <span className={map[s] ?? "ext-badge"}>{s}</span>;
-}
-
-// ── Exam form ──────────────────────────────────────────────────
 
 interface ExamFormData {
   title: string;
@@ -57,6 +44,17 @@ function emptyForm(): ExamFormData {
   };
 }
 
+function ExamStatusBadge({ status }: { status: string | undefined }) {
+  const normalized = status ?? "draft";
+  const classMap: Record<string, string> = {
+    draft: "ext-badge ext-badge--draft",
+    confirmed: "ext-badge ext-badge--confirmed",
+    completed: "ext-badge ext-badge--completed",
+    cancelled: "ext-badge ext-badge--cancelled",
+  };
+  return <span className={classMap[normalized] ?? "ext-badge"}>{normalized}</span>;
+}
+
 function ExamFormModal({
   exam,
   open,
@@ -73,6 +71,9 @@ function ExamFormModal({
   const [form, setForm] = useState<ExamFormData>(emptyForm);
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
     if (exam) {
       setForm({
         title: exam.title ?? "",
@@ -84,85 +85,231 @@ function ExamFormModal({
         invigilators_needed: exam.invigilators_needed ?? 1,
         notes: exam.notes ?? "",
       });
-    } else {
-      setForm(emptyForm());
+      return;
     }
+    setForm(emptyForm());
   }, [exam, open]);
 
-  const set = (k: keyof ExamFormData, v: string | number | "") =>
-    setForm((f) => ({ ...f, [k]: v }));
+  const setField = (key: keyof ExamFormData, value: string | number | "") => {
+    setForm((previous) => ({ ...previous, [key]: value }));
+  };
 
-  const canSave = form.title.trim() !== "" && form.exam_date !== "";
+  const canSave = form.title.trim() !== "" && form.exam_date.trim() !== "" && form.exam_time.trim() !== "";
 
   return (
     <Modal
       open={open}
       title={exam ? "Edit external exam" : "Create external exam"}
       onClose={onClose}
-      footer={
+      footer={(
         <div className="inline-actions">
           <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
           <Button type="button" disabled={!canSave} loading={busy} onClick={() => void onSave(form)}>
             {exam ? "Save changes" : "Create exam"}
           </Button>
         </div>
-      }
+      )}
     >
       <div className="ext-form">
         <div className="form-field">
-          <label htmlFor="ext-title">Exam / activity name</label>
-          <input id="ext-title" type="text" value={form.title} placeholder="e.g. TOEFL Mock Test" onChange={(e) => set("title", e.target.value)} />
+          <label htmlFor="external-title">Exam / activity name</label>
+          <input id="external-title" type="text" value={form.title} onChange={(event) => setField("title", event.target.value)} />
         </div>
         <div className="import-upload-grid">
           <div className="form-field">
-            <label htmlFor="ext-organizer">Organizer (optional)</label>
-            <input id="ext-organizer" type="text" value={form.organizer} placeholder="e.g. Faculty of Arts" onChange={(e) => set("organizer", e.target.value)} />
+            <label htmlFor="external-organizer">Organizer</label>
+            <input id="external-organizer" type="text" value={form.organizer} onChange={(event) => setField("organizer", event.target.value)} />
           </div>
           <div className="form-field">
-            <label htmlFor="ext-room">Room / venue (optional)</label>
-            <input id="ext-room" type="text" value={form.room_name} placeholder="e.g. Hall A" onChange={(e) => set("room_name", e.target.value)} />
+            <label htmlFor="external-room">Venue reference</label>
+            <input id="external-room" type="text" value={form.room_name} onChange={(event) => setField("room_name", event.target.value)} />
+            <span className="form-hint">Reference only. External optimization does not assign rooms.</span>
           </div>
           <div className="form-field">
-            <label htmlFor="ext-date">Date</label>
-            <input id="ext-date" type="date" value={form.exam_date} onChange={(e) => set("exam_date", e.target.value)} />
+            <label htmlFor="external-date">Date</label>
+            <input id="external-date" type="date" value={form.exam_date} onChange={(event) => setField("exam_date", event.target.value)} />
           </div>
           <div className="form-field">
-            <label htmlFor="ext-time">Time</label>
-            <input id="ext-time" type="text" placeholder="e.g. 09:00-12:00" value={form.exam_time} onChange={(e) => set("exam_time", e.target.value)} />
+            <label htmlFor="external-time">Time</label>
+            <input id="external-time" type="text" placeholder="09:00-12:00" value={form.exam_time} onChange={(event) => setField("exam_time", event.target.value)} />
           </div>
           <div className="form-field">
-            <label htmlFor="ext-students">Expected attendees</label>
-            <input id="ext-students" type="number" min={0} value={form.num_students} onChange={(e) => set("num_students", e.target.value === "" ? "" : Number(e.target.value))} />
+            <label htmlFor="external-students">Attendees</label>
+            <input id="external-students" type="number" min={0} value={form.num_students} onChange={(event) => setField("num_students", event.target.value === "" ? "" : Number(event.target.value))} />
           </div>
           <div className="form-field">
-            <label htmlFor="ext-invigs">Staff required</label>
-            <input id="ext-invigs" type="number" min={1} value={form.invigilators_needed} onChange={(e) => set("invigilators_needed", e.target.value === "" ? "" : Number(e.target.value))} />
-            <span className="form-hint">Number of invigilators needed</span>
+            <label htmlFor="external-staff">Staff required</label>
+            <input id="external-staff" type="number" min={1} value={form.invigilators_needed} onChange={(event) => setField("invigilators_needed", event.target.value === "" ? "" : Number(event.target.value))} />
           </div>
         </div>
         <div className="form-field">
-          <label htmlFor="ext-notes">Notes (optional)</label>
-          <textarea id="ext-notes" rows={2} value={form.notes} placeholder="Any special instructions…" onChange={(e) => set("notes", e.target.value)} />
+          <label htmlFor="external-notes">Notes</label>
+          <textarea id="external-notes" rows={2} value={form.notes} onChange={(event) => setField("notes", event.target.value)} />
         </div>
       </div>
     </Modal>
   );
 }
 
-// ── Exam card ──────────────────────────────────────────────────
+function PreviewSection({
+  title,
+  subtitle,
+  rows,
+}: {
+  title: string;
+  subtitle?: string;
+  rows: Array<{ user_id: number; full_name: string | null; division?: string | null; unit?: string | null; total_load: number; reason?: string }>;
+}) {
+  return (
+    <Card title={title} subtitle={subtitle}>
+      <DataTable
+        columns={[
+          {
+            key: "full_name",
+            label: "Staff",
+            width: "38%",
+            render: (row) => (
+              <div className="data-table__content data-table__content--clamp">
+                <strong>{row.full_name ?? `User #${row.user_id}`}</strong>
+                <p>{row.division ?? row.unit ?? "No organizational label"}</p>
+              </div>
+            ),
+          },
+          {
+            key: "total_load",
+            label: "Historical Load",
+            width: "18%",
+            align: "right",
+            render: (row) => row.total_load,
+          },
+          {
+            key: "reason",
+            label: "Reason",
+            width: "44%",
+            render: (row) => row.reason ?? "Eligible for allocation",
+          },
+        ]}
+        emptyTitle="No rows"
+        rowKey={(row) => row.user_id}
+        rows={rows}
+        scrollThreshold={5}
+        tableLayout="fixed"
+      />
+    </Card>
+  );
+}
+
+function AssignmentPreviewPanel({
+  preview,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  preview: ExternalExamAssignmentPreview;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const exam = preview.exam;
+
+  return (
+    <Card
+      title={`Staff allocation review: ${exam.title ?? "External exam"}`}
+      subtitle="Preview only. This flow assigns staff only and does not assign rooms."
+      actions={(
+        <div className="inline-actions">
+          <Button type="button" variant="outline" onClick={onClose}>Close</Button>
+          <Button type="button" loading={busy} disabled={preview.shortage_count > 0 || preview.needed_count === 0} onClick={onConfirm}>
+            Confirm staff allocation
+          </Button>
+        </div>
+      )}
+    >
+      <div className="stitch-metric-grid">
+        <article className="dashboard-metric dashboard-metric--accent">
+          <div className="dashboard-metric__icon"><Icon name="groups" /></div>
+          <div className="dashboard-metric__body">
+            <p className="dashboard-metric__label">Needed now</p>
+            <strong className="dashboard-metric__value">{preview.needed_count}</strong>
+          </div>
+        </article>
+        <article className="dashboard-metric dashboard-metric--neutral">
+          <div className="dashboard-metric__icon"><Icon name="person_search" /></div>
+          <div className="dashboard-metric__body">
+            <p className="dashboard-metric__label">Eligible staff</p>
+            <strong className="dashboard-metric__value">{preview.eligible_candidates.length}</strong>
+          </div>
+        </article>
+        <article className={`dashboard-metric ${preview.shortage_count > 0 ? "dashboard-metric--warning" : "dashboard-metric--success"}`}>
+          <div className="dashboard-metric__icon"><Icon name={preview.shortage_count > 0 ? "warning" : "check_circle"} /></div>
+          <div className="dashboard-metric__body">
+            <p className="dashboard-metric__label">Shortage</p>
+            <strong className="dashboard-metric__value">{preview.shortage_count}</strong>
+          </div>
+        </article>
+        <article className="dashboard-metric dashboard-metric--neutral">
+          <div className="dashboard-metric__icon"><Icon name="analytics" /></div>
+          <div className="dashboard-metric__body">
+            <p className="dashboard-metric__label">Fairness score</p>
+            <strong className="dashboard-metric__value">
+              {preview.fairness.current_score} → {preview.fairness.projected_score}
+            </strong>
+          </div>
+        </article>
+      </div>
+
+      {preview.warnings.length > 0 && (
+        <div className="wf-validation">
+          <div className="wf-validation__counts">
+            {preview.warnings.map((warning) => (
+              <span key={warning} className="wf-issue-chip wf-issue-chip--warning">
+                <Icon name="warning" /> {warning}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="page-stack">
+        <PreviewSection
+          title="Recommended allocation"
+          subtitle="The fairness engine selects the lowest historical loads first."
+          rows={preview.recommended_assignment}
+        />
+        <PreviewSection
+          title="Eligible reserve pool"
+          subtitle="These staff remain available if you need to rerun or adjust."
+          rows={preview.eligible_candidates}
+        />
+        <PreviewSection
+          title="Conflicted or unavailable staff"
+          subtitle="These staff are filtered out before allocation because of timing conflicts or declared unavailability."
+          rows={preview.conflicted_staff}
+        />
+        <PreviewSection
+          title="Excluded staff"
+          subtitle="Excluded by policy for external exams."
+          rows={preview.excluded_staff}
+        />
+      </div>
+    </Card>
+  );
+}
 
 function ExamCard({
   exam,
-  isAdmin,
+  canManage,
+  canOptimize,
   onEdit,
-  onAssign,
   onDelete,
+  onPreview,
 }: {
   exam: ExternalExam;
-  isAdmin: boolean;
+  canManage: boolean;
+  canOptimize: boolean;
   onEdit: () => void;
-  onAssign: () => void;
   onDelete: () => void;
+  onPreview: () => void;
 }) {
   const assigned = exam.supervisions?.length ?? 0;
   const needed = exam.invigilators_needed ?? 0;
@@ -179,8 +326,8 @@ function ExamCard({
       </div>
 
       <div className="ext-exam-card__meta">
-        <span><Icon name="event" /> {exam.exam_date ?? "—"} {exam.exam_time ?? ""}</span>
-        <span><Icon name="meeting_room" /> {exam.room_name ?? "No room set"}</span>
+        <span><Icon name="event" /> {exam.exam_date ?? "-"} {exam.exam_time ?? ""}</span>
+        <span><Icon name="location_on" /> {exam.room_name ?? "No venue reference"}</span>
         <span><Icon name="groups" /> {exam.num_students ?? 0} attendees</span>
         <span className={staffReady ? "ext-staff-ok" : "ext-staff-missing"}>
           <Icon name={staffReady ? "check_circle" : "warning"} />
@@ -188,12 +335,14 @@ function ExamCard({
         </span>
       </div>
 
+      <p className="text-muted ext-exam-card__notes">Staff allocation only. External optimization does not assign rooms.</p>
+
       {exam.supervisions && exam.supervisions.length > 0 && (
         <div className="ext-invig-list">
-          {exam.supervisions.map((s) => (
-            <span key={s.id} className="staff-slot-tag">
-              {s.user_name ?? `User #${s.id}`}
-              {s.confirmed && <Icon name="check" />}
+          {exam.supervisions.map((supervision) => (
+            <span key={supervision.id} className="staff-slot-tag">
+              {supervision.full_name ?? supervision.user_name ?? `User #${supervision.user_id ?? supervision.id}`}
+              {supervision.confirmed && <Icon name="check" />}
             </span>
           ))}
         </div>
@@ -201,36 +350,37 @@ function ExamCard({
 
       {exam.notes && <p className="ext-exam-card__notes text-muted">{exam.notes}</p>}
 
-      {isAdmin && (
+      {(canManage || canOptimize) && (
         <div className="inline-actions ext-exam-card__actions">
-          <Button type="button" size="sm" variant="outline" onClick={onEdit}>Edit</Button>
-          {!staffReady && (
-            <Button type="button" size="sm" onClick={onAssign}>
-              Auto-assign staff
+          {canManage && <Button type="button" size="sm" variant="outline" onClick={onEdit}>Edit</Button>}
+          {canOptimize && (
+            <Button type="button" size="sm" onClick={onPreview}>
+              Review staff allocation
             </Button>
           )}
-          <Button type="button" size="sm" variant="ghost" onClick={onDelete}>
-            Delete
-          </Button>
+          {canManage && <Button type="button" size="sm" variant="ghost" onClick={onDelete}>Delete</Button>}
         </div>
       )}
     </article>
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────
-
 export function ExternalPage() {
   const { toast } = useUi();
   const { user } = useAuth();
   const role = getEffectiveRole(user);
-  const isAdmin = role === "admin";
+  const canManage = role === "admin";
+  const canOptimize = role === "admin" || role === "staff";
 
   const [exams, setExams] = useState<ExternalExam[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<ExternalExam | null>(null);
   const [formBusy, setFormBusy] = useState(false);
+
+  const [preview, setPreview] = useState<ExternalExamAssignmentPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [assignBusy, setAssignBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -244,23 +394,25 @@ export function ExternalPage() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const handleSave = async (data: ExamFormData) => {
     setFormBusy(true);
     try {
       if (editTarget) {
         await updateExternalExam(editTarget.id, data as unknown as Record<string, unknown>);
-        toast("Exam updated.", "success");
+        toast("External exam updated.", "success");
       } else {
         await createExternalExam(data as unknown as Record<string, unknown>);
-        toast("Exam created.", "success");
+        toast("External exam created.", "success");
       }
       setShowForm(false);
       setEditTarget(null);
       await load();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to save.", "error");
+      toast(err instanceof Error ? err.message : "Failed to save external exam.", "error");
     } finally {
       setFormBusy(false);
     }
@@ -269,41 +421,66 @@ export function ExternalPage() {
   const handleDelete = async (exam: ExternalExam) => {
     try {
       await deleteExternalExam(exam.id);
-      toast("Exam deleted.", "warning");
+      toast("External exam deleted.", "warning");
       await load();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to delete.", "error");
+      toast(err instanceof Error ? err.message : "Failed to delete external exam.", "error");
     }
   };
 
-  const handleAutoAssign = async (examId: number) => {
+  const handlePreview = async (examId: number) => {
+    setPreviewLoading(true);
     try {
-      await post<unknown>(`/external/${examId}/assign`);
-      toast("Staff auto-assigned using fairness algorithm.", "success");
-      await load();
+      const nextPreview = await previewExternalExamAssignment(examId);
+      setPreview(nextPreview);
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Auto-assign failed.", "error");
+      toast(err instanceof Error ? err.message : "Failed to preview staff allocation.", "error");
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
-  const totalStaff = exams.reduce((acc, e) => acc + (e.supervisions?.length ?? 0), 0);
-  const pendingAssign = exams.filter((e) => (e.supervisions?.length ?? 0) < (e.invigilators_needed ?? 1)).length;
+  const handleConfirm = async () => {
+    if (!preview) {
+      return;
+    }
+    setAssignBusy(true);
+    try {
+      const response = await applyExternalExamAssignment(preview.exam.id);
+      setPreview(response.preview);
+      toast("External exam staff allocated.", "success");
+      await load();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to assign staff.", "error");
+    } finally {
+      setAssignBusy(false);
+    }
+  };
+
+  const totalAssigned = useMemo(
+    () => exams.reduce((sum, exam) => sum + (exam.supervisions?.length ?? 0), 0),
+    [exams],
+  );
+  const pendingCount = useMemo(
+    () => exams.filter((exam) => (exam.supervisions?.length ?? 0) < (exam.invigilators_needed ?? 1)).length,
+    [exams],
+  );
 
   return (
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">Special events</span>
-          <h1 className="page-hero__title">External exams</h1>
+          <span className="page-hero__eyebrow">External exams</span>
+          <h1 className="page-hero__title">Staff allocation without room assignment</h1>
           <p className="page-hero__description">
-            Manage special exam sessions outside the standard timetable. Staff are assigned using the same fairness algorithm as the optimizer.
+            External exam optimization mirrors the main fairness flow for staff allocation, but it deliberately skips room assignment.
           </p>
         </div>
         <div className="page-hero__actions">
           <Button type="button" variant="outline" onClick={() => void load()} disabled={loading}>
             Refresh
           </Button>
-          {isAdmin && (
+          {canManage && (
             <Button type="button" onClick={() => { setEditTarget(null); setShowForm(true); }}>
               Create exam
             </Button>
@@ -315,53 +492,65 @@ export function ExternalPage() {
         <article className="dashboard-metric dashboard-metric--accent">
           <div className="dashboard-metric__icon"><Icon name="language" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Total exams</p>
+            <p className="dashboard-metric__label">Active external exams</p>
             <strong className="dashboard-metric__value">{exams.length}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--neutral">
           <div className="dashboard-metric__icon"><Icon name="groups" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Staff assigned</p>
-            <strong className="dashboard-metric__value">{totalStaff}</strong>
+            <p className="dashboard-metric__label">Assigned staff</p>
+            <strong className="dashboard-metric__value">{totalAssigned}</strong>
           </div>
         </article>
-        <article className={`dashboard-metric ${pendingAssign > 0 ? "dashboard-metric--warning" : "dashboard-metric--success"}`}>
-          <div className="dashboard-metric__icon"><Icon name={pendingAssign > 0 ? "warning" : "check_circle"} /></div>
+        <article className={`dashboard-metric ${pendingCount > 0 ? "dashboard-metric--warning" : "dashboard-metric--success"}`}>
+          <div className="dashboard-metric__icon"><Icon name={pendingCount > 0 ? "warning" : "check_circle"} /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Needs staff</p>
-            <strong className="dashboard-metric__value">{pendingAssign}</strong>
+            <p className="dashboard-metric__label">Need allocation</p>
+            <strong className="dashboard-metric__value">{pendingCount}</strong>
           </div>
         </article>
       </div>
 
       {loading ? (
         <div className="page-stack">
-          {[0, 1, 2].map((i) => <Skeleton key={i} className="dashboard-skeleton" />)}
+          {[0, 1, 2].map((index) => <Skeleton key={index} className="dashboard-skeleton" />)}
         </div>
       ) : exams.length === 0 ? (
         <Card title="External exams">
           <EmptyState
             icon={<Icon name="language" />}
             title="No external exams scheduled"
-            description={isAdmin ? "Create an exam using the button above." : "No special exams are scheduled for the current period."}
+            description={canManage ? "Create the first external exam using the button above." : "No external exams are scheduled for the current period."}
           />
         </Card>
       ) : (
-        <Card title="Scheduled exams" subtitle={`${exams.length} exam${exams.length !== 1 ? "s" : ""} for the active period`}>
+        <Card title="Current external exams" subtitle={`${exams.length} exam${exams.length !== 1 ? "s" : ""} in the active period`}>
           <div className="page-stack">
             {exams.map((exam) => (
               <ExamCard
                 key={exam.id}
                 exam={exam}
-                isAdmin={isAdmin}
+                canManage={canManage}
+                canOptimize={canOptimize}
                 onEdit={() => { setEditTarget(exam); setShowForm(true); }}
-                onAssign={() => void handleAutoAssign(exam.id)}
                 onDelete={() => void handleDelete(exam)}
+                onPreview={() => void handlePreview(exam.id)}
               />
             ))}
           </div>
         </Card>
+      )}
+
+      {previewLoading && <Skeleton className="dashboard-skeleton" />}
+
+      {preview && !previewLoading && (
+        <AssignmentPreviewPanel
+          preview={preview}
+          busy={assignBusy}
+          onClose={() => setPreview(null)}
+          onConfirm={() => void handleConfirm()}
+        />
       )}
 
       <ExamFormModal

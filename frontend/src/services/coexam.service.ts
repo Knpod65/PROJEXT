@@ -1,8 +1,8 @@
-import type { CoExamGroup } from "@/types/api";
+import type { CoExamGroup, CoExamSuggestion } from "@/types/api";
 import { del, get, post, put } from "./api";
 
 export interface CoExamSuggestionsResponse {
-  suggestions: Array<Record<string, unknown>>;
+  suggestions: CoExamSuggestion[];
   count: number;
   note?: string;
 }

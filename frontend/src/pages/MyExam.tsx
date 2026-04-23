@@ -561,7 +561,7 @@ export function MyExamPage() {
           <span className="page-hero__eyebrow">Teacher workspace</span>
           <h1 className="page-hero__title">My exam submissions</h1>
           <p className="page-hero__description">
-            Complete exam submission for each of your assigned courses. All sections must be submitted before the deadline.
+            Complete exam submission for the sections you are responsible for in the active exam cycle.
           </p>
         </div>
         <div className="page-hero__actions">
@@ -575,7 +575,7 @@ export function MyExamPage() {
         <article className="dashboard-metric dashboard-metric--accent">
           <div className="dashboard-metric__icon"><Icon name="menu_book" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Assigned courses</p>
+            <p className="dashboard-metric__label">Assigned responsibilities</p>
             <strong className="dashboard-metric__value">{sections.length}</strong>
           </div>
         </article>
@@ -603,10 +603,10 @@ export function MyExamPage() {
         <EmptyState
           icon={<Icon name="menu_book" />}
           title="No courses assigned"
-          description="You have no sections assigned for this term. Contact your department administrator."
+          description="You have no ownership assignments for this exam cycle. Contact your department supervisor."
         />
       ) : (
-        <Card title="Your courses" subtitle={`${activePeriod?.label ?? "Current term"}`}>
+        <Card title="Your responsibilities" subtitle={`${activePeriod?.label ?? "Current term"}`}>
           <div className="page-stack">
             {sections.map((section) => (
               <SectionCard

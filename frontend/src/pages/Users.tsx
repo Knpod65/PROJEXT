@@ -2,7 +2,7 @@ import { useCallback } from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
-import { deactivateUser, listUsers } from "@/services/users.service";
+import { listUsers, updateUserStatus } from "@/services/users.service";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import type { UserOut } from "@/types/api";
 import { useUi } from "@/store/ui.store";
@@ -14,7 +14,7 @@ export function UsersPage() {
 
   const handleDeactivate = async (userId: number) => {
     try {
-      await deactivateUser(userId);
+      await updateUserStatus(userId, false);
       toast("ปิดการใช้งานผู้ใช้แล้ว", "success");
       await state.reload();
     } catch (err) {

@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { useI18n } from "@/i18n";
+import { ApiError } from "@/services/api";
 import { useAuth } from "@/store/auth.store";
-import { getDefaultRoute, getPublicEntryRoute, getStoredPendingRole, hasRole } from "@/utils/roles";
+import { getDefaultRoute, getPublicEntryRoute, getStoredPendingRole, hasRole, storePendingRole } from "@/utils/roles";
 
 export function LoginPage() {
   const { language, t } = useI18n();
@@ -65,6 +66,28 @@ export function LoginPage() {
 
       navigate(target || "/dashboard", { replace: true });
     } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        const data = err.data;
+        const detail =
+          typeof data === "object" && data !== null && "detail" in data
+            ? (data as { detail?: unknown }).detail
+            : null;
+        const code =
+          typeof detail === "object" && detail !== null && "code" in detail
+            ? (detail as { code?: unknown }).code
+            : null;
+
+        if (code === "workspace_not_assigned") {
+          storePendingRole(null);
+          setError(t("auth.login.workspaceNotAssigned"));
+          navigate("/role-selection", {
+            replace: true,
+            state: (location.state as { from?: string } | null) ?? undefined,
+          });
+          return;
+        }
+      }
+
       setError(err instanceof Error ? err.message : t("errors.loginFailed"));
     } finally {
       setLoading(false);

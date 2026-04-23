@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 
 import { useAsyncData } from "@/hooks/useAsyncData";
-import { deactivateUser, listUsers, updateUser } from "@/services/users.service";
+import {
+  createUser,
+  deleteUser,
+  listUsers,
+  updateUser,
+  updateUserStatus,
+} from "@/services/users.service";
 import type { UserOut, UserRole } from "@/types/api";
 
 export interface UserStats {
@@ -12,6 +18,17 @@ export interface UserStats {
   admins: number;
   pendingApprovals: number;
 }
+
+const trackedRoles: UserRole[] = [
+  "admin",
+  "teacher",
+  "staff",
+  "dept_supervisor",
+  "esq_head",
+  "secretary",
+  "print_shop",
+  "student",
+];
 
 export function useUsersData() {
   const [query, setQuery] = useState("");
@@ -25,11 +42,16 @@ export function useUsersData() {
     const allRows = state.data ?? [];
 
     return allRows.filter((row: UserOut) => {
-      const matchesQuery =
-        query.trim().length === 0 ||
-        `${row.full_name ?? ""} ${row.username} ${row.email} ${row.department ?? ""}`
-          .toLowerCase()
-          .includes(query.toLowerCase());
+      const haystack = [
+        row.full_name ?? "",
+        row.username,
+        row.email,
+        row.department ?? "",
+        row.dept_code ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      const matchesQuery = query.trim().length === 0 || haystack.includes(query.toLowerCase());
       const matchesRole = roleFilter === "all" || row.role === roleFilter;
       const matchesActive =
         activeFilter === "all" ||
@@ -56,13 +78,15 @@ export function useUsersData() {
     const allRows = state.data ?? [];
     const roleCounts = new Map<UserRole, number>();
 
+    trackedRoles.forEach((role) => roleCounts.set(role, 0));
     allRows.forEach((row: UserOut) => {
       roleCounts.set(row.role, (roleCounts.get(row.role) ?? 0) + 1);
     });
 
-    return Array.from(roleCounts.entries())
-      .map(([role, count]) => ({ role, count }))
-      .sort((left, right) => right.count - left.count);
+    return trackedRoles.map((role) => ({
+      role,
+      count: roleCounts.get(role) ?? 0,
+    }));
   }, [state.data]);
 
   const resetFilters = () => {
@@ -85,7 +109,9 @@ export function useUsersData() {
     setActiveFilter,
     resetFilters,
     reload: state.reload,
-    deactivateUser,
-    updateUserRole: (userId: number, role: UserRole) => updateUser(userId, { role }),
+    createUser,
+    deleteUser,
+    updateUser,
+    updateUserStatus,
   };
 }

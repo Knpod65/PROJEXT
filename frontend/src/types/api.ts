@@ -48,6 +48,8 @@ export interface CourseOut {
   course_name_en?: string | null;
   credits?: number;
   department?: string | null;
+  academic_group?: string | null;
+  academic_group_label?: string | null;
 }
 
 export interface RoomOut {
@@ -92,6 +94,8 @@ export interface SectionOut {
   co_group_id?: string | null;
   semester: string;
   academic_year: string;
+  academic_group?: string | null;
+  academic_group_label?: string | null;
   course?: CourseOut | null;
   teacher?: UserOut | null;
   teaching_room?: RoomOut | null;
@@ -340,6 +344,17 @@ export interface CoExamGroup {
   member_count: number;
 }
 
+export interface CoExamSuggestion {
+  type: string;
+  label: string;
+  exam_date: string;
+  exam_time: string;
+  exam_type: string;
+  total_students: number;
+  section_ids: number[];
+  sections: Array<Record<string, unknown>>;
+}
+
 export interface ExternalExam {
   id: number;
   title?: string;
@@ -353,10 +368,66 @@ export interface ExternalExam {
   status?: string;
   supervisions?: Array<{
     id: number;
+    user_id?: number | null;
+    full_name?: string | null;
     user_name?: string | null;
     slot_order?: number;
     confirmed?: boolean;
+    assigned_by?: string | null;
   }>;
+}
+
+export interface ExternalExamAssignmentPreview {
+  exam: ExternalExam;
+  allocation_mode: "staff_only";
+  required_count: number;
+  assigned_count: number;
+  needed_count: number;
+  shortage_count: number;
+  eligible_candidates: Array<{
+    user_id: number;
+    full_name: string | null;
+    division?: string | null;
+    unit?: string | null;
+    total_load: number;
+  }>;
+  recommended_assignment: Array<{
+    user_id: number;
+    full_name: string | null;
+    division?: string | null;
+    unit?: string | null;
+    total_load: number;
+  }>;
+  conflicted_staff: Array<{
+    user_id: number;
+    full_name: string | null;
+    division?: string | null;
+    unit?: string | null;
+    total_load: number;
+    reason: string;
+    conflict_type?: string;
+  }>;
+  excluded_staff: Array<{
+    user_id: number;
+    full_name: string | null;
+    division?: string | null;
+    unit?: string | null;
+    total_load: number;
+    reason: string;
+  }>;
+  assigned_staff: Array<{
+    user_id: number;
+    full_name: string | null;
+    division?: string | null;
+    unit?: string | null;
+    total_load: number;
+  }>;
+  fairness: {
+    current_score: number;
+    projected_score: number;
+  };
+  warnings: string[];
+  note?: string;
 }
 
 export interface WorkflowSession {
@@ -556,7 +627,20 @@ export interface CopyCountSummary {
     num_pages: number;
     total_sheets: number;
     exam_date: string;
-    room: string;
+    exam_time?: string | null;
+    room: string | null;
+    print_duplex: boolean;
+    print_staple: string;
+    print_staple_page?: number | null;
+    print_note?: string | null;
+    a4_pages_count: number;
+    answer_formats?: string[] | null;
+    answer_paper_sheets: number;
+    answer_paper_staple: boolean;
+    answer_booklet_count: number;
+    omr_sheet_count: number;
+    scratch_paper_sheets: number;
+    special_note?: string | null;
   }>;
   subtotal_exam: number;
   fraud_forms: number;

@@ -14,6 +14,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from database import get_db
 import models, os, hashlib
+from academic_groups import can_access_academic_group, normalize_academic_group_code
 
 _raw_secret = os.getenv("SECRET_KEY", "")
 if not _raw_secret:
@@ -258,7 +259,7 @@ def get_dept_filter(user: "models.User"):
     ):
         return None   # ไม่ filter
     if get_effective_role(user) in (models.UserRole.dept_supervisor, models.UserRole.teacher):
-        return user.dept_code
+        return normalize_academic_group_code(user.dept_code)
     return None
 
 
@@ -353,6 +354,35 @@ def assert_dept_access(user: "models.User", dept_code: str):
     ตรวจว่า user มีสิทธิ์ดู/แก้ไขข้อมูลของ dept_code นี้
     Raises 403 ถ้าไม่มีสิทธิ์
     """
+    effective_role = get_effective_role(user)
+    target_group = normalize_academic_group_code(dept_code)
+    viewer_group = normalize_academic_group_code(getattr(user, "dept_code", None))
+
+    if effective_role in (
+        models.UserRole.admin,
+        models.UserRole.esq_head,
+        models.UserRole.secretary,
+    ):
+        return
+
+    if effective_role == models.UserRole.dept_supervisor:
+        if not can_access_academic_group(viewer_group, target_group):
+            raise HTTPException(
+                403,
+                f"เธเธธเธ“เธกเธตเธชเธดเธ—เธเธดเนเน€เธเนเธฒเธ–เธถเธเน€เธเธเธฒเธฐเธ เธฒเธเธงเธดเธเธฒ {viewer_group or user.dept_code} เน€เธ—เนเธฒเธเธฑเนเธ",
+            )
+        return
+
+    if effective_role == models.UserRole.teacher:
+        if viewer_group and not can_access_academic_group(viewer_group, target_group):
+            raise HTTPException(
+                403,
+                f"เธเธธเธ“เธกเธตเธชเธดเธ—เธเธดเนเน€เธเนเธฒเธ–เธถเธเน€เธเธเธฒเธฐเธ เธฒเธเธงเธดเธเธฒ {viewer_group} เน€เธ—เนเธฒเธเธฑเนเธ",
+            )
+        return
+
+    raise HTTPException(403, "เนเธกเนเธกเธตเธชเธดเธ—เธเธดเนเน€เธเนเธฒเธ–เธถเธเธเนเธญเธกเธนเธฅเธเธตเน")
+
     if get_effective_role(user) in (models.UserRole.admin,
                      models.UserRole.esq_head,
                      models.UserRole.secretary):

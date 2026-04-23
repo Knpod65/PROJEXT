@@ -9,8 +9,14 @@ from typing import List, Optional
 from pydantic import BaseModel
 from database import get_db
 import models
+from academic_groups import build_course_group_clause
 from auth_utils import (get_current_user, require_admin, get_effective_role,
                         log_action, is_view_all_role, get_dept_filter)
+from exam_ownership import (
+    get_active_exam_period,
+    get_teacher_owned_section_ids,
+    teacher_has_section_access,
+)
 from routers.settings import get_setting, is_past_deadline
 from datetime import datetime, timedelta, timezone
 import secrets, hashlib, os, json
@@ -63,7 +69,7 @@ def _get_submission(db, section_id, user, create_if_missing=True):
         ).first()
         if not section:
             raise HTTPException(404, "ไม่พบ section")
-        if effective == models.UserRole.teacher and section.teacher_id != user.id:
+        if effective == models.UserRole.teacher and not teacher_has_section_access(db, user, section):
             raise HTTPException(403, "คุณไม่มีสิทธิ์จัดการ section นี้")
 
         sub = models.ExamSubmission(
@@ -87,6 +93,11 @@ def _snapshot_submission(sub: models.ExamSubmission) -> dict:
         "no_cover_page_confirmed": sub.no_cover_page_confirmed,
         "is_shared_exam": sub.is_shared_exam,
         "shared_with_sections": sub.shared_with_sections,
+        "print_duplex": sub.print_duplex,
+        "print_staple": sub.print_staple,
+        "print_staple_page": sub.print_staple_page,
+        "print_note": sub.print_note,
+        "print_spec_confirmed": sub.print_spec_confirmed,
         "status": sub.status,
     }
 
@@ -175,7 +186,7 @@ def get_submission(
         section = db.query(models.Section).filter(
             models.Section.id == section_id
         ).first()
-        if section and section.teacher_id != current_user.id:
+        if section and not teacher_has_section_access(db, current_user, section):
             raise HTTPException(403, "ไม่มีสิทธิ์ดู submission นี้")
 
     return {
@@ -229,9 +240,27 @@ def list_submissions(
     )
 
     if effective == models.UserRole.teacher:
-        q = q.filter(
-            models.Section.teacher_id == current_user.id
-        )
+        active_period = get_active_exam_period(db)
+        if active_period:
+            owned_section_ids, _ = get_teacher_owned_section_ids(
+                db,
+                current_user.id,
+                active_period.semester,
+                active_period.academic_year,
+            )
+            if owned_section_ids is None:
+                q = q.filter(models.Section.teacher_id == current_user.id)
+            elif not owned_section_ids:
+                return []
+            else:
+                q = q.filter(models.Section.id.in_(owned_section_ids))
+        else:
+            q = q.filter(models.Section.teacher_id == current_user.id)
+    elif effective == models.UserRole.dept_supervisor:
+        group_clause = build_course_group_clause(models.Course.course_id, dept_filter)
+        if group_clause is None:
+            return []
+        q = q.join(models.Course, models.Section.course_id == models.Course.id).filter(group_clause)
 
     if status:
         q = q.filter(models.ExamSubmission.status == status)
@@ -600,7 +629,7 @@ def request_file_access(
 
     # Teacher: only their own
     if effective == models.UserRole.teacher:
-        if sub.section.teacher_id != current_user.id:
+        if not teacher_has_section_access(db, current_user, sub.section):
             raise HTTPException(403, "ไม่มีสิทธิ์เข้าถึงไฟล์นี้")
 
     if purpose == models.TokenPurpose.download and not can_download:
@@ -700,7 +729,7 @@ def _assert_message_access(db: Session, submission_id: int, user: models.User):
         raise HTTPException(404, "ไม่พบ submission")
     if effective == models.UserRole.teacher:
         section = sub.section
-        if not section or section.teacher_id != user.id:
+        if not section or not teacher_has_section_access(db, user, section):
             raise HTTPException(403, "ไม่มีสิทธิ์เข้าถึง submission นี้")
     elif effective == models.UserRole.staff:
         # staff ไม่มีสิทธิ์อ่าน/เขียน messages
@@ -780,7 +809,7 @@ def step4_print_spec(
         raise HTTPException(404, "ไม่พบ submission")
     if sub.status in (models.SubmissionStatus.approved, models.SubmissionStatus.released):
         raise HTTPException(400, "ไม่สามารถแก้ไขได้ — submission ถูก approve แล้ว")
-    if effective == models.UserRole.teacher and sub.submitted_by != current_user.id:
+    if effective == models.UserRole.teacher and not teacher_has_section_access(db, current_user, sub.section):
         raise HTTPException(403, "ไม่มีสิทธิ์")
 
     valid_staple = {"none", "corner_left", "side_left", "custom"}

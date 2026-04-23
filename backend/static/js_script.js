@@ -65,10 +65,11 @@ const del  = p    => api('DELETE',p);
 async function doLogin() {
   const u = document.getElementById('l-user').value.trim();
   const p = document.getElementById('l-pass').value;
+  const selectedRole = document.getElementById('l-role')?.value || 'admin';
   const errEl = document.getElementById('l-err');
   errEl.style.display = 'none';
   try {
-    const data = await post('/auth/login', {username: u, password: p});
+    const data = await post('/auth/login', {username: u, password: p, selected_role: selectedRole});
     if (!data) return;
     // Server sets HttpOnly cookie — we only use the user object from the response body
     currentUser = data.user;

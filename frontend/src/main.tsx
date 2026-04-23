@@ -10,8 +10,13 @@ import "./styles/layout.css";
 import "./styles/components.css";
 import "./styles/utilities.css";
 
+const routerFuture = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+} as const;
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <BrowserRouter>
+  <BrowserRouter future={routerFuture}>
     <I18nProvider>
       <UiProvider>
         <AuthProvider>
