@@ -13,9 +13,25 @@ from sqlalchemy.orm import Session, joinedload
 from datetime import date
 from database import get_db
 import models
-from auth_utils import require_admin, get_current_user
+from auth_utils import require_admin, require_staff_or_admin, get_current_user
+from staff_workloads import get_period_workload_snapshot
 
 router = APIRouter()
+
+
+def _resolve_period(db: Session, semester: str | None, academic_year: str | None, exam_type: str | None = "final") -> models.ExamPeriod:
+    if semester and academic_year:
+        period = db.query(models.ExamPeriod).filter(
+            models.ExamPeriod.semester == semester,
+            models.ExamPeriod.academic_year == academic_year,
+            models.ExamPeriod.exam_type == exam_type,
+        ).first()
+        if period:
+            return period
+    period = db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
+    if not period:
+        raise HTTPException(400, "ไม่มี active period")
+    return period
 
 
 def _workbook_response(wb, filename: str) -> StreamingResponse:
@@ -394,3 +410,194 @@ def export_submissions_excel(
     _auto_width(ws)
     fname = f"EMS_submissions_{semester}_{academic_year}.xlsx"
     return _workbook_response(wb, fname)
+
+
+@router.get("/workload-summary-excel")
+def export_workload_summary_excel(
+    semester: str = None,
+    academic_year: str = None,
+    exam_type: str = "final",
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    try:
+        import openpyxl
+    except ImportError:
+        raise HTTPException(500, "ต้องติดตั้ง openpyxl")
+
+    period = _resolve_period(db, semester, academic_year, exam_type)
+    snapshot = get_period_workload_snapshot(db, period)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Workload Summary"
+    headers = [
+        "Staff Name",
+        "Department",
+        "Invigilation",
+        "Paper Distribution",
+        "External Exam",
+        "Current Total",
+        "Historical Total",
+    ]
+    for c, h in enumerate(headers, 1):
+        ws.cell(1, c, h)
+    _style_header(ws, 1, len(headers))
+
+    for row in snapshot["summary"]:
+        ws.append(
+            [
+                row["staff_name"],
+                row["department"],
+                row["invigilation_count"],
+                row["paper_distribution_count"],
+                row["external_exam_count"],
+                row["total_workload"],
+                row["historical_total_workload"],
+            ]
+        )
+
+    _auto_width(ws)
+    return _workbook_response(
+        wb,
+        f"EMS_workload_summary_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx",
+    )
+
+
+@router.get("/workload-detail-excel")
+def export_workload_detail_excel(
+    semester: str = None,
+    academic_year: str = None,
+    exam_type: str = "final",
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    try:
+        import openpyxl
+    except ImportError:
+        raise HTTPException(500, "ต้องติดตั้ง openpyxl")
+
+    period = _resolve_period(db, semester, academic_year, exam_type)
+    snapshot = get_period_workload_snapshot(db, period)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Workload Detail"
+    headers = [
+        "Staff Name",
+        "Department",
+        "Duty Type",
+        "Date",
+        "Time",
+        "Context",
+        "Room",
+        "Workload Count",
+    ]
+    for c, h in enumerate(headers, 1):
+        ws.cell(1, c, h)
+    _style_header(ws, 1, len(headers))
+
+    for row in snapshot["details"]:
+        ws.append(
+            [
+                row["staff_name"],
+                row["department"],
+                row["duty_type"],
+                row["date"],
+                row["time"],
+                row["context_label"],
+                row["room"],
+                row["workload_count"],
+            ]
+        )
+
+    _auto_width(ws)
+    return _workbook_response(
+        wb,
+        f"EMS_workload_detail_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx",
+    )
+
+
+@router.get("/paper-distribution-excel")
+def export_paper_distribution_excel(
+    semester: str = None,
+    academic_year: str = None,
+    exam_type: str = "final",
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    try:
+        import openpyxl
+    except ImportError:
+        raise HTTPException(500, "ต้องติดตั้ง openpyxl")
+
+    period = _resolve_period(db, semester, academic_year, exam_type)
+    rows = db.query(models.PaperDistributionAssignment).options(
+        joinedload(models.PaperDistributionAssignment.user)
+    ).filter(
+        models.PaperDistributionAssignment.exam_period_id == period.id
+    ).order_by(
+        models.PaperDistributionAssignment.exam_date,
+        models.PaperDistributionAssignment.exam_time,
+        models.PaperDistributionAssignment.slot_order,
+    ).all()
+
+    schedules = db.query(models.ExamSchedule).options(
+        joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
+        joinedload(models.ExamSchedule.room),
+    ).join(models.Section).filter(
+        models.Section.academic_year == period.academic_year,
+        models.Section.semester == period.semester,
+        models.ExamSchedule.exam_type == period.exam_type,
+    ).all()
+
+    slot_context: dict[tuple[str, str], dict[str, list[str]]] = {}
+    for schedule in schedules:
+        key = (str(schedule.exam_date) if schedule.exam_date else "", schedule.exam_time or "")
+        context = slot_context.setdefault(key, {"courses": [], "rooms": []})
+        if schedule.section and schedule.section.course:
+            label = f"{schedule.section.course.course_id} Sec {schedule.section.section_no}"
+            if label not in context["courses"]:
+                context["courses"].append(label)
+        if schedule.room and schedule.room.room_name not in context["rooms"]:
+            context["rooms"].append(schedule.room.room_name)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Paper Distribution"
+    headers = [
+        "Staff Name",
+        "Department",
+        "Date",
+        "Time",
+        "Covered Courses",
+        "Covered Rooms",
+        "Schedules Covered",
+        "Workload Count",
+        "Assignment Mode",
+    ]
+    for c, h in enumerate(headers, 1):
+        ws.cell(1, c, h)
+    _style_header(ws, 1, len(headers))
+
+    for row in rows:
+        context = slot_context.get((row.exam_date, row.exam_time), {"courses": [], "rooms": []})
+        ws.append(
+            [
+                row.user.full_name if row.user else f"User #{row.user_id}",
+                (row.user.division or row.user.unit) if row.user else "",
+                row.exam_date,
+                row.exam_time,
+                ", ".join(context["courses"]),
+                ", ".join(context["rooms"]),
+                row.covered_schedule_count or 0,
+                row.workload_units or 1,
+                row.assignment_mode,
+            ]
+        )
+
+    _auto_width(ws)
+    return _workbook_response(
+        wb,
+        f"EMS_paper_distribution_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx",
+    )

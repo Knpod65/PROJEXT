@@ -178,6 +178,16 @@ class ExamSchedule(Base):
     section       = relationship("Section", back_populates="schedules")
     room          = relationship("Room", back_populates="schedules")
     supervisions  = relationship("Supervision", back_populates="schedule")
+    pickup_qr_tokens = relationship(
+        "ExamPickupQrToken",
+        back_populates="schedule",
+        cascade="all, delete-orphan",
+    )
+    pickup_checkins = relationship(
+        "ExamPickupCheckin",
+        back_populates="schedule",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def computed_sheets(self) -> int:
@@ -366,6 +376,27 @@ class CheckinType(str, enum.Enum):
 
 
 # ─── System Settings ─────────────────────────────────────────
+class PickupQrType(str, enum.Enum):
+    invigilator_pickup = "INVIGILATOR_PICKUP"
+    regulation = "REGULATION"
+
+
+class PickupCheckinStatus(str, enum.Enum):
+    success = "success"
+    duplicate = "duplicate"
+    invalid_token = "invalid_token"
+    inactive_token = "inactive_token"
+    unassigned_user = "unassigned_user"
+    outside_window = "outside_window"
+    late_override = "late_override"
+
+
+class StaffDutyType(str, enum.Enum):
+    invigilation = "INVIGILATION"
+    paper_distribution = "PAPER_DISTRIBUTION"
+    external_exam = "EXTERNAL_EXAM"
+
+
 class SystemSetting(Base):
     __tablename__ = "system_settings"
     id          = Column(Integer, primary_key=True, index=True)
@@ -601,6 +632,69 @@ class CheckinEvent(Base):
 
 
 # ─── Teacher-Admin Message ────────────────────────────────────
+class ExamPickupQrToken(Base):
+    __tablename__ = "exam_pickup_qr_tokens"
+    id            = Column(Integer, primary_key=True, index=True)
+    schedule_id   = Column(Integer, ForeignKey("exam_schedules.id"), nullable=False)
+    room_id       = Column(Integer, ForeignKey("rooms.id"), nullable=True)
+    token         = Column(String(128), unique=True, nullable=False, index=True)
+    token_hash    = Column(String(64), unique=True, nullable=False, index=True)
+    qr_type       = Column(Enum(PickupQrType), default=PickupQrType.invigilator_pickup, nullable=False)
+    version       = Column(Integer, default=1, nullable=False)
+    course_code   = Column(String(20))
+    section_no    = Column(String(20))
+    exam_date     = Column(String(20))
+    start_time    = Column(String(8))
+    end_time      = Column(String(8))
+    is_active     = Column(Boolean, default=False, nullable=False)
+    generated_by  = Column(Integer, ForeignKey("users.id"), nullable=False)
+    generated_at  = Column(DateTime(timezone=True), server_default=func.now())
+    confirmed_by  = Column(Integer, ForeignKey("users.id"))
+    confirmed_at  = Column(DateTime(timezone=True))
+    valid_from    = Column(DateTime(timezone=True))
+    valid_until   = Column(DateTime(timezone=True))
+    revoked_at    = Column(DateTime(timezone=True))
+    payload_snapshot = Column(JSON)
+
+    schedule      = relationship("ExamSchedule", back_populates="pickup_qr_tokens")
+    room          = relationship("Room", foreign_keys=[room_id])
+    generator     = relationship("User", foreign_keys=[generated_by])
+    confirmer     = relationship("User", foreign_keys=[confirmed_by])
+    checkins      = relationship("ExamPickupCheckin", back_populates="qr_token")
+
+    __table_args__ = (
+        Index("ix_pickup_qr_schedule", "schedule_id"),
+        Index("ix_pickup_qr_active", "schedule_id", "is_active"),
+        Index("ix_pickup_qr_version", "schedule_id", "version"),
+    )
+
+
+class ExamPickupCheckin(Base):
+    __tablename__ = "exam_pickup_checkins"
+    id                = Column(Integer, primary_key=True, index=True)
+    qr_token_id       = Column(Integer, ForeignKey("exam_pickup_qr_tokens.id"), nullable=True)
+    schedule_id       = Column(Integer, ForeignKey("exam_schedules.id"), nullable=False)
+    user_id           = Column(Integer, ForeignKey("users.id"), nullable=True)
+    role              = Column(String(50))
+    scanned_at        = Column(DateTime(timezone=True), server_default=func.now())
+    status            = Column(Enum(PickupCheckinStatus), nullable=False)
+    message           = Column(Text)
+    duplicate_attempt = Column(Boolean, default=False, nullable=False)
+    token_version     = Column(Integer)
+    token_hash        = Column(String(64))
+    device_metadata   = Column(JSON)
+
+    qr_token          = relationship("ExamPickupQrToken", back_populates="checkins")
+    schedule          = relationship("ExamSchedule", back_populates="pickup_checkins")
+    user              = relationship("User", foreign_keys=[user_id])
+
+    __table_args__ = (
+        Index("ix_pickup_checkin_schedule", "schedule_id"),
+        Index("ix_pickup_checkin_user", "user_id"),
+        Index("ix_pickup_checkin_status", "status"),
+    )
+
+
 class ExamMessage(Base):
     __tablename__ = "exam_messages"
     id            = Column(Integer, primary_key=True, index=True)
@@ -796,6 +890,8 @@ class StaffUnavailability(Base):
     exam_period_id= Column(Integer, ForeignKey("exam_periods.id"), nullable=False)
     block_date    = Column(String(20), nullable=False)   # "2026-03-23"
     block_time    = Column(String(20), nullable=True)    # "09.00-12.00" | NULL=ทั้งวัน
+    start_time    = Column(String(8), nullable=True)
+    end_time      = Column(String(8), nullable=True)
     reason        = Column(String(300))
     created_by    = Column(Integer, ForeignKey("users.id"))
     created_at    = Column(DateTime(timezone=True), server_default=func.now())
@@ -806,6 +902,37 @@ class StaffUnavailability(Base):
     __table_args__ = (
         Index("ix_unavail_user_period", "user_id", "exam_period_id"),
         Index("ix_unavail_date", "block_date"),
+    )
+
+
+class PaperDistributionAssignment(Base):
+    __tablename__ = "paper_distribution_assignments"
+    id             = Column(Integer, primary_key=True, index=True)
+    exam_period_id = Column(Integer, ForeignKey("exam_periods.id"), nullable=False)
+    user_id        = Column(Integer, ForeignKey("users.id"), nullable=False)
+    exam_date      = Column(String(20), nullable=False)
+    exam_time      = Column(String(20), nullable=False)
+    start_time     = Column(String(8), nullable=True)
+    end_time       = Column(String(8), nullable=True)
+    slot_order     = Column(Integer, default=1, nullable=False)
+    duty_type      = Column(Enum(StaffDutyType), default=StaffDutyType.paper_distribution, nullable=False)
+    workload_units = Column(Integer, default=1, nullable=False)
+    assignment_mode = Column(String(20), default="auto", nullable=False)
+    covered_schedule_count = Column(Integer, default=0, nullable=False)
+    notes          = Column(Text)
+    created_by     = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at     = Column(DateTime(timezone=True), onupdate=func.now())
+
+    period         = relationship("ExamPeriod")
+    user           = relationship("User", foreign_keys=[user_id])
+    creator        = relationship("User", foreign_keys=[created_by])
+
+    __table_args__ = (
+        UniqueConstraint("exam_period_id", "exam_date", "exam_time", "user_id", name="uq_paper_distribution_slot_user"),
+        Index("ix_paper_distribution_period", "exam_period_id"),
+        Index("ix_paper_distribution_slot", "exam_date", "exam_time"),
+        Index("ix_paper_distribution_user", "user_id"),
     )
 
 

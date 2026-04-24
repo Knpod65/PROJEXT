@@ -6,35 +6,19 @@ import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { listExternalExams } from "@/services/external.service";
 import { listSchedules } from "@/services/schedule.service";
 import {
   getWorkflowSession,
   initWorkflowSession,
+  listWorkflowExternalIssues,
   openSwapWindow,
   signWorkflow,
 } from "@/services/workflow.service";
 import { useAuth } from "@/store/auth.store";
 import { usePeriod } from "@/store/period.store";
 import { useUi } from "@/store/ui.store";
-import type { ExternalExam, ScheduleWithSection, WorkflowSession } from "@/types/api";
+import type { ScheduleWithSection, WorkflowIssueItem, WorkflowIssueType, WorkflowSession } from "@/types/api";
 import { getEffectiveRole } from "@/utils/roles";
-
-type WorkflowIssueType =
-  | "no_invigilator_assigned"
-  | "room_capacity_exceeded"
-  | "high_student_invigilator_ratio"
-  | "external_staff_shortage";
-
-type WorkflowIssue = {
-  id: string;
-  type: WorkflowIssueType;
-  severity: "error" | "warning";
-  scope: "internal" | "external";
-  title: string;
-  message: string;
-  reference: string;
-};
 
 const ISSUE_LABELS: Record<WorkflowIssueType, string> = {
   no_invigilator_assigned: "No invigilator assigned",
@@ -108,8 +92,8 @@ function SignerRow({
   );
 }
 
-function computeInternalIssues(schedules: ScheduleWithSection[]): WorkflowIssue[] {
-  const issues: WorkflowIssue[] = [];
+function computeInternalIssues(schedules: ScheduleWithSection[]): WorkflowIssueItem[] {
+  const issues: WorkflowIssueItem[] = [];
 
   for (const schedule of schedules) {
     const students = schedule.section?.num_students ?? 0;
@@ -160,48 +144,13 @@ function computeInternalIssues(schedules: ScheduleWithSection[]): WorkflowIssue[
   return issues;
 }
 
-function computeExternalIssues(exams: ExternalExam[]): WorkflowIssue[] {
-  const issues: WorkflowIssue[] = [];
-
-  for (const exam of exams) {
-    const assigned = exam.supervisions?.length ?? 0;
-    const needed = exam.invigilators_needed ?? 0;
-    if (assigned === 0 && needed > 0) {
-      issues.push({
-        id: `external-none-${exam.id}`,
-        type: "no_invigilator_assigned",
-        severity: "error",
-        scope: "external",
-        title: ISSUE_LABELS.no_invigilator_assigned,
-        message: `${exam.title ?? "External exam"} has no assigned staff for ${exam.exam_date ?? "-"} ${exam.exam_time ?? ""}.`,
-        reference: exam.title ?? `External exam #${exam.id}`,
-      });
-      continue;
-    }
-
-    if (assigned < needed) {
-      issues.push({
-        id: `external-short-${exam.id}`,
-        type: "external_staff_shortage",
-        severity: "warning",
-        scope: "external",
-        title: ISSUE_LABELS.external_staff_shortage,
-        message: `${exam.title ?? "External exam"} needs ${needed} staff but only ${assigned} are assigned.`,
-        reference: exam.title ?? `External exam #${exam.id}`,
-      });
-    }
-  }
-
-  return issues;
-}
-
 function IssueSummary({
   issues,
   filter,
   onFilterChange,
   loading,
 }: {
-  issues: WorkflowIssue[];
+  issues: WorkflowIssueItem[];
   filter: WorkflowIssueType | "all";
   onFilterChange: (value: WorkflowIssueType | "all") => void;
   loading: boolean;
@@ -296,7 +245,7 @@ export function WorkflowV2Page() {
 
   const [schedules, setSchedules] = useState<ScheduleWithSection[]>([]);
   const [schedulesLoading, setSchedulesLoading] = useState(true);
-  const [externalExams, setExternalExams] = useState<ExternalExam[]>([]);
+  const [externalIssues, setExternalIssues] = useState<WorkflowIssueItem[]>([]);
   const [externalLoading, setExternalLoading] = useState(false);
 
   const [issueFilter, setIssueFilter] = useState<WorkflowIssueType | "all">("all");
@@ -325,30 +274,29 @@ export function WorkflowV2Page() {
     }
   }, []);
 
-  const loadExternalExams = useCallback(async () => {
-    if (!isAdmin) {
-      setExternalExams([]);
+  const loadExternalIssues = useCallback(async () => {
+    if (!canSign) {
+      setExternalIssues([]);
       return;
     }
     setExternalLoading(true);
     try {
-      const nextExams = await listExternalExams();
-      setExternalExams(nextExams);
+      const nextIssues = await listWorkflowExternalIssues();
+      setExternalIssues(nextIssues);
     } catch {
-      setExternalExams([]);
+      setExternalIssues([]);
     } finally {
       setExternalLoading(false);
     }
-  }, [isAdmin]);
+  }, [canSign]);
 
   useEffect(() => {
     void loadSession();
     void loadSchedules();
-    void loadExternalExams();
-  }, [loadExternalExams, loadSchedules, loadSession]);
+    void loadExternalIssues();
+  }, [loadExternalIssues, loadSchedules, loadSession]);
 
   const internalIssues = useMemo(() => computeInternalIssues(schedules), [schedules]);
-  const externalIssues = useMemo(() => computeExternalIssues(externalExams), [externalExams]);
   const issues = useMemo(() => [...internalIssues, ...externalIssues], [externalIssues, internalIssues]);
   const filteredIssues = useMemo(
     () => (issueFilter === "all" ? issues : issues.filter((issue) => issue.type === issueFilter)),
@@ -396,7 +344,7 @@ export function WorkflowV2Page() {
           </p>
         </div>
         <div className="page-hero__actions">
-          <Button type="button" variant="outline" onClick={() => { void loadSession(); void loadSchedules(); void loadExternalExams(); }}>
+          <Button type="button" variant="outline" onClick={() => { void loadSession(); void loadSchedules(); void loadExternalIssues(); }}>
             Refresh
           </Button>
           {isAdmin && status === "no_session" && (
@@ -484,7 +432,7 @@ export function WorkflowV2Page() {
           loading={schedulesLoading || externalLoading}
         />
         {issues.length > 0 && (
-          <DataTable<WorkflowIssue>
+          <DataTable<WorkflowIssueItem>
             columns={[
               {
                 key: "title",

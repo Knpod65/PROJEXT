@@ -228,6 +228,14 @@ class OptimizerResult(BaseModel):
     fairness_score: float
     violations: List[str] = []
     details: List[dict] = []
+    paper_distribution_assigned: int = 0
+    paper_distribution_slots: int = 0
+    paper_distribution_unfilled: int = 0
+    paper_distribution_warnings: List[str] = []
+    esq_staff_excluded: List[dict] = []
+    esq_in_stat: List[dict] = []
+    room_keepers_assigned: List[dict] = []
+    reminder: Optional[str] = None
 
 
 # ─── Questions (M1) ───────────────────────────────────────────

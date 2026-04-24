@@ -553,10 +553,19 @@ export function OptimizerPage() {
                 <span>Violations</span>
                 <strong>{violationCount}</strong>
               </div>
+              <div className={`summary-box${(runResult.paper_distribution_unfilled ?? 0) > 0 ? " summary-box--warning" : ""}`}>
+                <span>Paper distribution</span>
+                <strong>{runResult.paper_distribution_assigned ?? 0} / {runResult.paper_distribution_slots ?? 0}</strong>
+              </div>
             </div>
             {violationCount > 0 && (
               <ul className="plain-list optimizer-violations">
                 {runResult.violations.map((v) => <li key={v}>{v}</li>)}
+              </ul>
+            )}
+            {(runResult.paper_distribution_warnings?.length ?? 0) > 0 && (
+              <ul className="plain-list optimizer-violations">
+                {runResult.paper_distribution_warnings?.map((warning) => <li key={warning}>{warning}</li>)}
               </ul>
             )}
           </div>

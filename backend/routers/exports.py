@@ -7,10 +7,26 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from database import get_db
 import models
-from auth_utils import get_current_user, require_admin
+from auth_utils import get_current_user, require_admin, require_staff_or_admin
+from staff_workloads import get_period_workload_snapshot
 import io
 
 router = APIRouter()
+
+
+def _resolve_period(db: Session, semester: str | None, academic_year: str | None, exam_type: str | None = "final") -> models.ExamPeriod:
+    if semester and academic_year:
+        period = db.query(models.ExamPeriod).filter(
+            models.ExamPeriod.semester == semester,
+            models.ExamPeriod.academic_year == academic_year,
+            models.ExamPeriod.exam_type == exam_type,
+        ).first()
+        if period:
+            return period
+    period = db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
+    if not period:
+        raise HTTPException(400, "ไม่มี active period")
+    return period
 
 # Thai day/month names
 THAI_DAYS = ["จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์","อาทิตย์"]
@@ -255,6 +271,145 @@ def export_schedule_pdf(
 
     except ImportError:
         raise HTTPException(500, "กรุณาติดตั้ง reportlab: pip install reportlab")
+
+
+@router.get("/workload-summary-pdf")
+def export_workload_summary_pdf(
+    semester: str = Query(None),
+    academic_year: str = Query(None),
+    exam_type: str = Query("final"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet
+    except ImportError:
+        raise HTTPException(500, "กรุณาติดตั้ง reportlab: pip install reportlab")
+
+    period = _resolve_period(db, semester, academic_year, exam_type)
+    snapshot = get_period_workload_snapshot(db, period)
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), leftMargin=1.4 * cm, rightMargin=1.4 * cm, topMargin=1.2 * cm, bottomMargin=1.2 * cm)
+    styles = getSampleStyleSheet()
+    rows = [["Staff", "Department", "Invigilation", "Paper Distribution", "External Exam", "Current Total", "Historical Total"]]
+    for row in snapshot["summary"]:
+        rows.append([
+            row["staff_name"],
+            row["department"],
+            str(row["invigilation_count"]),
+            str(row["paper_distribution_count"]),
+            str(row["external_exam_count"]),
+            str(row["total_workload"]),
+            str(row["historical_total_workload"]),
+        ])
+    table = Table(rows, repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a2d52")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+    ]))
+    doc.build([
+        Paragraph(f"EMS Staff Workload Summary - {period.label}", styles["Title"]),
+        Paragraph(f"Generated for {current_user.full_name or current_user.username}", styles["Normal"]),
+        Spacer(1, 12),
+        table,
+    ])
+    buffer.seek(0)
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename=\"EMS_workload_summary_{period.semester}_{period.academic_year}_{period.exam_type}.pdf\"'},
+    )
+
+
+@router.get("/paper-distribution-pdf")
+def export_paper_distribution_pdf(
+    semester: str = Query(None),
+    academic_year: str = Query(None),
+    exam_type: str = Query("final"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet
+    except ImportError:
+        raise HTTPException(500, "กรุณาติดตั้ง reportlab: pip install reportlab")
+
+    period = _resolve_period(db, semester, academic_year, exam_type)
+    assignments = db.query(models.PaperDistributionAssignment).options(
+        joinedload(models.PaperDistributionAssignment.user)
+    ).filter(
+        models.PaperDistributionAssignment.exam_period_id == period.id
+    ).order_by(
+        models.PaperDistributionAssignment.exam_date,
+        models.PaperDistributionAssignment.exam_time,
+        models.PaperDistributionAssignment.slot_order,
+    ).all()
+    schedules = db.query(models.ExamSchedule).options(
+        joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
+        joinedload(models.ExamSchedule.room),
+    ).join(models.Section).filter(
+        models.Section.academic_year == period.academic_year,
+        models.Section.semester == period.semester,
+        models.ExamSchedule.exam_type == period.exam_type,
+    ).all()
+    context_by_slot: dict[tuple[str, str], dict[str, list[str]]] = {}
+    for schedule in schedules:
+        key = (str(schedule.exam_date) if schedule.exam_date else "", schedule.exam_time or "")
+        context = context_by_slot.setdefault(key, {"courses": [], "rooms": []})
+        if schedule.section and schedule.section.course:
+            label = f"{schedule.section.course.course_id} Sec {schedule.section.section_no}"
+            if label not in context["courses"]:
+                context["courses"].append(label)
+        if schedule.room and schedule.room.room_name not in context["rooms"]:
+            context["rooms"].append(schedule.room.room_name)
+    rows = [["Staff", "Department", "Date", "Time", "Covered Courses", "Covered Rooms", "Load"]]
+    for assignment in assignments:
+        context = context_by_slot.get((assignment.exam_date, assignment.exam_time), {"courses": [], "rooms": []})
+        rows.append([
+            assignment.user.full_name if assignment.user else f"User #{assignment.user_id}",
+            (assignment.user.division or assignment.user.unit) if assignment.user else "",
+            assignment.exam_date,
+            assignment.exam_time,
+            ", ".join(context["courses"]),
+            ", ".join(context["rooms"]),
+            str(assignment.workload_units or 1),
+        ])
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), leftMargin=1.4 * cm, rightMargin=1.4 * cm, topMargin=1.2 * cm, bottomMargin=1.2 * cm)
+    styles = getSampleStyleSheet()
+    table = Table(rows, repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a2d52")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+    ]))
+    doc.build([
+        Paragraph(f"EMS Paper Distribution Assignments - {period.label}", styles["Title"]),
+        Paragraph(f"Generated for {current_user.full_name or current_user.username}", styles["Normal"]),
+        Spacer(1, 12),
+        table,
+    ])
+    buffer.seek(0)
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename=\"EMS_paper_distribution_{period.semester}_{period.academic_year}_{period.exam_type}.pdf\"'},
+    )
 
 
 @router.get("/supervision-stats/{user_id}")

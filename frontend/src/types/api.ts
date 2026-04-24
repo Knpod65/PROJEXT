@@ -219,6 +219,87 @@ export interface CheckinEventItem {
   confirmations?: Record<string, string>;
 }
 
+export interface PickupScheduleSummary {
+  schedule_id?: number;
+  id?: number;
+  course_code?: string | null;
+  course_name?: string | null;
+  section_no?: string | null;
+  room_name?: string | null;
+  exam_date?: string | null;
+  exam_time?: string | null;
+  teacher_name?: string | null;
+  status?: string | null;
+}
+
+export interface PickupAssignment {
+  user_id: number;
+  full_name: string;
+  role: string;
+}
+
+export interface PickupQrSummary {
+  id: number;
+  schedule_id: number;
+  version: number;
+  qr_type: string;
+  is_active: boolean;
+  confirmed_at?: string | null;
+  generated_at?: string | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  course_code?: string | null;
+  section_no?: string | null;
+  exam_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  qr_value?: string | null;
+}
+
+export interface PickupQrStatusResponse {
+  schedule: PickupScheduleSummary;
+  assignments: PickupAssignment[];
+  active_qr?: PickupQrSummary | null;
+  latest_qr?: PickupQrSummary | null;
+  has_pending_regeneration: boolean;
+}
+
+export interface PickupQrMutationResponse extends PickupQrStatusResponse {
+  pending_qr?: PickupQrSummary | null;
+}
+
+export interface PickupScanResult {
+  success: boolean;
+  status: string;
+  message: string;
+  schedule: PickupScheduleSummary;
+  assignment?: PickupAssignment | null;
+  checked_in_at?: string | null;
+  qr_version?: number | null;
+}
+
+export interface PickupMonitorRow {
+  schedule_id: number;
+  date: string;
+  time: string;
+  course_code?: string | null;
+  course_name?: string | null;
+  section_no?: string | null;
+  room_name?: string | null;
+  assigned_person: string;
+  role: string;
+  checkin_status: string;
+  checkin_time?: string | null;
+  latest_message?: string | null;
+  active_qr_version?: number | null;
+  latest_qr_version?: number | null;
+  has_pending_regeneration: boolean;
+  action_details?: {
+    checkin_id?: number | null;
+    duplicate_attempt?: boolean;
+  };
+}
+
 export interface PublicStudentSchedule {
   student_id: string;
   full_name: string;
@@ -450,6 +531,22 @@ export interface WorkflowSession {
   next_signer_r1?: string | null;
   next_signer_r2?: string | null;
   message?: string;
+}
+
+export type WorkflowIssueType =
+  | "no_invigilator_assigned"
+  | "room_capacity_exceeded"
+  | "high_student_invigilator_ratio"
+  | "external_staff_shortage";
+
+export interface WorkflowIssueItem {
+  id: string;
+  type: WorkflowIssueType;
+  severity: "error" | "warning";
+  scope: "internal" | "external";
+  title: string;
+  message: string;
+  reference: string;
 }
 
 export interface SignerInfo {
@@ -684,4 +781,65 @@ export interface OptimizerResult {
   fairness_score: number;
   violations: string[];
   details: Array<Record<string, unknown>>;
+  paper_distribution_assigned?: number;
+  paper_distribution_slots?: number;
+  paper_distribution_unfilled?: number;
+  paper_distribution_warnings?: string[];
+}
+
+export interface StaffAvailabilityMember {
+  id: number;
+  username: string;
+  full_name: string | null;
+  division?: string | null;
+  unit?: string | null;
+  department?: string | null;
+  is_paper_distribution_candidate: boolean;
+  excluded_reason?: string | null;
+  availability_block_count: number;
+  invigilation_count: number;
+  paper_distribution_count: number;
+  external_exam_count: number;
+  total_workload: number;
+}
+
+export interface WorkloadSummaryRow {
+  user_id: number;
+  staff_name: string;
+  department: string;
+  invigilation_count: number;
+  paper_distribution_count: number;
+  external_exam_count: number;
+  total_workload: number;
+  historical_total_workload: number;
+}
+
+export interface WorkloadDetailRow {
+  user_id: number;
+  staff_name: string;
+  department: string;
+  duty_type: string;
+  date: string;
+  time: string;
+  context_label: string;
+  room?: string | null;
+  workload_count: number;
+}
+
+export interface PaperDistributionAssignmentRow {
+  id: number;
+  user_id: number;
+  staff_name: string;
+  department: string;
+  exam_date: string;
+  exam_time: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  duty_type: string;
+  workload_count: number;
+  covered_schedule_count: number;
+  covered_courses: string[];
+  covered_rooms: string[];
+  assignment_mode?: string | null;
+  notes?: string | null;
 }

@@ -8,13 +8,18 @@ import { FilterBar } from "@/components/ui/FilterBar";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAsyncData } from "@/hooks/useAsyncData";
+import { buildDocumentExportUrl } from "@/services/documents.service";
 import { getRooms, listSchedules } from "@/services/schedule.service";
+import { useAuth } from "@/store/auth.store";
 import type { ScheduleWithSection } from "@/types/api";
 import { formatDate, formatNumber } from "@/utils/format";
 
 type ViewMode = "date" | "room";
 
 export function SchedulePage() {
+  const { user } = useAuth();
+  const effectiveRole = user?.effective_role ?? user?.active_role ?? user?.role ?? null;
+  const canExportOperationalDocs = effectiveRole === "admin" || effectiveRole === "staff";
   const [roomId, setRoomId] = useState("");
   const [status, setStatus] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -112,6 +117,26 @@ export function SchedulePage() {
           >
             Export PDF
           </Button>
+          {canExportOperationalDocs ? (
+            <>
+              <Button
+                iconLeft={<Icon name="inventory_2" />}
+                type="button"
+                variant="outline"
+                onClick={() => window.open(buildDocumentExportUrl({ document_type: "all" }), "_blank")}
+              >
+                Generate Exam Documents
+              </Button>
+              <Button
+                iconLeft={<Icon name="qr_code" />}
+                type="button"
+                variant="outline"
+                onClick={() => window.open(buildDocumentExportUrl({ document_type: "envelope_cover" }), "_blank")}
+              >
+                Export Cover Sheets
+              </Button>
+            </>
+          ) : null}
         </div>
       </section>
 

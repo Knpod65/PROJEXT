@@ -24,7 +24,12 @@ import models
 from auth_utils import require_admin, require_staff_or_admin, get_current_user, log_action
 from collections import defaultdict
 import statistics
-from time_ranges import normalize_time_range
+from time_ranges import normalize_time_range, parse_time_range
+from staff_workloads import (
+    build_staff_unavailability_map,
+    get_accumulated_workload_breakdown,
+    is_staff_unavailable,
+)
 
 router = APIRouter()
 
@@ -116,32 +121,10 @@ def _exam_dict(exam: models.ExternalExam) -> dict:
 
 
 def _get_accumulated_load(db: Session) -> dict:
-    """
-    นับจำนวนครั้งคุมสอบสะสมทุก period ทุก type:
-      supervision_baselines (ภายในคณะ) +
-      external_supervisions (สอบพิเศษ)
-
-    return: {user_id: total_count}
-    """
-    load = defaultdict(int)
-
-    # ภายในคณะ (baseline = ไม่นับ swap เข้า/ออก)
-    baselines = db.query(
-        models.SupervisionBaseline.user_id,
-        func.count(models.SupervisionBaseline.id).label("cnt")
-    ).group_by(models.SupervisionBaseline.user_id).all()
-    for user_id, cnt in baselines:
-        load[user_id] += cnt
-
-    # External exams
-    ext_sups = db.query(
-        models.ExternalSupervision.user_id,
-        func.count(models.ExternalSupervision.id).label("cnt")
-    ).group_by(models.ExternalSupervision.user_id).all()
-    for user_id, cnt in ext_sups:
-        load[user_id] += cnt
-
-    return dict(load)
+    return {
+        user_id: payload.get("total_workload", 0)
+        for user_id, payload in get_accumulated_workload_breakdown(db).items()
+    }
 
 
 # กลุ่มที่ไม่เข้าร่วม external exam
@@ -190,9 +173,9 @@ def _get_eligible_staff(db: Session, exam: models.ExternalExam) -> List[models.U
 
 
 def _build_assignment_preview(db: Session, exam: models.ExternalExam) -> dict:
-    normalized_exam_time = normalize_time_range(exam.exam_time) or exam.exam_time
+    normalized_exam_time = normalize_time_range(*parse_time_range(exam.exam_time)) or exam.exam_time
     already_assigned = {s.user_id for s in exam.supervisions}
-    acc_load = _get_accumulated_load(db)
+    load_breakdown = get_accumulated_workload_breakdown(db)
 
     internal_conflicts = {
         row[0]
@@ -217,18 +200,13 @@ def _build_assignment_preview(db: Session, exam: models.ExternalExam) -> dict:
     }
 
     unavailable_by_user: dict[int, str] = {}
-    for user_id, block_time in db.query(
-        models.StaffUnavailability.user_id,
-        models.StaffUnavailability.block_time,
-    ).filter(
-        models.StaffUnavailability.exam_period_id == exam.exam_period_id,
-        models.StaffUnavailability.block_date == exam.exam_date,
+    unavailability_map = build_staff_unavailability_map(db, exam.exam_period_id)
+    for user in db.query(models.User).filter(
+        models.User.role == models.UserRole.staff,
+        models.User.is_active == True,
     ).all():
-        if block_time is None:
-            unavailable_by_user[user_id] = "Unavailable all day"
-            continue
-        if normalize_time_range(block_time) == normalized_exam_time:
-            unavailable_by_user[user_id] = f"Unavailable at {normalized_exam_time}"
+        if is_staff_unavailable(unavailability_map, user.id, exam.exam_date, exam.exam_time):
+            unavailable_by_user[user.id] = f"Unavailable at {normalized_exam_time or exam.exam_time}"
 
     all_staff = [
         user
@@ -249,7 +227,10 @@ def _build_assignment_preview(db: Session, exam: models.ExternalExam) -> dict:
             "full_name": user.full_name,
             "division": user.division,
             "unit": user.unit,
-            "total_load": acc_load.get(user.id, 0),
+            "total_load": load_breakdown.get(user.id, {}).get("total_workload", 0),
+            "invigilation_count": load_breakdown.get(user.id, {}).get("invigilation_count", 0),
+            "paper_distribution_count": load_breakdown.get(user.id, {}).get("paper_distribution_count", 0),
+            "external_exam_count": load_breakdown.get(user.id, {}).get("external_exam_count", 0),
         }
         if _is_excluded(user):
             excluded_staff.append({**payload, "reason": "Excluded by role/division rule"})
@@ -568,19 +549,7 @@ def get_leaderboard(
       total_count     = รวม
     เรียงจากน้อยสุด (คนที่ยังได้คุมน้อย = ควรได้รับเลือกครั้งต่อไป)
     """
-    # internal
-    internal = db.query(
-        models.SupervisionBaseline.user_id,
-        func.count(models.SupervisionBaseline.id).label("internal_count"),
-    ).group_by(models.SupervisionBaseline.user_id).all()
-    internal_map = {r[0]: r[1] for r in internal}
-
-    # external
-    external = db.query(
-        models.ExternalSupervision.user_id,
-        func.count(models.ExternalSupervision.id).label("external_count"),
-    ).group_by(models.ExternalSupervision.user_id).all()
-    external_map = {r[0]: r[1] for r in external}
+    workload = get_accumulated_workload_breakdown(db)
 
     # all staff
     all_staff = db.query(models.User).filter(
@@ -592,15 +561,17 @@ def get_leaderboard(
 
     rows = []
     for u in staff:
-        ic = internal_map.get(u.id, 0)
-        ec = external_map.get(u.id, 0)
+        ic = workload.get(u.id, {}).get("invigilation_count", 0)
+        pc = workload.get(u.id, {}).get("paper_distribution_count", 0)
+        ec = workload.get(u.id, {}).get("external_exam_count", 0)
         rows.append({
             "user_id":        u.id,
             "full_name":      u.full_name,
             "division":       u.division,
             "internal_count": ic,
+            "paper_distribution_count": pc,
             "external_count": ec,
-            "total_count":    ic + ec,
+            "total_count":    ic + pc + ec,
         })
 
     # เรียง total_count น้อย→มาก (fairness order)

@@ -1,4 +1,4 @@
-import type { SignerInfo, WorkflowSession } from "@/types/api";
+import type { SignerInfo, WorkflowIssueItem, WorkflowSession } from "@/types/api";
 import { get, post } from "./api";
 
 export function getWorkflowSession() {
@@ -19,4 +19,8 @@ export function openSwapWindow() {
 
 export function listWorkflowSigners() {
   return get<SignerInfo[]>("/workflow/session/signers");
+}
+
+export function listWorkflowExternalIssues() {
+  return get<WorkflowIssueItem[]>("/workflow/session/external-issues");
 }

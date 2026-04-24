@@ -19,6 +19,7 @@ import { CoExamPage } from "@/pages/CoExam";
 import { CopyPage } from "@/pages/Copy";
 import { DashboardPage } from "@/pages/Dashboard";
 import { ExamManagerPage } from "@/pages/ExamManager";
+import { ExportCenterPage } from "@/pages/ExportCenter";
 import { ExternalPage } from "@/pages/External";
 import { ImportV2Page } from "@/pages/ImportV2";
 import { ImportAuditPage } from "@/pages/ImportAudit";
@@ -34,6 +35,7 @@ import { RoomManagementV2Page } from "@/pages/RoomManagementV2";
 import { SchedulePage } from "@/pages/Schedule";
 import { SectionsPage } from "@/pages/Sections";
 import { SettingsV2Page } from "@/pages/SettingsV2";
+import { StaffAvailabilityPage } from "@/pages/StaffAvailability";
 import { StudentsV2Page } from "@/pages/StudentsV2";
 import { StudentSearchPage } from "@/pages/StudentSearch";
 import { SubmissionsPage } from "@/pages/Submissions";
@@ -152,8 +154,10 @@ export function App() {
             <Route path="/workflow-v2" element={<Navigate replace to="/workflow" />} />
             <Route path="/coexam" element={<GuardedPage roles={["admin"]}><CoExamPage /></GuardedPage>} />
             <Route path="/optimizer" element={<GuardedPage roles={["admin"]}><OptimizerPage /></GuardedPage>} />
+            <Route path="/staff-availability" element={<GuardedPage roles={["admin"]}><StaffAvailabilityPage /></GuardedPage>} />
             <Route path="/printreview" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><PrintReviewPage /></GuardedPage>} />
             <Route path="/external" element={<GuardedPage roles={["admin", "staff"]}><ExternalPage /></GuardedPage>} />
+            <Route path="/exports-center" element={<GuardedPage roles={["admin", "staff"]}><ExportCenterPage /></GuardedPage>} />
             <Route path="/import" element={<GuardedPage roles={["admin"]}><ImportV2Page /></GuardedPage>} />
             <Route path="/import-audit" element={<GuardedPage roles={["admin"]}><ImportAuditPage /></GuardedPage>} />
             <Route path="/period" element={<GuardedPage roles={["admin"]}><PeriodPage /></GuardedPage>} />

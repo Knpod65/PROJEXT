@@ -4,6 +4,7 @@ Exam Submission Router — Teacher workflow (M1 complete)
 Steps: confirm date → exam type → upload/create → submit → admin approve → release
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from pydantic import BaseModel
@@ -161,6 +162,46 @@ def _upsert_print_queue_job(
         job.delivery_note = None
 
     return job
+
+
+def _resolve_submission_pdf_path(submission: models.ExamSubmission) -> str:
+    for candidate in (submission.pdf_stripped_path, submission.pdf_original_path):
+        if candidate and os.path.exists(candidate):
+            return candidate
+    raise HTTPException(404, "เนเธกเนเธเธเนเธเธฅเน")
+
+
+def _build_submission_filename(submission: models.ExamSubmission) -> str:
+    section = submission.section
+    course = section.course if section else None
+    course_code = (course.course_id if course and course.course_id else f"submission-{submission.id}").replace("/", "-")
+    section_no = (section.section_no if section and section.section_no else "unknown").replace("/", "-")
+    return f"{course_code}_section-{section_no}.pdf"
+
+
+def _load_valid_access_token(
+    db: Session,
+    token: str,
+    current_user: models.User,
+) -> models.ExamAccessToken:
+    access_token = db.query(models.ExamAccessToken).options(
+        joinedload(models.ExamAccessToken.submission)
+            .joinedload(models.ExamSubmission.section)
+            .joinedload(models.Section.course)
+    ).filter(
+        models.ExamAccessToken.token == token,
+        models.ExamAccessToken.revoked == False,
+    ).first()
+
+    if not access_token:
+        raise HTTPException(403, "Token เนเธกเนเธ–เธนเธเธ•เนเธญเธ")
+    if access_token.issued_to != current_user.id:
+        raise HTTPException(403, "Token เธเธตเนเนเธกเนเนเธเนเธเธญเธเธเธธเธ“")
+    if datetime.now(timezone.utc) > access_token.expires_at:
+        raise HTTPException(403, "Token เธซเธกเธ”เธญเธฒเธขเธธ")
+    if access_token.use_count >= access_token.max_uses:
+        raise HTTPException(403, "Token เนเธเนเธเธฃเธเนเธฅเนเธง")
+    return access_token
 
 
 # ── Get submission status ──────────────────────────────────────
@@ -375,6 +416,12 @@ async def step3_upload_pdf(
         raise HTTPException(400, "กรุณาเลือกประเภทข้อสอบก่อน (Step 2)")
 
     # ── Validate file ──
+    filename = (file.filename or "").strip().lower()
+    allowed_content_types = {"application/pdf", "application/x-pdf"}
+    if not filename.endswith(".pdf"):
+        raise HTTPException(400, "รองรับเฉพาะไฟล์ .pdf เท่านั้น")
+    if file.content_type and file.content_type.lower() not in allowed_content_types:
+        raise HTTPException(400, "ชนิดไฟล์ไม่ถูกต้อง ต้องเป็น PDF เท่านั้น")
     content = await file.read()
     if len(content) > 20 * 1024 * 1024:
         raise HTTPException(400, "ไฟล์ใหญ่เกิน 20MB")
@@ -663,57 +710,82 @@ def request_file_access(
         "purpose": purpose,
         "expires_in": "2 hours",
         "max_uses": max_uses,
+        "access_url": f"/api/submissions/access/{token_str}",
+        "content_url": f"/api/submissions/access/{token_str}/content",
     }
 
 
 @router.get("/access/{token}")
 def access_exam_file(
     token: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    access_token = _load_valid_access_token(db, token, current_user)
+    submission = access_token.submission
+    _resolve_submission_pdf_path(submission)
+
+    watermark = (
+        f"{current_user.full_name or current_user.username} | "
+        f"{current_user.email} | "
+        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}"
+    )
+
+    response = JSONResponse(
+        {
+            "purpose": access_token.purpose.value,
+            "can_download": access_token.purpose in (models.TokenPurpose.download, models.TokenPurpose.print),
+            "submission_id": submission.id,
+            "watermark": watermark,
+            "remaining_uses": max(access_token.max_uses - access_token.use_count, 0),
+            "expires_at": access_token.expires_at.isoformat() if access_token.expires_at else None,
+            "content_url": f"/api/submissions/access/{token}/content",
+        }
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@router.get("/access/{token}/content")
+def stream_exam_file(
+    token: str,
     request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    t = db.query(models.ExamAccessToken).options(
-        joinedload(models.ExamAccessToken.submission)
-    ).filter(
-        models.ExamAccessToken.token == token,
-        models.ExamAccessToken.revoked == False,
-    ).first()
+    access_token = _load_valid_access_token(db, token, current_user)
+    submission = access_token.submission
+    file_path = _resolve_submission_pdf_path(submission)
 
-    if not t:
-        raise HTTPException(403, "Token ไม่ถูกต้อง")
-    if t.issued_to != current_user.id:
-        raise HTTPException(403, "Token นี้ไม่ใช่ของคุณ")
-    if datetime.now(timezone.utc) > t.expires_at:
-        raise HTTPException(403, "Token หมดอายุ")
-    if t.use_count >= t.max_uses:
-        raise HTTPException(403, "Token ใช้ครบแล้ว")
-
-    # Log access
     ip = request.client.host if request.client else "unknown"
-    watermark = f"{current_user.full_name} | {current_user.email} | {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}"
+    watermark = (
+        f"{current_user.full_name or current_user.username} | "
+        f"{current_user.email} | "
+        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}"
+    )
+    action = {
+        models.TokenPurpose.view: "viewed",
+        models.TokenPurpose.download: "downloaded",
+        models.TokenPurpose.print: "printed",
+    }.get(access_token.purpose, "viewed")
     log = models.ExamAccessLog(
-        token_id       = t.id,
-        user_id        = current_user.id,
-        action         = "viewed",
-        ip_hash        = hashlib.sha256(ip.encode()).hexdigest()[:16],
-        watermark_text = watermark,
+        token_id=access_token.id,
+        user_id=current_user.id,
+        action=action,
+        ip_hash=hashlib.sha256(ip.encode()).hexdigest()[:16],
+        watermark_text=watermark,
     )
     db.add(log)
-    t.use_count += 1
+    access_token.use_count += 1
     db.commit()
 
-    sub = t.submission
-    if not sub.pdf_stripped_path or not os.path.exists(sub.pdf_stripped_path):
-        raise HTTPException(404, "ไม่พบไฟล์")
-
-    return {
-        "file_path": sub.pdf_stripped_path,
-        "watermark": watermark,
-        "purpose": t.purpose,
-        "can_download": t.purpose == models.TokenPurpose.download,
-        "submission_id": sub.id,
-    }
+    filename = _build_submission_filename(submission)
+    response = FileResponse(file_path, media_type="application/pdf", filename=filename)
+    if access_token.purpose == models.TokenPurpose.view:
+        response.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-EMS-Watermark"] = watermark
+    return response
 
 
 # ── Messages: Teacher ↔ Admin ──────────────────────────────────

@@ -13,6 +13,11 @@ from auth_utils import (
 )
 from collections import defaultdict
 from exam_ownership import get_active_exam_period, get_teacher_owned_section_ids
+from staff_workloads import (
+    assign_paper_distribution_for_period,
+    build_staff_unavailability_map,
+    is_staff_unavailable as _interval_staff_unavailable,
+)
 from term_lifecycle import require_period_editable_for_values
 from time_ranges import normalize_time_range, parse_time_range, ranges_overlap
 
@@ -102,13 +107,8 @@ def _load_unavailability_maps(db: Session, data: schemas.OptimizerRequest):
     if not period:
         return {}, {}
 
-    staff_map = defaultdict(set)
+    staff_map = build_staff_unavailability_map(db, period.id)
     room_map = defaultdict(list)
-
-    for row in db.query(models.StaffUnavailability).filter(
-        models.StaffUnavailability.exam_period_id == period.id
-    ).all():
-        staff_map[row.user_id].add((str(row.block_date), row.block_time or None))
 
     for row in db.query(models.RoomUnavailability).filter(
         models.RoomUnavailability.exam_period_id == period.id
@@ -131,11 +131,7 @@ def _load_unavailability_maps(db: Session, data: schemas.OptimizerRequest):
 
 
 def _is_staff_unavailable(unavail_map, user_id: int, block_date, block_time: Optional[str]) -> bool:
-    if not unavail_map:
-        return False
-    blocked = unavail_map.get(user_id, set())
-    key_date = str(block_date)
-    return (key_date, block_time) in blocked or (key_date, None) in blocked
+    return _interval_staff_unavailable(unavail_map, user_id, block_date, block_time)
 
 
 def _is_room_unavailable(
@@ -485,7 +481,7 @@ def copy_count_summary(
     semester: str = "2",
     academic_year: str = "2568",
     db: Session = Depends(get_db),
-    _=Depends(get_current_user)
+    _: models.User = Depends(require_staff_or_admin)
 ):
     schedules = db.query(models.ExamSchedule).join(models.Section).options(
         joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
@@ -821,6 +817,17 @@ def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_u
                     ]
                 })
 
+    period = db.query(models.ExamPeriod).filter(
+        models.ExamPeriod.academic_year == data.academic_year,
+        models.ExamPeriod.semester == data.semester,
+        models.ExamPeriod.exam_type == data.exam_type.value,
+    ).first()
+    distribution_result = (
+        assign_paper_distribution_for_period(db, period, current_user.id)
+        if period
+        else {"assigned_count": 0, "slot_count": 0, "unfilled_count": 0, "warnings": []}
+    )
+
     db.commit()
 
     # Fairness score (std deviation ต่ำ = ดี)
@@ -877,6 +884,10 @@ def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_u
         fairness_score=fairness,
         violations=violations,
         details=details,
+        paper_distribution_assigned=distribution_result["assigned_count"],
+        paper_distribution_slots=distribution_result["slot_count"],
+        paper_distribution_unfilled=distribution_result["unfilled_count"],
+        paper_distribution_warnings=distribution_result["warnings"],
         esq_staff_excluded=esq_staff_excluded,
         esq_in_stat=esq_in_stat if "esq_in_stat" in dir() else [],
         room_keepers_assigned=room_keepers_assigned,
@@ -989,6 +1000,14 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
                         t for t in teachers
                         if t.id not in slot_teacher_used[t_idx]
                         and t.id != (section.teacher_id or -1)
+                        and not _interval_staff_unavailable(
+                            unavail_map,
+                            t.id,
+                            slot[0],
+                            slot[1],
+                            parse_time_range(slot[1])[0],
+                            parse_time_range(slot[1])[1],
+                        )
                     ]
                     available.sort(key=lambda t: teacher_count[t.id])
                     sup1 = available[0] if available else None
@@ -1034,6 +1053,17 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
                         "room": room.room_name,
                     })
 
+    period = db.query(models.ExamPeriod).filter(
+        models.ExamPeriod.academic_year == data.academic_year,
+        models.ExamPeriod.semester == data.semester,
+        models.ExamPeriod.exam_type == data.exam_type.value,
+    ).first()
+    distribution_result = (
+        assign_paper_distribution_for_period(db, period, current_user.id)
+        if period
+        else {"assigned_count": 0, "slot_count": 0, "unfilled_count": 0, "warnings": []}
+    )
+
     db.commit()
     import statistics
     counts = list(teacher_count.values())
@@ -1050,4 +1080,8 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
         fairness_score=fairness,
         violations=[],
         details=details,
+        paper_distribution_assigned=distribution_result["assigned_count"],
+        paper_distribution_slots=distribution_result["slot_count"],
+        paper_distribution_unfilled=distribution_result["unfilled_count"],
+        paper_distribution_warnings=distribution_result["warnings"],
     )

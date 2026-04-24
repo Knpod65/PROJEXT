@@ -13,26 +13,63 @@ Query params:
   type = cover_page | envelope | attendance | all (default: all)
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_
 from typing import Optional
 from database import get_db
 import models
-from auth_utils import get_current_user, require_staff_or_admin
+from auth_utils import get_current_user, require_staff_or_admin, log_action
 
-import io, zipfile, os
+import io, zipfile, os, math
 
 # นำเข้า generator functions
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from gen_docs import generate_cover_page, generate_envelope_cover, generate_attendance_sheet
+_GEN_DOCS_IMPORT_ERROR: Exception | None = None
+try:
+    from gen_docs import generate_cover_page, generate_envelope_cover, generate_attendance_sheet
+except Exception as exc:  # pragma: no cover - local env dependent
+    generate_cover_page = None
+    generate_envelope_cover = None
+    generate_attendance_sheet = None
+    _GEN_DOCS_IMPORT_ERROR = exc
+
+from exam_pickup import (
+    activate_pickup_qr,
+    build_pickup_assignments,
+    create_pickup_qr,
+    ensure_active_pickup_qr,
+    ensure_schedule_ready_for_pickup,
+    get_active_pickup_qr,
+    get_confirmed_section_owner,
+    get_latest_pickup_qr,
+    serialize_pickup_qr,
+)
+from operational_documents import (
+    build_bundle_filename,
+    build_document_filename,
+    generate_envelope_cover_pdf,
+    generate_participant_code_announcement_pdf,
+    generate_signature_sheet_pdf,
+    iter_document_types,
+    normalize_document_type,
+)
 
 router = APIRouter()
 
 # path ของ QR code image
 QR_IMAGE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "qr_regulation.png")
+
+
+def _ensure_doc_generators_available() -> None:
+    if generate_cover_page and generate_envelope_cover and generate_attendance_sheet:
+        return
+    detail = "Document generation dependencies are unavailable in this local environment."
+    if _GEN_DOCS_IMPORT_ERROR:
+        detail = f"{detail} ({_GEN_DOCS_IMPORT_ERROR})"
+    raise HTTPException(503, detail)
 
 
 def _safe_filename(s: str) -> str:
@@ -67,6 +104,7 @@ def _build_docs(sch: models.ExamSchedule, db: Session) -> dict:
       "filename_prefix": str,
     }
     """
+    _ensure_doc_generators_available()
     sec     = sch.section
     course  = sec.course if sec else None
     teacher = sec.teacher if sec else None
@@ -604,4 +642,364 @@ def generate_preview_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition":
                  f'inline; filename="preview_{course_id}_sec{section_no}.pdf"'},
+    )
+
+
+def _resolve_document_period(
+    db: Session,
+    *,
+    academic_year: Optional[str] = None,
+    semester: Optional[str] = None,
+    exam_type: Optional[str] = None,
+) -> models.ExamPeriod:
+    if academic_year and semester and exam_type:
+        period = db.query(models.ExamPeriod).filter(
+            models.ExamPeriod.academic_year == str(academic_year),
+            models.ExamPeriod.semester == str(semester),
+            models.ExamPeriod.exam_type == str(exam_type),
+        ).first()
+    else:
+        period = db.query(models.ExamPeriod).filter(
+            models.ExamPeriod.is_active == True
+        ).first()
+
+    if not period:
+        raise HTTPException(404, "ไม่พบภาคสอบที่ต้องการสำหรับการสร้างเอกสาร")
+    return period
+
+
+def _load_export_schedules(
+    db: Session,
+    *,
+    schedule_id: Optional[int] = None,
+    course_id: Optional[str] = None,
+    section_no: Optional[str] = None,
+    room_id: Optional[int] = None,
+    academic_year: Optional[str] = None,
+    semester: Optional[str] = None,
+    exam_type: Optional[str] = None,
+) -> list[models.ExamSchedule]:
+    if schedule_id is not None:
+        return [_load_schedule(db, schedule_id)]
+
+    period = _resolve_document_period(
+        db,
+        academic_year=academic_year,
+        semester=semester,
+        exam_type=exam_type,
+    )
+    exam_type_enum = models.ExamType(period.exam_type)
+
+    query = db.query(models.ExamSchedule).options(
+        joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
+        joinedload(models.ExamSchedule.section).joinedload(models.Section.teacher),
+        joinedload(models.ExamSchedule.room),
+        joinedload(models.ExamSchedule.supervisions).joinedload(models.Supervision.user),
+    ).join(models.Section).join(models.Course).filter(
+        models.Section.academic_year == period.academic_year,
+        models.Section.semester == period.semester,
+        models.ExamSchedule.exam_type == exam_type_enum,
+    )
+
+    if course_id:
+        query = query.filter(models.Course.course_id == course_id.strip())
+    if section_no:
+        query = query.filter(models.Section.section_no == section_no.strip())
+    if room_id is not None:
+        query = query.filter(models.ExamSchedule.room_id == room_id)
+
+    return query.order_by(
+        models.ExamSchedule.exam_date,
+        models.ExamSchedule.exam_time,
+        models.Course.course_id,
+        models.Section.section_no,
+    ).all()
+
+
+def _serialize_schedule_summary(schedule: models.ExamSchedule, db: Session) -> dict[str, object]:
+    section = schedule.section
+    course = section.course if section else None
+    teacher = get_confirmed_section_owner(db, schedule)
+    return {
+        "id": schedule.id,
+        "course_code": course.course_id if course else None,
+        "course_name": course.course_name_th or course.course_name_en if course else None,
+        "section_no": section.section_no if section else None,
+        "exam_date": schedule.exam_date.isoformat() if hasattr(schedule.exam_date, "isoformat") else str(schedule.exam_date),
+        "exam_time": schedule.exam_time,
+        "room_name": schedule.room.room_name if schedule.room else None,
+        "teacher_name": teacher.full_name if teacher else None,
+        "status": schedule.status.value if hasattr(schedule.status, "value") else str(schedule.status),
+    }
+
+
+def _load_students_for_schedule(schedule: models.ExamSchedule, db: Session) -> list[dict[str, str]]:
+    section = schedule.section
+    if not section:
+        return []
+
+    rows = db.query(models.EnrollmentRecord).filter(
+        models.EnrollmentRecord.section_id == section.id
+    ).order_by(
+        models.EnrollmentRecord.student_id,
+        models.EnrollmentRecord.student_name,
+    ).all()
+    if rows:
+        return [
+            {
+                "student_id": row.student_id,
+                "student_name": row.student_name or "",
+            }
+            for row in rows
+        ]
+
+    legacy_rows = db.query(models.Enrollment).join(
+        models.Student,
+        models.Student.student_id == models.Enrollment.student_id,
+    ).filter(
+        models.Enrollment.section_id == section.id
+    ).order_by(
+        models.Enrollment.student_id
+    ).all()
+    return [
+        {
+            "student_id": row.student_id,
+            "student_name": row.student.full_name if row.student else "",
+        }
+        for row in legacy_rows
+    ]
+
+
+def _build_operational_document_payload(
+    db: Session,
+    schedule: models.ExamSchedule,
+    *,
+    actor_id: int,
+    include_qr: bool,
+) -> dict[str, object]:
+    ensure_schedule_ready_for_pickup(db, schedule)
+
+    section = schedule.section
+    course = section.course if section and section.course else None
+    room = schedule.room
+    teacher = get_confirmed_section_owner(db, schedule)
+    students = _load_students_for_schedule(schedule, db)
+    invigilators = [
+        {
+            "name": supervision.user.full_name or supervision.user.username,
+            "role": supervision.role_in_exam or "invigilator",
+        }
+        for supervision in sorted(schedule.supervisions or [], key=lambda item: item.slot_order or 0)
+        if supervision.user
+    ]
+
+    if include_qr and not invigilators:
+        raise HTTPException(400, "ยังไม่ได้ยืนยันผู้คุมสอบหรือผู้รับข้อสอบสำหรับการพิมพ์ปกซองข้อสอบ")
+
+    active_qr = ensure_active_pickup_qr(db, schedule, actor_id=actor_id) if include_qr else None
+    return {
+        "schedule_id": schedule.id,
+        "course_code": course.course_id if course else "-",
+        "course_name": course.course_name_th or course.course_name_en if course else "-",
+        "section_no": section.section_no if section else "-",
+        "exam_date": schedule.exam_date,
+        "exam_time": schedule.exam_time,
+        "exam_type": schedule.exam_type.value if hasattr(schedule.exam_type, "value") else str(schedule.exam_type),
+        "semester": section.semester if section else "-",
+        "academic_year": section.academic_year if section else "-",
+        "room_name": room.room_name if room else "-",
+        "total_students": section.num_students if section else len(students),
+        "instructor_name": teacher.full_name if teacher else (section.teacher.full_name if section and section.teacher else "-"),
+        "invigilators": invigilators,
+        "student_rows": students,
+        "qr_x_value": active_qr and serialize_pickup_qr(active_qr)["qr_value"],
+    }
+
+
+def _generate_operational_document_bytes(document_type: str, payload: dict[str, object]) -> bytes:
+    if document_type == "participant_codes":
+        return generate_participant_code_announcement_pdf(payload)
+    if document_type == "signature_sheet":
+        return generate_signature_sheet_pdf(payload)
+    if document_type == "envelope_cover":
+        return generate_envelope_cover_pdf(payload)
+    raise HTTPException(400, f"Unsupported document type: {document_type}")
+
+
+@router.get("/pickup-qr/{schedule_id}")
+def get_pickup_qr_status(
+    schedule_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    schedule = _load_schedule(db, schedule_id)
+    ensure_schedule_ready_for_pickup(db, schedule)
+    active_qr = get_active_pickup_qr(db, schedule_id)
+    latest_qr = get_latest_pickup_qr(db, schedule_id)
+    return {
+        "schedule": _serialize_schedule_summary(schedule, db),
+        "assignments": build_pickup_assignments(db, schedule),
+        "active_qr": serialize_pickup_qr(active_qr),
+        "latest_qr": serialize_pickup_qr(latest_qr),
+        "has_pending_regeneration": bool(latest_qr and not latest_qr.is_active),
+    }
+
+
+@router.post("/pickup-qr/{schedule_id}/regenerate")
+def regenerate_pickup_qr(
+    schedule_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    schedule = _load_schedule(db, schedule_id)
+    ensure_schedule_ready_for_pickup(db, schedule)
+    pending_qr = create_pickup_qr(db, schedule, actor_id=current_user.id, activate=False)
+    db.commit()
+    db.refresh(pending_qr)
+    log_action(
+        db,
+        current_user,
+        "REGENERATE_PICKUP_QR",
+        "exam_pickup_qr_tokens",
+        record_id=pending_qr.id,
+        new_values={"schedule_id": schedule_id, "version": pending_qr.version},
+        request=request,
+    )
+    return {
+        "schedule": _serialize_schedule_summary(schedule, db),
+        "assignments": build_pickup_assignments(db, schedule),
+        "active_qr": serialize_pickup_qr(get_active_pickup_qr(db, schedule_id)),
+        "latest_qr": serialize_pickup_qr(get_latest_pickup_qr(db, schedule_id)),
+        "pending_qr": serialize_pickup_qr(pending_qr),
+        "has_pending_regeneration": True,
+    }
+
+
+@router.post("/pickup-qr/{schedule_id}/confirm")
+def confirm_pickup_qr(
+    schedule_id: int,
+    request: Request,
+    qr_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    schedule = _load_schedule(db, schedule_id)
+    ensure_schedule_ready_for_pickup(db, schedule)
+
+    if qr_id is not None:
+        qr_token = db.query(models.ExamPickupQrToken).filter(
+            models.ExamPickupQrToken.id == qr_id,
+            models.ExamPickupQrToken.schedule_id == schedule_id,
+        ).first()
+    else:
+        qr_token = get_latest_pickup_qr(db, schedule_id)
+
+    if not qr_token:
+        raise HTTPException(404, "ไม่พบ QR X สำหรับ schedule นี้")
+
+    activate_pickup_qr(db, qr_token, actor_id=current_user.id)
+    db.commit()
+    db.refresh(qr_token)
+    log_action(
+        db,
+        current_user,
+        "CONFIRM_PICKUP_QR",
+        "exam_pickup_qr_tokens",
+        record_id=qr_token.id,
+        new_values={"schedule_id": schedule_id, "version": qr_token.version},
+        request=request,
+    )
+    return {
+        "schedule": _serialize_schedule_summary(schedule, db),
+        "assignments": build_pickup_assignments(db, schedule),
+        "active_qr": serialize_pickup_qr(qr_token),
+        "latest_qr": serialize_pickup_qr(get_latest_pickup_qr(db, schedule_id)),
+        "has_pending_regeneration": False,
+    }
+
+
+@router.get("/export-pdf")
+def export_operational_documents(
+    request: Request,
+    schedule_id: Optional[int] = None,
+    course_id: Optional[str] = None,
+    section_no: Optional[str] = None,
+    room_id: Optional[int] = None,
+    academic_year: Optional[str] = None,
+    semester: Optional[str] = None,
+    exam_type: Optional[str] = None,
+    document_type: str = Query("all"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    try:
+        normalized_type = normalize_document_type(document_type)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+    schedules = _load_export_schedules(
+        db,
+        schedule_id=schedule_id,
+        course_id=course_id,
+        section_no=section_no,
+        room_id=room_id,
+        academic_year=academic_year,
+        semester=semester,
+        exam_type=exam_type,
+    )
+    if not schedules:
+        raise HTTPException(404, "ไม่พบตารางสอบที่ตรงกับเงื่อนไขสำหรับการส่งออกเอกสาร")
+
+    outputs: list[tuple[str, bytes]] = []
+    for schedule in schedules:
+        payload = _build_operational_document_payload(
+            db,
+            schedule,
+            actor_id=current_user.id,
+            include_qr=normalized_type in {"all", "envelope_cover"},
+        )
+        for item_type in iter_document_types(normalized_type):
+            pdf_bytes = _generate_operational_document_bytes(item_type, payload)
+            outputs.append((build_document_filename(item_type, payload), pdf_bytes))
+
+    log_action(
+        db,
+        current_user,
+        "EXPORT_OPERATIONAL_DOCUMENTS",
+        "exam_schedules",
+        record_id=schedule_id,
+        new_values={
+            "document_type": normalized_type,
+            "count": len(outputs),
+            "course_id": course_id,
+            "section_no": section_no,
+            "room_id": room_id,
+        },
+        request=request,
+    )
+
+    if len(outputs) == 1:
+        file_name, pdf_bytes = outputs[0]
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
+        )
+
+    scope_bits = [
+        course_id or "all-courses",
+        section_no or "all-sections",
+        str(room_id) if room_id is not None else "all-rooms",
+    ]
+    scope_label = "_".join(scope_bits)
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        for file_name, pdf_bytes in outputs:
+            archive.writestr(file_name, pdf_bytes)
+    zip_buffer.seek(0)
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{build_bundle_filename(scope_label, normalized_type)}"'},
     )

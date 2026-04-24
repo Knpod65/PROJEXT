@@ -26,15 +26,21 @@ Endpoints:
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone
 from database import get_db
 import models
 from auth_utils import (
-    require_admin, get_current_user, log_action, hash_password, get_effective_role,
-    SIGN_ORDER_USERNAMES, is_signer
+    require_admin, require_staff_or_admin, get_current_user, log_action, hash_password, get_effective_role,
+    SIGN_ORDER_USERNAMES, is_signer, require_view_all
+)
+from staff_workloads import (
+    PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS,
+    PAPER_DISTRIBUTION_EXCLUDED_USERNAMES,
+    get_period_workload_snapshot,
+    is_paper_distribution_candidate,
 )
 from term_lifecycle import ensure_period_record_editable, require_active_period_for_mutation
 from time_ranges import normalize_time_range, normalize_time_value, parse_time_range
@@ -224,7 +230,89 @@ class UnavailCreate(BaseModel):
     user_id:    int
     block_date: str              # "2026-03-23"
     block_time: Optional[str] = None   # None = ทั้งวัน
+    start_time: Optional[str] = None
+    end_time:   Optional[str] = None
     reason:     Optional[str] = None
+
+
+def _normalize_staff_block_fields(data: UnavailCreate) -> tuple[Optional[str], Optional[str], Optional[str]]:
+    start_time = normalize_time_value(data.start_time)
+    end_time = normalize_time_value(data.end_time)
+    block_time = data.block_time.strip() if isinstance(data.block_time, str) and data.block_time.strip() else None
+
+    if start_time or end_time:
+        if not start_time or not end_time:
+            raise HTTPException(400, "ต้องระบุทั้ง start_time และ end_time ให้ครบ")
+        normalized_block = normalize_time_range(start_time, end_time)
+        if not normalized_block:
+            raise HTTPException(400, "ช่วงเวลาไม่ถูกต้อง")
+        return normalized_block, start_time, end_time
+
+    if block_time:
+        normalized_block = normalize_time_range(*parse_time_range(block_time))
+        if normalized_block:
+            start_time, end_time = parse_time_range(normalized_block)
+            return normalized_block, start_time, end_time
+        normalized_point = normalize_time_value(block_time)
+        if normalized_point:
+            return normalized_point, normalized_point, normalized_point
+        raise HTTPException(400, "block_time ไม่ถูกต้อง")
+
+    return None, None, None
+
+
+def _get_active_period_or_none(db: Session) -> models.ExamPeriod | None:
+    return db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
+
+
+def _build_external_workflow_issues(db: Session, period_id: int | None) -> list[dict[str, object]]:
+    if not period_id:
+        return []
+
+    exams = db.query(models.ExternalExam).options(
+        joinedload(models.ExternalExam.supervisions)
+    ).filter(
+        models.ExternalExam.exam_period_id == period_id
+    ).order_by(
+        models.ExternalExam.exam_date,
+        models.ExternalExam.exam_time,
+        models.ExternalExam.id,
+    ).all()
+
+    issues: list[dict[str, object]] = []
+    for exam in exams:
+        assigned = len(exam.supervisions or [])
+        needed = exam.invigilators_needed or 0
+        reference = exam.title or f"External exam #{exam.id}"
+
+        if needed > 0 and assigned == 0:
+            issues.append(
+                {
+                    "id": f"external-none-{exam.id}",
+                    "type": "no_invigilator_assigned",
+                    "severity": "error",
+                    "scope": "external",
+                    "title": "No invigilator assigned",
+                    "message": f"{reference} has no assigned staff for {exam.exam_date or '-'} {exam.exam_time or ''}.",
+                    "reference": reference,
+                }
+            )
+            continue
+
+        if assigned < needed:
+            issues.append(
+                {
+                    "id": f"external-short-{exam.id}",
+                    "type": "external_staff_shortage",
+                    "severity": "warning",
+                    "scope": "external",
+                    "title": "External exam staff shortage",
+                    "message": f"{reference} needs {needed} staff but only {assigned} are assigned.",
+                    "reference": reference,
+                }
+            )
+
+    return issues
 
 
 @router.get("/unavailability/")
@@ -256,9 +344,13 @@ def list_unavailability(
             "id":         r.id,
             "user_id":    r.user_id,
             "full_name":  r.user.full_name if r.user else None,
+            "division":   r.user.division if r.user else None,
+            "unit":       r.user.unit if r.user else None,
             "block_date": r.block_date,
-            "block_time": r.block_time,
-            "all_day":    r.block_time is None,
+            "block_time": normalize_time_range(r.start_time, r.end_time) or normalize_time_range(*parse_time_range(r.block_time)) or r.block_time,
+            "start_time": normalize_time_value(r.start_time) or (parse_time_range(r.block_time)[0] if r.block_time and parse_time_range(r.block_time) else None),
+            "end_time":   normalize_time_value(r.end_time) or (parse_time_range(r.block_time)[1] if r.block_time and parse_time_range(r.block_time) else None),
+            "all_day":    r.block_time is None and not getattr(r, "start_time", None) and not getattr(r, "end_time", None),
             "reason":     r.reason,
         }
         for r in rows
@@ -276,13 +368,15 @@ def add_unavailability(
     if not p:
         raise HTTPException(400, "ไม่มี active period")
 
+    normalized_block_time, start_time, end_time = _normalize_staff_block_fields(data)
+
     # เช็ค duplicate
     existing = db.query(models.StaffUnavailability).filter(
         and_(
             models.StaffUnavailability.user_id        == data.user_id,
             models.StaffUnavailability.exam_period_id == p.id,
             models.StaffUnavailability.block_date     == data.block_date,
-            models.StaffUnavailability.block_time     == data.block_time,
+            models.StaffUnavailability.block_time     == normalized_block_time,
         )
     ).first()
     if existing:
@@ -292,7 +386,9 @@ def add_unavailability(
         user_id        = data.user_id,
         exam_period_id = p.id,
         block_date     = data.block_date,
-        block_time     = data.block_time,
+        block_time     = normalized_block_time,
+        start_time     = start_time,
+        end_time       = end_time,
         reason         = data.reason,
         created_by     = current_user.id,
     )
@@ -304,7 +400,7 @@ def add_unavailability(
     log_action(db, current_user, "ADD_UNAVAILABILITY", "staff_unavailability",
                record_id=row.id,
                new_values={"user": user.full_name if user else data.user_id,
-                           "date": data.block_date, "time": data.block_time},
+                           "date": data.block_date, "time": normalized_block_time},
                request=request)
 
     return {"id": row.id, "status": "added"}
@@ -551,6 +647,182 @@ def get_signers_info(
     return signers
 
 
+@router.get("/session/external-issues")
+def list_external_workflow_issues(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_view_all),
+):
+    period = _get_active_period_or_none(db)
+    if not period:
+        return []
+    return _build_external_workflow_issues(db, period.id)
+
+
+def _resolve_period_for_reporting(db: Session, period_id: Optional[int]) -> models.ExamPeriod:
+    if period_id:
+        period = db.query(models.ExamPeriod).filter(models.ExamPeriod.id == period_id).first()
+    else:
+        period = _get_active_period_or_none(db)
+    if not period:
+        raise HTTPException(400, "ไม่มี active period")
+    return period
+
+
+@router.get("/staff-workload")
+def get_staff_workload_report(
+    period_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    period = _resolve_period_for_reporting(db, period_id)
+    snapshot = get_period_workload_snapshot(db, period)
+    snapshot["period"] = {
+        "id": period.id,
+        "semester": period.semester,
+        "academic_year": period.academic_year,
+        "exam_type": period.exam_type,
+        "label": period.label,
+    }
+    snapshot["viewer_role"] = current_user.role.value if current_user.role else None
+    return snapshot
+
+
+@router.get("/paper-distribution/assignments")
+def list_paper_distribution_assignments(
+    period_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_staff_or_admin),
+):
+    period = _resolve_period_for_reporting(db, period_id)
+    assignments = db.query(models.PaperDistributionAssignment).options(
+        joinedload(models.PaperDistributionAssignment.user)
+    ).filter(
+        models.PaperDistributionAssignment.exam_period_id == period.id
+    ).order_by(
+        models.PaperDistributionAssignment.exam_date,
+        models.PaperDistributionAssignment.exam_time,
+        models.PaperDistributionAssignment.slot_order,
+    ).all()
+
+    schedules = db.query(models.ExamSchedule).options(
+        joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
+        joinedload(models.ExamSchedule.room),
+    ).join(models.Section).filter(
+        models.Section.academic_year == period.academic_year,
+        models.Section.semester == period.semester,
+        models.ExamSchedule.exam_type == period.exam_type,
+    ).all()
+
+    slot_context: dict[tuple[str, str], dict[str, list[str]]] = {}
+    for schedule in schedules:
+        key = (str(schedule.exam_date) if schedule.exam_date else "", schedule.exam_time or "")
+        context = slot_context.setdefault(key, {"courses": [], "rooms": []})
+        if schedule.section and schedule.section.course:
+            label = f"{schedule.section.course.course_id} Sec {schedule.section.section_no}"
+            if label not in context["courses"]:
+                context["courses"].append(label)
+        if schedule.room and schedule.room.room_name not in context["rooms"]:
+            context["rooms"].append(schedule.room.room_name)
+
+    rows = []
+    for assignment in assignments:
+        context = slot_context.get((assignment.exam_date, assignment.exam_time), {"courses": [], "rooms": []})
+        rows.append(
+            {
+                "id": assignment.id,
+                "user_id": assignment.user_id,
+                "staff_name": assignment.user.full_name if assignment.user else f"User #{assignment.user_id}",
+                "department": (assignment.user.division or assignment.user.unit) if assignment.user else "",
+                "exam_date": assignment.exam_date,
+                "exam_time": assignment.exam_time,
+                "start_time": assignment.start_time,
+                "end_time": assignment.end_time,
+                "duty_type": assignment.duty_type.value if assignment.duty_type else models.StaffDutyType.paper_distribution.value,
+                "workload_count": assignment.workload_units or 1,
+                "covered_schedule_count": assignment.covered_schedule_count or 0,
+                "covered_courses": context["courses"],
+                "covered_rooms": context["rooms"],
+                "assignment_mode": assignment.assignment_mode,
+                "notes": assignment.notes,
+            }
+        )
+
+    return {
+        "period": {
+            "id": period.id,
+            "semester": period.semester,
+            "academic_year": period.academic_year,
+            "exam_type": period.exam_type,
+            "label": period.label,
+        },
+        "rows": rows,
+        "count": len(rows),
+    }
+
+
+@router.get("/staff-availability/staff")
+def list_staff_availability_staff(
+    period_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    period = _resolve_period_for_reporting(db, period_id)
+    snapshot = get_period_workload_snapshot(db, period)
+    summary_map = {row["user_id"]: row for row in snapshot["summary"]}
+    block_counts = {
+        user_id: count
+        for user_id, count in db.query(
+            models.StaffUnavailability.user_id,
+            func.count(models.StaffUnavailability.id),
+        ).filter(
+            models.StaffUnavailability.exam_period_id == period.id
+        ).group_by(models.StaffUnavailability.user_id).all()
+    }
+
+    staff = db.query(models.User).filter(
+        models.User.role == models.UserRole.staff,
+        models.User.is_active == True,
+    ).order_by(models.User.full_name).all()
+
+    rows = []
+    for user in staff:
+        summary = summary_map.get(user.id, {})
+        excluded_reason = None
+        if user.username in PAPER_DISTRIBUTION_EXCLUDED_USERNAMES:
+            excluded_reason = "Excluded by paper-distribution policy"
+        elif any(snippet in (user.full_name or "") for snippet in PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS):
+            excluded_reason = "Excluded by paper-distribution policy"
+        rows.append(
+            {
+                "id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "division": user.division,
+                "unit": user.unit,
+                "department": user.department,
+                "is_paper_distribution_candidate": is_paper_distribution_candidate(user),
+                "excluded_reason": excluded_reason,
+                "availability_block_count": int(block_counts.get(user.id, 0) or 0),
+                "invigilation_count": int(summary.get("invigilation_count", 0) or 0),
+                "paper_distribution_count": int(summary.get("paper_distribution_count", 0) or 0),
+                "external_exam_count": int(summary.get("external_exam_count", 0) or 0),
+                "total_workload": int(summary.get("total_workload", 0) or 0),
+            }
+        )
+
+    return {
+        "period": {
+            "id": period.id,
+            "semester": period.semester,
+            "academic_year": period.academic_year,
+            "exam_type": period.exam_type,
+            "label": period.label,
+        },
+        "rows": rows,
+        "count": len(rows),
+    }
+
+
 
 
 
@@ -581,7 +853,7 @@ def _normalize_room_block_fields(data: RoomUnavailCreate) -> tuple[Optional[str]
         return normalized_block, start_time, end_time
 
     if block_time:
-        normalized_block = normalize_time_range(block_time)
+        normalized_block = normalize_time_range(*parse_time_range(block_time))
         if normalized_block is None:
             raise HTTPException(400, "block_time ไม่ถูกต้อง")
         parsed = parse_time_range(normalized_block)
@@ -623,7 +895,7 @@ def list_room_unavailability(
             "room_name":  r.room.room_name if r.room else None,
             "capacity":   r.room.capacity  if r.room else None,
             "block_date": r.block_date,
-            "block_time": normalize_time_range(r.start_time, r.end_time) or normalize_time_range(r.block_time) or r.block_time,
+            "block_time": normalize_time_range(r.start_time, r.end_time) or normalize_time_range(*parse_time_range(r.block_time)) or r.block_time,
             "start_time": normalize_time_value(r.start_time) or (parse_time_range(r.block_time)[0] if r.block_time and parse_time_range(r.block_time) else None),
             "end_time":   normalize_time_value(r.end_time) or (parse_time_range(r.block_time)[1] if r.block_time and parse_time_range(r.block_time) else None),
             "all_day":    r.block_time is None,
@@ -1015,8 +1287,14 @@ def get_staff_pool(
     room_keepers = []
     excluded     = []
     esq_remind   = []
+    paper_distribution_pool = []
+    paper_distribution_excluded = []
 
     for u in all_staff:
+        if is_paper_distribution_candidate(u):
+            paper_distribution_pool.append(u)
+        else:
+            paper_distribution_excluded.append(u)
         if is_room_keeper(u):
             room_keepers.append(u)
         elif not is_eligible_supervisor(u):
@@ -1043,6 +1321,8 @@ def get_staff_pool(
         "supervisors":       [_u(u) for u in supervisors],
         "room_keepers":      [_u(u) for u in room_keepers],
         "excluded":          [_u(u) for u in excluded],
+        "paper_distribution_pool": [_u(u) for u in paper_distribution_pool],
+        "paper_distribution_excluded": [_u(u) for u in paper_distribution_excluded],
         "esq_staff_reminder": {
             "count":   len(esq_remind),
             "message": f"อารยา + สัพพัญญู ({len(esq_remind)} คน) อยู่ใน optimizer pool — ตรวจสอบก่อน optimize",
