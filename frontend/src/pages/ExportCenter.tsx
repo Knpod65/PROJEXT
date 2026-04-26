@@ -1,11 +1,12 @@
 import { useCallback } from "react";
 
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
-import { Button } from "@/components/ui/Button";
 import { useAsyncData } from "@/hooks/useAsyncData";
+import { useI18n } from "@/i18n";
 import { buildDocumentExportUrl } from "@/services/documents.service";
 import {
   getPaperDistributionAssignments,
@@ -45,6 +46,7 @@ function ExportCard({
 }
 
 export function ExportCenterPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const effectiveRole = user?.effective_role ?? user?.active_role ?? user?.role ?? null;
   const isAdmin = effectiveRole === "admin";
@@ -60,83 +62,80 @@ export function ExportCenterPage() {
 
   return (
     <div className="page-stack">
-      <Card
-        title="Export Center"
-        subtitle="Centralize operational exports for schedules, documents, workload, and staffing assignments."
-      >
+      <Card title={t("exportCenter.title")} subtitle={t("exportCenter.subtitle")}>
         <div className="summary-grid">
           <div className="summary-box">
-            <span>Staff workload rows</span>
+            <span>{t("exportCenter.stats.staffWorkloadRows")}</span>
             <strong>{formatNumber(workloadSummary.length)}</strong>
           </div>
           <div className="summary-box">
-            <span>Paper distribution slots</span>
+            <span>{t("exportCenter.stats.paperDistributionSlots")}</span>
             <strong>{formatNumber(distributionRows.length)}</strong>
           </div>
           <div className="summary-box">
-            <span>Total duty assignments</span>
+            <span>{t("exportCenter.stats.totalDutyAssignments")}</span>
             <strong>{formatNumber(workloadState.data?.total_assignments ?? 0)}</strong>
           </div>
           <div className="summary-box">
-            <span>Fairness snapshot</span>
+            <span>{t("exportCenter.stats.fairnessSnapshot")}</span>
             <strong>{workloadState.data?.fairness_score ?? 0}</strong>
           </div>
         </div>
       </Card>
 
-      <Card title="Export channels" subtitle="Choose the report family, then export directly from this hub.">
+      <Card title={t("exportCenter.channels.title")} subtitle={t("exportCenter.channels.subtitle")}>
         <div className="import-summary-grid">
           <ExportCard
-            title="Exam documents"
-            description="Participant codes, signature sheets, and envelope cover sheets from confirmed exam schedules."
+            title={t("exportCenter.cards.examDocuments.title")}
+            description={t("exportCenter.cards.examDocuments.description")}
             actions={[
-              { label: "All documents", onClick: () => openExport(buildDocumentExportUrl({ document_type: "all" })) },
-              { label: "Participant codes", onClick: () => openExport(buildDocumentExportUrl({ document_type: "participant_codes" })) },
-              { label: "Signature sheets", onClick: () => openExport(buildDocumentExportUrl({ document_type: "signature_sheet" })) },
-              { label: "Cover sheets", onClick: () => openExport(buildDocumentExportUrl({ document_type: "envelope_cover" })) },
+              { label: t("exportCenter.actions.allDocuments"), onClick: () => openExport(buildDocumentExportUrl({ document_type: "all" })) },
+              { label: t("exportCenter.actions.participantCodes"), onClick: () => openExport(buildDocumentExportUrl({ document_type: "participant_codes" })) },
+              { label: t("exportCenter.actions.signatureSheets"), onClick: () => openExport(buildDocumentExportUrl({ document_type: "signature_sheet" })) },
+              { label: t("exportCenter.actions.coverSheets"), onClick: () => openExport(buildDocumentExportUrl({ document_type: "envelope_cover" })) },
             ]}
           />
           <ExportCard
-            title="Optimization results"
-            description="Master exam schedule and room/invigilator allocations."
+            title={t("exportCenter.cards.optimizationResults.title")}
+            description={t("exportCenter.cards.optimizationResults.description")}
             actions={[
-              { label: "Schedule PDF", onClick: () => openExport("/api/exports/schedule") },
-              { label: "Schedule Excel", onClick: () => openExport("/api/exports/schedule-excel") },
-              { label: "Paper distribution PDF", onClick: () => openExport("/api/exports/paper-distribution-pdf") },
-              { label: "Paper distribution Excel", onClick: () => openExport("/api/exports/paper-distribution-excel") },
+              { label: t("exportCenter.actions.schedulePdf"), onClick: () => openExport("/api/exports/schedule") },
+              { label: t("exportCenter.actions.scheduleExcel"), onClick: () => openExport("/api/exports/schedule-excel") },
+              { label: t("exportCenter.actions.paperDistributionPdf"), onClick: () => openExport("/api/exports/paper-distribution-pdf") },
+              { label: t("exportCenter.actions.paperDistributionExcel"), onClick: () => openExport("/api/exports/paper-distribution-excel") },
             ]}
           />
           <ExportCard
-            title="Staff workload reports"
-            description="Duty counts by type, detail by slot, and fairness-aware workload exports."
+            title={t("exportCenter.cards.staffWorkload.title")}
+            description={t("exportCenter.cards.staffWorkload.description")}
             actions={[
-              { label: "Summary PDF", onClick: () => openExport("/api/exports/workload-summary-pdf") },
-              { label: "Workload summary", onClick: () => openExport("/api/exports/workload-summary-excel") },
-              { label: "Duty detail", onClick: () => openExport("/api/exports/workload-detail-excel") },
-              { label: "Fairness sheet", onClick: () => openExport("/api/exports/workload-summary-excel") },
+              { label: t("exportCenter.actions.summaryPdf"), onClick: () => openExport("/api/exports/workload-summary-pdf") },
+              { label: t("exportCenter.actions.workloadSummary"), onClick: () => openExport("/api/exports/workload-summary-excel") },
+              { label: t("exportCenter.actions.dutyDetail"), onClick: () => openExport("/api/exports/workload-detail-excel") },
+              { label: t("exportCenter.actions.fairnessSheet"), onClick: () => openExport("/api/exports/workload-summary-excel") },
             ]}
           />
           <ExportCard
-            title="Copy / print reports"
-            description="Use the print-operations page for live copy count and teacher print details."
+            title={t("exportCenter.cards.copyReports.title")}
+            description={t("exportCenter.cards.copyReports.description")}
             actions={[
-              { label: "Open Copy Count", onClick: () => { window.location.href = "/copy"; } },
+              { label: t("exportCenter.actions.openCopyCount"), onClick: () => { window.location.href = "/copy"; } },
             ]}
           />
           {isAdmin ? (
             <>
               <ExportCard
-                title="Workflow reports"
-                description="Approval status and issue review remain available in the workflow checkpoint."
+                title={t("exportCenter.cards.workflowReports.title")}
+                description={t("exportCenter.cards.workflowReports.description")}
                 actions={[
-                  { label: "Open Workflow", onClick: () => { window.location.href = "/workflow"; } },
+                  { label: t("exportCenter.actions.openWorkflow"), onClick: () => { window.location.href = "/workflow"; } },
                 ]}
               />
               <ExportCard
-                title="External exams"
-                description="Staff-only external exam operations remain available from the External Exams module."
+                title={t("exportCenter.cards.externalExams.title")}
+                description={t("exportCenter.cards.externalExams.description")}
                 actions={[
-                  { label: "Open External Exams", onClick: () => { window.location.href = "/external"; } },
+                  { label: t("exportCenter.actions.openExternalExams"), onClick: () => { window.location.href = "/external"; } },
                 ]}
               />
             </>
@@ -144,7 +143,7 @@ export function ExportCenterPage() {
         </div>
       </Card>
 
-      <Card title="Staff workload summary" subtitle="Combined invigilation, paper distribution, and external duty counts for the active period.">
+      <Card title={t("exportCenter.workload.title")} subtitle={t("exportCenter.workload.subtitle")}>
         {workloadState.loading ? (
           <div className="page-stack">
             <div className="dashboard-skeleton" />
@@ -152,31 +151,31 @@ export function ExportCenterPage() {
         ) : workloadSummary.length === 0 ? (
           <EmptyState
             icon={<Icon name="groups" />}
-            title="No workload data yet"
-            description="Run optimization or assign operational duties first, then export from this center."
+            title={t("exportCenter.workload.emptyTitle")}
+            description={t("exportCenter.workload.emptyDescription")}
           />
         ) : (
           <DataTable<WorkloadSummaryRow>
             columns={[
               {
                 key: "staff_name",
-                label: "Staff",
+                label: t("common.staff"),
                 width: "28%",
                 render: (row) => (
                   <div className="data-table__content data-table__content--clamp">
                     <strong>{row.staff_name}</strong>
-                    <p>{row.department || "No department"}</p>
+                    <p>{row.department || t("exportCenter.table.noDepartment")}</p>
                   </div>
                 ),
               },
-              { key: "invigilation_count", label: "Invigilation", width: "12%" },
-              { key: "paper_distribution_count", label: "Paper distribution", width: "16%" },
-              { key: "external_exam_count", label: "External", width: "12%" },
-              { key: "total_workload", label: "Current total", width: "12%" },
-              { key: "historical_total_workload", label: "Historical total", width: "20%" },
+              { key: "invigilation_count", label: t("exportCenter.table.invigilation"), width: "12%" },
+              { key: "paper_distribution_count", label: t("exportCenter.table.paperDistribution"), width: "16%" },
+              { key: "external_exam_count", label: t("exportCenter.table.external"), width: "12%" },
+              { key: "total_workload", label: t("exportCenter.table.currentTotal"), width: "12%" },
+              { key: "historical_total_workload", label: t("exportCenter.table.historicalTotal"), width: "20%" },
             ]}
-            emptyTitle="No workload data"
-            emptyDescription="Assignments will appear here after optimization or manual staffing."
+            emptyTitle={t("exportCenter.workload.emptyTitle")}
+            emptyDescription={t("exportCenter.workload.tableEmptyDescription")}
             loading={false}
             rowKey={(row) => row.user_id}
             rows={workloadSummary}
@@ -186,23 +185,23 @@ export function ExportCenterPage() {
         )}
       </Card>
 
-      <Card title="Paper distribution assignments" subtitle="Slot-wide exam-paper distribution duty counts as one workload unit per slot.">
+      <Card title={t("exportCenter.paperDistribution.title")} subtitle={t("exportCenter.paperDistribution.subtitle")}>
         <DataTable<PaperDistributionAssignmentRow>
           columns={[
             {
               key: "staff_name",
-              label: "Staff",
+              label: t("common.staff"),
               width: "18%",
               render: (row) => (
                 <div className="data-table__content data-table__content--clamp">
                   <strong>{row.staff_name}</strong>
-                  <p>{row.department || "No department"}</p>
+                  <p>{row.department || t("exportCenter.table.noDepartment")}</p>
                 </div>
               ),
             },
             {
               key: "exam_date",
-              label: "Slot",
+              label: t("exportCenter.table.slot"),
               width: "16%",
               render: (row) => (
                 <div className="data-table__content data-table__content--clamp">
@@ -213,25 +212,25 @@ export function ExportCenterPage() {
             },
             {
               key: "covered_courses",
-              label: "Courses covered",
+              label: t("exportCenter.table.coursesCovered"),
               width: "28%",
               render: (row) => (
                 <div className="data-table__content data-table__content--clamp">
-                  <p>{row.covered_courses.join(", ") || "Slot-wide coverage"}</p>
+                  <p>{row.covered_courses.join(", ") || t("exportCenter.table.slotWideCoverage")}</p>
                 </div>
               ),
             },
             {
               key: "covered_rooms",
-              label: "Rooms",
+              label: t("common.room"),
               width: "16%",
               render: (row) => <span>{row.covered_rooms.join(", ") || "-"}</span>,
             },
-            { key: "covered_schedule_count", label: "Schedules", width: "10%" },
-            { key: "workload_count", label: "Load", width: "12%" },
+            { key: "covered_schedule_count", label: t("exportCenter.table.schedules"), width: "10%" },
+            { key: "workload_count", label: t("exportCenter.table.load"), width: "12%" },
           ]}
-          emptyTitle="No paper-distribution assignments yet"
-          emptyDescription="Run the optimizer to generate slot-based paper distribution assignments."
+          emptyTitle={t("exportCenter.paperDistribution.emptyTitle")}
+          emptyDescription={t("exportCenter.paperDistribution.emptyDescription")}
           loading={distributionState.loading}
           rowKey={(row) => row.id}
           rows={distributionRows}

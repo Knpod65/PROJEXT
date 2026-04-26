@@ -72,8 +72,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const currentUser = await me();
-      setUser(currentUser);
-      storePendingRole(null);
+      if (currentUser) {
+        setUser(currentUser);
+        setAuthBootstrapHint(true);
+        storePendingRole(null);
+      } else {
+        setUser(null);
+        setAuthBootstrapHint(false);
+        storePendingRole(null);
+      }
     } catch {
       setUser(null);
     } finally {
@@ -98,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      await logout();
+      await logout({ notifyOnUnauthorized: false });
     } catch {
       // Ignore logout errors and clear local session anyway.
     } finally {

@@ -12,6 +12,21 @@ env/
 backend/logs/
 backend/uploads/
 backend/ems.db
+backend/*.db-shm
+backend/*.db-wal
+backend/*.db-journal
+backend/*.db.bak
+backend/*.err.log
+backend/*.out.log
+backend/*runtime.log
+backend/*runtime.err.log
+frontend/*.err.log
+frontend/*.out.log
+frontend/*runtime.log
+frontend/*runtime.err.log
+frontend/dist/
+frontend/.vite/
+backend/docx-template-paths.txt
 
 # Local/imported data
 backend/data/*.xlsx

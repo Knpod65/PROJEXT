@@ -20,6 +20,7 @@ interface RequestOptions {
   signal?: AbortSignal;
   formData?: FormData;
   query?: Record<string, Primitive>;
+  notifyOnUnauthorized?: boolean;
 }
 
 const API_BASE = "/api";
@@ -87,7 +88,7 @@ export async function request<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, headers, signal, formData, query } = options;
+  const { body, headers, signal, formData, query, notifyOnUnauthorized = true } = options;
   const url = buildUrl(path, query);
   const init: RequestInit = {
     method,
@@ -115,7 +116,7 @@ export async function request<T>(
       ? translateApiMessage(rawDetail)
       : translate("errors.requestFailed", { status: response.status });
 
-    if (response.status === 401) {
+    if (response.status === 401 && notifyOnUnauthorized) {
       window.dispatchEvent(new Event("ems:unauthorized"));
     }
 

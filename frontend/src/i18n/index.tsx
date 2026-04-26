@@ -26,6 +26,7 @@ interface I18nContextValue {
 const LANGUAGE_STORAGE_KEY = "ems.language";
 const dictionaries: Record<AppLanguage, TranslationDictionary> = { en, th };
 const missingKeys = new Set<string>();
+const isDevEnvironment = import.meta.env?.DEV ?? false;
 
 const backendMessageMap: Record<string, string> = {
   "You are not assigned to this workspace. Please check your role and try again.": "errors.workspaceNotAssigned",
@@ -83,7 +84,7 @@ function resolveTranslationTemplate(language: AppLanguage, key: string) {
 }
 
 function logMissingKey(key: string) {
-  if (missingKeys.has(key)) {
+  if (!isDevEnvironment || missingKeys.has(key)) {
     return;
   }
 

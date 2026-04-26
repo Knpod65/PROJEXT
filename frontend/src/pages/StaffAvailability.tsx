@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useI18n } from "@/i18n";
 import {
   addUnavailability,
   deleteUnavailability,
@@ -112,14 +113,17 @@ function compressSlotStarts(slotStarts: string[]) {
 }
 
 function AvailabilityStatusBadge({ blocked }: { blocked: boolean }) {
+  const { t } = useI18n();
+
   return (
     <span className={`room-badge ${blocked ? "room-badge--inactive" : "room-badge--active"}`}>
-      {blocked ? "Has blocks" : "Available"}
+      {blocked ? t("staffAvailability.status.hasBlocks") : t("common.available")}
     </span>
   );
 }
 
 export function StaffAvailabilityPage() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const [staff, setStaff] = useState<StaffAvailabilityMember[]>([]);
   const [blocks, setBlocks] = useState<UnavailabilityRecord[]>([]);
@@ -177,12 +181,7 @@ export function StaffAvailabilityPage() {
 
   const filteredStaff = useMemo(() => {
     return staff.filter((member) => {
-      const haystack = [
-        member.full_name,
-        member.username,
-        member.division,
-        member.unit,
-      ]
+      const haystack = [member.full_name, member.username, member.division, member.unit]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -190,9 +189,9 @@ export function StaffAvailabilityPage() {
       const matchesUnit = unitFilter === "" || (member.unit || member.division || "") === unitFilter;
       const hasBlocks = member.availability_block_count > 0;
       const matchesAvailability =
-        availabilityFilter === "all"
-          || (availabilityFilter === "available" && !hasBlocks)
-          || (availabilityFilter === "blocked" && hasBlocks);
+        availabilityFilter === "all" ||
+        (availabilityFilter === "available" && !hasBlocks) ||
+        (availabilityFilter === "blocked" && hasBlocks);
       return matchesQuery && matchesUnit && matchesAvailability;
     });
   }, [availabilityFilter, query, staff, unitFilter]);
@@ -213,9 +212,10 @@ export function StaffAvailabilityPage() {
     return blocks.filter((row) => row.user_id === selectedStaffId);
   }, [blocks, selectedStaffId]);
 
-  const blocksForSelectedDate = useMemo(() => {
-    return blocksForSelectedStaff.filter((row) => row.block_date === selectedDate);
-  }, [blocksForSelectedStaff, selectedDate]);
+  const blocksForSelectedDate = useMemo(
+    () => blocksForSelectedStaff.filter((row) => row.block_date === selectedDate),
+    [blocksForSelectedStaff, selectedDate],
+  );
 
   const toggleSlot = (slotStart: string) => {
     setSelectedSlots((current) =>
@@ -250,10 +250,10 @@ export function StaffAvailabilityPage() {
       }
       setSelectedSlots([]);
       setDraftAllDay(false);
-      toast("Staff availability updated.", "success");
+      toast(t("staffAvailability.toast.updated"), "success");
       await Promise.all([loadBlocks(), loadStaff()]);
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Could not save availability.", "error");
+      toast(error instanceof Error ? error.message : t("staffAvailability.toast.saveFailed"), "error");
     } finally {
       setSaving(false);
     }
@@ -262,28 +262,29 @@ export function StaffAvailabilityPage() {
   const handleDeleteBlock = async (id: number) => {
     try {
       await deleteUnavailability(id);
-      toast("Block removed.", "warning");
+      toast(t("staffAvailability.toast.removed"), "warning");
       await Promise.all([loadBlocks(), loadStaff()]);
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Could not remove block.", "error");
+      toast(error instanceof Error ? error.message : t("staffAvailability.toast.removeFailed"), "error");
     }
   };
 
   return (
     <div className="page-stack">
-      <Card
-        title="Staff availability"
-        subtitle="Mark operational availability for invigilation, paper distribution, and external exams."
-      >
+      <Card title={t("staffAvailability.title")} subtitle={t("staffAvailability.subtitle")}>
         <div className="filter-row">
           <label className="filter-field">
-            <span>Search staff</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name or username" />
+            <span>{t("staffAvailability.filters.search")}</span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("staffAvailability.filters.searchPlaceholder")}
+            />
           </label>
           <label className="filter-field">
-            <span>Unit</span>
+            <span>{t("common.unit")}</span>
             <select value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}>
-              <option value="">All units</option>
+              <option value="">{t("staffAvailability.filters.allUnits")}</option>
               {unitOptions.map((option) => (
                 <option key={option} value={option}>
                   {option}
@@ -292,11 +293,14 @@ export function StaffAvailabilityPage() {
             </select>
           </label>
           <label className="filter-field">
-            <span>Availability</span>
-            <select value={availabilityFilter} onChange={(event) => setAvailabilityFilter(event.target.value as "all" | "available" | "blocked")}>
-              <option value="all">All</option>
-              <option value="available">Available</option>
-              <option value="blocked">Has blocks</option>
+            <span>{t("staffAvailability.filters.availability")}</span>
+            <select
+              value={availabilityFilter}
+              onChange={(event) => setAvailabilityFilter(event.target.value as "all" | "available" | "blocked")}
+            >
+              <option value="all">{t("common.all")}</option>
+              <option value="available">{t("common.available")}</option>
+              <option value="blocked">{t("staffAvailability.status.hasBlocks")}</option>
             </select>
           </label>
         </div>
@@ -308,8 +312,8 @@ export function StaffAvailabilityPage() {
         ) : filteredStaff.length === 0 ? (
           <EmptyState
             icon={<Icon name="groups" />}
-            title="No staff found"
-            description="Adjust the search or filters to find the staff member you want to manage."
+            title={t("staffAvailability.emptyTitle")}
+            description={t("staffAvailability.emptyDescription")}
           />
         ) : (
           <div className="table-wrap table-wrap--scrollable" style={{ maxHeight: "380px" }}>
@@ -324,12 +328,12 @@ export function StaffAvailabilityPage() {
               </colgroup>
               <thead>
                 <tr>
-                  <th>Staff</th>
-                  <th>Unit</th>
-                  <th>Status</th>
-                  <th>Duty load</th>
-                  <th>Paper distribution</th>
-                  <th>Actions</th>
+                  <th>{t("common.staff")}</th>
+                  <th>{t("common.unit")}</th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("staffAvailability.table.dutyLoad")}</th>
+                  <th>{t("staffAvailability.table.paperDistribution")}</th>
+                  <th>{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -349,19 +353,28 @@ export function StaffAvailabilityPage() {
                       <td>
                         <div className="data-table__content data-table__content--clamp">
                           <strong>{member.total_workload}</strong>
-                          <p>Invigilation {member.invigilation_count}</p>
-                          <p>External {member.external_exam_count}</p>
+                          <p>{t("staffAvailability.table.invigilationCount", { count: member.invigilation_count })}</p>
+                          <p>{t("staffAvailability.table.externalCount", { count: member.external_exam_count })}</p>
                         </div>
                       </td>
                       <td>
                         <div className="data-table__content data-table__content--clamp">
                           <strong>{member.paper_distribution_count}</strong>
-                          <p>{member.is_paper_distribution_candidate ? "Eligible pool" : "Not eligible"}</p>
+                          <p>
+                            {member.is_paper_distribution_candidate
+                              ? t("staffAvailability.table.eligiblePool")
+                              : t("staffAvailability.table.notEligible")}
+                          </p>
                         </div>
                       </td>
                       <td>
-                        <Button type="button" size="sm" variant={selected ? "primary" : "outline"} onClick={() => setSelectedStaffId(member.id)}>
-                          {selected ? "Selected" : "Select"}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={selected ? "primary" : "outline"}
+                          onClick={() => setSelectedStaffId(member.id)}
+                        >
+                          {selected ? t("common.selected") : t("common.select")}
                         </Button>
                       </td>
                     </tr>
@@ -374,21 +387,25 @@ export function StaffAvailabilityPage() {
       </Card>
 
       <Card
-        title={selectedStaff ? `Availability calendar — ${selectedStaff.full_name ?? selectedStaff.username}` : "Availability calendar"}
-        subtitle="08:00–19:00 in 30-minute intervals. Saved blocks affect invigilation, paper distribution, and external-exam assignment."
+        title={
+          selectedStaff
+            ? t("staffAvailability.calendarTitleWithName", { name: selectedStaff.full_name ?? selectedStaff.username })
+            : t("staffAvailability.calendarTitle")
+        }
+        subtitle={t("staffAvailability.calendarSubtitle")}
       >
         {!selectedStaff ? (
           <EmptyState
             icon={<Icon name="calendar_month" />}
-            title="Select a staff member"
-            description="Choose a staff member from the table above to edit operational availability."
+            title={t("staffAvailability.selectTitle")}
+            description={t("staffAvailability.selectDescription")}
           />
         ) : (
           <div className="room-availability-layout">
             <div className="room-availability-editor">
               <div className="filter-row">
                 <label className="filter-field">
-                  <span>Date</span>
+                  <span>{t("common.date")}</span>
                   <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
                 </label>
                 <div className="inline-actions">
@@ -397,7 +414,9 @@ export function StaffAvailabilityPage() {
                     variant={draftAllDay ? "primary" : "outline"}
                     onClick={() => setDraftAllDay((value) => !value)}
                   >
-                    {draftAllDay ? "All-day block selected" : "Mark all day unavailable"}
+                    {draftAllDay
+                      ? t("staffAvailability.actions.allDaySelected")
+                      : t("staffAvailability.actions.markAllDayUnavailable")}
                   </Button>
                   <Button
                     type="button"
@@ -405,15 +424,15 @@ export function StaffAvailabilityPage() {
                     loading={saving}
                     onClick={() => void handleSaveBlocks()}
                   >
-                    Save block
+                    {t("staffAvailability.actions.saveBlock")}
                   </Button>
                 </div>
               </div>
 
               {draftAllDay ? (
                 <div className="room-availability-sidebar__summary">
-                  <strong>All-day block ready</strong>
-                  <span>This will block the selected staff member for the whole date.</span>
+                  <strong>{t("staffAvailability.allDayReadyTitle")}</strong>
+                  <span>{t("staffAvailability.allDayReadyDescription")}</span>
                 </div>
               ) : (
                 <div className="room-slot-grid">
@@ -429,7 +448,13 @@ export function StaffAvailabilityPage() {
                         onClick={() => toggleSlot(slot.start)}
                       >
                         <strong>{slot.label}</strong>
-                        <span>{covered ? "Blocked" : selected ? "Selected" : "Available"}</span>
+                        <span>
+                          {covered
+                            ? t("staffAvailability.slot.blocked")
+                            : selected
+                              ? t("common.selected")
+                              : t("common.available")}
+                        </span>
                       </button>
                     );
                   })}
@@ -440,34 +465,34 @@ export function StaffAvailabilityPage() {
             <aside className="room-availability-sidebar">
               <div className="room-availability-sidebar__summary">
                 <strong>{selectedStaff.full_name ?? selectedStaff.username}</strong>
-                <span>{selectedStaff.unit ?? selectedStaff.division ?? "No unit specified"}</span>
-                <span>Total workload: {selectedStaff.total_workload}</span>
-                <span>Paper distribution: {selectedStaff.paper_distribution_count}</span>
+                <span>{selectedStaff.unit ?? selectedStaff.division ?? t("staffAvailability.sidebar.noUnit")}</span>
+                <span>{t("staffAvailability.sidebar.totalWorkload", { count: selectedStaff.total_workload })}</span>
+                <span>{t("staffAvailability.sidebar.paperDistribution", { count: selectedStaff.paper_distribution_count })}</span>
               </div>
 
               <div className="room-block-list">
                 <div className="optimizer-section__header">
                   <div>
-                    <h3>Saved blocks</h3>
-                    <p className="text-muted">Current period blocks for this staff member.</p>
+                    <h3>{t("staffAvailability.savedBlocksTitle")}</h3>
+                    <p className="text-muted">{t("staffAvailability.savedBlocksSubtitle")}</p>
                   </div>
                 </div>
 
                 {blocksLoading ? (
                   <Skeleton className="dashboard-skeleton" />
                 ) : blocksForSelectedStaff.length === 0 ? (
-                  <p className="text-muted">No availability blocks saved yet.</p>
+                  <p className="text-muted">{t("staffAvailability.noBlocks")}</p>
                 ) : (
                   <div className="page-stack">
                     {blocksForSelectedStaff.map((block) => (
                       <div key={block.id} className="room-block-list__item">
                         <div>
                           <strong>{block.block_date}</strong>
-                          <p>{block.all_day ? "All day" : block.block_time}</p>
+                          <p>{block.all_day ? t("staffAvailability.block.allDay") : block.block_time}</p>
                           {block.reason ? <p>{block.reason}</p> : null}
                         </div>
                         <Button type="button" size="sm" variant="ghost" onClick={() => void handleDeleteBlock(block.id)}>
-                          Remove
+                          {t("common.remove")}
                         </Button>
                       </div>
                     ))}

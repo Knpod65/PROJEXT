@@ -6,6 +6,7 @@ import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useI18n } from "@/i18n";
 import { listSchedules } from "@/services/schedule.service";
 import {
   getWorkflowSession,
@@ -20,28 +21,33 @@ import { useUi } from "@/store/ui.store";
 import type { ScheduleWithSection, WorkflowIssueItem, WorkflowIssueType, WorkflowSession } from "@/types/api";
 import { getEffectiveRole } from "@/utils/roles";
 
-const ISSUE_LABELS: Record<WorkflowIssueType, string> = {
-  no_invigilator_assigned: "No invigilator assigned",
-  room_capacity_exceeded: "Room capacity exceeded",
-  high_student_invigilator_ratio: "High student/invigilator ratio",
-  external_staff_shortage: "External exam staff shortage",
-};
-
-const STAGES = [
-  { key: "no_session", label: "Not started" },
-  { key: "draft", label: "Round 1 signing" },
-  { key: "confirming", label: "Confirming" },
-  { key: "confirmed", label: "Confirmed" },
-  { key: "swap_open", label: "Swap window" },
-  { key: "locked", label: "Locked" },
+const ISSUE_TYPES: WorkflowIssueType[] = [
+  "no_invigilator_assigned",
+  "room_capacity_exceeded",
+  "high_student_invigilator_ratio",
+  "external_staff_shortage",
 ];
 
+const STAGE_KEYS = [
+  { key: "no_session", labelKey: "workflowV2.stage.notStarted" },
+  { key: "draft", labelKey: "workflowV2.stage.round1" },
+  { key: "confirming", labelKey: "workflowV2.stage.confirming" },
+  { key: "confirmed", labelKey: "workflowV2.stage.confirmed" },
+  { key: "swap_open", labelKey: "workflowV2.stage.swapWindow" },
+  { key: "locked", labelKey: "workflowV2.stage.locked" },
+] as const;
+
+function getIssueLabel(t: ReturnType<typeof useI18n>["t"], type: WorkflowIssueType) {
+  return t(`workflowV2.issueType.${type}`);
+}
+
 function StageTimeline({ status }: { status: string }) {
-  const index = STAGES.findIndex((stage) => stage.key === status);
+  const { t } = useI18n();
+  const index = STAGE_KEYS.findIndex((stage) => stage.key === status);
 
   return (
     <div className="wf-stage-timeline">
-      {STAGES.filter((stage) => stage.key !== "no_session").map((stage, stageIndex) => {
+      {STAGE_KEYS.filter((stage) => stage.key !== "no_session").map((stage, stageIndex) => {
         const currentIndex = stageIndex + 1;
         const done = index >= currentIndex;
         const active = index === currentIndex;
@@ -50,8 +56,8 @@ function StageTimeline({ status }: { status: string }) {
             <div className="wf-stage__dot">
               {done ? <Icon name="check" /> : <span>{stageIndex + 1}</span>}
             </div>
-            <span className="wf-stage__label">{stage.label}</span>
-            {stageIndex < STAGES.length - 2 && <div className="wf-stage__line" />}
+            <span className="wf-stage__label">{t(stage.labelKey)}</span>
+            {stageIndex < STAGE_KEYS.length - 2 && <div className="wf-stage__line" />}
           </div>
         );
       })}
@@ -66,33 +72,38 @@ function SignerRow({
   busy,
   canSign,
 }: {
-  sig: { order: number; username: string; signed_at: string | null };
+  sig: { order: number; user?: string | null; signed_at?: string | null };
   isNext: boolean;
   onSign: () => void;
   busy: boolean;
   canSign: boolean;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className={`wf-signer${sig.signed_at ? " signed" : ""}${isNext ? " next" : ""}`}>
       <Icon name={sig.signed_at ? "check_circle" : isNext ? "radio_button_checked" : "radio_button_unchecked"} />
       <div className="wf-signer__info">
-        <strong>{sig.username}</strong>
+        <strong>{sig.user ?? t("workflowV2.signers.unknown")}</strong>
         {sig.signed_at ? (
           <small>{new Date(sig.signed_at).toLocaleString()}</small>
         ) : isNext ? (
-          <small className="text-muted">Awaiting signature</small>
+          <small className="text-muted">{t("workflowV2.signers.awaitingSignature")}</small>
         ) : null}
       </div>
-      {isNext && canSign && (
+      {isNext && canSign ? (
         <Button type="button" size="sm" loading={busy} onClick={onSign}>
-          Sign
+          {t("workflowV2.actions.sign")}
         </Button>
-      )}
+      ) : null}
     </div>
   );
 }
 
-function computeInternalIssues(schedules: ScheduleWithSection[]): WorkflowIssueItem[] {
+function computeInternalIssues(
+  schedules: ScheduleWithSection[],
+  t: ReturnType<typeof useI18n>["t"],
+): WorkflowIssueItem[] {
   const issues: WorkflowIssueItem[] = [];
 
   for (const schedule of schedules) {
@@ -101,7 +112,7 @@ function computeInternalIssues(schedules: ScheduleWithSection[]): WorkflowIssueI
     const invigilators = schedule.supervisions.length;
     const courseCode = schedule.section?.course?.course_id ?? "-";
     const sectionNo = schedule.section?.section_no ?? "-";
-    const reference = `${courseCode} sec ${sectionNo}`;
+    const reference = t("workflowV2.issue.reference", { course: courseCode, section: sectionNo });
 
     if (capacity > 0 && students > capacity) {
       issues.push({
@@ -109,8 +120,12 @@ function computeInternalIssues(schedules: ScheduleWithSection[]): WorkflowIssueI
         type: "room_capacity_exceeded",
         severity: "error",
         scope: "internal",
-        title: ISSUE_LABELS.room_capacity_exceeded,
-        message: `${schedule.room?.room_name ?? "Unassigned room"} has capacity ${capacity}, but ${students} students are scheduled.`,
+        title: getIssueLabel(t, "room_capacity_exceeded"),
+        message: t("workflowV2.issue.message.roomCapacityExceeded", {
+          room: schedule.room?.room_name ?? t("workflowV2.issue.unassignedRoom"),
+          capacity,
+          students,
+        }),
         reference,
       });
     }
@@ -121,8 +136,12 @@ function computeInternalIssues(schedules: ScheduleWithSection[]): WorkflowIssueI
         type: "no_invigilator_assigned",
         severity: "error",
         scope: "internal",
-        title: ISSUE_LABELS.no_invigilator_assigned,
-        message: `${reference} on ${schedule.exam_date} ${schedule.exam_time} has no invigilator assigned.`,
+        title: getIssueLabel(t, "no_invigilator_assigned"),
+        message: t("workflowV2.issue.message.noInvigilatorAssigned", {
+          reference,
+          date: schedule.exam_date,
+          time: schedule.exam_time,
+        }),
         reference,
       });
     } else if (students > 0) {
@@ -133,8 +152,11 @@ function computeInternalIssues(schedules: ScheduleWithSection[]): WorkflowIssueI
           type: "high_student_invigilator_ratio",
           severity: "warning",
           scope: "internal",
-          title: ISSUE_LABELS.high_student_invigilator_ratio,
-          message: `${reference} is running at roughly ${Math.round(ratio)} students per invigilator.`,
+          title: getIssueLabel(t, "high_student_invigilator_ratio"),
+          message: t("workflowV2.issue.message.highRatio", {
+            reference,
+            ratio: Math.round(ratio),
+          }),
           reference,
         });
       }
@@ -155,15 +177,17 @@ function IssueSummary({
   onFilterChange: (value: WorkflowIssueType | "all") => void;
   loading: boolean;
 }) {
+  const { t } = useI18n();
+
   const groups = useMemo(() => {
-    return (["no_invigilator_assigned", "room_capacity_exceeded", "high_student_invigilator_ratio", "external_staff_shortage"] as WorkflowIssueType[])
+    return ISSUE_TYPES
       .map((type) => ({
         type,
-        label: ISSUE_LABELS[type],
+        label: getIssueLabel(t, type),
         count: issues.filter((issue) => issue.type === type).length,
       }))
       .filter((group) => group.count > 0);
-  }, [issues]);
+  }, [issues, t]);
 
   if (loading) {
     return <Skeleton className="dashboard-skeleton" />;
@@ -173,7 +197,7 @@ function IssueSummary({
     return (
       <div className="wf-validation wf-validation--ok">
         <Icon name="check_circle" />
-        <span>No workflow issues detected. The current schedules and external allocations look ready for review.</span>
+        <span>{t("workflowV2.issue.noneDetected")}</span>
       </div>
     );
   }
@@ -184,14 +208,14 @@ function IssueSummary({
         <article className="dashboard-metric dashboard-metric--danger">
           <div className="dashboard-metric__icon"><Icon name="error" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Errors</p>
+            <p className="dashboard-metric__label">{t("common.errors")}</p>
             <strong className="dashboard-metric__value">{issues.filter((issue) => issue.severity === "error").length}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--warning">
           <div className="dashboard-metric__icon"><Icon name="warning" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Warnings</p>
+            <p className="dashboard-metric__label">{t("common.warnings")}</p>
             <strong className="dashboard-metric__value">{issues.filter((issue) => issue.severity === "warning").length}</strong>
           </div>
         </article>
@@ -213,7 +237,7 @@ function IssueSummary({
 
       <div className="wf-filter-bar">
         <Button type="button" size="sm" variant={filter === "all" ? "primary" : "outline"} onClick={() => onFilterChange("all")}>
-          All issues
+          {t("workflowV2.filters.allIssues")}
         </Button>
         {groups.map((group) => (
           <Button
@@ -232,6 +256,7 @@ function IssueSummary({
 }
 
 export function WorkflowV2Page() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const { user } = useAuth();
   const { activePeriod } = usePeriod();
@@ -296,7 +321,7 @@ export function WorkflowV2Page() {
     void loadExternalIssues();
   }, [loadExternalIssues, loadSchedules, loadSession]);
 
-  const internalIssues = useMemo(() => computeInternalIssues(schedules), [schedules]);
+  const internalIssues = useMemo(() => computeInternalIssues(schedules, t), [schedules, t]);
   const issues = useMemo(() => [...internalIssues, ...externalIssues], [externalIssues, internalIssues]);
   const filteredIssues = useMemo(
     () => (issueFilter === "all" ? issues : issues.filter((issue) => issue.type === issueFilter)),
@@ -311,7 +336,7 @@ export function WorkflowV2Page() {
       toast(successMessage, "success");
       await loadSession();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Action failed.", "error");
+      toast(err instanceof Error ? err.message : t("workflowV2.toast.actionFailed"), "error");
     } finally {
       setSessionBusy(false);
     }
@@ -323,6 +348,12 @@ export function WorkflowV2Page() {
   const myUsername = user?.username ?? "";
   const isNextRound1 = session?.next_signer_r1 === myUsername;
   const isNextRound2 = session?.next_signer_r2 === myUsername;
+  const activeExamTypeLabel =
+    activePeriod?.exam_type === "midterm"
+      ? t("optimizer.form.midterm")
+      : activePeriod?.exam_type === "final"
+        ? t("optimizer.form.final")
+        : activePeriod?.exam_type ?? "";
 
   const scheduleStats = useMemo(() => {
     return {
@@ -337,58 +368,61 @@ export function WorkflowV2Page() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">Workflow review</span>
-          <h1 className="page-hero__title">Schedule review & sign-off</h1>
-          <p className="page-hero__description">
-            Review operational issues, confirm readiness, and complete the two-round sign-off flow before release.
-          </p>
+          <span className="page-hero__eyebrow">{t("workflowV2.heroEyebrow")}</span>
+          <h1 className="page-hero__title">{t("workflowV2.heroTitle")}</h1>
+          <p className="page-hero__description">{t("workflowV2.heroDescription")}</p>
         </div>
         <div className="page-hero__actions">
           <Button type="button" variant="outline" onClick={() => { void loadSession(); void loadSchedules(); void loadExternalIssues(); }}>
-            Refresh
+            {t("common.refresh")}
           </Button>
-          {isAdmin && status === "no_session" && (
+          {isAdmin && status === "no_session" ? (
             <Button
               type="button"
               disabled={errorCount > 0}
               loading={sessionBusy}
-              onClick={() => void doAction(async () => { await initWorkflowSession(); }, "Workflow session initialized.")}
+              onClick={() => void doAction(async () => { await initWorkflowSession(); }, t("workflowV2.toast.sessionInitialized"))}
             >
-              Initialize session
+              {t("workflowV2.actions.initializeSession")}
             </Button>
-          )}
-          {isAdmin && status === "confirmed" && (
+          ) : null}
+          {isAdmin && status === "confirmed" ? (
             <Button
               type="button"
               variant="outline"
               loading={sessionBusy}
-              onClick={() => void doAction(async () => { await openSwapWindow(); }, "Swap window opened.")}
+              onClick={() => void doAction(async () => { await openSwapWindow(); }, t("workflowV2.toast.swapWindowOpened"))}
             >
-              Open swap window
+              {t("workflowV2.actions.openSwapWindow")}
             </Button>
-          )}
+          ) : null}
         </div>
       </section>
 
-      {activePeriod && (
+      {activePeriod ? (
         <div className="wf-period-bar">
           <Icon name="calendar_month" />
-          <span>Active period: <strong>{activePeriod.label}</strong></span>
-          <span className="wf-period-bar__status">{activePeriod.exam_type} · semester {activePeriod.semester}</span>
+          <span>{t("workflowV2.activePeriod", { label: activePeriod.label })}</span>
+          <span className="wf-period-bar__status">
+            {t("workflowV2.activePeriodStatus", {
+              examType: activeExamTypeLabel,
+              semester: activePeriod.semester,
+            })}
+          </span>
         </div>
-      )}
+      ) : null}
 
-      <Card title="Workflow status" subtitle="Current position in the approval pipeline">
+      <Card title={t("workflowV2.status.title")} subtitle={t("workflowV2.status.subtitle")}>
         {sessionLoading ? (
           <Skeleton className="dashboard-skeleton" />
         ) : (
           <>
             <StageTimeline status={status} />
-            {status === "no_session" && (
+            {status === "no_session" ? (
               <p className="text-muted" style={{ marginTop: "12px" }}>
-                Generate schedules, resolve blocking issues, then initialize the workflow session to start sign-off.
+                {t("workflowV2.status.noSessionNote")}
               </p>
-            )}
+            ) : null}
           </>
         )}
       </Card>
@@ -397,148 +431,156 @@ export function WorkflowV2Page() {
         <article className="dashboard-metric dashboard-metric--accent">
           <div className="dashboard-metric__icon"><Icon name="event_note" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Schedules</p>
+            <p className="dashboard-metric__label">{t("workflowV2.metrics.schedules")}</p>
             <strong className="dashboard-metric__value">{scheduleStats.total}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--neutral">
           <div className="dashboard-metric__icon"><Icon name="meeting_room" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">With room assigned</p>
+            <p className="dashboard-metric__label">{t("workflowV2.metrics.withRoom")}</p>
             <strong className="dashboard-metric__value">{scheduleStats.withRoom}</strong>
           </div>
         </article>
         <article className={`dashboard-metric ${scheduleStats.withInvigilator < scheduleStats.total ? "dashboard-metric--warning" : "dashboard-metric--success"}`}>
           <div className="dashboard-metric__icon"><Icon name="groups" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">With invigilators</p>
+            <p className="dashboard-metric__label">{t("workflowV2.metrics.withInvigilators")}</p>
             <strong className="dashboard-metric__value">{scheduleStats.withInvigilator} / {scheduleStats.total}</strong>
           </div>
         </article>
         <article className={`dashboard-metric ${issues.length > 0 ? "dashboard-metric--warning" : "dashboard-metric--success"}`}>
           <div className="dashboard-metric__icon"><Icon name={issues.length > 0 ? "warning" : "check_circle"} /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Visible issues</p>
+            <p className="dashboard-metric__label">{t("workflowV2.metrics.visibleIssues")}</p>
             <strong className="dashboard-metric__value">{issues.length}</strong>
           </div>
         </article>
       </div>
 
-      <Card title="Issue review checkpoint" subtitle="Grouped issues must be reviewed before the workflow moves forward">
+      <Card title={t("workflowV2.issues.title")} subtitle={t("workflowV2.issues.subtitle")}>
         <IssueSummary
           issues={issues}
           filter={issueFilter}
           onFilterChange={setIssueFilter}
           loading={schedulesLoading || externalLoading}
         />
-        {issues.length > 0 && (
+        {issues.length > 0 ? (
           <DataTable<WorkflowIssueItem>
             columns={[
               {
                 key: "title",
-                label: "Issue",
+                label: t("workflowV2.table.issue"),
                 width: "22%",
                 render: (row) => (
                   <div className="data-table__content data-table__content--clamp">
                     <strong>{row.title}</strong>
-                    <p>{row.scope === "external" ? "External exam flow" : "Internal schedule flow"}</p>
+                    <p>{row.scope === "external" ? t("workflowV2.scope.external") : t("workflowV2.scope.internal")}</p>
                   </div>
                 ),
               },
               {
                 key: "severity",
-                label: "Severity",
+                label: t("workflowV2.table.severity"),
                 width: "12%",
                 render: (row) => (
                   <span className={`wf-issue-chip wf-issue-chip--${row.severity}`}>
-                    <Icon name={row.severity === "error" ? "error" : "warning"} /> {row.severity}
+                    <Icon name={row.severity === "error" ? "error" : "warning"} /> {t(`workflowV2.severity.${row.severity}`)}
                   </span>
                 ),
               },
               {
                 key: "reference",
-                label: "Reference",
+                label: t("workflowV2.table.reference"),
                 width: "18%",
               },
               {
                 key: "message",
-                label: "Details",
+                label: t("workflowV2.table.details"),
                 width: "48%",
               },
             ]}
-            emptyTitle="No visible issues"
+            emptyTitle={t("workflowV2.issues.emptyTitle")}
             rowKey={(row) => row.id}
             rows={filteredIssues}
             scrollThreshold={5}
             tableLayout="fixed"
           />
-        )}
-        {errorCount > 0 && isAdmin && status === "no_session" && (
+        ) : null}
+        {errorCount > 0 && isAdmin && status === "no_session" ? (
           <p className="text-muted" style={{ marginTop: "10px", fontSize: "0.85rem" }}>
-            Resolve the blocking errors above before initializing the workflow session.
+            {t("workflowV2.issues.blockingNote")}
           </p>
-        )}
+        ) : null}
       </Card>
 
-      {session && status !== "no_session" && round1 && (
+      {session && status !== "no_session" && round1 ? (
         <Card
-          title="Round 1 · Pre-swap signatures"
-          subtitle={`${round1.done} of ${round1.total} signed${round1.complete ? " · Complete" : ""}`}
+          title={t("workflowV2.round1.title")}
+          subtitle={t("workflowV2.roundProgress", {
+            done: round1.done,
+            total: round1.total,
+            status: round1.complete ? t("workflowV2.roundStatus.complete") : "",
+          }).trim()}
         >
           <div className="wf-signers">
             {round1.signatures.map((signature, index) => (
               <SignerRow
                 key={signature.order}
-                sig={signature as { order: number; username: string; signed_at: string | null }}
+                sig={signature}
                 isNext={index === round1.done && !round1.complete}
-                onSign={() => void doAction(async () => { await signWorkflow(1); }, "Round 1 signature recorded.")}
+                onSign={() => void doAction(async () => { await signWorkflow(1); }, t("workflowV2.toast.round1Signed"))}
                 busy={sessionBusy}
                 canSign={canSign && isNextRound1}
               />
             ))}
           </div>
-          {round1.complete && (
+          {round1.complete ? (
             <div className="wf-round-complete">
-              <Icon name="verified" /> Round 1 complete. Swaps can now be opened.
+              <Icon name="verified" /> {t("workflowV2.round1.completeMessage")}
             </div>
-          )}
+          ) : null}
         </Card>
-      )}
+      ) : null}
 
-      {session && round1?.complete && round2 && (
+      {session && round1?.complete && round2 ? (
         <Card
-          title="Round 2 · Post-swap lock"
-          subtitle={`${round2.done} of ${round2.total} signed${round2.complete ? " · Locked" : ""}`}
+          title={t("workflowV2.round2.title")}
+          subtitle={t("workflowV2.roundProgress", {
+            done: round2.done,
+            total: round2.total,
+            status: round2.complete ? t("workflowV2.roundStatus.locked") : "",
+          }).trim()}
         >
           <div className="wf-signers">
             {round2.signatures.map((signature, index) => (
               <SignerRow
                 key={signature.order}
-                sig={signature as { order: number; username: string; signed_at: string | null }}
+                sig={signature}
                 isNext={index === round2.done && !round2.complete}
-                onSign={() => void doAction(async () => { await signWorkflow(2); }, "Round 2 signature recorded.")}
+                onSign={() => void doAction(async () => { await signWorkflow(2); }, t("workflowV2.toast.round2Signed"))}
                 busy={sessionBusy}
                 canSign={canSign && isNextRound2}
               />
             ))}
           </div>
-          {round2.complete && (
+          {round2.complete ? (
             <div className="wf-round-complete">
-              <Icon name="lock" /> Schedule locked. Ready for print preparation and downstream operations.
+              <Icon name="lock" /> {t("workflowV2.round2.completeMessage")}
             </div>
-          )}
+          ) : null}
         </Card>
-      )}
+      ) : null}
 
-      {!schedulesLoading && schedules.length === 0 && (
-        <Card title="No schedule data">
+      {!schedulesLoading && schedules.length === 0 ? (
+        <Card title={t("workflowV2.noScheduleCardTitle")}>
           <EmptyState
             icon={<Icon name="event_busy" />}
-            title="No schedules found"
-            description="Run the optimizer to generate room and invigilator assignments before starting the workflow."
+            title={t("workflowV2.noScheduleTitle")}
+            description={t("workflowV2.noScheduleDescription")}
           />
         </Card>
-      )}
+      ) : null}
     </div>
   );
 }

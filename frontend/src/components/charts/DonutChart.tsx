@@ -1,3 +1,4 @@
+import { useI18n } from "@/i18n";
 import { formatNumber } from "@/utils/format";
 
 interface DonutChartProps {
@@ -8,10 +9,11 @@ interface DonutChartProps {
 }
 
 export function DonutChart({ centerLabel, colors, labels, values }: DonutChartProps) {
+  const { t } = useI18n();
   const total = values.reduce((sum, value) => sum + value, 0);
 
   if (total === 0) {
-    return <div className="chart-empty">ยังไม่มีข้อมูล</div>;
+    return <div className="chart-empty">{t("charts.empty")}</div>;
   }
 
   let cursor = 0;

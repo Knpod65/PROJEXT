@@ -15,9 +15,17 @@ from database import engine, Base, get_db
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from cmu_sso import router as sso_router
-from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, imports, imports_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing
+from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing
 from routers import scheduler, exports_excel
 import models
+
+try:
+    from routers import imports, imports_v2
+    IMPORT_ROUTERS_ERROR = None
+except Exception as exc:
+    imports = None
+    imports_v2 = None
+    IMPORT_ROUTERS_ERROR = exc
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -55,6 +63,12 @@ except ImportError:
     _request_id_var = ContextVar("request_id", default="")
     _user_id_var    = ContextVar("user_id",    default=0)
     app_log         = logging.getLogger("ems")
+
+if IMPORT_ROUTERS_ERROR is not None:
+    app_log.warning(
+        "Import routes disabled during startup: %s",
+        IMPORT_ROUTERS_ERROR,
+    )
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
@@ -181,8 +195,10 @@ app.include_router(courses.router,   prefix="/api/courses",  tags=["courses"])
 app.include_router(schedule.router,  prefix="/api/schedule", tags=["schedule"])
 app.include_router(dashboard.router, prefix="/api/dashboard",tags=["dashboard"])
 app.include_router(pdf.router,       prefix="/api/pdf",      tags=["pdf"])
-app.include_router(imports.router,   prefix="/api/import",   tags=["import"])
-app.include_router(imports_v2.router, prefix="/api/import/v2", tags=["import-v2"])
+if imports is not None:
+    app.include_router(imports.router,   prefix="/api/import",   tags=["import"])
+if imports_v2 is not None:
+    app.include_router(imports_v2.router, prefix="/api/import/v2", tags=["import-v2"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(printing.router, prefix="/api/printing", tags=["printing"])
 app.include_router(period.router,         prefix="/api/period",    tags=["period"])

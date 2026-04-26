@@ -6,11 +6,13 @@ export function login(username: string, password: string, selectedRole: RoleSele
 }
 
 export function me() {
-  return get<UserMe>("/auth/me");
+  return get<UserMe | null>("/auth/me", { notifyOnUnauthorized: false });
 }
 
-export function logout() {
-  return post<{ success: boolean; message?: string }>("/auth/logout");
+export function logout(options?: { notifyOnUnauthorized?: boolean }) {
+  return post<{ success: boolean; message?: string }>("/auth/logout", undefined, {
+    notifyOnUnauthorized: options?.notifyOnUnauthorized ?? true,
+  });
 }
 
 export function setViewAs(role: UserRole | null) {

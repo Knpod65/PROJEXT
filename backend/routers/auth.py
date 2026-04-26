@@ -6,19 +6,19 @@ Auth Router
 - /view-as: admin impersonation
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from auth_utils import (
     DUMMY_PASSWORD_HASH,
+    RequestAuthState,
     create_token,
     get_active_role,
     get_available_roles,
-    get_current_user,
     get_effective_role,
     log_action,
     require_admin,
     require_base_admin,
+    resolve_request_auth,
     resolve_active_role,
     revoke_token,
     verify_password,
@@ -28,7 +28,6 @@ from database import get_db
 import models
 import schemas
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 router = APIRouter()
 
 
@@ -102,9 +101,16 @@ def login(data: schemas.LoginRequest, request: Request, response: Response,
     }
 
 
-@router.get("/me", response_model=schemas.UserMe)
-def get_me(current_user: models.User = Depends(get_current_user)):
-    return _serialize_user_me(current_user)
+@router.get("/me", response_model=schemas.UserMe | None)
+def get_me(
+    response: Response,
+    auth_state: RequestAuthState = Depends(resolve_request_auth),
+):
+    if not auth_state.user:
+        if auth_state.invalid_token and auth_state.token:
+            clear_auth_cookie(response)
+        return None
+    return _serialize_user_me(auth_state.user)
 
 
 @router.post("/view-as")
@@ -134,20 +140,20 @@ def set_view_as(
 def logout(
     request: Request,
     response: Response,
-    bearer_token: str = Depends(oauth2_scheme),
+    auth_state: RequestAuthState = Depends(resolve_request_auth),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
 ):
     # Revoke whichever token was used (cookie or bearer)
-    token = request.cookies.get("ems_session") or bearer_token
-    if token:
-        revoke_token(token, db)
+    if auth_state.token and not auth_state.invalid_token:
+        revoke_token(auth_state.token, db)
 
-    current_user.view_as_role = None
-    db.commit()
+    current_user = auth_state.user
+    if current_user:
+        current_user.view_as_role = None
+        db.commit()
 
-    # Clear cookie
     clear_auth_cookie(response)
 
-    log_action(db, current_user, "LOGOUT", request=request, http_status=200)
+    if current_user:
+        log_action(db, current_user, "LOGOUT", request=request, http_status=200)
     return {"success": True, "message": "ออกจากระบบแล้ว"}

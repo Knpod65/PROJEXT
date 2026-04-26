@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
+import { useI18n } from "@/i18n";
 import {
   addUnavailability,
   deleteUnavailability,
@@ -20,14 +21,12 @@ import {
   type UnavailabilityRecord,
 } from "@/services/optimizer.service";
 import { listSchedules } from "@/services/schedule.service";
+import { useAuth } from "@/store/auth.store";
 import { usePeriod } from "@/store/period.store";
 import { useUi } from "@/store/ui.store";
 import type { ScheduleWithSection } from "@/types/api";
 import { formatDate } from "@/utils/format";
-import { useAuth } from "@/store/auth.store";
 import { getEffectiveRole } from "@/utils/roles";
-
-// ── Pre-optimization: unavailability panel ─────────────────────
 
 function UnavailabilityPanel({
   rows,
@@ -40,6 +39,7 @@ function UnavailabilityPanel({
   onAdd: (userId: number, date: string, time?: string, reason?: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ user_id: "", block_date: "", block_time: "", reason: "" });
   const [saving, setSaving] = useState(false);
@@ -60,37 +60,37 @@ function UnavailabilityPanel({
     <div className="optimizer-section">
       <div className="optimizer-section__header">
         <div>
-          <h3>Staff unavailability</h3>
-          <p className="text-muted">Block staff from specific dates before running the optimizer.</p>
+          <h3>{t("optimizer.unavailability.title")}</h3>
+          <p className="text-muted">{t("optimizer.unavailability.subtitle")}</p>
         </div>
         <Button type="button" size="sm" variant="outline" onClick={() => setShowForm(true)}>
-          Add block
+          {t("optimizer.unavailability.addBlock")}
         </Button>
       </div>
 
       {loading ? (
         <Skeleton className="dashboard-skeleton" />
       ) : rows.length === 0 ? (
-        <p className="text-muted">No unavailability blocks. All staff are currently available.</p>
+        <p className="text-muted">{t("optimizer.unavailability.empty")}</p>
       ) : (
         <div className="table-wrap">
           <table className="data-table data-table--compact">
             <thead>
               <tr>
-                <th>Staff</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Reason</th>
+                <th>{t("common.staff")}</th>
+                <th>{t("common.date")}</th>
+                <th>{t("common.time")}</th>
+                <th>{t("common.reason")}</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id}>
-                  <td><strong>{row.full_name ?? `User #${row.user_id}`}</strong></td>
+                  <td><strong>{row.full_name ?? t("optimizer.unavailability.userFallback", { id: row.user_id })}</strong></td>
                   <td>{row.block_date}</td>
-                  <td>{row.all_day ? "All day" : (row.block_time ?? "—")}</td>
-                  <td className="text-muted">{row.reason ?? "—"}</td>
+                  <td>{row.all_day ? t("optimizer.block.allDay") : (row.block_time ?? "-")}</td>
+                  <td className="text-muted">{row.reason ?? "-"}</td>
                   <td>
                     <Button
                       type="button"
@@ -98,7 +98,7 @@ function UnavailabilityPanel({
                       variant="ghost"
                       onClick={() => void onDelete(row.id)}
                     >
-                      Remove
+                      {t("common.remove")}
                     </Button>
                   </td>
                 </tr>
@@ -110,42 +110,40 @@ function UnavailabilityPanel({
 
       <Modal
         open={showForm}
-        title="Block staff date"
+        title={t("optimizer.unavailability.modalTitle")}
         onClose={() => setShowForm(false)}
         footer={
           <div className="inline-actions">
-            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>{t("common.cancel")}</Button>
             <Button type="button" loading={saving} disabled={!form.user_id || !form.block_date} onClick={() => void handleAdd()}>
-              Add block
+              {t("optimizer.unavailability.addBlock")}
             </Button>
           </div>
         }
       >
         <div className="optimizer-block-form">
           <div className="form-field">
-            <label htmlFor="block-uid">User ID</label>
-            <input id="block-uid" type="number" placeholder="Enter user ID" value={form.user_id} onChange={(e) => setForm((f) => ({ ...f, user_id: e.target.value }))} />
-            <span className="form-hint">Enter the numeric user ID of the staff member.</span>
+            <label htmlFor="block-uid">{t("optimizer.unavailability.form.userId")}</label>
+            <input id="block-uid" type="number" placeholder={t("optimizer.unavailability.form.userIdPlaceholder")} value={form.user_id} onChange={(e) => setForm((f) => ({ ...f, user_id: e.target.value }))} />
+            <span className="form-hint">{t("optimizer.unavailability.form.userIdHint")}</span>
           </div>
           <div className="form-field">
-            <label htmlFor="block-date">Date</label>
+            <label htmlFor="block-date">{t("common.date")}</label>
             <input id="block-date" type="date" value={form.block_date} onChange={(e) => setForm((f) => ({ ...f, block_date: e.target.value }))} />
           </div>
           <div className="form-field">
-            <label htmlFor="block-time">Time slot (optional — leave blank for all-day)</label>
-            <input id="block-time" type="text" placeholder="e.g. 09:00 or 09.00-12.00" value={form.block_time} onChange={(e) => setForm((f) => ({ ...f, block_time: e.target.value }))} />
+            <label htmlFor="block-time">{t("optimizer.unavailability.form.timeSlot")}</label>
+            <input id="block-time" type="text" placeholder={t("optimizer.unavailability.form.timeSlotPlaceholder")} value={form.block_time} onChange={(e) => setForm((f) => ({ ...f, block_time: e.target.value }))} />
           </div>
           <div className="form-field">
-            <label htmlFor="block-reason">Reason (optional)</label>
-            <input id="block-reason" type="text" placeholder="e.g. Medical leave" value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
+            <label htmlFor="block-reason">{t("common.reason")}</label>
+            <input id="block-reason" type="text" placeholder={t("optimizer.unavailability.form.reasonPlaceholder")} value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
           </div>
         </div>
       </Modal>
     </div>
   );
 }
-
-// ── Session workflow panel ─────────────────────────────────────
 
 function SessionPanel({
   session,
@@ -158,12 +156,14 @@ function SessionPanel({
   onSign: (round: 1 | 2) => Promise<void>;
   busy: boolean;
 }) {
+  const { t } = useI18n();
+
   if (!session || session.status === "no_session") {
     return (
       <div className="optimizer-section">
-        <p className="text-muted">No session. Run the optimizer first, then initialize a session.</p>
+        <p className="text-muted">{t("optimizer.session.empty")}</p>
         <Button type="button" variant="outline" loading={busy} onClick={() => void onInit()}>
-          Initialize session
+          {t("optimizer.session.initialize")}
         </Button>
       </div>
     );
@@ -175,58 +175,58 @@ function SessionPanel({
   return (
     <div className="optimizer-section">
       <div className="optimizer-session-status">
-        <span className={`session-badge session-badge--${session.status}`}>{session.status.replace("_", " ")}</span>
-        {session.baseline_saved && <span className="session-badge session-badge--success">Baseline saved</span>}
+        <span className={`session-badge session-badge--${session.status}`}>{t(`optimizer.session.status.${session.status}`)}</span>
+        {session.baseline_saved ? <span className="session-badge session-badge--success">{t("optimizer.session.baselineSaved")}</span> : null}
       </div>
 
-      {r1 && (
+      {r1 ? (
         <div className="optimizer-round">
-          <h4>Round 1 — Pre-swap confirmation ({r1.done}/{r1.total})</h4>
+          <h4>{t("optimizer.session.round1Title", { done: r1.done, total: r1.total })}</h4>
           <div className="optimizer-signers">
             {r1.signatures.map((sig) => (
               <div key={sig.order} className={`optimizer-signer${sig.signed_at ? " signed" : ""}`}>
                 <Icon name={sig.signed_at ? "check_circle" : "radio_button_unchecked"} />
                 <span>{sig.username}</span>
-                {sig.signed_at && <small>{formatDate(sig.signed_at)}</small>}
+                {sig.signed_at ? <small>{formatDate(sig.signed_at)}</small> : null}
               </div>
             ))}
           </div>
-          {!r1.complete && session.status === "draft" && (
+          {!r1.complete && session.status === "draft" ? (
             <Button type="button" size="sm" loading={busy} onClick={() => void onSign(1)}>
-              Sign round 1 (as {session.next_signer_r1 ?? "next signer"})
+              {t("optimizer.session.signRound1", { signer: session.next_signer_r1 ?? t("optimizer.session.nextSigner") })}
             </Button>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
 
-      {r2 && r1?.complete && (
+      {r2 && r1?.complete ? (
         <div className="optimizer-round">
-          <h4>Round 2 — Post-swap lock ({r2.done}/{r2.total})</h4>
+          <h4>{t("optimizer.session.round2Title", { done: r2.done, total: r2.total })}</h4>
           <div className="optimizer-signers">
             {r2.signatures.map((sig) => (
               <div key={sig.order} className={`optimizer-signer${sig.signed_at ? " signed" : ""}`}>
                 <Icon name={sig.signed_at ? "check_circle" : "radio_button_unchecked"} />
                 <span>{sig.username}</span>
-                {sig.signed_at && <small>{formatDate(sig.signed_at)}</small>}
+                {sig.signed_at ? <small>{formatDate(sig.signed_at)}</small> : null}
               </div>
             ))}
           </div>
-          {!r2.complete && session.status === "swap_open" && (
+          {!r2.complete && session.status === "swap_open" ? (
             <Button type="button" size="sm" loading={busy} onClick={() => void onSign(2)}>
-              Sign round 2 (as {session.next_signer_r2 ?? "next signer"})
+              {t("optimizer.session.signRound2", { signer: session.next_signer_r2 ?? t("optimizer.session.nextSigner") })}
             </Button>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
 
-// ── Results: room & staff assignment tables ─────────────────────
-
 function RoomAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] }) {
+  const { t } = useI18n();
+
   if (schedules.length === 0) {
-    return <EmptyState icon={<Icon name="event_note" />} title="No schedules available." description="Run the optimizer to generate assignments." />;
+    return <EmptyState icon={<Icon name="event_note" />} title={t("optimizer.rooms.emptyTitle")} description={t("optimizer.rooms.emptyDescription")} />;
   }
 
   return (
@@ -234,14 +234,14 @@ function RoomAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] }
       <table className="data-table data-table--compact">
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Exam room</th>
-            <th>Course</th>
-            <th>Section</th>
-            <th>Students</th>
-            <th>Capacity</th>
-            <th>Invigilators</th>
+            <th>{t("common.date")}</th>
+            <th>{t("common.time")}</th>
+            <th>{t("optimizer.rooms.examRoom")}</th>
+            <th>{t("common.course")}</th>
+            <th>{t("common.section")}</th>
+            <th>{t("common.students")}</th>
+            <th>{t("common.capacity")}</th>
+            <th>{t("optimizer.rooms.invigilators")}</th>
           </tr>
         </thead>
         <tbody>
@@ -250,21 +250,21 @@ function RoomAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] }
               <td>{sch.exam_date}</td>
               <td>{sch.exam_time}</td>
               <td>
-                <strong>{sch.room?.room_name ?? "Exam room not assigned yet"}</strong>
-                {sch.room?.building && <small className="text-muted"> {sch.room.building}</small>}
-                {!sch.room?.building && sch.section?.teaching_room?.room_name && (
-                  <small className="text-muted"> Teaching room: {sch.section.teaching_room.room_name}</small>
-                )}
+                <strong>{sch.room?.room_name ?? t("optimizer.rooms.roomPending")}</strong>
+                {sch.room?.building ? <small className="text-muted"> {sch.room.building}</small> : null}
+                {!sch.room?.building && sch.section?.teaching_room?.room_name ? (
+                  <small className="text-muted"> {t("optimizer.rooms.teachingRoom", { room: sch.section.teaching_room.room_name })}</small>
+                ) : null}
               </td>
-              <td>{sch.section?.course?.course_id ?? "—"}</td>
-              <td>§{sch.section?.section_no ?? "?"}</td>
-              <td>{sch.section?.num_students ?? "—"}</td>
+              <td>{sch.section?.course?.course_id ?? "-"}</td>
+              <td>{sch.section?.section_no ?? "?"}</td>
+              <td>{sch.section?.num_students ?? "-"}</td>
               <td className={sch.room && sch.section && sch.room.capacity < sch.section.num_students ? "text-danger" : ""}>
-                {sch.room?.capacity ?? "—"}
+                {sch.room?.capacity ?? "-"}
               </td>
               <td>
                 {sch.supervisions.length === 0 ? (
-                  <span className="text-muted">None</span>
+                  <span className="text-muted">{t("common.none")}</span>
                 ) : (
                   <span>{sch.supervisions.map((s) => s.user?.full_name ?? `#${s.id}`).join(", ")}</span>
                 )}
@@ -278,7 +278,7 @@ function RoomAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] }
 }
 
 function StaffAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] }) {
-  // Flatten supervisions grouped by staff member
+  const { t } = useI18n();
   const staffMap = new Map<number, { name: string; slots: ScheduleWithSection[] }>();
   for (const sch of schedules) {
     for (const sup of sch.supervisions) {
@@ -291,12 +291,10 @@ function StaffAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] 
     }
   }
 
-  const staffList = [...staffMap.entries()].sort((a, b) =>
-    a[1].name.localeCompare(b[1].name),
-  );
+  const staffList = [...staffMap.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name));
 
   if (staffList.length === 0) {
-    return <EmptyState icon={<Icon name="groups" />} title="No staff assignments yet." description="Run the optimizer to generate assignments." />;
+    return <EmptyState icon={<Icon name="groups" />} title={t("optimizer.staff.emptyTitle")} description={t("optimizer.staff.emptyDescription")} />;
   }
 
   return (
@@ -304,9 +302,9 @@ function StaffAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] 
       <table className="data-table data-table--compact">
         <thead>
           <tr>
-            <th>Staff member</th>
-            <th>Slots</th>
-            <th>Assignments</th>
+            <th>{t("common.staff")}</th>
+            <th>{t("optimizer.staff.slots")}</th>
+            <th>{t("optimizer.staff.assignments")}</th>
           </tr>
         </thead>
         <tbody>
@@ -318,7 +316,11 @@ function StaffAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] 
                 <div className="staff-slots">
                   {staff.slots.map((sch) => (
                     <span key={sch.id} className="staff-slot-tag">
-                      {sch.exam_date} {sch.exam_time} · Exam room: {sch.room?.room_name ?? "not assigned yet"}
+                      {t("optimizer.staff.assignmentTag", {
+                        date: sch.exam_date,
+                        time: sch.exam_time,
+                        room: sch.room?.room_name ?? t("optimizer.rooms.roomPendingShort"),
+                      })}
                     </span>
                   ))}
                 </div>
@@ -331,9 +333,8 @@ function StaffAssignmentTable({ schedules }: { schedules: ScheduleWithSection[] 
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────
-
 export function OptimizerPage() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const { activePeriod } = usePeriod();
   const { user } = useAuth();
@@ -401,7 +402,6 @@ export function OptimizerPage() {
     void loadSchedules();
   }, [loadUnavailability, loadSession, loadSchedules]);
 
-  // Sync form with active period when it loads
   useEffect(() => {
     if (activePeriod) {
       setForm({
@@ -419,9 +419,12 @@ export function OptimizerPage() {
       setRunResult(result);
       await loadSchedules();
       await loadSession();
-      toast(`Optimizer complete: ${result.sections_assigned}/${result.sections_total} sections assigned.`, "success");
+      toast(t("optimizer.toast.completed", {
+        assigned: result.sections_assigned,
+        total: result.sections_total,
+      }), "success");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Optimizer failed.", "error");
+      toast(err instanceof Error ? err.message : t("optimizer.toast.failed"), "error");
     } finally {
       setRunning(false);
     }
@@ -430,13 +433,13 @@ export function OptimizerPage() {
   const handleAddBlock = async (userId: number, date: string, time?: string, reason?: string) => {
     await addUnavailability({ user_id: userId, block_date: date, block_time: time, reason });
     await loadUnavailability();
-    toast("Unavailability block added.", "success");
+    toast(t("optimizer.toast.blockAdded"), "success");
   };
 
   const handleDeleteBlock = async (id: number) => {
     await deleteUnavailability(id);
     await loadUnavailability();
-    toast("Block removed.", "warning");
+    toast(t("optimizer.toast.blockRemoved"), "warning");
   };
 
   const handleInitSession = async () => {
@@ -444,9 +447,9 @@ export function OptimizerPage() {
     try {
       const s = await initSession();
       setSession(s);
-      toast("Session initialized.", "success");
+      toast(t("optimizer.toast.sessionInitialized"), "success");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to init session.", "error");
+      toast(err instanceof Error ? err.message : t("optimizer.toast.initFailed"), "error");
     } finally {
       setSessionBusy(false);
     }
@@ -457,9 +460,9 @@ export function OptimizerPage() {
     try {
       const s = await signSession(round);
       setSession(s);
-      toast(`Round ${round} signature recorded.`, "success");
+      toast(t("optimizer.toast.roundSigned", { round }), "success");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to sign.", "error");
+      toast(err instanceof Error ? err.message : t("optimizer.toast.signFailed"), "error");
     } finally {
       setSessionBusy(false);
     }
@@ -471,22 +474,19 @@ export function OptimizerPage() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">Exam optimization</span>
-          <h1 className="page-hero__title">Schedule & invigilator assignment</h1>
-          <p className="page-hero__description">
-            Configure constraints, run the optimizer, then review exam-room and staff assignments before confirming.
-          </p>
+          <span className="page-hero__eyebrow">{t("optimizer.heroEyebrow")}</span>
+          <h1 className="page-hero__title">{t("optimizer.heroTitle")}</h1>
+          <p className="page-hero__description">{t("optimizer.heroDescription")}</p>
         </div>
         <div className="page-hero__actions">
           <Button type="button" variant="outline" onClick={() => void loadSchedules()} disabled={schedulesLoading}>
-            Refresh results
+            {t("optimizer.actions.refreshResults")}
           </Button>
         </div>
       </section>
 
-      {/* ── Pre-optimization: constraints ── */}
-      {isAdmin && (
-        <Card title="Pre-optimization setup" subtitle="Staff blocks are applied before the optimizer runs">
+      {isAdmin ? (
+        <Card title={t("optimizer.setup.title")} subtitle={t("optimizer.setup.subtitle")}>
           <UnavailabilityPanel
             rows={unavailability}
             loading={unavailLoading}
@@ -494,13 +494,12 @@ export function OptimizerPage() {
             onDelete={handleDeleteBlock}
           />
         </Card>
-      )}
+      ) : null}
 
-      {/* ── Run optimizer ── */}
-      <Card title="Run optimizer" subtitle="Assign exam rooms and invigilators for the selected term">
+      <Card title={t("optimizer.run.title")} subtitle={t("optimizer.run.subtitle")}>
         <div className="optimizer-run-row">
           <div className="form-field">
-            <label htmlFor="opt-ay">Academic year</label>
+            <label htmlFor="opt-ay">{t("common.academicYear")}</label>
             <input
               id="opt-ay"
               type="text"
@@ -509,7 +508,7 @@ export function OptimizerPage() {
             />
           </div>
           <div className="form-field">
-            <label htmlFor="opt-sem">Semester</label>
+            <label htmlFor="opt-sem">{t("common.semester")}</label>
             <select
               id="opt-sem"
               value={form.semester}
@@ -517,68 +516,67 @@ export function OptimizerPage() {
             >
               <option value="1">1</option>
               <option value="2">2</option>
-              <option value="summer">Summer</option>
+              <option value="summer">{t("optimizer.form.summer")}</option>
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="opt-type">Exam type</label>
+            <label htmlFor="opt-type">{t("common.examType")}</label>
             <select
               id="opt-type"
               value={form.exam_type}
               onChange={(e) => setForm((f) => ({ ...f, exam_type: e.target.value }))}
             >
-              <option value="midterm">Midterm</option>
-              <option value="final">Final</option>
+              <option value="midterm">{t("optimizer.form.midterm")}</option>
+              <option value="final">{t("optimizer.form.final")}</option>
             </select>
           </div>
-          {isAdmin && (
+          {isAdmin ? (
             <Button type="button" loading={running} onClick={() => void handleRun()}>
-              Run optimizer
+              {t("optimizer.actions.run")}
             </Button>
-          )}
+          ) : null}
         </div>
 
-        {runResult && (
+        {runResult ? (
           <div className="optimizer-result-bar">
             <div className="summary-grid">
               <div className="summary-box">
-                <span>Assigned</span>
+                <span>{t("optimizer.result.assigned")}</span>
                 <strong>{runResult.sections_assigned} / {runResult.sections_total}</strong>
               </div>
               <div className="summary-box">
-                <span>Fairness score</span>
+                <span>{t("optimizer.result.fairnessScore")}</span>
                 <strong>{runResult.fairness_score}</strong>
               </div>
               <div className={`summary-box${violationCount > 0 ? " summary-box--warning" : ""}`}>
-                <span>Violations</span>
+                <span>{t("optimizer.result.violations")}</span>
                 <strong>{violationCount}</strong>
               </div>
               <div className={`summary-box${(runResult.paper_distribution_unfilled ?? 0) > 0 ? " summary-box--warning" : ""}`}>
-                <span>Paper distribution</span>
+                <span>{t("optimizer.result.paperDistribution")}</span>
                 <strong>{runResult.paper_distribution_assigned ?? 0} / {runResult.paper_distribution_slots ?? 0}</strong>
               </div>
             </div>
-            {violationCount > 0 && (
+            {violationCount > 0 ? (
               <ul className="plain-list optimizer-violations">
                 {runResult.violations.map((v) => <li key={v}>{v}</li>)}
               </ul>
-            )}
-            {(runResult.paper_distribution_warnings?.length ?? 0) > 0 && (
+            ) : null}
+            {(runResult.paper_distribution_warnings?.length ?? 0) > 0 ? (
               <ul className="plain-list optimizer-violations">
                 {runResult.paper_distribution_warnings?.map((warning) => <li key={warning}>{warning}</li>)}
               </ul>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
       </Card>
 
-      {/* ── Results: room & staff assignments ── */}
-      <Card title="Assignment results" subtitle="Current exam-room and invigilator allocations for the active period">
+      <Card title={t("optimizer.assignments.title")} subtitle={t("optimizer.assignments.subtitle")}>
         <Tabs
           activeKey={resultsTab}
           items={[
-            { key: "rooms", label: "Exam room assignments", badge: schedules.length || undefined },
-            { key: "staff", label: "Staff assignments" },
+            { key: "rooms", label: t("optimizer.tabs.rooms"), badge: schedules.length || undefined },
+            { key: "staff", label: t("optimizer.tabs.staff") },
           ]}
           onChange={setResultsTab}
         />
@@ -594,9 +592,8 @@ export function OptimizerPage() {
         )}
       </Card>
 
-      {/* ── 4-signature workflow session ── */}
-      {isAdmin && (
-        <Card title="Approval workflow" subtitle="4-signature confirmation — round 1 before swap, round 2 to lock">
+      {isAdmin ? (
+        <Card title={t("optimizer.workflow.title")} subtitle={t("optimizer.workflow.subtitle")}>
           <SessionPanel
             session={session}
             onInit={handleInitSession}
@@ -604,7 +601,7 @@ export function OptimizerPage() {
             busy={sessionBusy}
           />
         </Card>
-      )}
+      ) : null}
     </div>
   );
 }

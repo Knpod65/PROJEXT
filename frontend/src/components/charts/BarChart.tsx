@@ -1,3 +1,4 @@
+import { useI18n } from "@/i18n";
 import { formatNumber } from "@/utils/format";
 
 interface BarChartProps {
@@ -7,10 +8,11 @@ interface BarChartProps {
 }
 
 export function BarChart({ color = "var(--crimson)", labels, values }: BarChartProps) {
+  const { t } = useI18n();
   const max = Math.max(...values, 1);
 
   if (labels.length === 0) {
-    return <div className="chart-empty">ยังไม่มีข้อมูล</div>;
+    return <div className="chart-empty">{t("charts.empty")}</div>;
   }
 
   return (

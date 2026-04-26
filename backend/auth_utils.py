@@ -5,6 +5,7 @@ Auth utilities
 - Admin "view-as" impersonation
 - Dual-mode token extraction: HttpOnly cookie (preferred) + Bearer header (legacy)
 """
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
@@ -32,6 +33,13 @@ TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "12"))
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 GOVERNANCE_ROLE_KEY = "governance"
 WORKSPACE_REJECTION_MESSAGE = "You are not assigned to this workspace. Please check your role and try again."
+
+
+@dataclass
+class RequestAuthState:
+    token: Optional[str]
+    user: Optional["models.User"]
+    invalid_token: bool = False
 
 
 def hash_password(password: str) -> str:
@@ -136,7 +144,54 @@ def get_active_role(user: models.User) -> models.UserRole:
     return user.role
 
 
-def get_current_user(
+def _build_credentials_exception() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token not provided or expired",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def _get_request_token(request: Request, bearer_token: Optional[str]) -> Optional[str]:
+    return request.cookies.get("ems_session") or bearer_token
+
+
+def _resolve_user_from_token(token: str, db: Session) -> Optional[models.User]:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            return None
+        active_role = _coerce_user_role(payload.get("active_role"))
+    except JWTError:
+        return None
+
+    if is_token_revoked(token, db):
+        return None
+
+    user = db.query(models.User).filter(models.User.id == int(user_id)).first()
+    if not user or not user.is_active:
+        return None
+    if active_role and active_role not in get_available_roles(user):
+        return None
+    setattr(user, "_active_role", active_role or user.role)
+    return user
+
+
+def resolve_request_auth(
+    request: Request,
+    bearer_token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> RequestAuthState:
+    token = _get_request_token(request, bearer_token)
+    if not token:
+        return RequestAuthState(token=None, user=None, invalid_token=False)
+
+    user = _resolve_user_from_token(token, db)
+    return RequestAuthState(token=token, user=user, invalid_token=user is None)
+
+
+def _get_current_user_legacy(
     request: Request,
     bearer_token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
@@ -178,6 +233,20 @@ def get_current_user(
         raise credentials_exc
     setattr(user, "_active_role", active_role or user.role)
     return user
+
+
+def get_current_user(
+    auth_state: RequestAuthState = Depends(resolve_request_auth),
+) -> models.User:
+    if not auth_state.user:
+        raise _build_credentials_exception()
+    return auth_state.user
+
+
+def get_current_user_optional(
+    auth_state: RequestAuthState = Depends(resolve_request_auth),
+) -> Optional[models.User]:
+    return auth_state.user
 
 
 def get_effective_role(user: models.User) -> models.UserRole:

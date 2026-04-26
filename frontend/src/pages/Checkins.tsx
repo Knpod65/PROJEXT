@@ -1,9 +1,8 @@
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { PickupQrScanner } from "@/components/checkins/PickupQrScanner";
 import { OperationsSummaryCard } from "@/components/attendance/OperationsSummaryCard";
-import { RoomOperationsTable } from "@/components/attendance/RoomOperationsTable";
+import { PickupQrScanner } from "@/components/checkins/PickupQrScanner";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
@@ -13,7 +12,9 @@ import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
+import { RoomOperationsTable } from "@/components/attendance/RoomOperationsTable";
 import { useRoomOperationsData } from "@/hooks/useRoomOperationsData";
+import { useI18n } from "@/i18n";
 import {
   confirmCheckin,
   createCheckin,
@@ -35,7 +36,7 @@ import type {
   PickupScanResult,
   ScheduleWithSection,
 } from "@/types/api";
-import { formatDate, formatDateTime, formatNumber } from "@/utils/format";
+import { formatDate, formatDateTime, formatNumber, formatTranslatedValue } from "@/utils/format";
 import { getCurrentPosition } from "@/utils/gps";
 
 function getToday() {
@@ -57,7 +58,20 @@ function getPickupStatusVariant(status: string) {
   }
 }
 
+function getPickupStatusLabel(t: ReturnType<typeof useI18n>["t"], status: string) {
+  switch (status) {
+    case "checked_in":
+    case "late":
+    case "missed":
+    case "not_checked_in":
+      return t(`checkins.pickupStatus.${status}`);
+    default:
+      return status;
+  }
+}
+
 export function CheckinsPage() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const { user } = useAuth();
   const effectiveRole = user?.effective_role ?? user?.active_role ?? user?.role ?? null;
@@ -127,11 +141,11 @@ export function CheckinsPage() {
       const data = await getPickupMonitor(selectedDate);
       setPickupRows(data);
     } catch (err) {
-      setPickupError(err instanceof Error ? err.message : "Unable to load QR pickup monitoring.");
+      setPickupError(err instanceof Error ? err.message : t("checkins.toast.pickupMonitorLoadFailed"));
     } finally {
       setPickupLoading(false);
     }
-  }, [canManagePickup, selectedDate]);
+  }, [canManagePickup, selectedDate, t]);
 
   useEffect(() => {
     if (activeTab === "pickup_qr" && canManagePickup) {
@@ -149,11 +163,11 @@ export function CheckinsPage() {
     void getPickupQrStatus(pickupScheduleId)
       .then((data) => setPickupDetail(data))
       .catch((err) => {
-        toast(err instanceof Error ? err.message : "Unable to load QR details.", "error");
+        toast(err instanceof Error ? err.message : t("checkins.toast.pickupDetailLoadFailed"), "error");
         setPickupDetail(null);
       })
       .finally(() => setPickupDetailLoading(false));
-  }, [pickupScheduleId, toast]);
+  }, [pickupScheduleId, t, toast]);
 
   const handleCreateCheckin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -170,14 +184,14 @@ export function CheckinsPage() {
         notes: `${notes}\nGPS: ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`.trim(),
       });
 
-      toast("Check-in recorded.", "success");
+      toast(t("checkins.toast.checkinRecorded"), "success");
       setStudentsPresent("");
       setLateCount("");
       setNotes("");
       setSelectedSchedule(null);
       await refresh();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Unable to record check-in.", "error");
+      toast(err instanceof Error ? err.message : t("checkins.toast.checkinFailed"), "error");
     } finally {
       setSubmitting(false);
     }
@@ -187,10 +201,10 @@ export function CheckinsPage() {
     setConfirmingId(item.id);
     try {
       await confirmCheckin(item.id);
-      toast("Check-in confirmed.", "success");
+      toast(t("checkins.toast.checkinConfirmed"), "success");
       await refresh();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Unable to confirm this check-in.", "error");
+      toast(err instanceof Error ? err.message : t("checkins.toast.confirmFailed"), "error");
     } finally {
       setConfirmingId(null);
     }
@@ -214,7 +228,7 @@ export function CheckinsPage() {
         await refreshPickupMonitor();
       }
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Unable to confirm QR pickup.", "error");
+      toast(err instanceof Error ? err.message : t("checkins.toast.qrConfirmFailed"), "error");
     } finally {
       setScannerBusy(false);
     }
@@ -230,10 +244,10 @@ export function CheckinsPage() {
     try {
       const data = await regeneratePickupQr(pickupScheduleId);
       setPickupDetail(data);
-      toast("QR X regenerated. Confirm the new version to activate it.", "success");
+      toast(t("checkins.toast.qrRegenerated"), "success");
       await refreshPickupMonitor();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Unable to regenerate QR X.", "error");
+      toast(err instanceof Error ? err.message : t("checkins.toast.qrRegenerateFailed"), "error");
     } finally {
       setPickupActionBusy(null);
     }
@@ -246,10 +260,10 @@ export function CheckinsPage() {
       const qrId = pickupDetail?.latest_qr?.id;
       const data = await confirmPickupQr(pickupScheduleId, qrId);
       setPickupDetail(data);
-      toast("The latest QR X is now active.", "success");
+      toast(t("checkins.toast.qrActivated"), "success");
       await refreshPickupMonitor();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Unable to confirm the regenerated QR.", "error");
+      toast(err instanceof Error ? err.message : t("checkins.toast.qrActivateFailed"), "error");
     } finally {
       setPickupActionBusy(null);
     }
@@ -259,7 +273,7 @@ export function CheckinsPage() {
     () => [
       {
         key: "date_time",
-        label: "Date & time",
+        label: t("checkins.pickupTable.dateTime"),
         width: "14%",
         render: (row: PickupMonitorRow) => (
           <div className="data-table__content data-table__content--truncate">
@@ -270,78 +284,76 @@ export function CheckinsPage() {
       },
       {
         key: "exam",
-        label: "Exam",
+        label: t("checkins.pickupTable.exam"),
         width: "24%",
         render: (row: PickupMonitorRow) => (
           <div className="data-table__content">
-            <strong>{row.course_name ?? row.course_code ?? "Untitled exam"}</strong>
-            <p>
-              {row.course_code ?? "-"} / Section {row.section_no ?? "-"}
-            </p>
+            <strong>{row.course_name ?? row.course_code ?? t("checkins.pickupTable.untitledExam")}</strong>
+            <p>{t("checkins.pickupTable.courseSection", { course: row.course_code ?? "-", section: row.section_no ?? "-" })}</p>
           </div>
         ),
       },
       {
         key: "room",
-        label: "Exam room",
+        label: t("checkins.pickupTable.examRoom"),
         width: "12%",
         render: (row: PickupMonitorRow) => (
           <div className="data-table__content data-table__content--truncate">
-            <strong>{row.room_name ?? "Room pending"}</strong>
-            <p>QR X pickup point</p>
+            <strong>{row.room_name ?? t("checkins.pickupTable.roomPending")}</strong>
+            <p>{t("checkins.pickupTable.pickupPoint")}</p>
           </div>
         ),
       },
       {
         key: "assigned_person",
-        label: "Assigned person",
+        label: t("checkins.pickupTable.assignedPerson"),
         width: "16%",
         render: (row: PickupMonitorRow) => (
           <div className="data-table__content data-table__content--truncate">
             <strong>{row.assigned_person}</strong>
-            <p>{row.role}</p>
+            <p>{formatTranslatedValue("roles", row.role)}</p>
           </div>
         ),
       },
       {
         key: "checkin_status",
-        label: "Pickup status",
+        label: t("checkins.pickupTable.pickupStatus"),
         width: "14%",
         render: (row: PickupMonitorRow) => (
           <div className="data-table__content">
             <Badge variant={getPickupStatusVariant(row.checkin_status)}>
-              {row.checkin_status.split("_").join(" ")}
+              {getPickupStatusLabel(t, row.checkin_status)}
             </Badge>
-            <p>{row.checkin_time ? formatDateTime(row.checkin_time) : row.latest_message ?? "Waiting for QR scan"}</p>
+            <p>{row.checkin_time ? formatDateTime(row.checkin_time) : row.latest_message ?? t("checkins.pickupTable.waitingForScan")}</p>
           </div>
         ),
       },
       {
         key: "qr",
-        label: "QR X",
+        label: t("checkins.pickupTable.qrX"),
         width: "10%",
         render: (row: PickupMonitorRow) => (
           <div className="data-table__content data-table__content--truncate">
-            <strong>V{row.active_qr_version ?? "-"}</strong>
-            <p>{row.has_pending_regeneration ? `Pending V${row.latest_qr_version ?? "-"}` : "Active"}</p>
+            <strong>{t("checkins.pickupTable.version", { version: row.active_qr_version ?? "-" })}</strong>
+            <p>{row.has_pending_regeneration ? t("checkins.pickupTable.pendingVersion", { version: row.latest_qr_version ?? "-" }) : t("checkins.pickupTable.active")}</p>
           </div>
         ),
       },
       {
         key: "actions",
-        label: "Actions",
+        label: t("common.actions"),
         width: "10%",
         align: "right" as const,
         render: (row: PickupMonitorRow) => (
           <div className="pickup-monitor__actions">
             <Button size="sm" type="button" variant="outline" onClick={() => setPickupScheduleId(row.schedule_id)}>
-              Details
+              {t("common.details")}
             </Button>
           </div>
         ),
       },
     ],
-    [],
+    [t],
   );
 
   if (loading) {
@@ -358,15 +370,13 @@ export function CheckinsPage() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero page-hero--attendance">
         <div>
-          <span className="page-hero__eyebrow">Room operations + QR pickup</span>
-          <h2 className="page-hero__title">Operational check-ins</h2>
-          <p className="page-hero__description">
-            Manage room updates and QR X exam-paper pickup confirmations from one operational workspace. QR scanning uses the device camera only.
-          </p>
+          <span className="page-hero__eyebrow">{t("checkins.heroEyebrow")}</span>
+          <h2 className="page-hero__title">{t("checkins.heroTitle")}</h2>
+          <p className="page-hero__description">{t("checkins.heroDescription")}</p>
         </div>
         <div className="page-hero__actions">
           <Button iconLeft={<Icon name="qr_code_scanner" />} type="button" variant="outline" onClick={() => setScannerOpen(true)}>
-            Scan QR
+            {t("checkins.actions.scanQr")}
           </Button>
           {canManagePickup ? (
             <Button
@@ -375,7 +385,7 @@ export function CheckinsPage() {
               variant="outline"
               onClick={() => openDocumentExport({ document_type: "all" })}
             >
-              Export all documents
+              {t("checkins.actions.exportAllDocuments")}
             </Button>
           ) : null}
         </div>
@@ -384,8 +394,8 @@ export function CheckinsPage() {
       <Tabs
         activeKey={activeTab}
         items={[
-          { key: "room_ops", label: "Room operations" },
-          { key: "pickup_qr", label: "QR pickup", badge: canManagePickup ? pickupStats.pending + pickupStats.missed : undefined },
+          { key: "room_ops", label: t("checkins.tabs.roomOperations") },
+          { key: "pickup_qr", label: t("checkins.tabs.qrPickup"), badge: canManagePickup ? pickupStats.pending + pickupStats.missed : undefined },
         ]}
         onChange={(key) => setActiveTab(key as CheckinTab)}
       />
@@ -394,59 +404,59 @@ export function CheckinsPage() {
         actions={
           <div className="pickup-toolbar">
             <Button iconLeft={<Icon name="refresh" />} type="button" variant="outline" onClick={() => void refresh()}>
-              Refresh room ops
+              {t("checkins.actions.refreshRoomOps")}
             </Button>
             {canManagePickup ? (
               <Button iconLeft={<Icon name="refresh" />} type="button" variant="outline" onClick={() => void refreshPickupMonitor()}>
-                Refresh pickup monitor
+                {t("checkins.actions.refreshPickupMonitor")}
               </Button>
             ) : null}
           </div>
         }
       >
         <label className="filter-field">
-          <span>Operating date</span>
+          <span>{t("checkins.operatingDate")}</span>
           <input onChange={(event) => setSelectedDate(event.target.value)} type="date" value={selectedDate} />
         </label>
       </FilterBar>
 
       {activeTab === "room_ops" ? (
         <>
-          {error ? <EmptyState icon={<Icon name="warning" />} title="Unable to load check-in data." description={error} /> : null}
+          {error ? <EmptyState icon={<Icon name="warning" />} title={t("checkins.loadError")} description={error} /> : null}
 
           {rows.length === 0 ? (
             <EmptyState
               icon={<Icon name="how_to_reg" />}
-              title="No sessions found for this date."
-              description="Pick another date or check whether schedules have been assigned yet."
+              title={t("checkins.emptyTitle")}
+              description={t("checkins.emptyDescription")}
             />
           ) : (
             <>
               <section className="operations-summary-grid">
                 <OperationsSummaryCard
                   icon="calendar_today"
-                  label="Sessions"
-                  note="All scheduled rows for the selected day."
+                  label={t("checkins.stats.sessions")}
+                  note={t("checkins.stats.sessionsNote")}
                   value={formatNumber(rows.length)}
                 />
                 <OperationsSummaryCard
                   icon="how_to_reg"
-                  label="Checked in"
-                  note="Sessions with at least one check-in event."
+                  label={t("checkins.stats.checkedIn")}
+                  note={t("checkins.stats.checkedInNote")}
                   tone="success"
                   value={formatNumber(checkedInCount)}
                 />
                 <OperationsSummaryCard
                   icon="pending_actions"
-                  label="Pending confirm"
-                  note="Latest check-in exists but still needs confirmation."
+                  label={t("checkins.stats.pendingConfirm")}
+                  note={t("checkins.stats.pendingConfirmNote")}
                   tone="neutral"
                   value={formatNumber(pendingCount)}
                 />
                 <OperationsSummaryCard
                   icon="verified"
-                  label="Confirmed"
-                  note="Latest room report is already confirmed."
+                  label={t("checkins.stats.confirmed")}
+                  note={t("checkins.stats.confirmedNote")}
                   tone="accent"
                   value={formatNumber(confirmedCount)}
                 />
@@ -468,28 +478,28 @@ export function CheckinsPage() {
           <section className="operations-summary-grid">
             <OperationsSummaryCard
               icon="qr_code_scanner"
-              label="Assignments"
-              note="People expected to confirm pickup for the selected day."
+              label={t("checkins.pickupStats.assignments")}
+              note={t("checkins.pickupStats.assignmentsNote")}
               value={formatNumber(pickupStats.total)}
             />
             <OperationsSummaryCard
               icon="verified"
-              label="Checked in"
-              note="QR X pickup completed before exam start."
+              label={t("checkins.pickupStats.checkedIn")}
+              note={t("checkins.pickupStats.checkedInNote")}
               tone="success"
               value={formatNumber(pickupStats.checkedIn)}
             />
             <OperationsSummaryCard
               icon="warning"
-              label="Late / missed"
-              note="Assignments that are already late or missed."
+              label={t("checkins.pickupStats.lateOrMissed")}
+              note={t("checkins.pickupStats.lateOrMissedNote")}
               tone="danger"
               value={formatNumber(pickupStats.late + pickupStats.missed)}
             />
             <OperationsSummaryCard
               icon="pending_actions"
-              label="Pending"
-              note="Still waiting for a camera-based QR scan."
+              label={t("common.pending")}
+              note={t("checkins.pickupStats.pendingNote")}
               tone="neutral"
               value={formatNumber(pickupStats.pending)}
             />
@@ -499,13 +509,13 @@ export function CheckinsPage() {
             <section className="pickup-result-card ui-card">
               <div className="ui-card__body pickup-result-card__body">
                 <div>
-                  <span className="pickup-result-card__eyebrow">Latest QR pickup confirmation</span>
-                  <h3>{lastPickupResult.schedule.course_code ?? "Exam assignment"}</h3>
+                  <span className="pickup-result-card__eyebrow">{t("checkins.latestPickupTitle")}</span>
+                  <h3>{lastPickupResult.schedule.course_code ?? t("checkins.latestPickupFallback")}</h3>
                   <p>{lastPickupResult.message}</p>
                 </div>
                 <div className="pickup-result-card__meta">
-                  <span>{lastPickupResult.schedule.room_name ?? "Room pending"}</span>
-                  <span>{lastPickupResult.checked_in_at ? formatDateTime(lastPickupResult.checked_in_at) : "Just confirmed"}</span>
+                  <span>{lastPickupResult.schedule.room_name ?? t("checkins.pickupRoomPending")}</span>
+                  <span>{lastPickupResult.checked_in_at ? formatDateTime(lastPickupResult.checked_in_at) : t("checkins.justConfirmed")}</span>
                 </div>
               </div>
             </section>
@@ -514,8 +524,8 @@ export function CheckinsPage() {
           {!canManagePickup ? (
             <EmptyState
               icon={<Icon name="qr_code_scanner" />}
-              title="Camera-based QR pickup"
-              description="Use Scan QR when you arrive to receive exam papers for your assigned room. Image upload is disabled by policy."
+              title={t("checkins.publicPickupTitle")}
+              description={t("checkins.publicPickupDescription")}
             />
           ) : pickupLoading ? (
             <div className="page-stack">
@@ -524,12 +534,12 @@ export function CheckinsPage() {
               ))}
             </div>
           ) : pickupError ? (
-            <EmptyState icon={<Icon name="warning" />} title="Unable to load QR pickup monitor." description={pickupError} />
+            <EmptyState icon={<Icon name="warning" />} title={t("checkins.pickupMonitorLoadError")} description={pickupError} />
           ) : pickupRows.length === 0 ? (
             <EmptyState
               icon={<Icon name="inventory_2" />}
-              title="No pickup assignments for this date."
-              description="Choose another date or confirm the exam workflow first."
+              title={t("checkins.pickupEmptyTitle")}
+              description={t("checkins.pickupEmptyDescription")}
             />
           ) : (
             <DataTable<PickupMonitorRow>
@@ -547,53 +557,60 @@ export function CheckinsPage() {
 
       <Modal
         open={Boolean(selectedSchedule)}
-        title={selectedSchedule ? `Check-in update for ${selectedSchedule.room?.room_name ?? "assigned room"}` : "Check-in update"}
+        title={
+          selectedSchedule
+            ? t("checkins.modal.titleWithRoom", { room: selectedSchedule.room?.room_name ?? t("checkins.modal.assignedRoom") })
+            : t("checkins.modal.title")
+        }
         onClose={() => setSelectedSchedule(null)}
       >
         <form className="page-stack" onSubmit={handleCreateCheckin}>
           <label className="form-field">
-            <span>Students present</span>
+            <span>{t("checkins.form.studentsPresent")}</span>
             <input
               inputMode="numeric"
               onChange={(event) => setStudentsPresent(event.target.value)}
-              placeholder="e.g. 28"
+              placeholder={t("checkins.form.studentsPresentPlaceholder")}
               value={studentsPresent}
             />
           </label>
           <label className="form-field">
-            <span>Late count</span>
+            <span>{t("checkins.form.lateCount")}</span>
             <input
               inputMode="numeric"
               onChange={(event) => setLateCount(event.target.value)}
-              placeholder="e.g. 2"
+              placeholder={t("checkins.form.lateCountPlaceholder")}
               value={lateCount}
             />
           </label>
           <label className="form-field">
-            <span>Notes</span>
+            <span>{t("common.notes")}</span>
             <textarea
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Add room notes, incidents, or readiness details"
+              placeholder={t("checkins.form.notesPlaceholder")}
               rows={4}
               value={notes}
             />
           </label>
           <Button loading={submitting} type="submit">
-            Save check-in
+            {t("checkins.actions.saveCheckin")}
           </Button>
         </form>
 
         {selectedEvents.length > 0 ? (
           <div className="checkin-history">
-            <h3>Recent check-in history</h3>
+            <h3>{t("checkins.history.title")}</h3>
             {selectedEvents.map((item) => (
               <div key={item.id} className="checkin-history__item">
-                <strong>{item.user ?? "EMS user"}</strong>
+                <strong>{item.user ?? t("checkins.history.emsUser")}</strong>
                 <span>{formatDateTime(item.checked_in_at)}</span>
                 <span>
-                  Present {formatNumber(item.students_present ?? 0)} / Late {formatNumber(item.late_count ?? 0)}
+                  {t("checkins.history.presentLate", {
+                    present: formatNumber(item.students_present ?? 0),
+                    late: formatNumber(item.late_count ?? 0),
+                  })}
                 </span>
-                <p>{item.notes ?? "No notes attached."}</p>
+                <p>{item.notes ?? t("checkins.history.noNotes")}</p>
               </div>
             ))}
           </div>
@@ -602,7 +619,7 @@ export function CheckinsPage() {
 
       <Modal
         open={Boolean(pickupScheduleId)}
-        title={pickupDetail?.schedule.course_code ? `Pickup QR X for ${pickupDetail.schedule.course_code}` : "Pickup QR X"}
+        title={pickupDetail?.schedule.course_code ? t("checkins.pickupModal.titleWithCourse", { course: pickupDetail.schedule.course_code }) : t("checkins.pickupModal.title")}
         onClose={() => setPickupScheduleId(null)}
       >
         {pickupDetailLoading ? (
@@ -614,19 +631,19 @@ export function CheckinsPage() {
           <div className="page-stack">
             <section className="pickup-detail-grid">
               <div className="pickup-detail-tile">
-                <span>Course</span>
+                <span>{t("common.course")}</span>
                 <strong>{pickupDetail.schedule.course_code ?? "-"}</strong>
-                <p>{pickupDetail.schedule.course_name ?? "Course name pending"}</p>
+                <p>{pickupDetail.schedule.course_name ?? t("checkins.pickupModal.coursePending")}</p>
               </div>
               <div className="pickup-detail-tile">
-                <span>Exam slot</span>
+                <span>{t("checkins.pickupModal.examSlot")}</span>
                 <strong>{pickupDetail.schedule.exam_time ?? "-"}</strong>
-                <p>{pickupDetail.schedule.exam_date ? formatDate(pickupDetail.schedule.exam_date) : "Date pending"}</p>
+                <p>{pickupDetail.schedule.exam_date ? formatDate(pickupDetail.schedule.exam_date) : t("checkins.pickupModal.datePending")}</p>
               </div>
               <div className="pickup-detail-tile">
-                <span>Exam room</span>
+                <span>{t("checkins.pickupModal.examRoom")}</span>
                 <strong>{pickupDetail.schedule.room_name ?? "-"}</strong>
-                <p>QR X is bound to this confirmed room only.</p>
+                <p>{t("checkins.pickupModal.roomNote")}</p>
               </div>
             </section>
 
@@ -634,60 +651,58 @@ export function CheckinsPage() {
               <div className="ui-card__body page-stack">
                 <div className="pickup-qr-status-card__row">
                   <div>
-                    <span className="pickup-result-card__eyebrow">Active QR X</span>
-                    <h3>Version {pickupDetail.active_qr?.version ?? "-"}</h3>
+                    <span className="pickup-result-card__eyebrow">{t("checkins.pickupModal.activeQr")}</span>
+                    <h3>{t("checkins.pickupTable.version", { version: pickupDetail.active_qr?.version ?? "-" })}</h3>
                     <p>
                       {pickupDetail.active_qr?.confirmed_at
-                        ? `Confirmed ${formatDateTime(pickupDetail.active_qr.confirmed_at)}`
-                        : "No active QR confirmed yet."}
+                        ? t("checkins.pickupModal.confirmedAt", { value: formatDateTime(pickupDetail.active_qr.confirmed_at) })
+                        : t("checkins.pickupModal.noActiveQr")}
                     </p>
                   </div>
                   <div>
-                    <span className="pickup-result-card__eyebrow">Latest QR X</span>
-                    <h3>Version {pickupDetail.latest_qr?.version ?? "-"}</h3>
-                    <p>{pickupDetail.has_pending_regeneration ? "Waiting for confirmation" : "Already active"}</p>
+                    <span className="pickup-result-card__eyebrow">{t("checkins.pickupModal.latestQr")}</span>
+                    <h3>{t("checkins.pickupTable.version", { version: pickupDetail.latest_qr?.version ?? "-" })}</h3>
+                    <p>{pickupDetail.has_pending_regeneration ? t("checkins.pickupModal.waitingForConfirmation") : t("checkins.pickupTable.active")}</p>
                   </div>
                 </div>
                 <div className="pickup-qr-status-card__actions">
                   <Button type="button" variant="outline" onClick={() => openDocumentExport({ schedule_id: pickupScheduleId ?? undefined, document_type: "all" })}>
-                    Export all documents
+                    {t("checkins.actions.exportAllDocuments")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => openDocumentExport({ schedule_id: pickupScheduleId ?? undefined, document_type: "participant_codes" })}>
-                    Participant codes
+                    {t("exportCenter.actions.participantCodes")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => openDocumentExport({ schedule_id: pickupScheduleId ?? undefined, document_type: "signature_sheet" })}>
-                    Signature sheet
+                    {t("exportCenter.actions.signatureSheets")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => openDocumentExport({ schedule_id: pickupScheduleId ?? undefined, document_type: "envelope_cover" })}>
-                    Cover sheet
+                    {t("exportCenter.actions.coverSheets")}
                   </Button>
                   {canManagePickup ? (
                     <Button type="button" variant="ghost" loading={pickupActionBusy === "regenerate"} onClick={() => void handleRegeneratePickupQr()}>
-                      Regenerate QR X
+                      {t("checkins.actions.regenerateQr")}
                     </Button>
                   ) : null}
                   {canManagePickup && pickupDetail.has_pending_regeneration ? (
                     <Button type="button" loading={pickupActionBusy === "confirm"} onClick={() => void handleConfirmPickupQr()}>
-                      Confirm regenerated QR X
+                      {t("checkins.actions.confirmRegeneratedQr")}
                     </Button>
                   ) : null}
                 </div>
-                <p className="pickup-qr-status-card__note">
-                  QR Y stays as a separate regulation/method placeholder on the envelope cover and is not used for pickup confirmation.
-                </p>
+                <p className="pickup-qr-status-card__note">{t("checkins.pickupModal.note")}</p>
               </div>
             </section>
 
             <section className="pickup-assignment-list">
-              <h3>Assigned pickup personnel</h3>
+              <h3>{t("checkins.pickupModal.assignedPersonnel")}</h3>
               {pickupDetail.assignments.length === 0 ? (
-                <p>No invigilator or pickup assignments were found for this exam yet.</p>
+                <p>{t("checkins.pickupModal.noAssignments")}</p>
               ) : (
                 <div className="pickup-assignment-list__grid">
                   {pickupDetail.assignments.map((assignment) => (
                     <div key={`${assignment.user_id}-${assignment.role}`} className="pickup-assignment-list__item">
                       <strong>{assignment.full_name}</strong>
-                      <span>{assignment.role}</span>
+                      <span>{formatTranslatedValue("roles", assignment.role)}</span>
                     </div>
                   ))}
                 </div>
@@ -695,7 +710,7 @@ export function CheckinsPage() {
             </section>
           </div>
         ) : (
-          <EmptyState icon={<Icon name="qr_code" />} title="No QR details available." description="Select another assignment or regenerate QR X." />
+          <EmptyState icon={<Icon name="qr_code" />} title={t("checkins.pickupModal.noDetailsTitle")} description={t("checkins.pickupModal.noDetailsDescription")} />
         )}
       </Modal>
 

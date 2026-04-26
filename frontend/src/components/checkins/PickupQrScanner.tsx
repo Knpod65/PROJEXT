@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { useI18n } from "@/i18n";
 
 interface PickupQrScannerProps {
   open: boolean;
@@ -11,13 +12,14 @@ interface PickupQrScannerProps {
 }
 
 export function PickupQrScanner({ busy = false, onClose, onDetected, open }: PickupQrScannerProps) {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<number | null>(null);
   const detectorRef = useRef<BarcodeDetector | null>(null);
   const handledRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState("Point QR X at the camera to confirm exam-paper pickup.");
+  const [status, setStatus] = useState(t("checkins.scanner.initialStatus"));
 
   useEffect(() => {
     if (!open) {
@@ -26,7 +28,7 @@ export function PickupQrScanner({ busy = false, onClose, onDetected, open }: Pic
 
     handledRef.current = false;
     setError(null);
-    setStatus("Requesting camera access...");
+    setStatus(t("checkins.scanner.requestingCamera"));
 
     const stopScanner = () => {
       if (frameRef.current !== null) {
@@ -54,7 +56,7 @@ export function PickupQrScanner({ busy = false, onClose, onDetected, open }: Pic
           const value = barcodes.find((item) => item.rawValue?.trim())?.rawValue?.trim();
           if (value && !handledRef.current) {
             handledRef.current = true;
-            setStatus("QR detected. Confirming pickup...");
+            setStatus(t("checkins.scanner.qrDetected"));
             void Promise.resolve(onDetected(value)).catch(() => {
               handledRef.current = false;
             });
@@ -69,8 +71,8 @@ export function PickupQrScanner({ busy = false, onClose, onDetected, open }: Pic
 
     const startScanner = async () => {
       if (!window.BarcodeDetector) {
-        setError("This browser does not support camera QR scanning yet. Please use Chrome or Edge on a camera-enabled device.");
-        setStatus("Camera-only scanning is required.");
+        setError(t("checkins.scanner.unsupportedBrowser"));
+        setStatus(t("checkins.scanner.cameraOnly"));
         return;
       }
 
@@ -89,26 +91,26 @@ export function PickupQrScanner({ busy = false, onClose, onDetected, open }: Pic
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
         }
-        setStatus("Camera ready. Scan the printed QR X only.");
+        setStatus(t("checkins.scanner.ready"));
         frameRef.current = window.requestAnimationFrame(scanFrame);
       } catch (err) {
         const nextMessage =
           err instanceof DOMException && err.name === "NotAllowedError"
-            ? "Camera permission was denied. Please allow camera access to scan the printed QR."
-            : "Unable to start the camera scanner right now.";
+            ? t("checkins.scanner.permissionDenied")
+            : t("checkins.scanner.startFailed");
         setError(nextMessage);
-        setStatus("Camera-only scanning is required.");
+        setStatus(t("checkins.scanner.cameraOnly"));
       }
     };
 
     void startScanner();
     return stopScanner;
-  }, [onDetected, open]);
+  }, [onDetected, open, t]);
 
   return (
     <Modal
       open={open}
-      title="Scan QR X"
+      title={t("checkins.scanner.title")}
       onClose={() => {
         if (!busy) {
           onClose();
@@ -118,7 +120,7 @@ export function PickupQrScanner({ busy = false, onClose, onDetected, open }: Pic
         <div className="pickup-scanner__footer">
           <span>{status}</span>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Close
+            {t("common.close")}
           </Button>
         </div>
       }
@@ -128,7 +130,7 @@ export function PickupQrScanner({ busy = false, onClose, onDetected, open }: Pic
           <video ref={videoRef} autoPlay muted playsInline />
           <div className="pickup-scanner__frame" aria-hidden="true" />
         </div>
-        <p className="pickup-scanner__hint">Camera only. Image upload and photo-library scanning are disabled.</p>
+        <p className="pickup-scanner__hint">{t("checkins.scanner.hint")}</p>
         {error ? <p className="pickup-scanner__error">{error}</p> : null}
       </div>
     </Modal>
