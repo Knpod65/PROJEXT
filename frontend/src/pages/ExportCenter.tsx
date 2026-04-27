@@ -138,6 +138,13 @@ export function ExportCenterPage() {
                   { label: t("exportCenter.actions.openExternalExams"), onClick: () => { window.location.href = "/external"; } },
                 ]}
               />
+              <ExportCard
+                title="Historical schedule review"
+                description="Open the imported final-adjusted and optimized-baseline 2/2568 snapshots, compare differences, and export historical workload CSV files."
+                actions={[
+                  { label: "Open historical review", onClick: () => { window.location.href = "/historical-schedules"; } },
+                ]}
+              />
             </>
           ) : null}
         </div>

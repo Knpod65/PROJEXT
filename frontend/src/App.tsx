@@ -21,6 +21,7 @@ import { DashboardPage } from "@/pages/Dashboard";
 import { ExamManagerPage } from "@/pages/ExamManager";
 import { ExportCenterPage } from "@/pages/ExportCenter";
 import { ExternalPage } from "@/pages/External";
+import { HistoricalSchedulesPage } from "@/pages/HistoricalSchedules";
 import { ImportV2Page } from "@/pages/ImportV2";
 import { ImportAuditPage } from "@/pages/ImportAudit";
 import { LoginPage } from "@/pages/Login";
@@ -158,6 +159,7 @@ export function App() {
             <Route path="/printreview" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><PrintReviewPage /></GuardedPage>} />
             <Route path="/external" element={<GuardedPage roles={["admin", "staff"]}><ExternalPage /></GuardedPage>} />
             <Route path="/exports-center" element={<GuardedPage roles={["admin", "staff"]}><ExportCenterPage /></GuardedPage>} />
+            <Route path="/historical-schedules" element={<GuardedPage roles={["admin"]}><HistoricalSchedulesPage /></GuardedPage>} />
             <Route path="/import" element={<GuardedPage roles={["admin"]}><ImportV2Page /></GuardedPage>} />
             <Route path="/import-audit" element={<GuardedPage roles={["admin"]}><ImportAuditPage /></GuardedPage>} />
             <Route path="/period" element={<GuardedPage roles={["admin"]}><PeriodPage /></GuardedPage>} />

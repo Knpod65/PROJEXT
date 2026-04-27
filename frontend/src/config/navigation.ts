@@ -172,6 +172,15 @@ export const appPages: AppPageConfig[] = [
     roles: ["admin", "staff"],
     navGroup: "operations",
   },
+  {
+    key: "historical-schedules",
+    title: "Historical Schedule Review",
+    description: "Compare optimized baseline and final adjusted schedule imports for the historical 2/2568 final exam period.",
+    path: "/historical-schedules",
+    icon: "history",
+    roles: ["admin"],
+    navGroup: "operations",
+  },
 
   // ── Exam Management group ─────────────────────────────────────
   {

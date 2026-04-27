@@ -395,6 +395,18 @@ class StaffDutyType(str, enum.Enum):
     invigilation = "INVIGILATION"
     paper_distribution = "PAPER_DISTRIBUTION"
     external_exam = "EXTERNAL_EXAM"
+    room_opening = "ROOM_OPENING"
+
+
+class HistoricalScheduleVersion(str, enum.Enum):
+    optimized_baseline = "optimized_baseline"
+    final_adjusted = "final_adjusted"
+
+
+class HistoricalInvigilatorKind(str, enum.Enum):
+    instructor_invigilator = "instructor_invigilator"
+    staff_invigilator = "staff_invigilator"
+    unknown_invigilator = "unknown_invigilator"
 
 
 class SystemSetting(Base):
@@ -933,6 +945,136 @@ class PaperDistributionAssignment(Base):
         Index("ix_paper_distribution_period", "exam_period_id"),
         Index("ix_paper_distribution_slot", "exam_date", "exam_time"),
         Index("ix_paper_distribution_user", "user_id"),
+    )
+
+
+class HistoricalScheduleBatch(Base):
+    __tablename__ = "historical_schedule_batches"
+    id = Column(Integer, primary_key=True, index=True)
+    exam_period_id = Column(Integer, ForeignKey("exam_periods.id"), nullable=True)
+    semester = Column(String(10), nullable=False, default="2")
+    academic_year = Column(String(10), nullable=False, default="2568")
+    exam_type = Column(String(20), nullable=False, default="final")
+    version_kind = Column(Enum(HistoricalScheduleVersion), nullable=False)
+    source_label = Column(String(200), nullable=False)
+    source_filename = Column(String(300), nullable=False)
+    source_checksum = Column(String(128), nullable=True)
+    room_opening_start_username = Column(String(100), nullable=True)
+    imported_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    imported_at = Column(DateTime(timezone=True), server_default=func.now())
+    row_count = Column(Integer, default=0)
+    manual_review_count = Column(Integer, default=0)
+    notes = Column(Text, nullable=True)
+    parse_log = Column(JSON, nullable=True)
+
+    period = relationship("ExamPeriod")
+    importer = relationship("User", foreign_keys=[imported_by])
+    entries = relationship("HistoricalScheduleEntry", back_populates="batch", cascade="all, delete-orphan")
+    invigilators = relationship("HistoricalScheduleInvigilator", back_populates="batch", cascade="all, delete-orphan")
+    distribution_slots = relationship("HistoricalDistributionSlot", back_populates="batch", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("ix_hist_batch_term_version", "semester", "academic_year", "exam_type", "version_kind"),
+    )
+
+
+class HistoricalScheduleEntry(Base):
+    __tablename__ = "historical_schedule_entries"
+    id = Column(Integer, primary_key=True, index=True)
+    batch_id = Column(Integer, ForeignKey("historical_schedule_batches.id"), nullable=False)
+    course_ref_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
+    section_ref_id = Column(Integer, ForeignKey("sections.id"), nullable=True)
+    teacher_ref_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    row_order = Column(Integer, nullable=False, default=0)
+    exam_date = Column(Date, nullable=False)
+    exam_time = Column(String(20), nullable=False)
+    exam_time_start = Column(String(8), nullable=True)
+    exam_time_end = Column(String(8), nullable=True)
+    course_code = Column(String(20), nullable=False)
+    section_no = Column(String(20), nullable=False)
+    instructor_name = Column(String(300), nullable=False)
+    student_count = Column(Integer, default=0)
+    room_name = Column(String(120), nullable=True)
+    invigilators_raw = Column(Text, nullable=True)
+    distribution_raw = Column(Text, nullable=True)
+    paper_distribution_staff_name = Column(String(200), nullable=True)
+    room_opening_staff_name = Column(String(200), nullable=True)
+    inherited_room = Column(Boolean, default=False)
+    inherited_invigilators = Column(Boolean, default=False)
+    inherited_distribution = Column(Boolean, default=False)
+    parse_flags = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    batch = relationship("HistoricalScheduleBatch", back_populates="entries")
+    course_ref = relationship("Course", foreign_keys=[course_ref_id])
+    section_ref = relationship("Section", foreign_keys=[section_ref_id])
+    teacher_ref = relationship("User", foreign_keys=[teacher_ref_id])
+    invigilators = relationship(
+        "HistoricalScheduleInvigilator",
+        back_populates="entry",
+        cascade="all, delete-orphan",
+        order_by="HistoricalScheduleInvigilator.order_index",
+    )
+
+    __table_args__ = (
+        UniqueConstraint("batch_id", "row_order", name="uq_hist_schedule_entry_row_order"),
+        Index("ix_hist_entry_batch_slot", "batch_id", "exam_date", "exam_time"),
+    )
+
+
+class HistoricalScheduleInvigilator(Base):
+    __tablename__ = "historical_schedule_invigilators"
+    id = Column(Integer, primary_key=True, index=True)
+    batch_id = Column(Integer, ForeignKey("historical_schedule_batches.id"), nullable=False)
+    entry_id = Column(Integer, ForeignKey("historical_schedule_entries.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    order_index = Column(Integer, nullable=False, default=1)
+    display_name = Column(String(250), nullable=False)
+    normalized_name = Column(String(250), nullable=True)
+    role_kind = Column(Enum(HistoricalInvigilatorKind), nullable=False, default=HistoricalInvigilatorKind.unknown_invigilator)
+    counted = Column(Boolean, default=True)
+    source_column = Column(String(50), default="กรรมการคุมสอบ")
+    notes = Column(Text, nullable=True)
+
+    batch = relationship("HistoricalScheduleBatch", back_populates="invigilators")
+    entry = relationship("HistoricalScheduleEntry", back_populates="invigilators")
+    user = relationship("User", foreign_keys=[user_id])
+
+    __table_args__ = (
+        Index("ix_hist_inv_batch_entry", "batch_id", "entry_id"),
+        Index("ix_hist_inv_user", "user_id"),
+    )
+
+
+class HistoricalDistributionSlot(Base):
+    __tablename__ = "historical_distribution_slots"
+    id = Column(Integer, primary_key=True, index=True)
+    batch_id = Column(Integer, ForeignKey("historical_schedule_batches.id"), nullable=False)
+    paper_distribution_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    room_opening_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    exam_date = Column(Date, nullable=False)
+    exam_time = Column(String(20), nullable=False)
+    exam_time_start = Column(String(8), nullable=True)
+    exam_time_end = Column(String(8), nullable=True)
+    paper_distribution_staff_name = Column(String(200), nullable=True)
+    room_opening_staff_name = Column(String(200), nullable=True)
+    raw_value = Column(Text, nullable=True)
+    source_mode = Column(String(30), nullable=False, default="imported")
+    workload_count = Column(Integer, default=1)
+    counted = Column(Boolean, default=True)
+    covered_courses = Column(JSON, nullable=True)
+    covered_rooms = Column(JSON, nullable=True)
+    covered_row_count = Column(Integer, default=0)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    batch = relationship("HistoricalScheduleBatch", back_populates="distribution_slots")
+    paper_distribution_user = relationship("User", foreign_keys=[paper_distribution_user_id])
+    room_opening_user = relationship("User", foreign_keys=[room_opening_user_id])
+
+    __table_args__ = (
+        UniqueConstraint("batch_id", "exam_date", "exam_time", name="uq_hist_distribution_slot"),
+        Index("ix_hist_distribution_batch_slot", "batch_id", "exam_date", "exam_time"),
     )
 
 
