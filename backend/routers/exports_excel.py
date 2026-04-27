@@ -7,13 +7,13 @@ GET /api/exports/submissions-excel     → Excel สถานะข้อสอ�
 """
 
 import io, math
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from datetime import date
 from database import get_db
 import models
-from auth_utils import require_admin, require_staff_or_admin, get_current_user
+from auth_utils import require_admin, require_staff_or_admin, get_current_user, require_view_all, log_action, get_effective_role
 from staff_workloads import get_period_workload_snapshot
 
 router = APIRouter()
@@ -91,6 +91,7 @@ def export_compensation(
     exam_type:     str = "final",
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
+    request: Request = None,
 ):
     """
     Excel ค่าตอบแทนกรรมการคุมสอบ
@@ -253,6 +254,29 @@ def export_compensation(
     _auto_width(ws3)
 
     filename = f"EMS_compensation_{semester}_{academic_year}_{exam_type}.xlsx"
+
+    # Log export action
+    try:
+        log_action(
+            db=db,
+            actor=current_user,
+            action="export_compensation",
+            table_name="supervisions",
+            new_values={
+                "file_type": "xlsx",
+                "export_scope": "compensation",
+                "row_count": len(schedules) if 'schedules' in locals() else 0,
+                "semester": semester,
+                "academic_year": academic_year,
+                "exam_type": exam_type,
+            },
+            request=request,
+            http_status=200
+        )
+    except Exception as e:
+        import sys
+        print(f"Warning: Export logging failed: {e}", file=sys.stderr)
+
     return _workbook_response(wb, filename)
 
 
@@ -263,7 +287,8 @@ def export_schedule_excel(
     academic_year: str = None,
     exam_type:     str = "final",
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_view_all),
+    request: Request = None,
 ):
     """Excel ตารางสอบ — sort by date + time"""
     try:
@@ -326,6 +351,29 @@ def export_schedule_excel(
 
     _auto_width(ws)
     fname = f"EMS_schedule_{semester}_{academic_year}_{exam_type}.xlsx"
+
+    # Log export action
+    try:
+        log_action(
+            db=db,
+            actor=current_user,
+            action="export_schedule_excel",
+            table_name="exam_schedules",
+            new_values={
+                "file_type": "xlsx",
+                "export_scope": "schedule",
+                "row_count": len(scheds),
+                "semester": semester,
+                "academic_year": academic_year,
+                "exam_type": exam_type,
+            },
+            request=request,
+            http_status=200
+        )
+    except Exception as e:
+        import sys
+        print(f"Warning: Export logging failed: {e}", file=sys.stderr)
+
     return _workbook_response(wb, fname)
 
 
@@ -336,6 +384,7 @@ def export_submissions_excel(
     academic_year: str = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
+    request: Request = None,
 ):
     """Excel สถานะข้อสอบทุกวิชา"""
     try:
@@ -409,6 +458,28 @@ def export_submissions_excel(
 
     _auto_width(ws)
     fname = f"EMS_submissions_{semester}_{academic_year}.xlsx"
+
+    # Log export action
+    try:
+        log_action(
+            db=db,
+            actor=current_user,
+            action="export_submissions_excel",
+            table_name="exam_submissions",
+            new_values={
+                "file_type": "xlsx",
+                "export_scope": "submissions",
+                "row_count": len(subs),
+                "semester": semester,
+                "academic_year": academic_year,
+            },
+            request=request,
+            http_status=200
+        )
+    except Exception as e:
+        import sys
+        print(f"Warning: Export logging failed: {e}", file=sys.stderr)
+
     return _workbook_response(wb, fname)
 
 
@@ -419,6 +490,7 @@ def export_workload_summary_excel(
     exam_type: str = "final",
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
+    request: Request = None,
 ):
     try:
         import openpyxl
@@ -458,10 +530,31 @@ def export_workload_summary_excel(
         )
 
     _auto_width(ws)
-    return _workbook_response(
-        wb,
-        f"EMS_workload_summary_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx",
-    )
+    filename = f"EMS_workload_summary_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx"
+
+    # Log export action
+    try:
+        log_action(
+            db=db,
+            actor=current_user,
+            action="export_workload_summary_excel",
+            table_name="staffworkloads",
+            new_values={
+                "file_type": "xlsx",
+                "export_scope": "workload_summary",
+                "row_count": len(snapshot.entries) if 'snapshot' in locals() else 0,
+                "semester": period.semester,
+                "academic_year": period.academic_year,
+                "exam_type": period.exam_type,
+            },
+            request=request,
+            http_status=200
+        )
+    except Exception as e:
+        import sys
+        print(f"Warning: Export logging failed: {e}", file=sys.stderr)
+
+    return _workbook_response(wb, filename)
 
 
 @router.get("/workload-detail-excel")
@@ -471,6 +564,7 @@ def export_workload_detail_excel(
     exam_type: str = "final",
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
+    request: Request = None,
 ):
     try:
         import openpyxl
@@ -512,10 +606,31 @@ def export_workload_detail_excel(
         )
 
     _auto_width(ws)
-    return _workbook_response(
-        wb,
-        f"EMS_workload_detail_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx",
-    )
+    filename = f"EMS_workload_detail_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx"
+
+    # Log export action
+    try:
+        log_action(
+            db=db,
+            actor=current_user,
+            action="export_workload_detail_excel",
+            table_name="staffworkloads",
+            new_values={
+                "file_type": "xlsx",
+                "export_scope": "workload_detail",
+                "row_count": len(snapshot.entries) if 'snapshot' in locals() else 0,
+                "semester": period.semester,
+                "academic_year": period.academic_year,
+                "exam_type": period.exam_type,
+            },
+            request=request,
+            http_status=200
+        )
+    except Exception as e:
+        import sys
+        print(f"Warning: Export logging failed: {e}", file=sys.stderr)
+
+    return _workbook_response(wb, filename)
 
 
 @router.get("/paper-distribution-excel")
@@ -525,6 +640,7 @@ def export_paper_distribution_excel(
     exam_type: str = "final",
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
+    request: Request = None,
 ):
     try:
         import openpyxl
@@ -597,7 +713,28 @@ def export_paper_distribution_excel(
         )
 
     _auto_width(ws)
-    return _workbook_response(
-        wb,
-        f"EMS_paper_distribution_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx",
-    )
+    filename = f"EMS_paper_distribution_{period.semester}_{period.academic_year}_{period.exam_type}.xlsx"
+
+    # Log export action
+    try:
+        log_action(
+            db=db,
+            actor=current_user,
+            action="export_paper_distribution_excel",
+            table_name="paper_distribution_assignments",
+            new_values={
+                "file_type": "xlsx",
+                "export_scope": "paper_distribution",
+                "row_count": len(rows),
+                "semester": period.semester,
+                "academic_year": period.academic_year,
+                "exam_type": period.exam_type,
+            },
+            request=request,
+            http_status=200
+        )
+    except Exception as e:
+        import sys
+        print(f"Warning: Export logging failed: {e}", file=sys.stderr)
+
+    return _workbook_response(wb, filename)

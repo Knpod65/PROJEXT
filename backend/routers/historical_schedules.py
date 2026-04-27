@@ -199,7 +199,8 @@ def export_historical_comparison_csv(
     academic_year: str = "2568",
     exam_type: str = "final",
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_admin),
+    request: Request = None,
 ):
     baseline_batch = _latest_required(db, models.HistoricalScheduleVersion.optimized_baseline, semester, academic_year, exam_type)
     final_batch = _latest_required(db, models.HistoricalScheduleVersion.final_adjusted, semester, academic_year, exam_type)
@@ -224,6 +225,17 @@ def export_historical_comparison_csv(
                 (row["final"] or {}).get("room_opening_staff_name"),
             ]
         )
+    try:
+        log_action(db, current_user, "export_historical_comparison_csv",
+                   table_name="historical_schedule_batches",
+                   new_values={"file_type": "csv", "export_scope": "historical_snapshot",
+                               "row_count": len(csv_rows),
+                               "semester": semester,
+                               "academic_year": academic_year,
+                               "exam_type": exam_type},
+                   http_status=200, request=request)
+    except Exception:
+        pass
     return _csv_response(
         f"historical_schedule_comparison_{semester}_{academic_year}_{exam_type}.csv",
         [
@@ -253,7 +265,8 @@ def export_historical_workload_csv(
     academic_year: str = "2568",
     exam_type: str = "final",
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_admin),
+    request: Request = None,
 ):
     batch = _latest_required(db, _parse_version_kind(version_kind), semester, academic_year, exam_type)
     rows = build_workload_rows(batch)
@@ -272,6 +285,18 @@ def export_historical_workload_csv(
         ]
         for row in rows
     ]
+    try:
+        log_action(db, current_user, "export_historical_workload_csv",
+                   table_name="historical_schedule_batches",
+                   new_values={"file_type": "csv", "export_scope": "historical_snapshot",
+                               "row_count": len(csv_rows),
+                               "version_kind": version_kind,
+                               "semester": semester,
+                               "academic_year": academic_year,
+                               "exam_type": exam_type},
+                   http_status=200, request=request)
+    except Exception:
+        pass
     return _csv_response(
         f"historical_schedule_workload_{version_kind}_{semester}_{academic_year}_{exam_type}.csv",
         [

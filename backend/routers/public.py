@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload, selectinload
 from database import get_db
 import models
+from auth_utils import get_current_user
 
 router = APIRouter()
 
@@ -142,12 +143,54 @@ def _serialize_exam_rows(records, active_period: models.ExamPeriod | None):
 
 
 @router.get("/schedule/student/{student_id}")
-def student_schedule(student_id: str, db: Session = Depends(get_db)):
+def student_schedule(
+    student_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     """
-    นักศึกษาพิมพ์รหัสนักศึกษา → ได้ตารางสอบทุกวิชาที่ลงทะเบียน
-    ไม่ต้อง login
+    นักศึกษาค้นหาตารางสอบ (ต้อง login)
+
+    Access Control (Strict Ownership):
+    - Admin/Esq/Secretary: ดูตารางสอบของนักศึกษาคนใดก็ได้
+    - Staff: ช่วยนักศึกษา (ดูตารางสอบได้)
+    - Student: เฉพาะตารางสอบของตัวเอง (username == student_id)
+    - Others: ปฏิเสธ
+
+    Note: Temporary mapping uses username as student_id (common university pattern).
+    TODO: Add student_id field to User model for permanent solution.
     """
+    from auth_utils import get_effective_role
+
     normalized_student_id = student_id.strip()
+    effective_role = get_effective_role(current_user)
+
+    # ─── Access Control ───────────────────────────────────────
+    # Allowed roles that can view any student schedule
+    privileged_roles = (
+        models.UserRole.admin,
+        models.UserRole.esq_head,
+        models.UserRole.secretary,
+        models.UserRole.staff,  # Staff can help students
+    )
+
+    if effective_role not in privileged_roles:
+        if effective_role == models.UserRole.student:
+            # Student: Enforce strict ownership using username as temporary mapping
+            # Most universities use student ID as username (e.g., "6200001234")
+            if current_user.username != normalized_student_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"นักศึกษาสามารถดูตารางสอบของตัวเองเท่านั้น"
+                )
+        else:
+            # Deny other roles (teacher, print_shop, etc.)
+            raise HTTPException(
+                status_code=403,
+                detail="ไม่มีสิทธิ์เข้าถึงข้อมูลนี้"
+            )
+
+    # ─── Load schedule data (same as before) ───────────────────
     active_period = _get_active_period(db)
     enrollment_records = _load_enrollment_records(db, normalized_student_id, active_period)
     schedule_period = active_period if enrollment_records else None

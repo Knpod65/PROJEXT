@@ -1,13 +1,13 @@
 from collections import Counter
 from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 import models
 import schemas as app_schemas
-from auth_utils import require_admin
+from auth_utils import require_admin, log_action
 from database import get_db
 from import_v2.file_cache import get_file, store_file
 from import_v2.importer import ImportExecutionBlocked, execute_import
@@ -430,6 +430,7 @@ async def import_v2_confirm(
     payload: app_schemas.ImportConfirmRequest,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
+    request: Request = None,
 ):
     if payload.import_type not in SUPPORTED_IMPORT_TYPES:
         raise HTTPException(status_code=400, detail="Unsupported import_type")
@@ -472,6 +473,18 @@ async def import_v2_confirm(
             source_filename=cached_file.get("filename"),
         )
         db.commit()
+        try:
+            log_action(db, current_user, "IMPORT_CONFIRM_V2", "import_sessions",
+                       new_values={"import_type": payload.import_type,
+                                   "academic_year": payload.academic_year,
+                                   "semester": payload.semester,
+                                   "exam_type": payload.exam_type,
+                                   "source_filename": cached_file.get("filename"),
+                                   "imported_rows": getattr(result, "imported_rows", None),
+                                   "dry_run": getattr(payload, "dry_run", False)},
+                       request=request)
+        except Exception:
+            pass
         return result
     except ImportExecutionBlocked as exc:
         db.rollback()

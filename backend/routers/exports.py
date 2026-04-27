@@ -2,12 +2,12 @@
 PDF Export Router
 สร้างตารางสอบ PDF ตามรูปแบบไฟล์จริง (ตารางสอบปลายภาค)
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from database import get_db
 import models
-from auth_utils import get_current_user, require_admin, require_staff_or_admin
+from auth_utils import get_current_user, require_admin, require_staff_or_admin, require_view_all, log_action, get_effective_role
 from staff_workloads import get_period_workload_snapshot
 import io
 
@@ -79,7 +79,8 @@ def export_schedule_pdf(
     academic_year: str = Query("2568"),
     exam_type: str = Query("final"),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_view_all),
+    request: Request = None
 ):
     """Export ตารางสอบเป็น PDF ตามรูปแบบเอกสารจริง"""
     try:
@@ -263,6 +264,30 @@ def export_schedule_pdf(
         buf.seek(0)
 
         filename = f"exam_schedule_{semester}_{academic_year}_{exam_type}.pdf"
+
+        # Log export action
+        try:
+            log_action(
+                db=db,
+                actor=current_user,
+                action="export_schedule_pdf",
+                table_name="exam_schedules",
+                new_values={
+                    "file_type": "pdf",
+                    "export_scope": "schedule",
+                    "row_count": len(schedules),
+                    "semester": semester,
+                    "academic_year": academic_year,
+                    "exam_type": exam_type,
+                },
+                request=request,
+                http_status=200
+            )
+        except Exception as e:
+            # Don't block export if logging fails
+            import sys
+            print(f"Warning: Export logging failed: {e}", file=sys.stderr)
+
         return StreamingResponse(
             buf,
             media_type="application/pdf",
@@ -280,6 +305,7 @@ def export_workload_summary_pdf(
     exam_type: str = Query("final"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
+    request: Request = None,
 ):
     try:
         from reportlab.lib import colors
@@ -322,6 +348,17 @@ def export_workload_summary_pdf(
         table,
     ])
     buffer.seek(0)
+    try:
+        log_action(db, current_user, "export_workload_summary_pdf",
+                   table_name="staffworkloads",
+                   new_values={"file_type": "pdf", "export_scope": "period",
+                               "row_count": len(snapshot["summary"]),
+                               "semester": period.semester,
+                               "academic_year": period.academic_year,
+                               "exam_type": period.exam_type},
+                   http_status=200, request=request)
+    except Exception:
+        pass
     return StreamingResponse(
         buffer,
         media_type="application/pdf",
@@ -336,6 +373,7 @@ def export_paper_distribution_pdf(
     exam_type: str = Query("final"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
+    request: Request = None,
 ):
     try:
         from reportlab.lib import colors
@@ -405,6 +443,17 @@ def export_paper_distribution_pdf(
         table,
     ])
     buffer.seek(0)
+    try:
+        log_action(db, current_user, "export_paper_distribution_pdf",
+                   table_name="paper_distribution_assignments",
+                   new_values={"file_type": "pdf", "export_scope": "period",
+                               "row_count": len(assignments),
+                               "semester": period.semester,
+                               "academic_year": period.academic_year,
+                               "exam_type": period.exam_type},
+                   http_status=200, request=request)
+    except Exception:
+        pass
     return StreamingResponse(
         buffer,
         media_type="application/pdf",
