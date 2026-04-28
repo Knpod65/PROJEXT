@@ -43,3 +43,27 @@ backend/data/*.db
 Thumbs.db
 .vscode/
 .idea/
+
+# Node & builds
+node_modules/
+**/node_modules/
+dist/
+build/
+frontend/dist/
+frontend/build/
+
+# Runtime DB
+backend/ems.db*
+backend/*.db
+*.db
+*.db-shm
+*.db-wal
+*.db.bak
+
+# Logs
+*.log
+backend/logs/
+
+# Backups
+opt/ems_system_recovery_backup_*/
+*backup*/
