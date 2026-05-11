@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type DependencyList } from "react";
+import { translate } from "@/i18n";
 
 export interface AsyncState<T> {
   data: T | null;
@@ -22,7 +23,7 @@ export function useAsyncData<T>(
       const response = await loader();
       setData(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
+      setError(err instanceof Error ? err.message : translate("errors.unexpected"));
     } finally {
       setLoading(false);
     }

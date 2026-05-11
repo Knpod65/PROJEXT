@@ -167,6 +167,8 @@ def update_co_exam_group(
     if data.exam_date: group.exam_date = data.exam_date
     if data.exam_time: group.exam_time = data.exam_time
     db.commit()
+    log_action(db, current_user, "UPDATE_CO_EXAM", "co_exam_groups",
+               record_id=group_id, request=request)
     return {"status": "updated"}
 
 
@@ -187,6 +189,8 @@ def delete_co_exam_group(
             m.section.co_group_id = None
     db.delete(group)
     db.commit()
+    log_action(db, current_user, "DELETE_CO_EXAM", "co_exam_groups",
+               record_id=group_id, request=request)
     return {"status": "deleted"}
 
 
@@ -194,6 +198,7 @@ def delete_co_exam_group(
 def add_members(
     group_id: int,
     data: AddMembersRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -222,6 +227,10 @@ def add_members(
         ).options(joinedload(models.CoExamMember.section)).all()
     )
     db.commit()
+    log_action(db, current_user, "ADD_CO_EXAM_MEMBERS", "co_exam_members",
+               record_id=group_id,
+               new_values={"added_sections": added},
+               request=request)
     return {"added": added, "total_students": group.total_students}
 
 
@@ -229,6 +238,7 @@ def add_members(
 def remove_member(
     group_id: int,
     section_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -256,6 +266,9 @@ def remove_member(
 
     db.delete(member)
     db.commit()
+    log_action(db, current_user, "REMOVE_CO_EXAM_MEMBER", "co_exam_members",
+               new_values={"group_id": group_id, "section_id": section_id},
+               request=request)
     return {"status": "removed"}
 
 

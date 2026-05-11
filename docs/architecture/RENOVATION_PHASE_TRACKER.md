@@ -3,7 +3,7 @@
 
 > **Audience:** Tech leads, project managers, all engineers
 > **Scope:** Phase status, quick wins, risk register, architecture metrics
-> **Last updated:** 2026-05-11 (Phase 2 second slice)
+> **Last updated:** 2026-05-11 (Phase 2 closure + gap report)
 > **Update this file** whenever a phase, task, or quick win changes status
 
 ---
@@ -13,7 +13,7 @@
 | # | Phase | Status | Owner | % Done | Target |
 |---|-------|--------|-------|--------|--------|
 | 1 | Architecture Mapping & Governance | ✅ Complete (Approval Pending) | — | 100% | 2026-05-11 |
-| 2 | DRY Configuration Layer | 🟡 In Progress | — | 60% | 2026-06-08 |
+| 2 | DRY Configuration Layer | 🟡 In Progress | — | 85% | 2026-06-08 |
 | 3 | Service Layer Renovation | ⬜ Not Started | — | 0% | 2026-07-06 |
 | 4 | PDPA & Security Enforcement | ⬜ Not Started | — | 0% | 2026-07-20 |
 | 5 | Operational Intelligence | ⬜ Not Started | — | 0% | 2026-08-10 |
@@ -97,8 +97,8 @@
 | Move `PAPER_DISTRIBUTION_EXCLUDED_USERNAMES` to DB config | ⬜ | `staff_workloads.py:15-16` | `StaffExclusionRule` table (Phase 6 prereq) |
 | Move `SIGN_ORDER_USERNAMES` to `WorkflowSignerConfig` table | ⬜ | `auth_utils.py:473` | Phase 6 prereq; keep fallback during transition |
 | Centralize export period resolver | ✅ | `backend/config/periods.py`, `exports.py`, `exports_excel.py`, `pdf.py` | `resolve_export_period()` function |
-| Fix `useAsyncData.ts:25` hardcoded Thai string | ⬜ | `frontend/src/hooks/useAsyncData.ts` | Use `t("errors.generic")` or caller param |
-| Remove duplicate `require_admin`/`get_dept_filter` from `auth_utils.py` | ⬜ | `auth_utils.py:264-332` | Consolidate to `permissions.py` |
+| Fix `useAsyncData.ts:25` hardcoded Thai string | ✅ | `frontend/src/hooks/useAsyncData.ts` | `translate("errors.unexpected")` from `@/i18n` |
+| Remove duplicate `require_admin`/`get_dept_filter` from `auth_utils.py` | 🔄 Deferred | `auth_utils.py:264-332` | 26 routers import from auth_utils; safe consolidation requires Phase 3 service layer |
 
 ### Success Criteria
 - `grep -r '"distributor"' backend/routers/` → 0 results
@@ -224,8 +224,8 @@ Five high-impact, low-risk changes that can be done NOW, independent of phase or
 |---|-----------|--------|------|--------|------|
 | 1 | **Fix `permissions.build_dependencies()` missing call** | ✅ Done | `backend/main.py` | 30 min | Zero (Validated) |
 | 2 | **Replace 3 role extraction chains with `getEffectiveRole(user)`** | ✅ Done | `Checkins.tsx:77`, `Schedule.tsx:21`, `ExportCenter.tsx:51` | 1 hour | Zero |
-| 3 | **Fix `useAsyncData.ts:25` hardcoded Thai string** | ⬜ Pending | `frontend/src/hooks/useAsyncData.ts:25` | 15 min | Zero |
-| 4 | **Add `coerce_user_role()` to `permissions.py`** | ⬜ Pending | `permissions.py`, `optimize_workflow.py`, `users.py` | 1–2 hours | Low |
+| 3 | **Fix `useAsyncData.ts:25` hardcoded Thai string** | ✅ Done | `frontend/src/hooks/useAsyncData.ts:25` | 15 min | Zero |
+| 4 | **Add `coerce_user_role()` to `permissions.py`** | ✅ Done | `permissions.py`, `optimize_workflow.py` (3 sites) | 1–2 hours | Low |
 | 5 | **Centralize export period resolver** | ✅ Done | `backend/config/periods.py`, `exports.py`, `exports_excel.py` | 2–3 hours | Low |
 
 ---
@@ -252,10 +252,10 @@ Track these metrics as the renovation progresses. Current state measured 2026-05
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
 | Lines of business logic in top 3 routers | ~3329 (1087+1331+911) | <1200 total | Phase 3 |
-| Uncovered audit events (mutation endpoints without log_action) | ~30 | 0 | Phase 4 |
+| Uncovered audit events (mutation endpoints without log_action) | ~26 (4 fixed in co_exam.py) | 0 | Phase 4 |
 | Hardcoded strings outside i18n in backend | ~50+ | 0 | Phase 2 |
-| Hardcoded strings outside i18n in frontend | 1 (`useAsyncData.ts:25`) | 0 | Phase 1 |
-| Role extraction copy-paste chains in frontend | 3 | 0 | Phase 1 |
+| Hardcoded strings outside i18n in frontend | 0 (useAsyncData.ts fixed) | 0 | ✅ Done |
+| Role extraction copy-paste chains in frontend | 0 (all 3 fixed) | 0 | ✅ Done |
 | Duplicate `_resolve_period()` implementations | 2 | 0 | Phase 2 |
 | Inline `try: models.UserRole(...)` blocks in routers | 4+ | 0 | Phase 2 |
 | Service files in `backend/services/` | 0 | 7 | Phase 3 |
