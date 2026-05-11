@@ -230,9 +230,51 @@ class TestServiceExceptions:
         assert issubclass(EMSTermLockedError, EMSConflictError)
 
 
+class TestNewPermissionGuardStubs:
+    """Verify new guards are registered as module-level names in permissions.py."""
+
+    def test_require_read_only_exists(self):
+        import permissions
+        assert callable(permissions.require_read_only)
+
+    def test_require_can_edit_exists(self):
+        import permissions
+        assert callable(permissions.require_can_edit)
+
+    def test_require_dept_or_admin_exists(self):
+        import permissions
+        assert callable(permissions.require_dept_or_admin)
+
+    def test_require_print_shop_exists(self):
+        import permissions
+        assert callable(permissions.require_print_shop)
+
+    def test_require_base_admin_exists(self):
+        import permissions
+        assert callable(permissions.require_base_admin)
+
+    def test_build_dependencies_wires_all_guards(self):
+        """After build_dependencies(), none of the guards should raise NotImplementedError."""
+        import permissions
+        from models import UserRole
+        from unittest.mock import patch
+
+        permissions.build_dependencies()
+
+        for guard_name in (
+            "require_admin", "require_staff_or_admin", "require_view_all",
+            "require_write", "require_read_only", "require_can_edit",
+            "require_dept_or_admin", "require_print_shop", "require_base_admin",
+        ):
+            guard = getattr(permissions, guard_name)
+            assert callable(guard), f"{guard_name} should be callable"
+            assert not (guard.__doc__ or "").startswith("Use Depends"), (
+                f"{guard_name} appears to still be a stub after build_dependencies()"
+            )
+
+
 if __name__ == "__main__":
     import unittest
-    # Simple runner without pytest
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     for cls in [
@@ -242,6 +284,7 @@ if __name__ == "__main__":
         TestPermissionsViewAllRoles,
         TestPermissionServiceHelpers,
         TestServiceExceptions,
+        TestNewPermissionGuardStubs,
     ]:
         suite.addTests(loader.loadTestsFromTestCase(cls))
     runner = unittest.TextTestRunner(verbosity=2)

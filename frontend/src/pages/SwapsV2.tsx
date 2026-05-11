@@ -14,6 +14,7 @@ import { useAuth } from "@/store/auth.store";
 import { useUi } from "@/store/ui.store";
 import type { SwapItem } from "@/types/api";
 import { formatDateTime } from "@/utils/format";
+import { canManageExamPeriods } from "@/utils/permissions";
 import { getEffectiveRole } from "@/utils/roles";
 
 function SwapStatusBadge({ status }: { status: string }) {
@@ -144,7 +145,7 @@ export function SwapsV2Page() {
   const { toast } = useUi();
   const { user } = useAuth();
   const role = getEffectiveRole(user);
-  const isAdmin = role === "admin";
+  const isAdmin = canManageExamPeriods(user);
 
   const {
     busy,

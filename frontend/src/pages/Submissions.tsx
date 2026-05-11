@@ -16,6 +16,7 @@ import { useAuth } from "@/store/auth.store";
 import { useUi } from "@/store/ui.store";
 import type { SubmissionListItem, SubmissionMessage } from "@/types/api";
 import { formatDateTime } from "@/utils/format";
+import { canViewOwnExamWork } from "@/utils/permissions";
 import { getEffectiveRole } from "@/utils/roles";
 
 type SubmissionTab = "all" | "pending" | "approved" | "rejected";
@@ -124,9 +125,9 @@ export function SubmissionsPage() {
           <Button
             iconLeft={<Icon name="description" />}
             type="button"
-            onClick={() => navigate(role === "teacher" ? "/myexam" : "/schedule")}
+            onClick={() => navigate(canViewOwnExamWork(user) ? "/myexam" : "/schedule")}
           >
-            {role === "teacher" ? "Open my exam work" : "Review schedule"}
+            {canViewOwnExamWork(user) ? "Open my exam work" : "Review schedule"}
           </Button>
         </div>
       </section>

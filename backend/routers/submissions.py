@@ -19,6 +19,12 @@ from exam_ownership import (
     teacher_has_section_access,
 )
 from routers.settings import get_setting, is_past_deadline
+from services.submission_service import (
+    snapshot_submission as _snapshot_submission_svc,
+    save_version as _save_version_svc,
+    get_print_priority as _get_print_priority_svc,
+    upsert_print_queue_job as _upsert_print_queue_job_svc,
+)
 from datetime import datetime, timedelta, timezone
 import secrets, hashlib, os, json
 
@@ -85,53 +91,15 @@ def _get_submission(db, section_id, user, create_if_missing=True):
 
 
 def _snapshot_submission(sub: models.ExamSubmission) -> dict:
-    return {
-        "date_confirmed": sub.date_confirmed,
-        "exam_type_choice": sub.exam_type_choice,
-        "answer_formats": sub.answer_formats,
-        "a4_pages_count": sub.a4_pages_count,
-        "has_uploaded_pdf": sub.has_uploaded_pdf,
-        "no_cover_page_confirmed": sub.no_cover_page_confirmed,
-        "is_shared_exam": sub.is_shared_exam,
-        "shared_with_sections": sub.shared_with_sections,
-        "print_duplex": sub.print_duplex,
-        "print_staple": sub.print_staple,
-        "print_staple_page": sub.print_staple_page,
-        "print_note": sub.print_note,
-        "print_spec_confirmed": sub.print_spec_confirmed,
-        "status": sub.status,
-    }
+    return _snapshot_submission_svc(sub)
 
 
 def _save_version(db, sub, user, reason=""):
-    version_num = (db.query(models.ExamSubmissionVersion)
-                   .filter(models.ExamSubmissionVersion.submission_id == sub.id)
-                   .count()) + 1
-    ver = models.ExamSubmissionVersion(
-        submission_id=sub.id,
-        version=version_num,
-        snapshot=_snapshot_submission(sub),
-        changed_by=user.id,
-        change_reason=reason,
-    )
-    db.add(ver)
-    sub.version = version_num
+    _save_version_svc(db, sub, user, reason)
 
 
 def _get_print_priority(submission: models.ExamSubmission) -> str:
-    section = submission.section
-    students = section.num_students if section else 0
-    pages = 0
-    if submission.print_duplex and submission.a4_pages_count:
-        pages = submission.a4_pages_count
-    elif section and section.schedules:
-        pages = max((schedule.num_pages or 0) for schedule in section.schedules)
-
-    if students >= 120 or pages >= 15:
-        return "high"
-    if students >= 70 or pages >= 10:
-        return "medium"
-    return "standard"
+    return _get_print_priority_svc(submission)
 
 
 def _upsert_print_queue_job(
@@ -140,28 +108,7 @@ def _upsert_print_queue_job(
     created_by: models.User,
     release_token: str,
 ):
-    job = db.query(models.PrintQueueJob).filter(
-        models.PrintQueueJob.submission_id == submission.id
-    ).first()
-
-    if not job:
-        job = models.PrintQueueJob(
-            submission_id=submission.id,
-            created_by=created_by.id,
-        )
-        db.add(job)
-
-    job.release_token = release_token
-    job.priority = _get_print_priority(submission)
-    if job.status == models.PrintJobStatus.delivered:
-        job.status = models.PrintJobStatus.queued
-        job.started_at = None
-        job.completed_at = None
-        job.dispatched_at = None
-        job.delivered_at = None
-        job.delivery_note = None
-
-    return job
+    return _upsert_print_queue_job_svc(db, submission, created_by, release_token)
 
 
 def _resolve_submission_pdf_path(submission: models.ExamSubmission) -> str:

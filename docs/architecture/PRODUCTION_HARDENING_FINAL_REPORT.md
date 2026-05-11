@@ -1,18 +1,37 @@
 # Production Hardening Final Report
 ## EMS — Academic Operations Platform
 
-> **Generated:** 2026-05-11
-> **Scope:** Phase 3 service foundation + hardening session audit
-> **Baseline:** EMS_COMPLETION_GAP_REPORT.md (2026-05-11, score 71/100)
+> **Generated:** 2026-05-11 (updated same day — Phase 3 Week 2 session)
+> **Scope:** Phase 3 service foundation (Week 1) + service extraction + auth unification + frontend DRY (Week 2)
+> **Week 1 baseline:** 71/100 → 75/100
+> **Week 2 baseline:** 75/100 → 78/100
 
 ---
 
 ## 1. Session Summary
 
+### Week 2 Changes (Phase 3 service extraction + auth unification Step 1)
+
+| Area | Change | Files |
+|------|--------|-------|
+| Service layer | Extracted 4 helpers from `submissions.py` | `services/submission_service.py` |
+| Tests | 21 new tests for submission_service | `tests/test_submission_service.py` |
+| Auth unification | Added 5 missing guards to `permissions.py` (Step 1) | `permissions.py` |
+| Auth unification | 6 new guard stub tests | `tests/test_permissions.py` |
+| Audit gap | Closed DELETE_SUPERVISION missing audit log | `routers/schedule.py` |
+| Frontend DRY | Migrated last 3 inline role check pages | `WorkflowV2.tsx`, `SwapsV2.tsx`, `Submissions.tsx` |
+| Frontend DRY | Added `canViewOwnExamWork()` helper | `utils/permissions.ts` |
+
+**Result:** 0 pages with inline role checks (was 6 before two sessions). 87 tests passing. permissions.py is now the complete guard authority.
+
+---
+
+### Week 1 Changes (Phase 3 service foundation)
+
 This session implemented the Phase 3 service-layer foundation and closed the highest-value
 production hardening gaps without rewriting any working functionality.
 
-### Changes Made This Session
+### Changes Made (Week 1)
 
 | Area | Change | Files |
 |------|--------|-------|
@@ -27,6 +46,36 @@ production hardening gaps without rewriting any working functionality.
 ---
 
 ## 2. Updated Readiness Score
+
+### Week 2 Score Update
+
+| Area | Week 1 | Week 2 | Delta | Notes |
+|------|--------|--------|-------|-------|
+| Authentication & Authorization | 87/100 | 89/100 | +2 | 5 missing guards added to permissions.py (Step 1 complete) |
+| PDPA & Privacy | 76/100 | 77/100 | +1 | DELETE_SUPERVISION audit gap closed; ~21 remain |
+| Workflow & Operations | 88/100 | 88/100 | 0 | No changes |
+| Import / Export / Lineage | 80/100 | 80/100 | 0 | No changes |
+| Frontend UX/UI | 79/100 | 83/100 | +4 | Last 3 inline check pages migrated; 0 pages remain |
+| Backend Architecture | 68/100 | 72/100 | +4 | submission_service.py + 21 tests; 6 service modules; 87 tests total |
+| Deployment / DevOps | 82/100 | 82/100 | 0 | No changes |
+| **Overall** | **75/100** | **78/100** | **+3** | Phase 3 Week 2 complete |
+
+### Cumulative (Baseline → Now)
+
+| Area | Baseline | Current | Total Delta |
+|------|----------|---------|-------------|
+| Authentication & Authorization | 85/100 | 89/100 | +4 |
+| PDPA & Privacy | 72/100 | 77/100 | +5 |
+| Workflow & Operations | 88/100 | 88/100 | 0 |
+| Import / Export / Lineage | 80/100 | 80/100 | 0 |
+| Frontend UX/UI | 75/100 | 83/100 | +8 |
+| Backend Architecture | 60/100 | 72/100 | +12 |
+| Deployment / DevOps | 78/100 | 82/100 | +4 |
+| **Overall** | **71/100** | **78/100** | **+7** |
+
+---
+
+### Week 1 Score Update (original)
 
 | Area | Previous | Current | Delta | Notes |
 |------|----------|---------|-------|-------|

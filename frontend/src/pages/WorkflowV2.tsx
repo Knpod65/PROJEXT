@@ -19,6 +19,7 @@ import { useAuth } from "@/store/auth.store";
 import { usePeriod } from "@/store/period.store";
 import { useUi } from "@/store/ui.store";
 import type { ScheduleWithSection, WorkflowIssueItem, WorkflowIssueType, WorkflowSession } from "@/types/api";
+import { canManageExamPeriods, canSignWorkflow } from "@/utils/permissions";
 import { getEffectiveRole } from "@/utils/roles";
 
 const ISSUE_TYPES: WorkflowIssueType[] = [
@@ -261,8 +262,8 @@ export function WorkflowV2Page() {
   const { user } = useAuth();
   const { activePeriod } = usePeriod();
   const role = getEffectiveRole(user);
-  const isAdmin = role === "admin";
-  const canSign = role === "admin" || role === "esq_head" || role === "secretary";
+  const isAdmin = canManageExamPeriods(user);
+  const canSign = canSignWorkflow(user);
 
   const [session, setSession] = useState<WorkflowSession | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);

@@ -1,10 +1,10 @@
 # EMS Completion Gap Report
 ## Academic Operations Intelligence Platform — Production Readiness Assessment
 
-> **Generated:** 2026-05-11 (updated same day — Phase 3 session)
+> **Generated:** 2026-05-11 (updated — Phase 3 Week 2 session)
 > **Scope:** Full system audit — backend, frontend, PDPA, deployment, architecture
 > **Based on:** Live codebase scan + renovation phase tracking
-> **See also:** `PRODUCTION_HARDENING_FINAL_REPORT.md` for full Phase 3 session detail
+> **See also:** `PRODUCTION_HARDENING_FINAL_REPORT.md` for full session detail
 
 ---
 
@@ -12,7 +12,7 @@
 
 The EMS system is a **functional, deployed FastAPI + React exam management platform** serving CMU Political Science Faculty. Core workflows are complete and operational. A multi-phase architectural renovation is underway. The system is **suitable for single-faculty production use** with known gaps in test coverage, audit completeness, and service layer structure. Multi-faculty use requires Phase 6 work.
 
-**Overall readiness score: 75 / 100** *(was 71/100; +4 from Phase 3 foundation session)*
+**Overall readiness score: 78 / 100** *(was 75/100; +3 from Phase 3 Week 2 session)*
 
 ---
 
@@ -20,14 +20,14 @@ The EMS system is a **functional, deployed FastAPI + React exam management platf
 
 | Area | Score | Notes |
 |------|-------|-------|
-| Authentication & Authorization | 87/100 | RBAC complete; permission_service added; unification plan documented |
-| PDPA & Privacy | 76/100 | Retention disabled; ~22 audit gaps remain (4 closed); masking implemented |
+| Authentication & Authorization | 89/100 | permissions.py now has all 9 guards (Step 1 unification complete); unification plan active |
+| PDPA & Privacy | 77/100 | Retention disabled; ~21 audit gaps remain (1 more closed); masking implemented |
 | Workflow & Operations | 88/100 | All core workflows implemented; state machine guards partially missing |
 | Import / Export / Lineage | 80/100 | V2 pipeline solid; `_resolve_period` consolidated; lineage metadata present |
-| Frontend UX/UI | 79/100 | permissions.ts created; 3 pages migrated; 3 pages still inline |
-| Backend Architecture | 68/100 | Service foundation created; tests added; 5 service modules; fat routers remain |
+| Frontend UX/UI | 83/100 | permissions.ts complete; **0 pages** with inline role checks (6→0 across two sessions) |
+| Backend Architecture | 72/100 | 6 service modules; 87 tests; submission_service extracted; fat routers remain |
 | Deployment / DevOps | 82/100 | `/api/health` + `/api/health/ready` added; Docker HEALTHCHECK still missing |
-| **Overall** | **75/100** | +4 from Phase 3 foundation; single-faculty production viable |
+| **Overall** | **78/100** | +3 from Phase 3 Week 2; single-faculty production viable |
 
 ---
 

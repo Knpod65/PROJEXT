@@ -97,12 +97,34 @@ def require_write(current_user: models.User = Depends(lambda: None)) -> models.U
     raise NotImplementedError
 
 
+def require_read_only(current_user: models.User = Depends(lambda: None)) -> models.User:
+    raise NotImplementedError
+
+
+def require_can_edit(current_user: models.User = Depends(lambda: None)) -> models.User:
+    raise NotImplementedError
+
+
+def require_dept_or_admin(current_user: models.User = Depends(lambda: None)) -> models.User:
+    raise NotImplementedError
+
+
+def require_print_shop(current_user: models.User = Depends(lambda: None)) -> models.User:
+    raise NotImplementedError
+
+
+def require_base_admin(current_user: models.User = Depends(lambda: None)) -> models.User:
+    raise NotImplementedError
+
+
 # ── Rebuild dependencies properly after auth_utils is available ───────────────
 # Called once from main.py lifespan after all modules are imported.
 
 def build_dependencies():
     """Wire FastAPI dependency functions. Call once at app startup."""
-    global require_admin, require_staff_or_admin, require_view_all, require_write
+    global require_admin, require_staff_or_admin, require_view_all, require_write, \
+        require_read_only, require_can_edit, require_dept_or_admin, require_print_shop, \
+        require_base_admin
     from auth_utils import get_current_user
 
     def _require_admin(cu: models.User = Depends(get_current_user)) -> models.User:
@@ -127,10 +149,47 @@ def build_dependencies():
             raise HTTPException(status.HTTP_403_FORBIDDEN, "ไม่มีสิทธิ์แก้ไข")
         return cu
 
+    def _require_read_only(cu: models.User = Depends(get_current_user)) -> models.User:
+        if get_effective_role(cu) in (UserRole.esq_head, UserRole.secretary):
+            raise HTTPException(status.HTTP_403_FORBIDDEN,
+                                "บัญชีนี้มีสิทธิ์อ่านอย่างเดียว — ไม่สามารถแก้ไขได้")
+        return cu
+
+    def _require_can_edit(cu: models.User = Depends(get_current_user)) -> models.User:
+        eff = get_effective_role(cu)
+        if eff in (UserRole.esq_head, UserRole.secretary):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "บัญชีนี้มีสิทธิ์อ่านอย่างเดียว")
+        if eff not in (UserRole.admin, UserRole.teacher, UserRole.dept_supervisor):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "ไม่มีสิทธิ์แก้ไข")
+        return cu
+
+    def _require_dept_or_admin(cu: models.User = Depends(get_current_user)) -> models.User:
+        if get_effective_role(cu) not in (
+            UserRole.admin, UserRole.dept_supervisor,
+            UserRole.esq_head, UserRole.secretary,
+        ):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "ต้องการสิทธิ์ระดับแผนกหรือสูงกว่า")
+        return cu
+
+    def _require_print_shop(cu: models.User = Depends(get_current_user)) -> models.User:
+        if get_effective_role(cu) != UserRole.print_shop:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Print shop role required")
+        return cu
+
+    def _require_base_admin(cu: models.User = Depends(get_current_user)) -> models.User:
+        if cu.role != UserRole.admin:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "ต้องการสิทธิ์ admin")
+        return cu
+
     require_admin = _require_admin
     require_staff_or_admin = _require_staff_or_admin
     require_view_all = _require_view_all
     require_write = _require_write
+    require_read_only = _require_read_only
+    require_can_edit = _require_can_edit
+    require_dept_or_admin = _require_dept_or_admin
+    require_print_shop = _require_print_shop
+    require_base_admin = _require_base_admin
 
 
 # ── Object-level authorization helpers ───────────────────────────────────────

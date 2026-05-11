@@ -118,6 +118,11 @@ export function canAccessExternalExams(
   return hasAnyRole(user, "admin", "staff", "esq_head", "secretary");
 }
 
+/** True only for the teacher role — used to decide personal exam work navigation path. */
+export function canViewOwnExamWork(user: UserMe | null | undefined): boolean {
+  return role(user) === "teacher";
+}
+
 // ── Co-exam groups ──────────────────────────────────────────────
 
 /** Create and manage co-exam groups. */

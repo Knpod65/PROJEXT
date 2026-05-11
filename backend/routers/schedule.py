@@ -472,6 +472,7 @@ def remove_supervision(
         )
     db.delete(sup)
     db.commit()
+    log_action(db, current_user, "DELETE_SUPERVISION", "supervisions", sup_id, request=request)
     return {"success": True}
 
 
