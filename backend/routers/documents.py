@@ -189,6 +189,7 @@ def _build_docs(sch: models.ExamSchedule, db: Session) -> dict:
 @router.post("/generate/{schedule_id}")
 def generate_documents(
     schedule_id: int,
+    request: Request,
     doc_type: str = Query("all", description="cover_page | envelope | attendance | all"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
@@ -203,6 +204,9 @@ def generate_documents(
     sch  = _load_schedule(db, schedule_id)
     docs = _build_docs(sch, db)
     pfx  = docs["filename_prefix"]
+
+    log_action(db, current_user, "GENERATE_DOCUMENTS", "exam_schedules",
+               record_id=schedule_id, new_values={"doc_type": doc_type}, request=request)
 
     if doc_type == "cover_page":
         filename = f"ใบปะหน้า_{pfx}.docx"
@@ -245,6 +249,7 @@ def generate_documents(
 # ══════════════════════════════════════════════════════════════
 @router.post("/generate-batch")
 def generate_batch_documents(
+    request: Request,
     semester: str = Query("2"),
     academic_year: str = Query("2568"),
     exam_type: str = Query("final"),
@@ -277,6 +282,12 @@ def generate_batch_documents(
 
     if not schedules:
         raise HTTPException(404, "ไม่พบ schedule ที่ publish แล้วในช่วงเวลาที่เลือก")
+
+    log_action(db, current_user, "GENERATE_BATCH_DOCUMENTS", "exam_schedules",
+               new_values={"semester": semester, "academic_year": academic_year,
+                           "exam_type": exam_type, "doc_type": doc_type,
+                           "count": len(schedules)},
+               request=request)
 
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -551,6 +562,7 @@ def get_exam_print_info(
 @router.post("/preview-pdf/{submission_id}")
 def generate_preview_pdf(
     submission_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
@@ -568,6 +580,9 @@ def generate_preview_pdf(
 
     if not sub:
         raise HTTPException(404, "ไม่พบ submission")
+
+    log_action(db, current_user, "PREVIEW_SUBMISSION_PDF", "exam_submissions",
+               record_id=submission_id, request=request)
 
     sec      = sub.section
     schedule = db.query(models.ExamSchedule).options(

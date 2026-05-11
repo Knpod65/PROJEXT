@@ -17,6 +17,7 @@ import { getDashboardAnalytics, getDashboardStats } from "@/services/dashboard.s
 import { useAuth } from "@/store/auth.store";
 import { formatCurrency, formatNumber, formatPercent, formatRole } from "@/utils/format";
 import { getEffectiveRole } from "@/utils/roles";
+import { canManageUsers } from "@/utils/permissions";
 
 function buildOverviewHighlights(
   roleLabel: string,
@@ -54,7 +55,7 @@ export function DashboardPage() {
   const role = getEffectiveRole(user);
 
   const statsLoader = useCallback(() => getDashboardStats(), []);
-  const analyticsLoader = useCallback(() => (role === "admin" ? getDashboardAnalytics() : Promise.resolve(null)), [role]);
+  const analyticsLoader = useCallback(() => (canManageUsers(user) ? getDashboardAnalytics() : Promise.resolve(null)), [user]);
 
   const statsState = useAsyncData(statsLoader, [statsLoader]);
   const analyticsState = useAsyncData(analyticsLoader, [analyticsLoader]);
@@ -141,7 +142,7 @@ export function DashboardPage() {
         />
       </section>
 
-      {role === "admin" && analytics ? (
+      {canManageUsers(user) && analytics ? (
         <>
           <section className="stitch-metric-grid">
             <DashboardMetricCard

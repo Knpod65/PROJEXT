@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from cmu_sso import router as sso_router
 from config.policy import ALLOWED_ORIGINS, LOGIN_RATE_MAX, LOGIN_RATE_WINDOW
 from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing, historical_schedules
-from routers import scheduler, exports_excel
+from routers import scheduler, exports_excel, health as health_router
 import models
 
 try:
@@ -180,6 +180,7 @@ app.add_middleware(
 )
 
 # Routers
+app.include_router(health_router.router, prefix="/api/health", tags=["health"])
 app.include_router(public.router,  prefix="/api/public",  tags=["public"])
 app.include_router(submissions.router,  prefix="/api/submissions",  tags=["submissions"])
 app.include_router(swaps.router,  prefix="/api/swaps",  tags=["swaps"])

@@ -18,6 +18,7 @@ import { usePeriod } from "@/store/period.store";
 import { useUi } from "@/store/ui.store";
 import type { SubmissionDetail, SubmissionListItem } from "@/types/api";
 import { getEffectiveRole } from "@/utils/roles";
+import { canApproveSubmission } from "@/utils/permissions";
 
 // ── Status badge ───────────────────────────────────────────────
 
@@ -267,7 +268,7 @@ export function PrintReviewPage() {
   const { user } = useAuth();
   const { activePeriod } = usePeriod();
   const role = getEffectiveRole(user);
-  const isAdmin = role === "admin" || role === "esq_head" || role === "secretary";
+  const isAdmin = canApproveSubmission(user);
 
   const [items, setItems] = useState<SubmissionListItem[]>([]);
   const [loading, setLoading] = useState(true);

@@ -3,7 +3,7 @@
 
 > **Audience:** Tech leads, project managers, all engineers
 > **Scope:** Phase status, quick wins, risk register, architecture metrics
-> **Last updated:** 2026-05-11 (Phase 2 closure + gap report)
+> **Last updated:** 2026-05-11 (Phase 3 service foundation session)
 > **Update this file** whenever a phase, task, or quick win changes status
 
 ---
@@ -14,7 +14,7 @@
 |---|-------|--------|-------|--------|--------|
 | 1 | Architecture Mapping & Governance | ✅ Complete (Approval Pending) | — | 100% | 2026-05-11 |
 | 2 | DRY Configuration Layer | 🟡 In Progress | — | 85% | 2026-06-08 |
-| 3 | Service Layer Renovation | ⬜ Not Started | — | 0% | 2026-07-06 |
+| 3 | Service Layer Renovation | 🟡 In Progress | — | 20% | 2026-07-06 |
 | 4 | PDPA & Security Enforcement | ⬜ Not Started | — | 0% | 2026-07-20 |
 | 5 | Operational Intelligence | ⬜ Not Started | — | 0% | 2026-08-10 |
 | 6 | Multi-Faculty Architecture | ⬜ Not Started | — | 0% | 2026-09-07 |
@@ -118,16 +118,22 @@
 **Dependencies:** Phase 1 (exceptions.py), Phase 2 (coerce_user_role, settings.py)
 
 ### Files to Create
-| File | Source | Lines to Extract | Priority |
-|------|--------|-----------------|---------|
-| `backend/services/__init__.py` | New | — | Week 1 |
-| `backend/services/exceptions.py` | New | — | Week 1 |
-| `backend/services/submission_service.py` | `submissions.py` helpers | ~120 lines | Week 2 |
-| `backend/services/schedule_service.py` | `schedule.py` helpers (non-optimizer) | ~200 lines | Week 3 |
-| `backend/services/period_service.py` | `term_lifecycle.py` wrapper | ~30 lines | Week 3 |
-| `backend/services/user_service.py` | `optimize_workflow.py` user section | ~100 lines | Week 4 |
-| `backend/services/audit_service.py` | `auth_utils.log_action` wrapper | ~80 lines | Week 4 |
-| `backend/services/print_service.py` | `submissions._get_print_priority` | ~20 lines | Week 2 |
+| File | Source | Lines to Extract | Priority | Status |
+|------|--------|-----------------|---------|--------|
+| `backend/services/__init__.py` | New | — | Week 1 | ✅ Done |
+| `backend/services/exceptions.py` | New | — | Week 1 | ✅ Done |
+| `backend/services/audit_service.py` | `auth_utils.log_action` wrapper | ~80 lines | Week 1 | ✅ Done |
+| `backend/services/permission_service.py` | semantic helpers | ~130 lines | Week 1 | ✅ Done |
+| `backend/services/health_service.py` | DB/settings/RBAC checks | ~80 lines | Week 1 | ✅ Done |
+| `backend/routers/health.py` | New | — | Week 1 | ✅ Done |
+| `backend/tests/test_permissions.py` | New | — | Week 1 | ✅ Done |
+| `backend/tests/test_settings.py` | New | — | Week 1 | ✅ Done |
+| `backend/tests/test_health_service.py` | New | — | Week 1 | ✅ Done |
+| `backend/services/submission_service.py` | `submissions.py` helpers | ~120 lines | Week 2 | ⬜ |
+| `backend/services/schedule_service.py` | `schedule.py` helpers (non-optimizer) | ~200 lines | Week 3 | ⬜ |
+| `backend/services/period_service.py` | `term_lifecycle.py` wrapper | ~30 lines | Week 3 | ⬜ |
+| `backend/services/user_service.py` | `optimize_workflow.py` user section | ~100 lines | Week 4 | ⬜ |
+| `backend/services/print_service.py` | `submissions._get_print_priority` | ~20 lines | Week 2 | ⬜ |
 
 ### Success Criteria
 - `schedule.py` < 400 lines (from 1087)
@@ -174,7 +180,7 @@
 ### Tasks
 | Task | Status | Notes |
 |------|--------|-------|
-| Create `backend/services/health_service.py` | ⬜ | All metric calculations |
+| Create `backend/services/health_service.py` | ✅ Done (liveness/readiness) | Extended for metrics in Phase 5 |
 | Implement `GET /api/dashboard/period-health` | ⬜ | Role-filtered response |
 | Implement `GET /api/dashboard/audit-timeline` | ⬜ | Last N significant events |
 | Add `PeriodHealthSnapshot` model + write-on-lock | ⬜ | `models.py` |
@@ -235,7 +241,7 @@ Five high-impact, low-risk changes that can be done NOW, independent of phase or
 | Risk | Severity | Status | Mitigation |
 |------|----------|--------|------------|
 | `permissions.build_dependencies()` never called — latent production defect | CRITICAL | ✅ Closed | **FIXED** in `backend/main.py` line 38; validated by compile ✅, import ✅, guard smoke ✅ tests |
-| Two parallel permission systems (`auth_utils.py` + `permissions.py`) | HIGH | 🔴 Open | Phase 2: consolidate to `permissions.py` as single source of truth |
+| Two parallel permission systems (`auth_utils.py` + `permissions.py`) | HIGH | 🟡 Plan ready | `AUTH_PERMISSION_UNIFICATION_PLAN.md` written; Phase 3 Week 2 shim approach |
 | CP-SAT optimizer in `schedule.py` has unclear transaction boundaries | HIGH | 🟡 Tracked | Phase 3: extract optimizer LAST; design transaction scope first |
 | Thai strings in error messages cannot be internationalized | MEDIUM | 🟡 Tracked | Phase 2: move all error strings to i18n keys |
 | Copy count accessible via API despite UI-layer hiding | MEDIUM | 🟡 Tracked | Phase 4: add backend role check |
@@ -249,19 +255,22 @@ Five high-impact, low-risk changes that can be done NOW, independent of phase or
 
 Track these metrics as the renovation progresses. Current state measured 2026-05-11.
 
-| Metric | Current | Target | Phase |
-|--------|---------|--------|-------|
-| Lines of business logic in top 3 routers | ~3329 (1087+1331+911) | <1200 total | Phase 3 |
-| Uncovered audit events (mutation endpoints without log_action) | ~26 (4 fixed in co_exam.py) | 0 | Phase 4 |
-| Hardcoded strings outside i18n in backend | ~50+ | 0 | Phase 2 |
-| Hardcoded strings outside i18n in frontend | 0 (useAsyncData.ts fixed) | 0 | ✅ Done |
-| Role extraction copy-paste chains in frontend | 0 (all 3 fixed) | 0 | ✅ Done |
-| Duplicate `_resolve_period()` implementations | 2 | 0 | Phase 2 |
-| Inline `try: models.UserRole(...)` blocks in routers | 4+ | 0 | Phase 2 |
-| Service files in `backend/services/` | 0 | 7 | Phase 3 |
-| Test coverage on service layer | 0% | >60% | Phase 3 |
-| `permissions.build_dependencies()` called at startup | ✅ Yes | ✅ Yes | Phase 1 |
-| Single source of truth for permission deps | ❌ No (2 files) | ✅ Yes | Phase 2 |
+| Metric | Current | Target | Phase | Note |
+|--------|---------|--------|-------|------|
+| Lines of business logic in top 3 routers | ~3329 (1087+1331+911) | <1200 total | Phase 3 | Unchanged — extraction starts Week 2 |
+| Uncovered audit events (mutation endpoints without log_action) | ~22 (4 more closed this session) | 0 | Phase 4 | Was ~26; now ~22 |
+| Hardcoded strings outside i18n in backend | ~50+ | 0 | Phase 2 | |
+| Hardcoded strings outside i18n in frontend | 0 (useAsyncData.ts fixed) | 0 | ✅ Done | |
+| Role extraction copy-paste chains in frontend | 0 (all 3 fixed) | 0 | ✅ Done | |
+| Pages with inline role checks (not using permissions.ts) | 3 (Dashboard✅ External✅ PrintReview✅) | 0 | Phase 4 | Was 6; now 3 |
+| Duplicate `_resolve_period()` implementations | 1 | 0 | Phase 2 | |
+| Inline `try: models.UserRole(...)` blocks in routers | 0 | 0 | ✅ Done | coerce_user_role() used |
+| Service files in `backend/services/` | 5 (foundation) | 8 | Phase 3 | __init__, exceptions, audit, permission, health |
+| Test files in `backend/tests/` | 3 (foundation, 40+ tests) | 10+ | Phase 3 | permissions, settings, health_service |
+| Test coverage on service layer | ~5% (foundation) | >60% | Phase 3 | |
+| `permissions.build_dependencies()` called at startup | ✅ Yes | ✅ Yes | Phase 1 | |
+| Single source of truth for permission deps | ❌ No (2 files) | ✅ Yes | Phase 3 | AUTH_PERMISSION_UNIFICATION_PLAN.md created |
+| Overall readiness score | 75/100 | 90/100 | Phase 4 exit | Was 71; +4 this session |
 
 ---
 

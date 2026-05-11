@@ -530,6 +530,9 @@ def remove_supervision(
         raise HTTPException(404, "ไม่พบกรรมการ")
     db.delete(sup)
     db.commit()
+    log_action(db, current_user, "REMOVE_EXTERNAL_SUPERVISION", "external_supervisions",
+               new_values={"exam_id": exam_id, "removed_user_id": user_id},
+               request=request)
     return {"status": "removed", "exam": _exam_dict(_load_exam(db, exam_id))}
 
 
