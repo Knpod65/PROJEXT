@@ -16,6 +16,7 @@ import {
 } from "@/services/optimizer.service";
 import { useAuth } from "@/store/auth.store";
 import { formatDate, formatNumber } from "@/utils/format";
+import { getEffectiveRole } from "@/utils/roles";
 
 function openExport(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
@@ -48,7 +49,7 @@ function ExportCard({
 export function ExportCenterPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const effectiveRole = user?.effective_role ?? user?.active_role ?? user?.role ?? null;
+  const effectiveRole = getEffectiveRole(user);
   const isAdmin = effectiveRole === "admin";
 
   const workloadLoader = useCallback(() => getStaffWorkloadReport(), []);

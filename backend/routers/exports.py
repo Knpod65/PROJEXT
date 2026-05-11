@@ -8,25 +8,16 @@ from sqlalchemy.orm import Session, joinedload
 from database import get_db
 import models
 from auth_utils import get_current_user, require_admin, require_staff_or_admin, require_view_all, log_action, get_effective_role
+from config.audit_actions import (
+    EXPORT_PAPER_DISTRIBUTION_PDF,
+    EXPORT_SCHEDULE_PDF,
+    EXPORT_WORKLOAD_SUMMARY_PDF,
+)
+from config.periods import resolve_export_period
 from staff_workloads import get_period_workload_snapshot
 import io
 
 router = APIRouter()
-
-
-def _resolve_period(db: Session, semester: str | None, academic_year: str | None, exam_type: str | None = "final") -> models.ExamPeriod:
-    if semester and academic_year:
-        period = db.query(models.ExamPeriod).filter(
-            models.ExamPeriod.semester == semester,
-            models.ExamPeriod.academic_year == academic_year,
-            models.ExamPeriod.exam_type == exam_type,
-        ).first()
-        if period:
-            return period
-    period = db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
-    if not period:
-        raise HTTPException(400, "ไม่มี active period")
-    return period
 
 # Thai day/month names
 THAI_DAYS = ["จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์","อาทิตย์"]
@@ -270,7 +261,7 @@ def export_schedule_pdf(
             log_action(
                 db=db,
                 actor=current_user,
-                action="export_schedule_pdf",
+                action=EXPORT_SCHEDULE_PDF,
                 table_name="exam_schedules",
                 new_values={
                     "file_type": "pdf",
@@ -316,7 +307,7 @@ def export_workload_summary_pdf(
     except ImportError:
         raise HTTPException(500, "กรุณาติดตั้ง reportlab: pip install reportlab")
 
-    period = _resolve_period(db, semester, academic_year, exam_type)
+    period = resolve_export_period(db, semester, academic_year, exam_type)
     snapshot = get_period_workload_snapshot(db, period)
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), leftMargin=1.4 * cm, rightMargin=1.4 * cm, topMargin=1.2 * cm, bottomMargin=1.2 * cm)
@@ -349,7 +340,7 @@ def export_workload_summary_pdf(
     ])
     buffer.seek(0)
     try:
-        log_action(db, current_user, "export_workload_summary_pdf",
+        log_action(db, current_user, EXPORT_WORKLOAD_SUMMARY_PDF,
                    table_name="staffworkloads",
                    new_values={"file_type": "pdf", "export_scope": "period",
                                "row_count": len(snapshot["summary"]),
@@ -384,7 +375,7 @@ def export_paper_distribution_pdf(
     except ImportError:
         raise HTTPException(500, "กรุณาติดตั้ง reportlab: pip install reportlab")
 
-    period = _resolve_period(db, semester, academic_year, exam_type)
+    period = resolve_export_period(db, semester, academic_year, exam_type)
     assignments = db.query(models.PaperDistributionAssignment).options(
         joinedload(models.PaperDistributionAssignment.user)
     ).filter(
@@ -444,7 +435,7 @@ def export_paper_distribution_pdf(
     ])
     buffer.seek(0)
     try:
-        log_action(db, current_user, "export_paper_distribution_pdf",
+        log_action(db, current_user, EXPORT_PAPER_DISTRIBUTION_PDF,
                    table_name="paper_distribution_assignments",
                    new_values={"file_type": "pdf", "export_scope": "period",
                                "row_count": len(assignments),

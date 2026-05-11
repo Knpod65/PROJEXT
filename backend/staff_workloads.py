@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session, joinedload
 import models
 from auth_utils import is_room_keeper
 from time_ranges import normalize_time_range, normalize_time_value, parse_time_range, ranges_overlap
-
-
-PAPER_DISTRIBUTION_DIVISION = "Education_Student_Quality"
-PAPER_DISTRIBUTION_EXCLUDED_USERNAMES = {"araya.fa", "sapanyu.wong"}
-PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS = ("อารยา", "สัพพัญญู")
+from config.policy import (
+    PAPER_DISTRIBUTION_DIVISION,
+    PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS,
+    PAPER_DISTRIBUTION_EXCLUDED_USERNAMES,
+)
 
 
 def is_paper_distribution_candidate(user: models.User) -> bool:

@@ -23,6 +23,7 @@ from auth_utils import (
     revoke_token,
     verify_password,
 )
+from config.audit_actions import LOGIN, LOGOUT, VIEW_AS_CHANGE
 from security import set_auth_cookie, clear_auth_cookie, get_real_ip
 from database import get_db
 import models
@@ -89,7 +90,7 @@ def login(data: schemas.LoginRequest, request: Request, response: Response,
     # Set HttpOnly cookie — JS cannot read this
     set_auth_cookie(response, token)
 
-    log_action(db, user, "LOGIN", request=request, http_status=200)
+    log_action(db, user, LOGIN, request=request, http_status=200)
 
     # Also return token in body for legacy Bearer clients and API scripts
     # Frontend should prefer the cookie and NOT store this in localStorage
@@ -124,7 +125,7 @@ def set_view_as(
     current_user.view_as_role = data.role
     db.commit()
     log_action(
-        db, current_user, "VIEW_AS_CHANGE",
+        db, current_user, VIEW_AS_CHANGE,
         old_values={"view_as": str(old_role)},
         new_values={"view_as": str(data.role)},
         request=request,
@@ -155,5 +156,5 @@ def logout(
     clear_auth_cookie(response)
 
     if current_user:
-        log_action(db, current_user, "LOGOUT", request=request, http_status=200)
+        log_action(db, current_user, LOGOUT, request=request, http_status=200)
     return {"success": True, "message": "ออกจากระบบแล้ว"}

@@ -6,22 +6,17 @@ import secrets
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Iterable
 from urllib.parse import parse_qs, urlparse
-from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 import models
+from config.policy import EMS_LOCAL_TIMEZONE, PICKUP_QR_OPEN_MINUTES_BEFORE, QR_PICKUP_PREFIX, QR_REGULATION_PREFIX
 from time_ranges import parse_time_range
-
-SCAN_OPEN_MINUTES_BEFORE = int(os.getenv("PICKUP_QR_OPEN_MINUTES_BEFORE", "120"))
-QR_PICKUP_PREFIX = "EMS-PICKUP:"
-QR_REGULATION_PREFIX = "EMS-REGULATION:"
-LOCAL_TIMEZONE = ZoneInfo(os.getenv("EMS_LOCAL_TIMEZONE", "Asia/Bangkok"))
 
 
 def now_local() -> datetime:
-    return datetime.now(LOCAL_TIMEZONE)
+    return datetime.now(EMS_LOCAL_TIMEZONE)
 
 
 def hash_pickup_token(token: str) -> str:
@@ -84,7 +79,7 @@ def get_pickup_scan_window(schedule: models.ExamSchedule) -> tuple[datetime | No
     exam_start = get_schedule_start_datetime(schedule)
     if not exam_start:
         return None, None
-    open_at = exam_start - timedelta(minutes=SCAN_OPEN_MINUTES_BEFORE)
+    open_at = exam_start - timedelta(minutes=PICKUP_QR_OPEN_MINUTES_BEFORE)
     return open_at, exam_start
 
 

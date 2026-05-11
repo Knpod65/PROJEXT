@@ -14,24 +14,18 @@ from datetime import date
 from database import get_db
 import models
 from auth_utils import require_admin, require_staff_or_admin, get_current_user, require_view_all, log_action, get_effective_role
+from config.audit_actions import (
+    EXPORT_COMPENSATION,
+    EXPORT_PAPER_DISTRIBUTION_EXCEL,
+    EXPORT_SCHEDULE_EXCEL,
+    EXPORT_SUBMISSIONS_EXCEL,
+    EXPORT_WORKLOAD_DETAIL_EXCEL,
+    EXPORT_WORKLOAD_SUMMARY_EXCEL,
+)
+from config.periods import resolve_export_period
 from staff_workloads import get_period_workload_snapshot
 
 router = APIRouter()
-
-
-def _resolve_period(db: Session, semester: str | None, academic_year: str | None, exam_type: str | None = "final") -> models.ExamPeriod:
-    if semester and academic_year:
-        period = db.query(models.ExamPeriod).filter(
-            models.ExamPeriod.semester == semester,
-            models.ExamPeriod.academic_year == academic_year,
-            models.ExamPeriod.exam_type == exam_type,
-        ).first()
-        if period:
-            return period
-    period = db.query(models.ExamPeriod).filter(models.ExamPeriod.is_active == True).first()
-    if not period:
-        raise HTTPException(400, "ไม่มี active period")
-    return period
 
 
 def _workbook_response(wb, filename: str) -> StreamingResponse:
@@ -260,7 +254,7 @@ def export_compensation(
         log_action(
             db=db,
             actor=current_user,
-            action="export_compensation",
+            action=EXPORT_COMPENSATION,
             table_name="supervisions",
             new_values={
                 "file_type": "xlsx",
@@ -357,7 +351,7 @@ def export_schedule_excel(
         log_action(
             db=db,
             actor=current_user,
-            action="export_schedule_excel",
+            action=EXPORT_SCHEDULE_EXCEL,
             table_name="exam_schedules",
             new_values={
                 "file_type": "xlsx",
@@ -464,7 +458,7 @@ def export_submissions_excel(
         log_action(
             db=db,
             actor=current_user,
-            action="export_submissions_excel",
+            action=EXPORT_SUBMISSIONS_EXCEL,
             table_name="exam_submissions",
             new_values={
                 "file_type": "xlsx",
@@ -497,7 +491,7 @@ def export_workload_summary_excel(
     except ImportError:
         raise HTTPException(500, "ต้องติดตั้ง openpyxl")
 
-    period = _resolve_period(db, semester, academic_year, exam_type)
+    period = resolve_export_period(db, semester, academic_year, exam_type)
     snapshot = get_period_workload_snapshot(db, period)
 
     wb = openpyxl.Workbook()
@@ -537,7 +531,7 @@ def export_workload_summary_excel(
         log_action(
             db=db,
             actor=current_user,
-            action="export_workload_summary_excel",
+            action=EXPORT_WORKLOAD_SUMMARY_EXCEL,
             table_name="staffworkloads",
             new_values={
                 "file_type": "xlsx",
@@ -571,7 +565,7 @@ def export_workload_detail_excel(
     except ImportError:
         raise HTTPException(500, "ต้องติดตั้ง openpyxl")
 
-    period = _resolve_period(db, semester, academic_year, exam_type)
+    period = resolve_export_period(db, semester, academic_year, exam_type)
     snapshot = get_period_workload_snapshot(db, period)
 
     wb = openpyxl.Workbook()
@@ -613,7 +607,7 @@ def export_workload_detail_excel(
         log_action(
             db=db,
             actor=current_user,
-            action="export_workload_detail_excel",
+            action=EXPORT_WORKLOAD_DETAIL_EXCEL,
             table_name="staffworkloads",
             new_values={
                 "file_type": "xlsx",
@@ -647,7 +641,7 @@ def export_paper_distribution_excel(
     except ImportError:
         raise HTTPException(500, "ต้องติดตั้ง openpyxl")
 
-    period = _resolve_period(db, semester, academic_year, exam_type)
+    period = resolve_export_period(db, semester, academic_year, exam_type)
     rows = db.query(models.PaperDistributionAssignment).options(
         joinedload(models.PaperDistributionAssignment.user)
     ).filter(
@@ -720,7 +714,7 @@ def export_paper_distribution_excel(
         log_action(
             db=db,
             actor=current_user,
-            action="export_paper_distribution_excel",
+            action=EXPORT_PAPER_DISTRIBUTION_EXCEL,
             table_name="paper_distribution_assignments",
             new_values={
                 "file_type": "xlsx",

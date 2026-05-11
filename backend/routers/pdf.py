@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 from auth_utils import get_current_user
+from config.policy import PDF_TOKEN_EXPIRE_HOURS
 import uuid, secrets
 from datetime import datetime, timedelta, timezone
 
@@ -27,11 +28,11 @@ def generate_pdf_token(
         token=token_str,
         section_id=section_id,
         created_by=current_user.id,
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=PDF_TOKEN_EXPIRE_HOURS),
     )
     db.add(token)
     db.commit()
-    return {"token": token_str, "expires_in": "1 hour"}
+    return {"token": token_str, "expires_in": f"{PDF_TOKEN_EXPIRE_HOURS} hour"}
 
 
 @router.get("/download/{token}")

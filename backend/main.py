@@ -12,9 +12,11 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from database import engine, Base, get_db
+import permissions
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from cmu_sso import router as sso_router
+from config.policy import ALLOWED_ORIGINS, LOGIN_RATE_MAX, LOGIN_RATE_WINDOW
 from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing, historical_schedules
 from routers import scheduler, exports_excel
 import models
@@ -32,6 +34,9 @@ async def lifespan(app: FastAPI):
     # Security: validate secrets before anything else
     from security import validate_production_secrets
     validate_production_secrets()
+
+    # Required: bind RBAC dependency guards so role checks do not stay as stubs.
+    permissions.build_dependencies()
 
     # Create tables + seed dev data
     Base.metadata.create_all(bind=engine)
@@ -138,8 +143,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 # ── Simple in-memory rate limiter สำหรับ login ────────────────
 _login_attempts: dict = defaultdict(list)
-LOGIN_MAX     = int(os.getenv("LOGIN_RATE_MAX",    "10"))   # ครั้ง
-LOGIN_WINDOW  = int(os.getenv("LOGIN_RATE_WINDOW", "300"))  # วินาที (5 นาที)
 
 class LoginRateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: StarletteRequest, call_next):
@@ -148,12 +151,12 @@ class LoginRateLimitMiddleware(BaseHTTPMiddleware):
             ip = get_real_ip(request)
             now = time.time()
             # ล้าง attempts เก่า
-            _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < LOGIN_WINDOW]
-            if len(_login_attempts[ip]) >= LOGIN_MAX:
+            _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < LOGIN_RATE_WINDOW]
+            if len(_login_attempts[ip]) >= LOGIN_RATE_MAX:
                 from fastapi.responses import JSONResponse
                 return JSONResponse(
                     status_code=429,
-                    content={"detail": f"พยายาม login มากเกินไป — รอ {LOGIN_WINDOW//60} นาที"}
+                    content={"detail": f"พยายาม login มากเกินไป — รอ {LOGIN_RATE_WINDOW//60} นาที"}
                 )
             _login_attempts[ip].append(now)
         return await call_next(request)
@@ -164,10 +167,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
-
-# CORS — จำกัดเฉพาะ origin ที่อนุญาต
-_allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8000")
-ALLOWED_ORIGINS = [o.strip() for o in _allowed_origins_env.split(",") if o.strip()]
 
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)

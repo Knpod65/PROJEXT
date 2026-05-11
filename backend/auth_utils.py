@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models, os, hashlib
 from academic_groups import can_access_academic_group, normalize_academic_group_code
+from config.policy import SIGN_ORDER_USERNAMES, TOKEN_EXPIRE_HOURS
 
 _raw_secret = os.getenv("SECRET_KEY", "")
 if not _raw_secret:
@@ -27,7 +28,6 @@ else:
     SECRET_KEY = _raw_secret
 
 ALGORITHM          = "HS256"
-TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "12"))
 
 # Keep OAuth2PasswordBearer for OpenAPI docs / legacy Bearer clients
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
@@ -468,9 +468,6 @@ def assert_dept_access(user: "models.User", dept_code: str):
                 f"คุณมีสิทธิ์เข้าถึงเฉพาะภาควิชา {user.dept_code} เท่านั้น")
         return
     raise HTTPException(403, "ไม่มีสิทธิ์เข้าถึงข้อมูลนี้")
-
-# SIGN_ORDER — ใช้ร่วมกับ optimize_workflow
-SIGN_ORDER_USERNAMES = ["atikant.s", "mathawee.m", "napaporn.ph", "paweena.t"]
 
 def log_action(
     db: Session,

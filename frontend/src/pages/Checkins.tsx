@@ -37,6 +37,7 @@ import type {
   ScheduleWithSection,
 } from "@/types/api";
 import { formatDate, formatDateTime, formatNumber, formatTranslatedValue } from "@/utils/format";
+import { getEffectiveRole } from "@/utils/roles";
 import { getCurrentPosition } from "@/utils/gps";
 
 function getToday() {
@@ -74,7 +75,7 @@ export function CheckinsPage() {
   const { t } = useI18n();
   const { toast } = useUi();
   const { user } = useAuth();
-  const effectiveRole = user?.effective_role ?? user?.active_role ?? user?.role ?? null;
+  const effectiveRole = getEffectiveRole(user);
   const canManagePickup = effectiveRole === "admin" || effectiveRole === "staff";
 
   const [activeTab, setActiveTab] = useState<CheckinTab>("room_ops");

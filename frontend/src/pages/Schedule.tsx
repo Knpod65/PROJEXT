@@ -13,12 +13,13 @@ import { getRooms, listSchedules } from "@/services/schedule.service";
 import { useAuth } from "@/store/auth.store";
 import type { ScheduleWithSection } from "@/types/api";
 import { formatDate, formatNumber } from "@/utils/format";
+import { getEffectiveRole } from "@/utils/roles";
 
 type ViewMode = "date" | "room";
 
 export function SchedulePage() {
   const { user } = useAuth();
-  const effectiveRole = user?.effective_role ?? user?.active_role ?? user?.role ?? null;
+  const effectiveRole = getEffectiveRole(user);
   const canExportOperationalDocs = effectiveRole === "admin" || effectiveRole === "staff";
   const [roomId, setRoomId] = useState("");
   const [status, setStatus] = useState("");
