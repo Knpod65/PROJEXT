@@ -39,6 +39,13 @@ class ScheduleStatus(str, enum.Enum):
     locked    = "locked"
 
 
+class SupervisionRole(str, enum.Enum):
+    supervisor  = "supervisor"   # กรรมการคุมสอบ (default)
+    chief       = "chief"        # กรรมการอาวุโส / chief invigilator
+    distributor = "distributor"  # กระจายข้อสอบ
+    room_keeper = "room_keeper"  # เปิด/ปิดห้อง — ไม่คุมสอบ ไม่กระจาย
+
+
 # ─── Users ───────────────────────────────────────────────────
 class User(Base):
     __tablename__ = "users"

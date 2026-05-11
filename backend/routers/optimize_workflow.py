@@ -32,6 +32,7 @@ from typing import Optional, List
 from datetime import datetime, timezone
 from database import get_db
 import models
+import permissions
 from auth_utils import (
     require_admin, require_staff_or_admin, get_current_user, log_action, hash_password, get_effective_role,
     SIGN_ORDER_USERNAMES, is_signer, require_view_all
@@ -93,11 +94,10 @@ def list_users(
 ):
     q = db.query(models.User)
     if role:
-        try:
-            role_enum = models.UserRole(role)
-            q = q.filter(models.User.role == role_enum)
-        except ValueError:
+        role_enum = permissions.coerce_user_role(role)
+        if role_enum is None:
             raise HTTPException(400, f"role ไม่ถูกต้อง: {role}")
+        q = q.filter(models.User.role == role_enum)
     if active is not None:
         q = q.filter(models.User.is_active == active)
 
@@ -118,9 +118,8 @@ def create_user(
     if db.query(models.User).filter(models.User.email == data.email).first():
         raise HTTPException(400, f"email '{data.email}' มีอยู่แล้ว")
 
-    try:
-        role_enum = models.UserRole(data.role)
-    except ValueError:
+    role_enum = permissions.coerce_user_role(data.role)
+    if role_enum is None:
         raise HTTPException(400, f"role ไม่ถูกต้อง: {data.role}")
 
     user = models.User(
@@ -162,10 +161,10 @@ def update_user(
     old = _user_dict(user)
 
     if data.role is not None:
-        try:
-            user.role = models.UserRole(data.role)
-        except ValueError:
+        role_enum = permissions.coerce_user_role(data.role)
+        if role_enum is None:
             raise HTTPException(400, f"role ไม่ถูกต้อง: {data.role}")
+        user.role = role_enum
     if data.full_name  is not None: user.full_name  = data.full_name
     if data.title      is not None: user.title      = data.title
     if data.division   is not None: user.division   = data.division

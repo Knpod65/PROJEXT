@@ -57,6 +57,21 @@ def get_dept_filter(user: models.User) -> Optional[str]:
     return None
 
 
+def coerce_user_role(value: object) -> UserRole | None:
+    """Safely coerce a string or UserRole to UserRole. Returns None for unrecognized values.
+
+    Use instead of inline ``try: UserRole(x) except ValueError`` blocks.
+    """
+    if isinstance(value, UserRole):
+        return value
+    if isinstance(value, str):
+        try:
+            return UserRole(value)
+        except ValueError:
+            return None
+    return None
+
+
 # ── FastAPI dependency guards ─────────────────────────────────────────────────
 # These are defined as functions that accept `current_user` via Depends.
 # Import get_current_user lazily to avoid circular imports.

@@ -1,31 +1,30 @@
+"""
+policy.py — Flat module-level constant re-exports from config.settings.
+
+All existing `from config.policy import X` statements continue to work unchanged.
+The canonical source of truth is now config.settings.Settings.
+"""
 from __future__ import annotations
 
-import os
-from zoneinfo import ZoneInfo
+from config.settings import settings
 
+TOKEN_EXPIRE_HOURS = settings.token_expire_hours
+LOGIN_RATE_MAX = settings.login_rate_max
+LOGIN_RATE_WINDOW = settings.login_rate_window
+ALLOWED_ORIGINS: list[str] = list(settings.allowed_origins)
 
-def _csv_env(name: str, default: str) -> list[str]:
-    value = os.getenv(name, default)
-    return [item.strip() for item in value.split(",") if item.strip()]
+PRINT_PRIORITY_HIGH_THRESHOLD = settings.print_priority_high_threshold
+PRINT_PRIORITY_MEDIUM_THRESHOLD = settings.print_priority_medium_threshold
+PRINT_PRIORITY_NORMAL_THRESHOLD = settings.print_priority_normal_threshold
 
+PICKUP_QR_OPEN_MINUTES_BEFORE = settings.pickup_qr_open_minutes_before
+EMS_LOCAL_TIMEZONE = settings.ems_local_timezone
+QR_PICKUP_PREFIX = settings.qr_pickup_prefix
+QR_REGULATION_PREFIX = settings.qr_regulation_prefix
+PDF_TOKEN_EXPIRE_HOURS = settings.pdf_token_expire_hours
 
-TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "12"))
-LOGIN_RATE_MAX = int(os.getenv("LOGIN_RATE_MAX", "10"))
-LOGIN_RATE_WINDOW = int(os.getenv("LOGIN_RATE_WINDOW", "300"))
-ALLOWED_ORIGINS = _csv_env("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8000")
+SIGN_ORDER_USERNAMES: list[str] = list(settings.sign_order_usernames)
 
-PRINT_PRIORITY_HIGH_THRESHOLD = int(os.getenv("PRINT_PRIORITY_HIGH_THRESHOLD", "120"))
-PRINT_PRIORITY_MEDIUM_THRESHOLD = int(os.getenv("PRINT_PRIORITY_MEDIUM_THRESHOLD", "70"))
-PRINT_PRIORITY_NORMAL_THRESHOLD = int(os.getenv("PRINT_PRIORITY_NORMAL_THRESHOLD", "15"))
-
-PICKUP_QR_OPEN_MINUTES_BEFORE = int(os.getenv("PICKUP_QR_OPEN_MINUTES_BEFORE", "120"))
-EMS_LOCAL_TIMEZONE = ZoneInfo(os.getenv("EMS_LOCAL_TIMEZONE", "Asia/Bangkok"))
-QR_PICKUP_PREFIX = "EMS-PICKUP:"
-QR_REGULATION_PREFIX = "EMS-REGULATION:"
-PDF_TOKEN_EXPIRE_HOURS = 1
-
-SIGN_ORDER_USERNAMES = ["atikant.s", "mathawee.m", "napaporn.ph", "paweena.t"]
-
-PAPER_DISTRIBUTION_DIVISION = "Education_Student_Quality"
-PAPER_DISTRIBUTION_EXCLUDED_USERNAMES = {"araya.fa", "sapanyu.wong"}
-PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS = ("อารยา", "สัพพัญญู")
+PAPER_DISTRIBUTION_DIVISION = settings.paper_distribution_division
+PAPER_DISTRIBUTION_EXCLUDED_USERNAMES: set[str] = set(settings.paper_distribution_excluded_usernames)
+PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS: tuple[str, ...] = settings.paper_distribution_excluded_name_snippets

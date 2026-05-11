@@ -3,7 +3,7 @@
 
 > **Audience:** Tech leads, project managers, all engineers
 > **Scope:** Phase status, quick wins, risk register, architecture metrics
-> **Last updated:** 2026-05-11
+> **Last updated:** 2026-05-11 (Phase 2 second slice)
 > **Update this file** whenever a phase, task, or quick win changes status
 
 ---
@@ -13,7 +13,7 @@
 | # | Phase | Status | Owner | % Done | Target |
 |---|-------|--------|-------|--------|--------|
 | 1 | Architecture Mapping & Governance | ✅ Complete (Approval Pending) | — | 100% | 2026-05-11 |
-| 2 | DRY Configuration Layer | 🟡 In Progress | — | 25% | 2026-06-08 |
+| 2 | DRY Configuration Layer | 🟡 In Progress | — | 60% | 2026-06-08 |
 | 3 | Service Layer Renovation | ⬜ Not Started | — | 0% | 2026-07-06 |
 | 4 | PDPA & Security Enforcement | ⬜ Not Started | — | 0% | 2026-07-20 |
 | 5 | Operational Intelligence | ⬜ Not Started | — | 0% | 2026-08-10 |
@@ -64,7 +64,7 @@
 | Task | Status | File | Effort |
 |------|--------|------|--------|
 | Add `permissions.build_dependencies()` to `main.py` lifespan | ✅ Done | `backend/main.py` | 30 min |
-| Create `backend/config/settings.py` (Pydantic BaseSettings) | ⬜ Pending | new file | 2 days |
+| Create `backend/config/settings.py` (typed Settings dataclass) | ✅ Done | `backend/config/settings.py` | — |
 | Replace 3 role extraction chains with `getEffectiveRole(user)` | ✅ Done | `Checkins.tsx:77`, `Schedule.tsx:21`, `ExportCenter.tsx:51` | 1 hour |
 | Centralize hardcoded policy constants | ✅ Done | `backend/config/policy.py` | 1–2 hours |
 | Centralize export period resolution | ✅ Done | `backend/config/periods.py` | 1 hour |
@@ -90,10 +90,10 @@
 ### Tasks
 | Task | Status | File | Notes |
 |------|--------|------|-------|
-| Move print priority thresholds to `config/settings.py` | ⬜ | `submissions.py:121-134` | 120→high, 70→medium |
-| Add `SupervisionRole` enum to `models.py` | ⬜ | `models.py` | Replace `"distributor"` magic string |
-| Add `coerce_user_role()` public function to `permissions.py` | ⬜ | `permissions.py` | Expose `_coerce_user_role` from auth_utils |
-| Replace 3+ inline `try: models.UserRole(...)` blocks | ⬜ | `optimize_workflow.py`, `users.py` | Use `coerce_user_role()` |
+| Move print priority thresholds to `config/settings.py` | ✅ | `config/settings.py` | Settings.print_priority_*_threshold fields |
+| Add `SupervisionRole` enum to `models.py` | ✅ | `models.py` | supervisor/chief/distributor/room_keeper |
+| Add `coerce_user_role()` public function to `permissions.py` | ✅ | `permissions.py` | Returns UserRole\|None, replaces try/except |
+| Replace 3+ inline `try: models.UserRole(...)` blocks | ✅ | `optimize_workflow.py` (3 sites) | Uses permissions.coerce_user_role() |
 | Move `PAPER_DISTRIBUTION_EXCLUDED_USERNAMES` to DB config | ⬜ | `staff_workloads.py:15-16` | `StaffExclusionRule` table (Phase 6 prereq) |
 | Move `SIGN_ORDER_USERNAMES` to `WorkflowSignerConfig` table | ⬜ | `auth_utils.py:473` | Phase 6 prereq; keep fallback during transition |
 | Centralize export period resolver | ✅ | `backend/config/periods.py`, `exports.py`, `exports_excel.py`, `pdf.py` | `resolve_export_period()` function |
