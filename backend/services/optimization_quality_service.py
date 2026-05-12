@@ -19,6 +19,8 @@ DEFAULT_QUALITY_WEIGHTS: dict[str, float] = {
     "operational_complexity_score": 0.10,
     "student_experience_score": 0.10,
     "document_readiness_score": 0.08,
+    "qr_readiness_score": 0.08,
+    "governance_readiness_score": 0.08,
     "accessibility_score": 0.07,
     "continuity_score": 0.08,
 }
@@ -208,6 +210,33 @@ def _document_readiness_score(schedule: List[Dict[str, Any]]) -> float:
     return _clamp(score)
 
 
+def _qr_readiness_score(schedule: List[Dict[str, Any]]) -> float:
+    if not schedule:
+        return 100.0
+    score = 100.0
+    for entry in schedule:
+        if not entry.get("pickup_qr_ready"):
+            score -= 28.0
+        if not entry.get("document_ready"):
+            score -= 12.0
+        if entry.get("pickup_qr_ready") is False and entry.get("document_ready") is False:
+            score -= 8.0
+    return _clamp(score / len(schedule))
+
+
+def _governance_readiness_score(schedule: List[Dict[str, Any]], scores: dict[str, float]) -> float:
+    if not schedule:
+        return 100.0
+    base = (
+        scores.get("conflict_risk_score", 100.0) * 0.30
+        + scores.get("document_readiness_score", 100.0) * 0.20
+        + scores.get("qr_readiness_score", 100.0) * 0.20
+        + scores.get("invigilator_balance_score", 100.0) * 0.15
+        + scores.get("fairness_score", 100.0) * 0.15
+    )
+    return _clamp(base)
+
+
 def _accessibility_score(schedule: List[Dict[str, Any]]) -> float:
     if not schedule:
         return 100.0
@@ -245,8 +274,10 @@ def _quality_band(overall_score: float, scores: dict[str, float]) -> str:
     if (
         scores["conflict_risk_score"] < 55
         or scores["document_readiness_score"] < 50
+        or scores["qr_readiness_score"] < 50
         or scores["invigilator_balance_score"] < 45
         or scores["operational_complexity_score"] < 45
+        or scores["governance_readiness_score"] < 55
         or overall_score < 55
     ):
         return "HIGH_RISK"
@@ -280,12 +311,16 @@ def _build_quality_recommendations(scores: dict[str, float]) -> List[str]:
         recommendations.append("Review overlapping room, staff, and student-slot assignments before sign-off.")
     if scores["document_readiness_score"] < 85:
         recommendations.append("Complete QR/document readiness checks before approval.")
+    if scores["qr_readiness_score"] < 85:
+        recommendations.append("Generate or verify QR handoff artifacts before approval.")
     if scores["invigilator_balance_score"] < 75:
         recommendations.append("Rebalance invigilator workload across available staff.")
     if scores["room_efficiency_score"] < 75:
         recommendations.append("Review room sizing to reduce underuse and over-capacity allocations.")
     if scores["operational_complexity_score"] < 70:
         recommendations.append("Reduce split or handoff complexity for manual execution safety.")
+    if scores["governance_readiness_score"] < 80:
+        recommendations.append("Route the allocation through governance review before approval.")
     return recommendations
 
 
@@ -305,6 +340,8 @@ def _build_scoring_notes(schedule: List[Dict[str, Any]], scores: dict[str, float
         notes.append("Missing staff-load data reduced certainty in fairness and invigilator balance scoring.")
     if any(entry.get("num_students") is None for entry in schedule):
         notes.append("Missing student-count data caused conservative allocation scoring.")
+    if any(entry.get("pickup_qr_ready") is False for entry in schedule):
+        notes.append("Missing QR readiness lowered the QR component and governance readiness score.")
     if any(score < 60 for score in scores.values()):
         notes.append("One or more component scores fell below review thresholds.")
 
@@ -389,9 +426,11 @@ def compute_quality_report(
         "operational_complexity_score": _operational_complexity_score(schedule),
         "student_experience_score": _student_experience_score(schedule),
         "document_readiness_score": _document_readiness_score(schedule),
+        "qr_readiness_score": _qr_readiness_score(schedule),
         "accessibility_score": _accessibility_score(schedule),
         "continuity_score": _continuity_score(schedule),
     }
+    scores["governance_readiness_score"] = _governance_readiness_score(schedule, scores)
 
     overall_score = round(
         sum(scores[metric] * normalized_weights.get(metric, 0.0) for metric in normalized_weights),
@@ -421,8 +460,10 @@ def compute_quality_report(
         "operational_complexity_score": int(round(scores["operational_complexity_score"])),
         "student_experience_score": int(round(scores["student_experience_score"])),
         "document_readiness_score": int(round(scores["document_readiness_score"])),
+        "qr_readiness_score": int(round(scores["qr_readiness_score"])),
         "accessibility_score": int(round(scores["accessibility_score"])),
         "continuity_score": int(round(scores["continuity_score"])),
+        "governance_readiness_score": int(round(scores["governance_readiness_score"])),
         # Compatibility field retained from the earlier report shape.
         "student_conflict_score": int(round(student_conflict_score)),
         "weights_used": normalized_weights,

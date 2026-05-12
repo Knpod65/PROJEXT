@@ -137,6 +137,8 @@ def test_quality_report_returns_weighted_breakdown_and_band():
     assert abs(sum(report["weights_used"].values()) - 1.0) < 0.0001
     assert "dominant_strengths" in report
     assert "dominant_weaknesses" in report
+    assert "qr_readiness_score" in report
+    assert "governance_readiness_score" in report
 
 
 def test_warning_conditions_reduce_quality_score():
@@ -147,6 +149,7 @@ def test_warning_conditions_reduce_quality_score():
 
     assert warning_report["overall_score"] < baseline
     assert warning_report["quality_band"] in {"NEEDS_REVIEW", "HIGH_RISK", "ACCEPTABLE", "GOOD", "EXCELLENT"}
+    assert warning_report["qr_readiness_score"] < 100
 
 
 def test_quality_report_includes_scoring_notes_and_breakdown():
@@ -197,6 +200,7 @@ def test_quality_band_can_drop_to_high_risk():
     assert report["risk_level"] == "HIGH"
     assert report["document_readiness_score"] < 50
     assert report["operational_complexity_score"] < 70
+    assert report["governance_readiness_score"] < 70
 
 
 def test_quality_report_includes_risk_and_trend_structures():
