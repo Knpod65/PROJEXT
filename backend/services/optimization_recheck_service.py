@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Any, Dict
 
 from sqlalchemy.orm import joinedload
 
@@ -18,6 +18,7 @@ import models
 @dataclass(frozen=True)
 class RecheckIssue:
     severity: str
+    category: str
     code: str
     message: str
     course_id: str | None = None
@@ -28,10 +29,14 @@ class RecheckIssue:
     actor_id: int | None = None
     suggested_fix: str | None = None
     can_override: bool = False
+    blocking: bool = False
+    source: str | None = None
+    metadata: Dict[str, Any] | None = None
 
 
 def _issue(
     severity: str,
+    category: str,
     code: str,
     message: str,
     *,
@@ -43,9 +48,13 @@ def _issue(
     actor_id: int | None = None,
     suggested_fix: str | None = None,
     can_override: bool = False,
+    blocking: bool = False,
+    source: str | None = "recheck_engine",
+    metadata: Dict[str, Any] | None = None,
 ) -> RecheckIssue:
     return RecheckIssue(
         severity=severity,
+        category=category,
         code=code,
         message=message,
         course_id=course_id,
@@ -56,6 +65,9 @@ def _issue(
         actor_id=actor_id,
         suggested_fix=suggested_fix,
         can_override=can_override,
+        blocking=blocking,
+        source=source,
+        metadata=metadata or {},
     )
 
 
@@ -136,7 +148,8 @@ def build_recheck_report(
 
         if not section or not course:
             add(_issue(
-                "ERROR",
+                "HARD_FAIL",
+                "DATA_INTEGRITY",
                 "INVALID_SECTION_COURSE_LINKAGE",
                 "Generated schedule references an unknown section or course.",
                 exam_date=str(getattr(schedule, "exam_date", None)),
@@ -144,12 +157,14 @@ def build_recheck_report(
                 room_id=getattr(schedule, "room_id", None),
                 suggested_fix=_suggested_fix_for("INVALID_SECTION_COURSE_LINKAGE"),
                 can_override=True,
+                blocking=True,
             ))
             continue
 
         if exam_type_value and period and exam_type_value != getattr(period, "exam_type", exam_type_value):
             add(_issue(
-                "ERROR",
+                "HARD_FAIL",
+                "PERIOD",
                 "EXAM_OUTSIDE_PERIOD",
                 f"Schedule exam type '{exam_type_value}' does not match active period '{getattr(period, 'exam_type', None)}'.",
                 course_id=getattr(course, "course_id", None),
@@ -160,11 +175,13 @@ def build_recheck_report(
                 actor_id=getattr(teacher, "id", None),
                 suggested_fix=_suggested_fix_for("EXAM_OUTSIDE_PERIOD"),
                 can_override=True,
+                blocking=True,
             ))
 
         if _is_info_excluded(submission):
             add(_issue(
                 "INFO",
+                "DATA_INTEGRITY",
                 "EXCLUDED_NON_ONSITE_EXAM",
                 "No-exam or online-style submission is excluded from room optimization.",
                 course_id=getattr(course, "course_id", None),
@@ -175,12 +192,14 @@ def build_recheck_report(
                 actor_id=getattr(teacher, "id", None),
                 suggested_fix="No room action is required for this schedule.",
                 can_override=False,
+                blocking=False,
             ))
             continue
 
         if room is None and getattr(schedule, "room_id", None) is None:
             add(_issue(
-                "ERROR",
+                "HARD_FAIL",
+                "ROOM",
                 "MISSING_ROOM",
                 "Onsite exam schedule is missing a room assignment.",
                 course_id=getattr(course, "course_id", None),
@@ -189,6 +208,7 @@ def build_recheck_report(
                 exam_time=getattr(schedule, "exam_time", None),
                 suggested_fix=_suggested_fix_for("MISSING_ROOM"),
                 can_override=True,
+                blocking=True,
             ))
             continue
 
@@ -197,7 +217,8 @@ def build_recheck_report(
 
         if room and getattr(room, "capacity", None) is not None and student_count > room.capacity:
             add(_issue(
-                "ERROR",
+                "HARD_FAIL",
+                "CAPACITY",
                 "ROOM_CAPACITY_EXCEEDED",
                 f"{student_count} students exceed room capacity {room.capacity}.",
                 course_id=getattr(course, "course_id", None),
@@ -207,12 +228,14 @@ def build_recheck_report(
                 room_id=getattr(room, "id", getattr(schedule, "room_id", None)),
                 actor_id=getattr(teacher, "id", None),
                 suggested_fix=_suggested_fix_for("ROOM_CAPACITY_EXCEEDED"),
-                can_override=True,
+                can_override=False,
+                blocking=True,
             ))
 
         if room and getattr(section, "teaching_room", None) and room.id == section.teaching_room.id:
             add(_issue(
                 "INFO",
+                "ROOM",
                 "INVALID_ROOM_SEMANTICS",
                 "Teaching room was reused as the exam room; review whether this is allowed.",
                 course_id=getattr(course, "course_id", None),
@@ -223,6 +246,7 @@ def build_recheck_report(
                 actor_id=getattr(teacher, "id", None),
                 suggested_fix=_suggested_fix_for("INVALID_ROOM_SEMANTICS"),
                 can_override=False,
+                blocking=False,
             ))
 
         if room and getattr(room, "capacity", None):
@@ -230,6 +254,7 @@ def build_recheck_report(
             if utilization < 0.4:
                 add(_issue(
                     "WARNING",
+                    "OPTIMIZATION_QUALITY",
                     "LOW_ROOM_UTILIZATION",
                     f"Room utilization is low at {utilization:.0%}.",
                     course_id=getattr(course, "course_id", None),
@@ -240,12 +265,31 @@ def build_recheck_report(
                     actor_id=getattr(teacher, "id", None),
                     suggested_fix=_suggested_fix_for("LOW_ROOM_UTILIZATION"),
                     can_override=False,
+                    blocking=False,
+                ))
+            elif 0.4 <= utilization < 0.6:
+                # soft suggestion: consider grouping sections or a smaller room
+                add(_issue(
+                    "SUGGESTION",
+                    "OPTIMIZATION_QUALITY",
+                    "LOW_TO_MEDIUM_UTILIZATION",
+                    f"Room utilization is moderate at {utilization:.0%}; consider grouping sections or moving to a smaller room.",
+                    course_id=getattr(course, "course_id", None),
+                    section=getattr(section, "section_no", None),
+                    exam_date=str(getattr(schedule, "exam_date", None)),
+                    exam_time=getattr(schedule, "exam_time", None),
+                    room_id=room.id,
+                    actor_id=getattr(teacher, "id", None),
+                    suggested_fix=_suggested_fix_for("LOW_ROOM_UTILIZATION"),
+                    can_override=True,
+                    blocking=False,
                 ))
 
         supervisions = list(getattr(schedule, "supervisions", []) or [])
         if not supervisions:
             add(_issue(
-                "ERROR",
+                "HARD_FAIL",
+                "STAFFING",
                 "MISSING_INVIGILATOR",
                 "Onsite exam schedule has no invigilator or supervision assignment.",
                 course_id=getattr(course, "course_id", None),
@@ -255,11 +299,13 @@ def build_recheck_report(
                 room_id=getattr(room, "id", getattr(schedule, "room_id", None)),
                 suggested_fix=_suggested_fix_for("MISSING_INVIGILATOR"),
                 can_override=True,
+                blocking=True,
             ))
         else:
             if room and not getattr(schedule, "paper_distributor", None):
                 add(_issue(
-                    "ERROR",
+                    "HARD_FAIL",
+                    "STAFFING",
                     "MISSING_DISTRIBUTION_STAFF",
                     "Paper distribution is required but no distributor was assigned.",
                     course_id=getattr(course, "course_id", None),
@@ -269,11 +315,13 @@ def build_recheck_report(
                     room_id=room.id,
                     suggested_fix=_suggested_fix_for("MISSING_DISTRIBUTION_STAFF"),
                     can_override=True,
+                    blocking=True,
                 ))
 
         if not getattr(schedule, "pickup_qr_tokens", None):
             add(_issue(
                 "INFO",
+                "DOCUMENT_READINESS",
                 "MISSING_QR_READINESS",
                 "No pickup QR artifacts are attached to this generated schedule.",
                 course_id=getattr(course, "course_id", None),
@@ -283,12 +331,14 @@ def build_recheck_report(
                 room_id=getattr(room, "id", getattr(schedule, "room_id", None)),
                 suggested_fix=_suggested_fix_for("MISSING_QR_READINESS"),
                 can_override=False,
+                blocking=False,
             ))
 
         if submission and getattr(submission, "a4_pages_count", None) and getattr(schedule, "num_pages", None):
             if submission.a4_pages_count != schedule.num_pages:
                 add(_issue(
                     "WARNING",
+                    "DOCUMENT_READINESS",
                     "COPY_COUNT_MISMATCH",
                     "Teacher submission copy count differs from the generated schedule page count.",
                     course_id=getattr(course, "course_id", None),
@@ -298,6 +348,7 @@ def build_recheck_report(
                     room_id=getattr(room, "id", getattr(schedule, "room_id", None)),
                     suggested_fix=_suggested_fix_for("COPY_COUNT_MISMATCH"),
                     can_override=False,
+                    blocking=False,
                 ))
 
     # Slot-level checks
@@ -332,7 +383,8 @@ def build_recheck_report(
                 course = getattr(section, "course", None) if section else None
                 teacher = getattr(section, "teacher", None) if section else None
                 add(_issue(
-                    "ERROR",
+                    "HARD_FAIL",
+                    "ROOM",
                     "ROOM_CONFLICT",
                     "The same room is assigned to more than one exam in the same slot.",
                     course_id=getattr(course, "course_id", None),
@@ -343,6 +395,7 @@ def build_recheck_report(
                     actor_id=getattr(teacher, "id", None),
                     suggested_fix=_suggested_fix_for("ROOM_CONFLICT"),
                     can_override=True,
+                    blocking=True,
                 ))
 
         for teacher_id, teacher_items in teacher_bucket.items():
@@ -351,7 +404,8 @@ def build_recheck_report(
                 section = getattr(first, "section", None)
                 course = getattr(section, "course", None) if section else None
                 add(_issue(
-                    "ERROR",
+                    "HARD_FAIL",
+                    "STAFFING",
                     "INSTRUCTOR_CONFLICT",
                     "The same instructor is scheduled for overlapping exams.",
                     course_id=getattr(course, "course_id", None),
@@ -361,6 +415,7 @@ def build_recheck_report(
                     actor_id=teacher_id,
                     suggested_fix=_suggested_fix_for("INSTRUCTOR_CONFLICT"),
                     can_override=True,
+                    blocking=True,
                 ))
 
         for user_id, user_items in user_bucket.items():
@@ -369,7 +424,8 @@ def build_recheck_report(
                 section = getattr(first, "section", None)
                 course = getattr(section, "course", None) if section else None
                 add(_issue(
-                    "ERROR",
+                    "HARD_FAIL",
+                    "STAFFING",
                     "INSTRUCTOR_CONFLICT",
                     "The same invigilator is assigned to overlapping exams.",
                     course_id=getattr(course, "course_id", None),
@@ -379,6 +435,7 @@ def build_recheck_report(
                     actor_id=user_id,
                     suggested_fix=_suggested_fix_for("INSTRUCTOR_CONFLICT"),
                     can_override=True,
+                    blocking=True,
                 ))
 
         for student_id, student_items in student_bucket.items():
@@ -387,7 +444,8 @@ def build_recheck_report(
                 section = getattr(first, "section", None)
                 course = getattr(section, "course", None) if section else None
                 add(_issue(
-                    "ERROR",
+                    "HARD_FAIL",
+                    "CONFLICT",
                     "STUDENT_CONFLICT",
                     f"A student appears in multiple exams in the same slot ({len(student_items)} overlaps detected).",
                     course_id=getattr(course, "course_id", None),
@@ -395,7 +453,8 @@ def build_recheck_report(
                     exam_date=exam_date,
                     exam_time=exam_time,
                     suggested_fix=_suggested_fix_for("STUDENT_CONFLICT"),
-                    can_override=True,
+                    can_override=False,
+                    blocking=True,
                 ))
                 break
 
@@ -433,62 +492,97 @@ def build_recheck_report(
             section = getattr(sample, "section", None)
             course = getattr(section, "course", None) if section else None
             add(_issue(
-                "WARNING",
-                "WORKLOAD_IMBALANCE",
-                f"Actor {actor_id} has {total} assigned duties in the generated schedule.",
-                course_id=getattr(course, "course_id", None),
-                section=getattr(section, "section_no", None),
-                actor_id=actor_id,
-                suggested_fix=_suggested_fix_for("WORKLOAD_IMBALANCE"),
-                can_override=False,
+                    "WARNING",
+                    "WORKLOAD",
+                    "WORKLOAD_IMBALANCE",
+                    f"Actor {actor_id} has {total} assigned duties in the generated schedule.",
+                    course_id=getattr(course, "course_id", None),
+                    section=getattr(section, "section_no", None),
+                    actor_id=actor_id,
+                    suggested_fix=_suggested_fix_for("WORKLOAD_IMBALANCE"),
+                    can_override=False,
+                    blocking=False,
             ))
         if longest_streak >= 3:
             sample = schedule_list[0]
             section = getattr(sample, "section", None)
             course = getattr(section, "course", None) if section else None
             add(_issue(
-                "WARNING",
-                "CONSECUTIVE_INVIGILATION_OVERLOAD",
-                f"Actor {actor_id} is scheduled in {longest_streak} consecutive slots.",
-                course_id=getattr(course, "course_id", None),
-                section=getattr(section, "section_no", None),
-                actor_id=actor_id,
-                suggested_fix=_suggested_fix_for("CONSECUTIVE_INVIGILATION_OVERLOAD"),
-                can_override=False,
+                    "WARNING",
+                    "WORKLOAD",
+                    "CONSECUTIVE_INVIGILATION_OVERLOAD",
+                    f"Actor {actor_id} is scheduled in {longest_streak} consecutive slots.",
+                    course_id=getattr(course, "course_id", None),
+                    section=getattr(section, "section_no", None),
+                    actor_id=actor_id,
+                    suggested_fix=_suggested_fix_for("CONSECUTIVE_INVIGILATION_OVERLOAD"),
+                    can_override=False,
+                    blocking=False,
             ))
         if any(count > 2 for count in day_counts.values()):
             sample = schedule_list[0]
             section = getattr(sample, "section", None)
             course = getattr(section, "course", None) if section else None
             add(_issue(
-                "WARNING",
-                "SAME_DAY_OVERLOAD",
-                f"Actor {actor_id} has more than two assignments on the same day.",
-                course_id=getattr(course, "course_id", None),
-                section=getattr(section, "section_no", None),
-                actor_id=actor_id,
-                suggested_fix=_suggested_fix_for("SAME_DAY_OVERLOAD"),
-                can_override=False,
+                    "WARNING",
+                    "WORKLOAD",
+                    "SAME_DAY_OVERLOAD",
+                    f"Actor {actor_id} has more than two assignments on the same day.",
+                    course_id=getattr(course, "course_id", None),
+                    section=getattr(section, "section_no", None),
+                    actor_id=actor_id,
+                    suggested_fix=_suggested_fix_for("SAME_DAY_OVERLOAD"),
+                    can_override=False,
+                    blocking=False,
             ))
 
-    hard_error_count = sum(1 for issue in issues if issue.severity == "ERROR")
+    hard_fail_count = sum(1 for issue in issues if issue.severity == "HARD_FAIL")
     warning_count = sum(1 for issue in issues if issue.severity == "WARNING")
     info_count = sum(1 for issue in issues if issue.severity == "INFO")
+    suggestion_count = sum(1 for issue in issues if issue.severity == "SUGGESTION")
+
+    # invigilator counts (unique actor ids across supervisions)
+    invigilator_ids = set()
+    for schedule in schedule_list:
+        for s in getattr(schedule, "supervisions", []) or []:
+            user = getattr(s, "user", None)
+            if user and getattr(user, "id", None) is not None:
+                invigilator_ids.add(user.id)
+
     status = "PASS"
-    if hard_error_count > 0:
+    if hard_fail_count > 0:
         status = "FAIL"
     elif warning_count > 0:
         status = "PASS_WITH_WARNINGS"
 
+    manual_review_required = False
+    if hard_fail_count > 0:
+        manual_review_required = True
+    else:
+        # override-sensitive warnings require manual review
+        for issue in issues:
+            if issue.severity == "WARNING" and not issue.can_override:
+                manual_review_required = True
+                break
+
+    approval_recommended = False if hard_fail_count > 0 else True
+
     return {
         "status": status,
         "summary": {
-            "hard_error_count": hard_error_count,
+            "hard_fail_count": hard_fail_count,
+            # Compatibility alias for existing consumers while the frontend/router
+            # transitions to the newer severity vocabulary.
+            "hard_error_count": hard_fail_count,
             "warning_count": warning_count,
             "info_count": info_count,
+            "suggestion_count": suggestion_count,
+            "approval_recommended": approval_recommended,
+            "manual_review_required": manual_review_required,
             "checked_schedule_count": len(schedule_list),
             "checked_slot_count": len(slots),
             "checked_room_count": len(room_ids),
+            "checked_invigilator_count": len(invigilator_ids),
         },
         "issues": [asdict(issue) for issue in issues],
     }

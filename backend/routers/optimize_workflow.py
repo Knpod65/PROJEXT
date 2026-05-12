@@ -490,7 +490,10 @@ def recheck_generated_schedule(
             "OPTIMIZATION_RECHECK_FAIL",
             table_name="optimize_sessions",
             record_id=session_id,
-            metadata={"hard_error_count": report["summary"]["hard_error_count"]},
+            metadata={
+                "hard_fail_count": report["summary"]["hard_fail_count"],
+                "hard_error_count": report["summary"]["hard_error_count"],
+            },
             request=request,
         )
         if override:
