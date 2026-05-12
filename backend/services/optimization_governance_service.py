@@ -7,19 +7,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List
 
-
-LOCAL_GOVERNANCE_THRESHOLDS: dict[str, float] = {
-    "hard_fail_block": 1,
-    "warning_approval_required": 1,
-    "fairness_review_threshold": 72,
-    "room_efficiency_review_threshold": 68,
-    "staffing_fragility_threshold": 70,
-    "split_complexity_threshold": 55,
-    "quality_escalation_threshold": 55,
-    "quality_review_threshold": 70,
-    "conflict_escalation_threshold": 60,
-    "staff_review_load_score": 50,
-}
+from policies.optimization_policy import (
+    STAFFING_RISK_THRESHOLDS,
+    build_optimization_policy_snapshot,
+    get_optimization_governance_thresholds,
+)
 
 
 def _review_priority(governance_state: str) -> str:
@@ -48,7 +40,7 @@ def analyze_override_safety(
     quality_report: Dict[str, Any],
     issues: Iterable[Dict[str, Any]] | None = None,
 ) -> Dict[str, Any]:
-    thresholds = LOCAL_GOVERNANCE_THRESHOLDS
+    thresholds = get_optimization_governance_thresholds()
     issues = list(issues or [])
     violated_constraints = _collect_issue_constraints(issues)
     introduced_risks = []
@@ -69,7 +61,7 @@ def analyze_override_safety(
         recheck_summary.get("hard_fail_count", 0) > 0
         or quality_report.get("quality_band") == "HIGH_RISK"
         or quality_report.get("overall_score", 100) < thresholds["quality_escalation_threshold"]
-        or quality_report.get("invigilator_balance_score", 100) <= thresholds["staff_review_load_score"]
+        or quality_report.get("invigilator_balance_score", 100) <= STAFFING_RISK_THRESHOLDS["review_load"] * 10
     ):
         severity = "HIGH_RISK"
     elif (
@@ -106,11 +98,10 @@ def determine_governance_state(
 ) -> Dict[str, Any]:
     """Return a governance decision payload.
 
-    Thresholds are currently embedded here and will be extracted to policy in
-    the next slice.
+    Thresholds are policy-driven and kept outside the service layer.
     """
     issues = list(issues or [])
-    thresholds = LOCAL_GOVERNANCE_THRESHOLDS
+    thresholds = get_optimization_governance_thresholds()
     hard_fail_count = recheck_summary.get("hard_fail_count", recheck_summary.get("hard_error_count", 0))
     warning_count = recheck_summary.get("warning_count", 0)
     fairness_score = quality_report.get("fairness_score", 100)
@@ -176,5 +167,6 @@ def determine_governance_state(
             "quality_band": quality_band,
             "risk_level": quality_report.get("risk_level"),
         },
+        "policy_snapshot": build_optimization_policy_snapshot(),
         "recheck_summary": recheck_summary,
     }
