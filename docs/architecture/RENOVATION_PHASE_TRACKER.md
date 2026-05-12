@@ -9,7 +9,7 @@
 |------|--------|----------|-------|
 | Phase 1 — Architecture Governance | Complete | 100% | Done |
 | Phase 2 — DRY Configuration Layer | Near complete | 90% | Core config centralized; final cleanup still open |
-| Phase 3 — Service Layer Foundation | In progress | 35% | Foundations exist; major routers still need extraction |
+| Phase 3 — Service Layer Foundation | In progress | 45% | Foundations exist; `submissions.py` now has its first service/repository/policy slice, but major routers still need extraction |
 | Phase 4 — PDPA / Security Enforcement | In progress | 55% | Strong controls exist; public exposure and transaction/audit coupling remain |
 | Phase 5 — Test and Delivery Maturity | In progress | 35% | Backend unit tests exist; CI and integration slices still missing |
 | Phase 6 — Faculty IT / Multi-Faculty Readiness | Started | 15% | Auth contract documented; implementation not started |
@@ -65,12 +65,16 @@ In progress
 - `services/health_service.py`
 - `services/submission_service.py`
 - `services/exceptions.py`
+- `repositories/submission_repository.py`
+- `policies/submission_policy.py`
 
 ### This pass improved
 - permission semantics in `permissions.py`
 - PDF token auditing
 - submission message auditing
 - print-note audit minimization
+- `submissions.py` list/detail access now routes through `submission_service.py`
+- submission file-access, message-access, and print-spec validation now reuse service/policy helpers
 
 ### Still open
 - Extract service/repository slices from:
@@ -78,7 +82,7 @@ In progress
   - `backend/routers/schedule.py`
   - `backend/routers/documents.py`
   - `backend/routers/exam_manager.py`
-  - `backend/routers/submissions.py`
+- Complete remaining mutation-heavy extraction inside `backend/routers/submissions.py`
 - Move object-level checks out of routers and into reusable policy/service helpers
 
 ### Exit criteria
@@ -164,7 +168,8 @@ Started
 ## 8. Next Actions
 
 1. Extract the first service slice from `schedule.py`.
-2. Extract workflow lock/state management from `optimize_workflow.py`.
-3. Decide public schedule data exposure policy.
-4. Add CI and minimal router integration tests.
-5. Start EMS-side auth integration adapter design with Faculty IT.
+2. Continue `submissions.py` approval/release/print-queue extraction with regression coverage.
+3. Extract workflow lock/state management from `optimize_workflow.py`.
+4. Decide public schedule data exposure policy.
+5. Add CI and minimal router integration tests.
+6. Start EMS-side auth integration adapter design with Faculty IT.

@@ -28,17 +28,17 @@
 |---|---|---|---|---|---|---|
 | Route mapping | Already disciplined | Route modules are cleanly split under `backend/routers/*.py` with stable URL grouping such as `auth.py`, `schedule.py`, `submissions.py`, `public.py` | Keep route modules small and URL-focused | Main gap is route size, not route existence | Low | Preserve route grouping and thin the largest routers through services |
 | Middleware / auth guard | Partially aligned | `auth_utils.py` handles token/session resolution; `permissions.py` exposes `require_*` guards; many routers already use `Depends(require_admin)` style guards | Central policy/middleware layer before controller logic | Auth/session and permission logic are still split across two modules | Medium | Keep current guards, add auth integration service, gradually move semantic checks into services/policies |
-| Controller / router handler | Partially aligned | Thin handlers exist in `auth.py`, `health.py`, parts of `pdf.py`; large handlers still perform ORM and business logic directly in `schedule.py`, `submissions.py`, `documents.py`, `optimize_workflow.py` | Thin router: parse request, call service, return response | High concentration of business workflow inside routers | High | Extract high-value use cases into services first; avoid broad rewrites in one pass |
-| Service layer | Partially aligned | `services/permission_service.py`, `audit_service.py`, `health_service.py`, `submission_service.py` exist and follow plain-Python discipline | Named use-case services per domain | Coverage is still narrow compared with router surface area | Medium | Add service skeletons by domain and move use cases incrementally |
-| Repository layer | Not aligned until this pass | Queries mostly live inside routers; no first-class repository package was in use | `backend/repositories/*` owns query composition and persistence lookup | ORM access is duplicated across routers | Medium | Start with additive repositories for users and students; integrate later via services |
-| Policy layer | Not aligned until this pass | Authorization and PDPA choices are implicit across routers and docs | `backend/policies/*` for auth, export, schedule, PDPA decisions | PDPA and access rules are not yet centralized as policy modules | Medium | Add `pdpa_policy.py` now; add auth/export/schedule policies in later phases |
+| Controller / router handler | Partially aligned | Thin handlers exist in `auth.py`, `health.py`, parts of `pdf.py`; `submissions.py` now has a first extraction slice for list/detail/file-access/message helpers, but large handlers still perform ORM and workflow logic directly in `schedule.py`, `documents.py`, `optimize_workflow.py`, and the remaining submission mutations | Thin router: parse request, call service, return response | High concentration of business workflow inside routers | High | Keep extracting high-value use cases into services first; avoid broad rewrites in one pass |
+| Service layer | Partially aligned | `services/permission_service.py`, `audit_service.py`, `health_service.py`, `submission_service.py` exist and now cover submission list/detail access, message validation, access watermarking, and rollback helpers | Named use-case services per domain | Coverage is improving, but still narrow compared with router surface area | Medium | Add service slices by domain and continue moving mutation workflows incrementally |
+| Repository layer | Partially aligned | `user_repository.py`, `student_repository.py`, and `submission_repository.py` now exist, but most router query composition still lives inline | `backend/repositories/*` owns query composition and persistence lookup | ORM access is still duplicated across many routers | Medium | Expand repositories around the heaviest routers, starting with `schedule.py` next |
+| Policy layer | Partially aligned | `pdpa_policy.py` and `submission_policy.py` centralize some access and exposure rules, but many authorization branches still live inline in routers | `backend/policies/*` for auth, export, schedule, PDPA decisions | Policy coverage is still incomplete across schedule/export/workflow paths | Medium | Add `auth_policy.py`, `schedule_policy.py`, and `export_policy.py` in later phases |
 | Validation layer | Partially aligned | `backend/schemas.py` centralizes many request models; some routers still use inline validation and ad hoc checks | Domain validators beside services or schemas | Validation is centralized technically, but not yet domain-organized | Low | Keep Pydantic as the canonical request layer; split domain validators when service extraction begins |
 | Model / ORM layer | Already disciplined with limits | `backend/models.py` is ORM-centric with a few lightweight computed properties such as `Course.academic_group` and `ExamSchedule.computed_sheets` | Keep models mostly persistence-focused | Some legacy tables and broad model file size remain, but workflow logic is still mostly outside the models | Low | Keep ORM-only direction; avoid moving heavy workflow into models |
 | Audit logging | Partially aligned | `auth_utils.log_action()` is widely used; `services/audit_service.py` now wraps semantic audit paths | Controllers/services call centralized audit service | Old direct `log_action()` usage still dominates, and transaction coupling is incomplete | Medium | Route new work through `audit_service`; migrate router call sites opportunistically |
 | Auth integration compatibility | Partially aligned | Current login is username/password with JWT + HttpOnly cookie; docs already point toward callback/authen compatibility | `AuthMiddleware`-style external identity adapter feeding EMS session issuance | No runtime auth integration service existed before this pass | Medium | Add non-breaking `auth_integration_service.py` and keep existing login untouched |
 | Frontend page/controller split | Partially aligned | Services exist and are widely used; hooks exist for some routes; heavy pages like `Checkins.tsx`, `Optimizer.tsx`, `MyExam.tsx` still mix orchestration and view | Page = layout/gate, hook = controller, service = data client, component = presentation | Several pages remain “fat controllers + view” combined | Medium | Expand hook-based orchestration on the heaviest pages first |
 | Frontend role/UI policy | Partially aligned | `frontend/src/utils/permissions.ts` and `utils/roles.ts` already exist | Central permission helpers for all role-driven UI | Some pages/hooks still use inline role branching | Low | Continue replacing inline checks with permission helpers |
-| Risky areas that should not move now | Risky / should not change now | `optimize_workflow.py`, `schedule.py`, `documents.py`, `submissions.py`, `exam_manager.py`, `external_exams.py` hold business-critical logic | Stepwise service extraction with strong regression coverage | Direct broad movement would be high-diff and high-regression | High | Plan extraction in phases; do not mass-move logic in this pass |
+| Risky areas that should not move now | Risky / should not change now | `optimize_workflow.py`, `schedule.py`, `documents.py`, `exam_manager.py`, `external_exams.py`, and the remaining mutation-heavy parts of `submissions.py` hold business-critical logic | Stepwise service extraction with strong regression coverage | Direct broad movement would be high-diff and high-regression | High | Plan extraction in phases; keep using small additive slices like the current `submissions.py` pass |
 
 ---
 
@@ -70,16 +70,16 @@ backend/
 
 | Rank | Router | Lines | Endpoints | Primary issue |
 |---|---|---:|---:|---|
-| 1 | `backend/routers/optimize_workflow.py` | 1149 | 26 | Workflow state, optimizer orchestration, locks, signatures, exports mixed together |
-| 2 | `backend/routers/schedule.py` | 974 | 9 | Heavy scheduling, validation, optimizer setup, room and copy-count logic |
-| 3 | `backend/routers/documents.py` | 901 | 9 | Document assembly, schedule lookup, student data joins, file generation |
-| 4 | `backend/routers/exam_manager.py` | 803 | 11 | Ownership workflow, import review, policy logic, materials updates |
-| 5 | `backend/routers/submissions.py` | 765 | 16 | Multi-step submission workflow, file handling, approval, print release |
-| 6 | `backend/routers/imports.py` | 750 | 6 | Import parsing, preview, commit logic, row transformation |
-| 7 | `backend/routers/exports_excel.py` | 658 | 6 | Export data assembly with repeated joined queries |
-| 8 | `backend/routers/swaps_v2.py` | 587 | 9 | Swap workflow state mixed with response shaping |
-| 9 | `backend/routers/exports.py` | 562 | 6 | Multiple export shapes and business filtering in one router |
-| 10 | `backend/routers/external_exams.py` | 555 | 11 | External exam CRUD plus allocation workflow |
+| 1 | `backend/routers/optimize_workflow.py` | 1331 | 26 | Workflow state, optimizer orchestration, locks, signatures, and exports mixed together |
+| 2 | `backend/routers/schedule.py` | 1088 | 9 | Heavy scheduling, validation, optimizer setup, room and copy-count logic |
+| 3 | `backend/routers/documents.py` | 1020 | 9 | Document assembly, schedule lookup, student data joins, and file generation |
+| 4 | `backend/routers/exam_manager.py` | 907 | 11 | Ownership workflow, import review, policy logic, and materials updates |
+| 5 | `backend/routers/submissions.py` | 872 | 16 | First extraction slice landed; upload/approval/release/print mutations are still mixed in the router |
+| 6 | `backend/routers/imports.py` | 865 | 6 | Import parsing, preview, commit logic, and row transformation |
+| 7 | `backend/routers/exports_excel.py` | 734 | 6 | Export data assembly with repeated joined queries |
+| 8 | `backend/routers/swaps_v2.py` | 672 | 9 | Swap workflow state mixed with response shaping |
+| 9 | `backend/routers/external_exams.py` | 638 | 11 | External exam CRUD plus allocation workflow |
+| 10 | `backend/routers/exports.py` | 617 | 6 | Multiple export shapes and business filtering in one router |
 
 ### Routers already close to the target shape
 - `backend/routers/auth.py`
@@ -98,7 +98,7 @@ These are not perfect, but they are closer to “route -> guard -> service/helpe
 | `schedule.py` | `schedule_service.py`, `optimizer_service.py` | `schedule_repository.py`, `room_repository.py` | `schedule_policy.py` | `schedule_validators.py` |
 | `documents.py` | `document_service.py`, `document_export_service.py` | `student_repository.py`, `schedule_repository.py`, `submission_repository.py` | `pdpa_policy.py`, `export_policy.py` | `document_validators.py` |
 | `exam_manager.py` | `exam_manager_service.py`, `ownership_service.py` | `user_repository.py`, `schedule_repository.py`, `submission_repository.py` | `auth_policy.py`, `schedule_policy.py` | `exam_manager_validators.py` |
-| `submissions.py` | expand `submission_service.py`, add `print_queue_service.py` | `submission_repository.py`, `user_repository.py` | `auth_policy.py`, `pdpa_policy.py` | `submission_validators.py` |
+| `submissions.py` | continue expanding `submission_service.py`, add `print_queue_service.py` | `submission_repository.py`, `user_repository.py` | `submission_policy.py`, `auth_policy.py`, `pdpa_policy.py` | `submission_validators.py` |
 | `imports.py` | `import_service.py`, `import_commit_service.py` | `student_repository.py`, `schedule_repository.py`, `room_repository.py` | `pdpa_policy.py` | `import_validators.py` |
 | `exports_excel.py` | `export_service.py` | `schedule_repository.py`, `audit_repository.py` | `export_policy.py`, `pdpa_policy.py` | `export_validators.py` |
 | `swaps_v2.py` | `swap_service.py` | `schedule_repository.py`, `user_repository.py` | `schedule_policy.py` | `swap_validators.py` |
@@ -216,10 +216,11 @@ This is the architectural direction. It is not the implementation scope of this 
 - Document the Laravel-style target
 
 ### Phase B - low-risk backend extraction
-- Expand `submission_service.py`
-- Introduce `submission_repository.py`
+- Expand `submission_service.py` for list/detail access, file access, and message helpers
+- Introduce `submission_repository.py` and wire the first router call sites to it
 - Route new submission mutations through `audit_service`
-- Add domain validators for submission workflow
+- Add submission policy helpers and keep validator extraction incremental
+- Next backend router recommendation after this slice: `backend/routers/schedule.py`
 
 ### Phase C - schedule and workflow extraction
 - Add `schedule_service.py`

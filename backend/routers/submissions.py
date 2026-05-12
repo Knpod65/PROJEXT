@@ -9,26 +9,39 @@ from typing import List, Optional
 from pydantic import BaseModel
 from database import get_db
 import models
-from academic_groups import build_course_group_clause
 from auth_utils import (get_current_user, require_admin, get_effective_role,
-                        log_action, is_view_all_role, get_dept_filter)
+                        is_view_all_role)
 from config.policy import (
     PRINTSHOP_TOKEN_EXPIRE_HOURS,
     SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS,
 )
 from exam_ownership import (
-    get_active_exam_period,
-    get_teacher_owned_section_ids,
     teacher_has_section_access,
 )
 from routers.settings import get_setting, is_past_deadline
+from repositories.submission_repository import SubmissionRepository
+from policies.submission_policy import is_submission_readonly_actor
 from services.submission_service import (
+    apply_snapshot_to_submission as _apply_snapshot_to_submission_svc,
+    assert_message_access as _assert_message_access_svc,
+    assert_request_access_allowed as _assert_request_access_allowed_svc,
+    build_access_watermark as _build_access_watermark_svc,
+    build_submission_filename as _build_submission_filename_svc,
+    get_access_log_action as _get_access_log_action_svc,
+    get_or_create_submission as _get_or_create_submission_svc,
+    get_submission_detail_for_section as _get_submission_detail_for_section_svc,
+    list_submissions_overview as _list_submissions_overview_svc,
+    serialize_messages as _serialize_messages_svc,
+    serialize_submission_versions as _serialize_submission_versions_svc,
     snapshot_submission as _snapshot_submission_svc,
     save_version as _save_version_svc,
     get_print_priority as _get_print_priority_svc,
     upsert_print_queue_job as _upsert_print_queue_job_svc,
+    validate_message_text as _validate_message_text_svc,
+    validate_print_staple_choice as _validate_print_staple_choice_svc,
 )
-from services.audit_service import audit_mutation
+from services.audit_service import audit_event, audit_mutation
+from services.exceptions import EMSNotFoundError, EMSPermissionError, EMSValidationError
 from datetime import datetime, timedelta, timezone
 import secrets, hashlib, os, json
 
@@ -66,8 +79,32 @@ class MessageCreate(BaseModel):
     message: str
 
 
+def _submission_repo(db: Session) -> SubmissionRepository:
+    return SubmissionRepository(db)
+
+
+def _raise_submission_transport_error(exc: Exception) -> None:
+    if isinstance(exc, EMSNotFoundError):
+        raise HTTPException(404, exc.message)
+    if isinstance(exc, EMSPermissionError):
+        raise HTTPException(403, exc.message)
+    if isinstance(exc, EMSValidationError):
+        raise HTTPException(400, exc.message)
+    raise exc
+
+
 # ── Helpers ───────────────────────────────────────────────────
 def _get_submission(db, section_id, user, create_if_missing=True):
+    try:
+        return _get_or_create_submission_svc(
+            db,
+            _submission_repo(db),
+            section_id,
+            user,
+            create_if_missing=create_if_missing,
+        )
+    except (EMSNotFoundError, EMSPermissionError, EMSValidationError) as exc:
+        _raise_submission_transport_error(exc)
     effective = get_effective_role(user)
     sub = db.query(models.ExamSubmission).filter(
         models.ExamSubmission.section_id == section_id
@@ -123,11 +160,7 @@ def _resolve_submission_pdf_path(submission: models.ExamSubmission) -> str:
 
 
 def _build_submission_filename(submission: models.ExamSubmission) -> str:
-    section = submission.section
-    course = section.course if section else None
-    course_code = (course.course_id if course and course.course_id else f"submission-{submission.id}").replace("/", "-")
-    section_no = (section.section_no if section and section.section_no else "unknown").replace("/", "-")
-    return f"{course_code}_section-{section_no}.pdf"
+    return _build_submission_filename_svc(submission)
 
 
 def _load_valid_access_token(
@@ -135,14 +168,7 @@ def _load_valid_access_token(
     token: str,
     current_user: models.User,
 ) -> models.ExamAccessToken:
-    access_token = db.query(models.ExamAccessToken).options(
-        joinedload(models.ExamAccessToken.submission)
-            .joinedload(models.ExamSubmission.section)
-            .joinedload(models.Section.course)
-    ).filter(
-        models.ExamAccessToken.token == token,
-        models.ExamAccessToken.revoked == False,
-    ).first()
+    access_token = _submission_repo(db).get_access_token(token)
 
     if not access_token:
         raise HTTPException(403, "Token เนเธกเนเธ–เธนเธเธ•เนเธญเธ")
@@ -162,6 +188,15 @@ def get_submission(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    try:
+        return _get_submission_detail_for_section_svc(
+            db,
+            _submission_repo(db),
+            section_id,
+            current_user,
+        )
+    except (EMSNotFoundError, EMSPermissionError, EMSValidationError) as exc:
+        _raise_submission_transport_error(exc)
     effective = get_effective_role(current_user)
     sub = db.query(models.ExamSubmission).options(
         joinedload(models.ExamSubmission.section)
@@ -216,6 +251,14 @@ def list_submissions(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    return _list_submissions_overview_svc(
+        db,
+        _submission_repo(db),
+        current_user,
+        status=status,
+        page=page,
+        limit=limit,
+    )
     if limit > 200:
         limit = 200
     if page < 1:
@@ -279,7 +322,7 @@ def list_submissions(
 # ── Step 1: Confirm date ───────────────────────────────────────
 def _require_not_readonly(user):
     """Block esq_head + secretary จาก write operations"""
-    if is_view_all_role(user):
+    if is_submission_readonly_actor(user):
         raise HTTPException(403,
             "บัญชีนี้มีสิทธิ์ดูอย่างเดียว — ไม่สามารถแก้ไขได้")
 
@@ -302,8 +345,8 @@ def step1_confirm_date(
     sub.date_confirmed_at = datetime.now(timezone.utc)
     _save_version(db, sub, current_user, "ยืนยันวันสอบ")
     db.commit()
-    log_action(db, current_user, "EXAM_CONFIRM_DATE", "exam_submissions",
-               sub.id, request=request)
+    audit_event(db, current_user, "EXAM_CONFIRM_DATE", "exam_submissions",
+                sub.id, request=request)
     return {"success": True, "step": 1, "next": "step2-exam-type"}
 
 
@@ -332,8 +375,8 @@ def step2_exam_type(
     sub.a4_pages_count   = data.a4_pages_count or 0
     _save_version(db, sub, current_user, f"เลือกประเภท {data.exam_type_choice}")
     db.commit()
-    log_action(db, current_user, "EXAM_SET_TYPE", "exam_submissions",
-               sub.id, request=request)
+    audit_event(db, current_user, "EXAM_SET_TYPE", "exam_submissions",
+                sub.id, request=request)
 
     # no_exam / online / outside / in_class → ไม่ต้องส่งไฟล์
     needs_file = data.exam_type_choice == models.ExamTypeChoice.onsite
@@ -405,8 +448,8 @@ async def step3_upload_pdf(
     sub.is_shared_exam           = is_shared_exam
     _save_version(db, sub, current_user, "อัปโหลด PDF")
     db.commit()
-    log_action(db, current_user, "EXAM_UPLOAD_PDF", "exam_submissions",
-               sub.id, request=request)
+    audit_event(db, current_user, "EXAM_UPLOAD_PDF", "exam_submissions",
+                sub.id, request=request)
     return {"success": True, "step": 3, "next": "submit"}
 
 
@@ -445,8 +488,8 @@ def submit_for_review(
     sub.submitted_at = datetime.now(timezone.utc)
     _save_version(db, sub, current_user, "ส่งข้อสอบ")
     db.commit()
-    log_action(db, current_user, "EXAM_SUBMIT", "exam_submissions",
-               sub.id, request=request)
+    audit_event(db, current_user, "EXAM_SUBMIT", "exam_submissions",
+                sub.id, request=request)
     return {"success": True, "status": "submitted"}
 
 
@@ -479,8 +522,8 @@ def approve_submission(
     _save_version(db, sub, current_user,
                   "อนุมัติ" if data.approve else f"ปฏิเสธ: {data.reason}")
     db.commit()
-    log_action(db, current_user, action, "exam_submissions",
-               sub.id, request=request)
+    audit_event(db, current_user, action, "exam_submissions",
+                sub.id, request=request)
 
     # Email notification (no-op ถ้าไม่มี SMTP config)
     try:
@@ -536,8 +579,8 @@ def release_to_printshop(
     sub.status = models.SubmissionStatus.released
     _save_version(db, sub, current_user, "release ให้ printshop")
     db.commit()
-    log_action(db, current_user, "EXAM_RELEASE", "exam_submissions",
-               sub.id, request=request)
+    audit_event(db, current_user, "EXAM_RELEASE", "exam_submissions",
+                sub.id, request=request)
     return {
         "success": True,
         "printshop_token": token_str,
@@ -553,6 +596,8 @@ def get_versions(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin)
 ):
+    versions = _submission_repo(db).list_versions(submission_id)
+    return _serialize_submission_versions_svc(versions)
     versions = db.query(models.ExamSubmissionVersion).filter(
         models.ExamSubmissionVersion.submission_id == submission_id
     ).order_by(models.ExamSubmissionVersion.version.desc()).all()
@@ -577,29 +622,18 @@ def rollback_version(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin)
 ):
-    ver = db.query(models.ExamSubmissionVersion).filter(
-        models.ExamSubmissionVersion.submission_id == submission_id,
-        models.ExamSubmissionVersion.version == version,
-    ).first()
+    repo = _submission_repo(db)
+    ver = repo.get_version(submission_id, version)
     if not ver:
         raise HTTPException(404, "ไม่พบ version")
 
-    sub = db.query(models.ExamSubmission).filter(
-        models.ExamSubmission.id == submission_id
-    ).first()
+    sub = repo.get_by_id(submission_id)
 
-    snap = ver.snapshot
-    sub.date_confirmed           = snap.get("date_confirmed", False)
-    sub.exam_type_choice         = snap.get("exam_type_choice")
-    sub.answer_formats           = snap.get("answer_formats")
-    sub.a4_pages_count           = snap.get("a4_pages_count", 0)
-    sub.no_cover_page_confirmed  = snap.get("no_cover_page_confirmed", False)
-    sub.is_shared_exam           = snap.get("is_shared_exam", False)
-    sub.status                   = models.SubmissionStatus.draft  # reset to draft
+    _apply_snapshot_to_submission_svc(sub, ver.snapshot)
     _save_version(db, sub, current_user, f"rollback to version {version}")
     db.commit()
-    log_action(db, current_user, "EXAM_ROLLBACK", "exam_submissions",
-               sub.id, new_values={"rollback_to": version}, request=request)
+    audit_event(db, current_user, "EXAM_ROLLBACK", "exam_submissions",
+                sub.id, metadata={"rollback_to": version}, request=request)
     return {"success": True, "rolled_back_to": version}
 
 
@@ -612,30 +646,17 @@ def request_file_access(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    effective = get_effective_role(current_user)
-    sub = db.query(models.ExamSubmission).options(
-        joinedload(models.ExamSubmission.section)
-    ).filter(models.ExamSubmission.id == submission_id).first()
-    if not sub:
-        raise HTTPException(404, "ไม่พบ submission")
-
-    # Permission check
-    can_download = effective in (models.UserRole.admin, models.UserRole.teacher)
-    can_view     = can_download  # + edu-sq handled via role check
-
-    # Teacher: only their own
-    if effective == models.UserRole.teacher:
-        if not teacher_has_section_access(db, current_user, sub.section):
-            raise HTTPException(403, "ไม่มีสิทธิ์เข้าถึงไฟล์นี้")
-
-    if purpose == models.TokenPurpose.download and not can_download:
-        raise HTTPException(403, "role นี้ไม่สามารถ download ได้")
-
-    if sub.status not in (
-        models.SubmissionStatus.approved,
-        models.SubmissionStatus.released
-    ):
-        raise HTTPException(400, "ไฟล์ยังไม่ได้รับการอนุมัติ")
+    repo = _submission_repo(db)
+    try:
+        sub = _assert_request_access_allowed_svc(
+            db,
+            repo,
+            submission_id,
+            purpose,
+            current_user,
+        )
+    except (EMSNotFoundError, EMSPermissionError, EMSValidationError) as exc:
+        _raise_submission_transport_error(exc)
 
     # สร้าง token
     max_uses = 5 if purpose == models.TokenPurpose.view else 1
@@ -652,8 +673,8 @@ def request_file_access(
     )
     db.add(token)
     db.commit()
-    log_action(db, current_user, "EXAM_REQUEST_ACCESS", "exam_submissions",
-               sub.id, new_values={"purpose": purpose}, request=request)
+    audit_event(db, current_user, "EXAM_REQUEST_ACCESS", "exam_submissions",
+                sub.id, metadata={"purpose": purpose}, request=request)
     return {
         "token": token_str,
         "purpose": purpose,
@@ -674,11 +695,7 @@ def access_exam_file(
     submission = access_token.submission
     _resolve_submission_pdf_path(submission)
 
-    watermark = (
-        f"{current_user.full_name or current_user.username} | "
-        f"{current_user.email} | "
-        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}"
-    )
+    watermark = _build_access_watermark_svc(current_user)
 
     response = JSONResponse(
         {
@@ -707,16 +724,8 @@ def stream_exam_file(
     file_path = _resolve_submission_pdf_path(submission)
 
     ip = request.client.host if request.client else "unknown"
-    watermark = (
-        f"{current_user.full_name or current_user.username} | "
-        f"{current_user.email} | "
-        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}"
-    )
-    action = {
-        models.TokenPurpose.view: "viewed",
-        models.TokenPurpose.download: "downloaded",
-        models.TokenPurpose.print: "printed",
-    }.get(access_token.purpose, "viewed")
+    watermark = _build_access_watermark_svc(current_user)
+    action = _get_access_log_action_svc(access_token.purpose)
     log = models.ExamAccessLog(
         token_id=access_token.id,
         user_id=current_user.id,
@@ -742,20 +751,15 @@ def stream_exam_file(
 def _assert_message_access(db: Session, submission_id: int, user: models.User):
     """Raise 403/404 if user cannot access messages for this submission.
     Teachers: only their own. Admin/esq_head/secretary/dept_supervisor: all."""
-    effective = get_effective_role(user)
-    sub = db.query(models.ExamSubmission).options(
-        joinedload(models.ExamSubmission.section)
-    ).filter(models.ExamSubmission.id == submission_id).first()
-    if not sub:
-        raise HTTPException(404, "ไม่พบ submission")
-    if effective == models.UserRole.teacher:
-        section = sub.section
-        if not section or not teacher_has_section_access(db, user, section):
-            raise HTTPException(403, "ไม่มีสิทธิ์เข้าถึง submission นี้")
-    elif effective == models.UserRole.staff:
-        # staff ไม่มีสิทธิ์อ่าน/เขียน messages
-        raise HTTPException(403, "role นี้ไม่มีสิทธิ์ดู messages")
-    return sub
+    try:
+        return _assert_message_access_svc(
+            db,
+            _submission_repo(db),
+            submission_id,
+            user,
+        )
+    except (EMSNotFoundError, EMSPermissionError, EMSValidationError) as exc:
+        _raise_submission_transport_error(exc)
 
 
 @router.get("/{submission_id}/messages")
@@ -765,22 +769,8 @@ def get_messages(
     current_user: models.User = Depends(get_current_user)
 ):
     _assert_message_access(db, submission_id, current_user)
-    msgs = db.query(models.ExamMessage).options(
-        joinedload(models.ExamMessage.sender)
-    ).filter(
-        models.ExamMessage.submission_id == submission_id
-    ).order_by(models.ExamMessage.created_at).all()
-    return [
-        {
-            "id": m.id,
-            "sender": m.sender.full_name if m.sender else "—",
-            "sender_role": m.sender.role if m.sender else None,
-            "message": m.message,
-            "is_read": m.is_read,
-            "created_at": m.created_at.isoformat(),
-        }
-        for m in msgs
-    ]
+    msgs = _submission_repo(db).list_messages(submission_id)
+    return _serialize_messages_svc(msgs)
 
 
 @router.post("/{submission_id}/messages")
@@ -792,11 +782,10 @@ def send_message(
     current_user: models.User = Depends(get_current_user)
 ):
     _assert_message_access(db, submission_id, current_user)
-    cleaned_message = (data.message or "").strip()
-    if not cleaned_message:
-        raise HTTPException(400, "ข้อความไม่ควรว่าง")
-    if len(cleaned_message) > 2000:
-        raise HTTPException(400, "ข้อความยาวเกิน 2000 ตัวอักษร")
+    try:
+        cleaned_message = _validate_message_text_svc(data.message)
+    except EMSValidationError as exc:
+        _raise_submission_transport_error(exc)
     msg = models.ExamMessage(
         submission_id=submission_id,
         sender_id=current_user.id,
@@ -837,7 +826,7 @@ def step4_print_spec(
 ):
     """อาจารย์กำหนดสเปคการพิมพ์ (ทำหลัง upload PDF)"""
     effective = get_effective_role(current_user)
-    if is_view_all_role(current_user):
+    if is_submission_readonly_actor(current_user):
         raise HTTPException(403, "บัญชีนี้มีสิทธิ์อ่านอย่างเดียว")
     sub = _get_submission(db, data.section_id, current_user, create_if_missing=False)
     if not sub:
@@ -846,23 +835,32 @@ def step4_print_spec(
         raise HTTPException(400, "ไม่สามารถแก้ไขได้ — submission ถูก approve แล้ว")
     if effective == models.UserRole.teacher and not teacher_has_section_access(db, current_user, sub.section):
         raise HTTPException(403, "ไม่มีสิทธิ์")
-
-    valid_staple = {"none", "corner_left", "side_left", "custom"}
-    if data.print_staple not in valid_staple:
-        raise HTTPException(400, f"print_staple ต้องเป็น {valid_staple}")
+    try:
+        print_staple = _validate_print_staple_choice_svc(data.print_staple)
+    except EMSValidationError as exc:
+        _raise_submission_transport_error(exc)
 
     sub.print_duplex         = data.print_duplex
-    sub.print_staple         = data.print_staple
+    sub.print_staple         = print_staple
     sub.print_staple_page    = data.print_staple_page
     sub.print_note           = data.print_note
     sub.print_spec_confirmed = True
 
     db.commit()
-    log_action(db, current_user, "STEP4_PRINT_SPEC", "exam_submissions",
-               record_id=sub.id,
-               new_values={"duplex": data.print_duplex, "staple": data.print_staple,
-                           "staple_page": data.print_staple_page, "note": data.print_note},
-               request=request)
+    audit_event(
+        db,
+        current_user,
+        "STEP4_PRINT_SPEC",
+        "exam_submissions",
+        record_id=sub.id,
+        metadata={
+            "duplex": data.print_duplex,
+            "staple": data.print_staple,
+            "staple_page": data.print_staple_page,
+            "note": data.print_note,
+        },
+        request=request,
+    )
 
     return {
         "status":       "ok",

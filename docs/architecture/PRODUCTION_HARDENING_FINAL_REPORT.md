@@ -94,6 +94,8 @@ Added typed configuration ownership for:
 - Added 7 backend tests across:
   - `backend/tests/test_permissions.py`
   - `backend/tests/test_settings.py`
+- Added targeted submission extraction tests in:
+  - `backend/tests/test_submission_architecture.py`
 
 ---
 
@@ -101,7 +103,9 @@ Added typed configuration ownership for:
 
 ### Backend
 - `backend/routers/optimize_workflow.py` is still the largest operational risk due to scope and line count.
+- `backend/routers/schedule.py` is now the next router recommended for service extraction.
 - `backend/routers/exam_manager.py` still mixes policy, query, and workflow logic.
+- `backend/routers/submissions.py` now has a safe extraction foundation, but upload/approval/release mutations are still router-heavy.
 - `auth_utils.log_action()` still commits independently from many business writes.
 
 ### Frontend
@@ -142,8 +146,9 @@ Added typed configuration ownership for:
 
 ## 6. Recommended Next Sprint
 
-1. Extract a service slice from `schedule.py`.
-2. Extract lock/workflow state from `optimize_workflow.py`.
-3. Implement transaction-safe audit strategy.
-4. Decide and enforce public schedule data exposure policy.
-5. Add CI + router integration tests.
+1. Extract the first service/repository slice from `schedule.py`.
+2. Continue `submissions.py` extraction for approval/release/print-queue mutations.
+3. Extract lock/workflow state from `optimize_workflow.py`.
+4. Implement transaction-safe audit strategy.
+5. Decide and enforce public schedule data exposure policy.
+6. Add CI + router integration tests.
