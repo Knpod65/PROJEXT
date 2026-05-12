@@ -9,9 +9,9 @@
 |------|--------|----------|-------|
 | Phase 1 — Architecture Governance | Complete | 100% | Done |
 | Phase 2 — DRY Configuration Layer | Near complete | 90% | Core config centralized; final cleanup still open |
-| Phase 3 — Service Layer Foundation | In progress | 72% | Foundations exist; workflow lock, signing lifecycle, schedule query foundation, and optimization recheck foundation extracted into service layer |
+| Phase 3 — Service Layer Foundation | In progress | 80% | Foundations exist; workflow lock, signing lifecycle, schedule query foundation, optimization recheck foundation, and governed optimization observers are now in the service layer |
 | Phase 4 — PDPA / Security Enforcement | In progress | 55% | Strong controls exist; public exposure and transaction/audit coupling remain |
-| Phase 5 — Test and Delivery Maturity | In progress | 35% | Backend unit tests exist; CI and integration slices still missing |
+| Phase 5 — Test and Delivery Maturity | In progress | 45% | Backend unit tests exist; optimization governance slices now have targeted regression coverage |
 | Phase 6 — Faculty IT / Multi-Faculty Readiness | Started | 15% | Auth contract documented; implementation not started |
 
 ---
@@ -81,6 +81,9 @@ In progress
 - signing order, next-signer detection, and round transitions centralized in workflow policy/service
 - schedule query, serialization, and unavailability maps extracted to schedule service/repository/policy layers
 - optimization recheck foundation added for post-generation validation
+- optimization pipeline observer added to aggregate explainability, quality, and recheck outputs without changing optimizer decisions
+- optimization explainability payloads expanded with source, confidence, tradeoffs, rejected alternatives, and review actions
+- optimization quality scoring expanded with additional readiness metrics and quality notes
 
 ### Still open
 - Extract service/repository slices from:
@@ -94,6 +97,7 @@ In progress
 - Extract remaining optimize workflow CRUD and reporting helpers into domain services
 - Continue thinning `backend/routers/schedule.py` beyond query/serialization helpers
 - Consider wiring recheck into confirmation gate only after contract-safe review
+- Continue governed optimization hardening: report builder, audit events, frontend contract docs, and override policy rules
 
 ### Exit criteria
 - Top 5 routers reduced materially in size and complexity
@@ -177,9 +181,9 @@ Started
 
 ## 8. Next Actions
 
-1. Extract the first service slice from `schedule.py`.
-2. Continue `submissions.py` approval/release/print-queue extraction with regression coverage.
-3. Extract workflow lock/state management from `optimize_workflow.py`.
-4. Decide public schedule data exposure policy.
-5. Add CI and minimal router integration tests.
+1. Continue governed optimization hardening with approval/override policy rules.
+2. Add audit event payload structures for optimization review and approval flows.
+3. Finalize frontend contract docs for optimization badges, summaries, and explanation drawers.
+4. Extract the first service slice from `schedule.py`.
+5. Continue `submissions.py` approval/release/print-queue extraction with regression coverage.
 6. Start EMS-side auth integration adapter design with Faculty IT.
