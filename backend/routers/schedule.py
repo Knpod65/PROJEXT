@@ -15,19 +15,24 @@ from collections import defaultdict
 from exam_ownership import get_active_exam_period, get_teacher_owned_section_ids
 from staff_workloads import (
     assign_paper_distribution_for_period,
-    build_staff_unavailability_map,
     is_staff_unavailable as _interval_staff_unavailable,
 )
 from term_lifecycle import require_period_editable_for_values
 from time_ranges import normalize_time_range, parse_time_range, ranges_overlap
+from repositories.schedule_repository import load_unavailability_maps as _load_unavailability_maps_repo
+from services.schedule_query_service import (
+    build_schedule_query as _build_schedule_query_service,
+    group_schedules_by_date as _group_schedules_by_date,
+    is_room_unavailable as _is_room_unavailable_service,
+    schedule_time_bounds as _schedule_time_bounds_service,
+    serialize_schedule as _serialize_schedule,
+)
 
 router = APIRouter()
 
 
 def _schedule_time_bounds(exam_time: Optional[str], start: Optional[str] = None, end: Optional[str] = None):
-    if start and end:
-        return start, end
-    return parse_time_range(exam_time)
+    return _schedule_time_bounds_service(exam_time, start, end)
 
 
 def _normalize_schedule_time_fields(exam_time: Optional[str]):
@@ -45,89 +50,11 @@ def _build_schedule_query(
     room_id: Optional[int] = None,
     status: Optional[str] = None,
 ):
-    effective = get_effective_role(current_user)
-    dept_filter = get_dept_filter(current_user)
-
-    q = db.query(models.ExamSchedule).options(
-        joinedload(models.ExamSchedule.room),
-        joinedload(models.ExamSchedule.supervisions).joinedload(models.Supervision.user),
-        joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
-        joinedload(models.ExamSchedule.section).joinedload(models.Section.teacher),
-        joinedload(models.ExamSchedule.section).joinedload(models.Section.teaching_room),
-    )
-
-    if exam_date:
-        q = q.filter(models.ExamSchedule.exam_date == exam_date)
-    if room_id is not None:
-        q = q.filter(models.ExamSchedule.room_id == room_id)
-    if status:
-        try:
-            q = q.filter(models.ExamSchedule.status == models.ScheduleStatus(status))
-        except ValueError:
-            raise HTTPException(400, f"status ไม่ถูกต้อง: {status}")
-
-    if effective == models.UserRole.teacher:
-        active_period = get_active_exam_period(db)
-        q = q.join(models.Section)
-        if active_period:
-            owned_section_ids, _ = get_teacher_owned_section_ids(
-                db,
-                current_user.id,
-                active_period.semester,
-                active_period.academic_year,
-            )
-            if owned_section_ids is None:
-                q = q.filter(models.Section.teacher_id == current_user.id)
-            elif not owned_section_ids:
-                q = q.filter(models.Section.id.in_([-1]))
-            else:
-                q = q.filter(models.Section.id.in_(owned_section_ids))
-        else:
-            q = q.filter(models.Section.teacher_id == current_user.id)
-    elif dept_filter:
-        group_clause = build_course_group_clause(models.Course.course_id, dept_filter)
-        if group_clause is not None:
-            q = q.join(models.Section).join(
-                models.Course,
-                models.Section.course_id == models.Course.id,
-            ).filter(group_clause)
-        else:
-            q = q.filter(models.ExamSchedule.id.in_([-1]))
-
-    return q
+    return _build_schedule_query_service(db, current_user, exam_date, room_id, status)
 
 
 def _load_unavailability_maps(db: Session, data: schemas.OptimizerRequest):
-    period = db.query(models.ExamPeriod).filter(
-        models.ExamPeriod.academic_year == data.academic_year,
-        models.ExamPeriod.semester == data.semester,
-        models.ExamPeriod.exam_type == data.exam_type.value,
-    ).first()
-
-    if not period:
-        return {}, {}
-
-    staff_map = build_staff_unavailability_map(db, period.id)
-    room_map = defaultdict(list)
-
-    for row in db.query(models.RoomUnavailability).filter(
-        models.RoomUnavailability.exam_period_id == period.id
-    ).all():
-        start_time = getattr(row, "start_time", None)
-        end_time = getattr(row, "end_time", None)
-        if not (start_time and end_time):
-            start_time, end_time = parse_time_range(row.block_time)
-        room_map[row.room_id].append(
-            {
-                "date": str(row.block_date),
-                "block_time": row.block_time or None,
-                "start_time": start_time,
-                "end_time": end_time,
-                "all_day": row.block_time is None and not start_time and not end_time,
-            }
-        )
-
-    return staff_map, room_map
+    return _load_unavailability_maps_repo(db, data)
 
 
 def _is_staff_unavailable(unavail_map, user_id: int, block_date, block_time: Optional[str]) -> bool:
@@ -142,21 +69,7 @@ def _is_room_unavailable(
     block_start: Optional[str] = None,
     block_end: Optional[str] = None,
 ) -> bool:
-    if not room_unavail_map:
-        return False
-    blocked = room_unavail_map.get(room_id, [])
-    key_date = str(block_date)
-    slot_start, slot_end = _schedule_time_bounds(block_time, block_start, block_end)
-    for row in blocked:
-        if row["date"] != key_date:
-            continue
-        if row["all_day"]:
-            return True
-        if row["block_time"] == block_time and row["block_time"] is not None:
-            return True
-        if ranges_overlap(slot_start, slot_end, row["start_time"], row["end_time"]):
-            return True
-    return False
+    return _is_room_unavailable_service(room_unavail_map, room_id, block_date, block_time, block_start, block_end)
 
 def _get_schedule(section, exam_type=None):
     """Helper: ดึง ExamSchedule จาก section.schedules (list)
@@ -217,70 +130,11 @@ def schedule_grouped(
         models.ExamSchedule.exam_date,
         models.ExamSchedule.exam_time
     ).all()
-    grouped = defaultdict(list)
-    for s in schedules:
-        grouped[s.exam_date].append(s)
-    # เรียงวันที่
-    result = []
-    for date in sorted(grouped.keys()):
-        result.append({
-            "date": date,
-            "items": [_sch_to_dict(s) for s in sorted(
-                grouped[date], key=lambda x: x.exam_time
-            )]
-        })
-    return result
+    return _group_schedules_by_date(schedules)
 
 
 def _sch_to_dict(s: models.ExamSchedule) -> dict:
-    sec = s.section
-    course = sec.course if sec else None
-    teacher = sec.teacher if sec else None
-    room = s.room
-    sups = s.supervisions or []
-    return {
-        "id": s.id,
-        "exam_date": s.exam_date,
-        "exam_time": s.exam_time,
-        "status": s.status,
-        "num_pages": s.num_pages,
-        "total_sheets": s.total_sheets,
-        "paper_distributor": s.paper_distributor,
-        "notes": s.notes,
-        "room": {"id": room.id, "room_name": room.room_name, "capacity": room.capacity} if room else None,
-        "section": {
-            "id": sec.id,
-            "section_no": sec.section_no,
-            "num_students": sec.num_students,
-            "is_co_exam": sec.is_co_exam,
-            "teaching_room": (
-                {
-                    "id": sec.teaching_room.id,
-                    "room_name": sec.teaching_room.room_name,
-                    "capacity": sec.teaching_room.capacity,
-                    "building": sec.teaching_room.building,
-                }
-                if sec and sec.teaching_room
-                else None
-            ),
-        } if sec else None,
-        "course": {
-            "course_id": course.course_id,
-            "course_name_th": course.course_name_th,
-        } if course else None,
-        "teacher": {
-            "id": teacher.id,
-            "full_name": teacher.full_name,
-        } if teacher else None,
-        "supervisions": [
-            {
-                "slot_order": sup.slot_order,
-                "user": {"id": sup.user.id, "full_name": sup.user.full_name} if sup.user else None,
-                "confirmed": sup.confirmed,
-            }
-            for sup in sups
-        ],
-    }
+    return _serialize_schedule(s)
 
 
 @router.post("/", response_model=schemas.ScheduleOut)
