@@ -289,6 +289,34 @@ def _build_quality_recommendations(scores: dict[str, float]) -> List[str]:
     return recommendations
 
 
+def _build_scoring_notes(schedule: List[Dict[str, Any]], scores: dict[str, float], weights: dict[str, float]) -> List[str]:
+    notes: List[str] = []
+    if not schedule:
+        notes.append("No schedule entries were provided, so the report uses conservative default scoring.")
+        return notes
+
+    if any(entry.get("pickup_qr_ready") is False for entry in schedule):
+        notes.append("Missing QR readiness lowered the document readiness component conservatively.")
+    if any(entry.get("document_ready") is False for entry in schedule):
+        notes.append("Incomplete document readiness reduced the overall score.")
+    if any((entry.get("room") or {}).get("capacity") in (None, 0) for entry in schedule):
+        notes.append("Missing room capacity data caused conservative room-efficiency scoring.")
+    if any(entry.get("staff_load") is None for entry in schedule):
+        notes.append("Missing staff-load data reduced certainty in fairness and invigilator balance scoring.")
+    if any(entry.get("num_students") is None for entry in schedule):
+        notes.append("Missing student-count data caused conservative allocation scoring.")
+    if any(score < 60 for score in scores.values()):
+        notes.append("One or more component scores fell below review thresholds.")
+
+    if weights != DEFAULT_QUALITY_WEIGHTS:
+        notes.append("Custom scoring weights were applied to the weighted overall score.")
+
+    if not notes:
+        notes.append("All required data was present, so the report reflects the observed schedule directly.")
+
+    return notes
+
+
 def _build_quality_risks(schedule: List[Dict[str, Any]], scores: dict[str, float]) -> dict[str, List[str] | str]:
     staffing_fragility = []
     overloaded_days = []
@@ -399,9 +427,11 @@ def compute_quality_report(
         "student_conflict_score": int(round(student_conflict_score)),
         "weights_used": normalized_weights,
         "breakdown": {key: int(round(value)) for key, value in scores.items()},
+        "score_breakdown": {key: int(round(value)) for key, value in scores.items()},
         "dominant_strengths": strengths,
         "dominant_weaknesses": weaknesses,
         "recommended_actions": recommendations,
+        "scoring_notes": _build_scoring_notes(schedule, scores, normalized_weights),
         "warnings": warnings,
         "critical_issues": critical_issues,
         **risk_details,

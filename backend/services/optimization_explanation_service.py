@@ -18,6 +18,11 @@ TIMESLOT_SELECTION = "TIMESLOT_SELECTION"
 CONFLICT_AVOIDANCE = "CONFLICT_AVOIDANCE"
 FAIRNESS_BALANCING = "FAIRNESS_BALANCING"
 
+SOURCE_SOLVER_TRACE = "SOLVER_TRACE"
+SOURCE_INPUT_CONSTRAINT = "INPUT_CONSTRAINT"
+SOURCE_POST_HOC_HEURISTIC = "POST_HOC_HEURISTIC"
+SOURCE_POLICY_RULE = "POLICY_RULE"
+
 CONFIDENCE_HIGH = "HIGH"
 CONFIDENCE_MEDIUM = "MEDIUM"
 CONFIDENCE_LOW = "LOW"
@@ -47,6 +52,7 @@ class RejectedAlternativeExplanation:
 class ExplanationFactor:
     category: str
     explanation_type: str
+    source: str
     summary: str
     reasoning: List[str] = field(default_factory=list)
     tradeoff_notes: List[str] = field(default_factory=list)
@@ -70,7 +76,9 @@ class DecisionExplanation:
     confidence: int
     # Expanded explainability fields.
     explanation_type: str
+    source: str
     confidence_level: str
+    confidence_score: int
     readable_summary: str
     tradeoff_notes: List[str] = field(default_factory=list)
     contributing_constraints: List[str] = field(default_factory=list)
@@ -81,6 +89,7 @@ class DecisionExplanation:
     explanation_categories: List[str] = field(default_factory=list)
     weighted_reasoning: List[Dict[str, Any]] = field(default_factory=list)
     factor_breakdown: List[Dict[str, Any]] = field(default_factory=list)
+    recommended_review_action: str = "REVIEW_DETAILS"
 
 
 def _capacity_reasoning(students: int, room_capacity: int) -> List[str]:
@@ -146,7 +155,7 @@ def _normalize_rejected_alternatives(
                 severity=alternative.get("severity", "INFO"),
                 improvement_hint=alternative.get("improvement_hint", alternative.get("hint")),
             )
-        normalized.append(asdict(item))
+        normalized.append({key: value for key, value in asdict(item).items() if value is not None})
     return normalized
 
 
@@ -154,6 +163,7 @@ def _factor(
     category: str,
     summary: str,
     *,
+    source: str = SOURCE_POST_HOC_HEURISTIC,
     reasoning: List[str] | None = None,
     tradeoff_notes: List[str] | None = None,
     contributing_constraints: List[str] | None = None,
@@ -166,6 +176,7 @@ def _factor(
     factor = ExplanationFactor(
         category=category,
         explanation_type="WEIGHTED_FACTOR",
+        source=source,
         summary=summary,
         reasoning=reasoning or [],
         tradeoff_notes=tradeoff_notes or [],
@@ -220,6 +231,7 @@ def _build_room_factor(entry: Dict[str, Any]) -> Dict[str, Any]:
         rejected_alternatives=rejected,
         operational_notes=operational_notes,
         balancing_notes=["room_utilization_considered"],
+        source=SOURCE_INPUT_CONSTRAINT,
         confidence_score=confidence_score,
     )
 
@@ -249,6 +261,7 @@ def _build_staff_factor(entry: Dict[str, Any]) -> Dict[str, Any]:
     return _factor(
         STAFF_ASSIGNMENT,
         summary,
+        source=SOURCE_POST_HOC_HEURISTIC,
         reasoning=reasoning,
         tradeoff_notes=tradeoffs,
         contributing_constraints=["staff_availability", "workload_balance", "slot_conflict_avoidance"],
@@ -277,6 +290,7 @@ def _build_distribution_factor(entry: Dict[str, Any]) -> Dict[str, Any]:
     return _factor(
         DISTRIBUTION_ASSIGNMENT,
         summary,
+        source=SOURCE_POLICY_RULE,
         reasoning=reasoning,
         tradeoff_notes=tradeoffs,
         contributing_constraints=["distribution_coverage", "operational_readiness"],
@@ -310,6 +324,7 @@ def _build_split_factor(entry: Dict[str, Any]) -> Dict[str, Any]:
     return _factor(
         SPLIT_DECISION,
         summary,
+        source=SOURCE_POST_HOC_HEURISTIC,
         reasoning=reasoning,
         tradeoff_notes=tradeoffs,
         contributing_constraints=["split_minimization", "room_capacity", "operational_complexity"],
@@ -334,6 +349,7 @@ def _build_timeslot_factor(entry: Dict[str, Any]) -> Dict[str, Any]:
     return _factor(
         TIMESLOT_SELECTION,
         summary,
+        source=SOURCE_INPUT_CONSTRAINT,
         reasoning=reasoning,
         tradeoff_notes=tradeoffs,
         contributing_constraints=["period_window", "slot_conflict_avoidance", "room_staff_alignment"],
@@ -355,6 +371,7 @@ def _build_conflict_avoidance_factor(entry: Dict[str, Any]) -> Dict[str, Any]:
     return _factor(
         CONFLICT_AVOIDANCE,
         summary,
+        source=SOURCE_POST_HOC_HEURISTIC,
         reasoning=avoided_conflicts,
         contributing_constraints=["room_conflict", "staff_conflict", "student_conflict"],
         rejected_alternatives=rejected,
@@ -392,6 +409,7 @@ def _build_fairness_factor(entry: Dict[str, Any]) -> Dict[str, Any]:
     return _factor(
         FAIRNESS_BALANCING,
         summary,
+        source=SOURCE_POST_HOC_HEURISTIC,
         reasoning=reasoning,
         tradeoff_notes=tradeoffs,
         contributing_constraints=["fairness_balance", "workload_ceiling", "operational_continuity"],
@@ -431,6 +449,14 @@ def explain_schedule_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
         )
     )
     confidence_level = _confidence_label(confidence_score)
+    source_priority = [
+        SOURCE_SOLVER_TRACE,
+        SOURCE_INPUT_CONSTRAINT,
+        SOURCE_POLICY_RULE,
+        SOURCE_POST_HOC_HEURISTIC,
+    ]
+    sources_seen = [factor.get("source") for factor in factors if factor.get("source")]
+    source = next((candidate for candidate in source_priority if candidate in sources_seen), SOURCE_POST_HOC_HEURISTIC)
 
     reasoning = _unique(
         reason
@@ -476,7 +502,9 @@ def explain_schedule_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
         tradeoffs=tradeoff_notes,
         confidence=confidence_score,
         explanation_type="MULTI_FACTOR_ALLOCATION_EXPLANATION",
+        source=source,
         confidence_level=confidence_level,
+        confidence_score=confidence_score,
         readable_summary=readable_summary,
         tradeoff_notes=tradeoff_notes,
         contributing_constraints=contributing_constraints,
@@ -487,6 +515,9 @@ def explain_schedule_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
         explanation_categories=[factor["category"] for factor in factors],
         weighted_reasoning=weighted_reasoning,
         factor_breakdown=factors,
+        recommended_review_action=(
+            "REVIEW_HIGH_RISK" if confidence_level == CONFIDENCE_LOW else "REVIEW_NORMAL" if tradeoff_notes else "APPROVE_WITH_STANDARD_REVIEW"
+        ),
     )
     return asdict(explanation)
 

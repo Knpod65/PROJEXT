@@ -58,10 +58,14 @@ def test_explanation_includes_multi_factor_fields():
 
     assert explanation["explanation_type"] == "MULTI_FACTOR_ALLOCATION_EXPLANATION"
     assert explanation["confidence_level"] in {"HIGH", "MEDIUM", "LOW"}
+    assert explanation["source"] in {"SOLVER_TRACE", "INPUT_CONSTRAINT", "POST_HOC_HEURISTIC", "POLICY_RULE"}
+    assert explanation["confidence_score"] == explanation["confidence"]
+    assert explanation["recommended_review_action"]
     assert "ROOM_SELECTION" in explanation["explanation_categories"]
     assert "STAFF_ASSIGNMENT" in explanation["explanation_categories"]
     assert "TIMESLOT_SELECTION" in explanation["explanation_categories"]
     assert len(explanation["factor_breakdown"]) >= 5
+    assert all("source" in factor for factor in explanation["factor_breakdown"])
 
 
 def test_confidence_mapping_can_drop_to_low_for_forced_assignment():
@@ -77,6 +81,8 @@ def test_confidence_mapping_can_drop_to_low_for_forced_assignment():
 
     assert explanation["confidence_level"] == "LOW"
     assert explanation["confidence"] < 60
+    assert explanation["tradeoff_notes"]
+    assert any(note for note in explanation["operational_notes"])
 
 
 def test_rejected_alternatives_are_normalized_for_frontend_use():
@@ -107,6 +113,19 @@ def test_rejected_alternatives_are_normalized_for_frontend_use():
     assert len(rejected) >= 2
     assert any(item["violated_constraint"] == "ROOM_CONFLICT" for item in rejected)
     assert any(item["candidate_type"] == "staff" for item in rejected)
+    assert all("candidate_id" in item for item in rejected)
+
+
+def test_explanations_do_not_expose_student_names_or_raw_pii():
+    explanation = explain_schedule([
+        _entry(
+            rejected_room_candidates=[{"id": "R1", "rejection_reason": "conflict", "candidate_name": "Alice Student", "email": "alice@example.com"}],
+        )
+    ])[0]
+
+    payload_text = str(explanation).lower()
+    assert "alice student" not in payload_text
+    assert "@example.com" not in payload_text
 
 
 def test_quality_report_returns_weighted_breakdown_and_band():
@@ -118,6 +137,26 @@ def test_quality_report_returns_weighted_breakdown_and_band():
     assert abs(sum(report["weights_used"].values()) - 1.0) < 0.0001
     assert "dominant_strengths" in report
     assert "dominant_weaknesses" in report
+
+
+def test_warning_conditions_reduce_quality_score():
+    baseline = compute_quality_report([_entry()])["overall_score"]
+    warning_report = compute_quality_report([
+        _entry(pickup_qr_ready=False, document_ready=False, paper_distributor=None, staff_load=6)
+    ])
+
+    assert warning_report["overall_score"] < baseline
+    assert warning_report["quality_band"] in {"NEEDS_REVIEW", "HIGH_RISK", "ACCEPTABLE", "GOOD", "EXCELLENT"}
+
+
+def test_quality_report_includes_scoring_notes_and_breakdown():
+    report = compute_quality_report([
+        _entry(pickup_qr_ready=False, document_ready=False, paper_distributor=None, staff_load=6)
+    ])
+
+    assert "scoring_notes" in report
+    assert "score_breakdown" in report
+    assert report["scoring_notes"]
 
 
 def test_quality_band_can_drop_to_high_risk():
