@@ -9,7 +9,7 @@
 |------|--------|----------|-------|
 | Phase 1 — Architecture Governance | Complete | 100% | Done |
 | Phase 2 — DRY Configuration Layer | Near complete | 90% | Core config centralized; final cleanup still open |
-| Phase 3 — Service Layer Foundation | In progress | 50% | Foundations exist; workflow lock lifecycle extracted from `optimize_workflow.py` into service layer |
+| Phase 3 — Service Layer Foundation | In progress | 60% | Foundations exist; workflow lock and signing lifecycle extracted from `optimize_workflow.py` into service layer |
 | Phase 4 — PDPA / Security Enforcement | In progress | 55% | Strong controls exist; public exposure and transaction/audit coupling remain |
 | Phase 5 — Test and Delivery Maturity | In progress | 35% | Backend unit tests exist; CI and integration slices still missing |
 | Phase 6 — Faculty IT / Multi-Faculty Readiness | Started | 15% | Auth contract documented; implementation not started |
@@ -77,6 +77,8 @@ In progress
 - submission file-access, message-access, and print-spec validation now reuse service/policy helpers
 - workflow edit-lock lifecycle extracted to `services/workflow_lock_service.py`
 - lock acquire/release/heartbeat now emit semantic audit events (`WORKFLOW_LOCK_*`)
+- workflow signing state machine extracted to `services/workflow_signing_service.py`
+- signing order, next-signer detection, and round transitions centralized in workflow policy/service
 
 ### Still open
 - Extract service/repository slices from:
@@ -87,6 +89,7 @@ In progress
 - Complete remaining mutation-heavy extraction inside `backend/routers/submissions.py`
 - Move object-level checks out of routers and into reusable policy/service helpers
 - Extract workflow signing state machine rules from `optimize_workflow.py` into dedicated service
+- Extract remaining optimize workflow CRUD and reporting helpers into domain services
 
 ### Exit criteria
 - Top 5 routers reduced materially in size and complexity

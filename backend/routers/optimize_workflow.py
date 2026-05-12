@@ -35,12 +35,22 @@ import models
 import permissions
 from auth_utils import (
     require_admin, require_staff_or_admin, get_current_user, log_action, hash_password, get_effective_role,
-    SIGN_ORDER_USERNAMES, require_view_all
+    require_view_all
 )
 from config.policy import WORKFLOW_LOCK_TTL_SECONDS
 from services.audit_service import audit_event
 from services.exceptions import EMSDomainError, EMSPermissionError
 from services import workflow_lock_service
+from services.workflow_signing_service import (
+    apply_signature,
+    approve_transition,
+    audit_action_for_signature,
+    build_session_payload,
+    get_or_create_session as get_or_create_workflow_session,
+    get_signer_list,
+    open_swap_transition,
+    reject_transition,
+)
 from staff_workloads import (
     PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS,
     PAPER_DISTRIBUTION_EXCLUDED_USERNAMES,
@@ -51,10 +61,6 @@ from term_lifecycle import ensure_period_record_editable, require_active_period_
 from time_ranges import normalize_time_range, normalize_time_value, parse_time_range
 
 router = APIRouter()
-
-# ── ลำดับลายเซ็น 4 คน (username) ──────────────────────────────
-# Round 1 & 2 ใช้ลำดับเดียวกัน
-SIGN_ORDER = SIGN_ORDER_USERNAMES  # defined in auth_utils
 
 # ════════════════════════════════════════════════════════════════
 # USER MANAGEMENT
@@ -433,49 +439,6 @@ def delete_unavailability(
 
 
 # ════════════════════════════════════════════════════════════════
-# OPTIMIZE SESSION — 4-signature workflow
-# ════════════════════════════════════════════════════════════════
-
-def _get_or_create_session(db: Session, period_id: int) -> models.OptimizeSession:
-    sess = db.query(models.OptimizeSession).filter(
-        models.OptimizeSession.exam_period_id == period_id
-    ).first()
-    if not sess:
-        sess = models.OptimizeSession(exam_period_id=period_id, status="draft")
-        db.add(sess)
-        db.flush()
-    return sess
-
-
-def _session_dict(sess: models.OptimizeSession) -> dict:
-    sigs_r1 = [
-        {"order": i+1, "username": SIGN_ORDER[i],
-         "user_id": getattr(sess, f"sig{i+1}_user_id"),
-         "signed_at": getattr(sess, f"sig{i+1}_at").isoformat()
-                      if getattr(sess, f"sig{i+1}_at") else None}
-        for i in range(4)
-    ]
-    sigs_r2 = [
-        {"order": i+1, "username": SIGN_ORDER[i],
-         "user_id": getattr(sess, f"sig{i+1}r2_user_id"),
-         "signed_at": getattr(sess, f"sig{i+1}r2_at").isoformat()
-                      if getattr(sess, f"sig{i+1}r2_at") else None}
-        for i in range(4)
-    ]
-    r1_done = sum(1 for s in sigs_r1 if s["signed_at"])
-    r2_done = sum(1 for s in sigs_r2 if s["signed_at"])
-    return {
-        "id":              sess.id,
-        "exam_period_id":  sess.exam_period_id,
-        "status":          sess.status,
-        "baseline_saved":  sess.baseline_saved,
-        "round1": {"signatures": sigs_r1, "done": r1_done, "total": 4, "complete": r1_done == 4},
-        "round2": {"signatures": sigs_r2, "done": r2_done, "total": 4, "complete": r2_done == 4},
-        "next_signer_r1":  SIGN_ORDER[r1_done] if r1_done < 4 else None,
-        "next_signer_r2":  SIGN_ORDER[r2_done] if r2_done < 4 else None,
-    }
-
-
 @router.get("/session/")
 def get_session(
     db: Session = Depends(get_db),
@@ -489,7 +452,7 @@ def get_session(
     ).first()
     if not sess:
         return {"status": "no_session", "message": "ยังไม่ได้ optimize"}
-    return _session_dict(sess)
+    return build_session_payload(sess)
 
 
 @router.post("/session/init")
@@ -504,9 +467,7 @@ def init_session(
     if not p:
         raise HTTPException(400, "ไม่มี active period")
 
-    sess = db.query(models.OptimizeSession).filter(
-        models.OptimizeSession.exam_period_id == p.id
-    ).first()
+    sess = get_or_create_workflow_session(db, p.id)
     if sess:
         # reset signatures ทั้งหมด
         for i in range(1, 5):
@@ -524,7 +485,7 @@ def init_session(
     db.refresh(sess)
     log_action(db, current_user, "INIT_OPTIMIZE_SESSION", "optimize_sessions",
                record_id=sess.id, request=request)
-    return _session_dict(sess)
+    return build_session_payload(sess)
 
 
 @router.post("/session/sign")
@@ -552,58 +513,23 @@ def sign_session(
         models.OptimizeSession.exam_period_id == p.id
     ).with_for_update().first()
     if not sess:
-        sess = _get_or_create_session(db, p.id)
-        # re-lock after create
+        sess = get_or_create_workflow_session(db, p.id)
         sess = db.query(models.OptimizeSession).filter(
             models.OptimizeSession.exam_period_id == p.id
         ).with_for_update().first()
 
-    # ตรวจสอบสถานะ
-    if round == 1 and sess.status not in ("draft", "confirming"):
-        raise HTTPException(400, f"ไม่อยู่ใน state ที่ sign round 1 ได้ (status={sess.status})")
-    if round == 2 and sess.status not in ("swap_open", "swap_confirming"):
-        raise HTTPException(400, f"ยังไม่ได้เปิด swap หรือ status ไม่ถูก (status={sess.status})")
+    result = apply_signature(sess, current_user, round)
 
-    # หาตำแหน่งที่ว่าง
-    prefix = "" if round == 1 else "r2"
-    slot   = None
-    for i in range(1, 5):
-        uid_key = f"sig{i}{prefix}_user_id"
-        if getattr(sess, uid_key) is None:
-            slot = i
-            break
-
-    if slot is None:
-        raise HTTPException(400, "ลายเซ็นครบแล้ว")
-
-    # ตรวจว่าเป็นคนที่ถูกต้องตามลำดับ
-    expected_username = SIGN_ORDER[slot - 1]
-    if current_user.username != expected_username:
-        raise HTTPException(403,
-            f"ลำดับที่ {slot} ต้องเป็น {expected_username} เท่านั้น "
-            f"(คุณคือ {current_user.username})")
-
-    # บันทึก
-    setattr(sess, f"sig{slot}{prefix}_user_id", current_user.id)
-    setattr(sess, f"sig{slot}{prefix}_at",      datetime.now(timezone.utc))
-    sess.status = "confirming" if round == 1 else "swap_confirming"
-
-    # ครบ 4 คน
-    if slot == 4:
-        if round == 1:
-            sess.status = "confirmed"
-            # บันทึก baseline stats
-            _save_baseline_stats(db, p)
-            sess.baseline_saved = True
-        else:
-            sess.status = "locked"
+    if result.round_no == 1 and result.completed:
+        _save_baseline_stats(db, p)
+        sess.baseline_saved = True
 
     db.commit()
 
-    log_action(db, current_user, f"SIGN_R{round}_SLOT{slot}", "optimize_sessions",
+    log_action(db, current_user, audit_action_for_signature(round, result.slot), "optimize_sessions",
                record_id=sess.id, request=request)
 
-    return _session_dict(sess)
+    return build_session_payload(sess)
 
 
 @router.post("/session/open-swap")
@@ -621,15 +547,12 @@ def open_swap(
     sess = db.query(models.OptimizeSession).filter(
         models.OptimizeSession.exam_period_id == p.id
     ).first()
-    if not sess or sess.status != "confirmed":
-        raise HTTPException(400, "ต้อง confirm round 1 ครบก่อน (4 ลายเซ็น)")
-
-    sess.status = "swap_open"
+    open_swap_transition(sess)
     db.commit()
 
     log_action(db, current_user, "OPEN_SWAP", "optimize_sessions",
                record_id=sess.id, request=request)
-    return _session_dict(sess)
+    return build_session_payload(sess)
 
 
 @router.get("/session/signers")
@@ -639,13 +562,13 @@ def get_signers_info(
 ):
     """ข้อมูล 4 คนที่ต้องกดลายเซ็น"""
     signers = []
-    for i, uname in enumerate(SIGN_ORDER):
-        u = db.query(models.User).filter(models.User.username == uname).first()
+    for signer in get_signer_list(current_user):
+        u = db.query(models.User).filter(models.User.username == signer["username"]).first()
         signers.append({
-            "order":     i + 1,
-            "username":  uname,
-            "full_name": u.full_name if u else uname,
-            "is_me":     current_user.username == uname,
+            "order": signer["order"],
+            "username": signer["username"],
+            "full_name": u.full_name if u else signer["username"],
+            "is_me": signer["is_me"],
         })
     return signers
 
