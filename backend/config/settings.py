@@ -62,7 +62,18 @@ class Settings:
     )
     qr_pickup_prefix: str = "EMS-PICKUP:"
     qr_regulation_prefix: str = "EMS-REGULATION:"
-    pdf_token_expire_hours: int = 1
+    pdf_token_expire_hours: int = field(
+        default_factory=lambda: int(os.getenv("PDF_TOKEN_EXPIRE_HOURS", "1"))
+    )
+    printshop_token_expire_hours: int = field(
+        default_factory=lambda: int(os.getenv("PRINTSHOP_TOKEN_HOURS", "72"))
+    )
+    submission_access_token_expire_hours: int = field(
+        default_factory=lambda: int(os.getenv("SUBMISSION_ACCESS_TOKEN_HOURS", "2"))
+    )
+    workflow_lock_ttl_seconds: int = field(
+        default_factory=lambda: int(os.getenv("WORKFLOW_LOCK_TTL_SECONDS", "300"))
+    )
 
     # --- Workflow signing order (override via comma-separated env var) ---
     sign_order_usernames: tuple[str, ...] = field(

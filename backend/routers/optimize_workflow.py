@@ -37,6 +37,7 @@ from auth_utils import (
     require_admin, require_staff_or_admin, get_current_user, log_action, hash_password, get_effective_role,
     SIGN_ORDER_USERNAMES, is_signer, require_view_all
 )
+from config.policy import WORKFLOW_LOCK_TTL_SECONDS
 from staff_workloads import (
     PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS,
     PAPER_DISTRIBUTION_EXCLUDED_USERNAMES,
@@ -977,7 +978,7 @@ def delete_room_unavailability(
 # EDIT LOCK — ป้องกัน admin สองคนแก้พร้อมกัน
 # ════════════════════════════════════════════════════════════════
 
-LOCK_TTL_SECONDS = 300   # 5 นาที — expire อัตโนมัติ
+LOCK_TTL_SECONDS = WORKFLOW_LOCK_TTL_SECONDS
 
 
 def _is_lock_expired(sess: models.OptimizeSession) -> bool:

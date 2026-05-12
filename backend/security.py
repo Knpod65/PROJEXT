@@ -19,6 +19,7 @@ from typing import Optional
 from fastapi import Request, Response, HTTPException, Cookie, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from config.settings import settings
 
 # ── HTML sanitization ─────────────────────────────────────────────────────────
 
@@ -97,7 +98,8 @@ def validate_production_secrets() -> None:
 # ── Cookie management ─────────────────────────────────────────────────────────
 
 COOKIE_NAME = "ems_session"
-_TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "12"))
+_IS_PRODUCTION = os.getenv("ENV", "development").lower() in ("production", "prod")
+_COOKIE_MAX_AGE_SECONDS = settings.token_expire_hours * 3600
 
 
 def set_auth_cookie(response: Response, token: str) -> None:
@@ -106,9 +108,9 @@ def set_auth_cookie(response: Response, token: str) -> None:
         key=COOKIE_NAME,
         value=token,
         httponly=True,                          # JS cannot read
-        secure=os.getenv("ENV", "development").lower() in ("production", "prod"),
+        secure=_IS_PRODUCTION,
         samesite="lax",                         # CSRF protection; lax allows same-site nav
-        max_age=_TOKEN_EXPIRE_HOURS * 3600,
+        max_age=_COOKIE_MAX_AGE_SECONDS,
         path="/api",
     )
 
@@ -119,6 +121,7 @@ def clear_auth_cookie(response: Response) -> None:
         key=COOKIE_NAME,
         path="/api",
         httponly=True,
+        secure=_IS_PRODUCTION,
         samesite="lax",
     )
 

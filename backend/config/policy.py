@@ -22,6 +22,9 @@ EMS_LOCAL_TIMEZONE = settings.ems_local_timezone
 QR_PICKUP_PREFIX = settings.qr_pickup_prefix
 QR_REGULATION_PREFIX = settings.qr_regulation_prefix
 PDF_TOKEN_EXPIRE_HOURS = settings.pdf_token_expire_hours
+PRINTSHOP_TOKEN_EXPIRE_HOURS = settings.printshop_token_expire_hours
+SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS = settings.submission_access_token_expire_hours
+WORKFLOW_LOCK_TTL_SECONDS = settings.workflow_lock_ttl_seconds
 
 SIGN_ORDER_USERNAMES: list[str] = list(settings.sign_order_usernames)
 

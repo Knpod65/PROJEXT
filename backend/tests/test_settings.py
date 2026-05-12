@@ -29,6 +29,10 @@ class TestSettingsSingleton:
         assert hasattr(settings, "print_priority_high_threshold")
         assert hasattr(settings, "print_priority_medium_threshold")
         assert hasattr(settings, "print_priority_normal_threshold")
+        assert hasattr(settings, "pdf_token_expire_hours")
+        assert hasattr(settings, "printshop_token_expire_hours")
+        assert hasattr(settings, "submission_access_token_expire_hours")
+        assert hasattr(settings, "workflow_lock_ttl_seconds")
 
     def test_print_thresholds_are_ordered(self):
         from config.settings import settings
@@ -78,6 +82,13 @@ class TestSettingsSingleton:
         assert settings.qr_pickup_prefix.startswith("EMS-")
         assert settings.qr_regulation_prefix.startswith("EMS-")
 
+    def test_token_and_lock_windows_are_positive(self):
+        from config.settings import settings
+        assert settings.pdf_token_expire_hours > 0
+        assert settings.printshop_token_expire_hours > 0
+        assert settings.submission_access_token_expire_hours > 0
+        assert settings.workflow_lock_ttl_seconds > 0
+
 
 class TestPolicyReExports:
     """config/policy.py must re-export the same values from settings."""
@@ -96,6 +107,21 @@ class TestPolicyReExports:
         from config.policy import LOGIN_RATE_MAX
         from config.settings import settings
         assert LOGIN_RATE_MAX == settings.login_rate_max
+
+    def test_printshop_token_expire_hours_consistent(self):
+        from config.policy import PRINTSHOP_TOKEN_EXPIRE_HOURS
+        from config.settings import settings
+        assert PRINTSHOP_TOKEN_EXPIRE_HOURS == settings.printshop_token_expire_hours
+
+    def test_submission_access_token_expire_hours_consistent(self):
+        from config.policy import SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS
+        from config.settings import settings
+        assert SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS == settings.submission_access_token_expire_hours
+
+    def test_workflow_lock_ttl_consistent(self):
+        from config.policy import WORKFLOW_LOCK_TTL_SECONDS
+        from config.settings import settings
+        assert WORKFLOW_LOCK_TTL_SECONDS == settings.workflow_lock_ttl_seconds
 
 
 if __name__ == "__main__":

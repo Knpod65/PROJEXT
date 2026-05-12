@@ -1,4 +1,3 @@
-import os
 """
 Exam Submission Router — Teacher workflow (M1 complete)
 Steps: confirm date → exam type → upload/create → submit → admin approve → release
@@ -13,6 +12,10 @@ import models
 from academic_groups import build_course_group_clause
 from auth_utils import (get_current_user, require_admin, get_effective_role,
                         log_action, is_view_all_role, get_dept_filter)
+from config.policy import (
+    PRINTSHOP_TOKEN_EXPIRE_HOURS,
+    SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS,
+)
 from exam_ownership import (
     get_active_exam_period,
     get_teacher_owned_section_ids,
@@ -25,6 +28,7 @@ from services.submission_service import (
     get_print_priority as _get_print_priority_svc,
     upsert_print_queue_job as _upsert_print_queue_job_svc,
 )
+from services.audit_service import audit_mutation
 from datetime import datetime, timedelta, timezone
 import secrets, hashlib, os, json
 
@@ -525,9 +529,7 @@ def release_to_printshop(
         issued_to     = current_user.id,
         purpose       = models.TokenPurpose.print,
         max_uses      = 1,
-        expires_at    = datetime.now(timezone.utc) + timedelta(
-            hours=int(os.getenv("PRINTSHOP_TOKEN_HOURS", "72"))  # default 3 วัน
-        ),
+        expires_at    = datetime.now(timezone.utc) + timedelta(hours=PRINTSHOP_TOKEN_EXPIRE_HOURS),
     )
     db.add(token)
     _upsert_print_queue_job(db, sub, current_user, token_str)
@@ -539,7 +541,7 @@ def release_to_printshop(
     return {
         "success": True,
         "printshop_token": token_str,
-        "expires_in": "72 hours",
+        "expires_in": f"{PRINTSHOP_TOKEN_EXPIRE_HOURS} hours",
         "max_uses": 1,
     }
 
@@ -646,7 +648,7 @@ def request_file_access(
         purpose       = purpose,
         max_uses      = max_uses,
         ip_hash       = hashlib.sha256(ip.encode()).hexdigest()[:16],
-        expires_at    = datetime.now(timezone.utc) + timedelta(hours=2),
+        expires_at    = datetime.now(timezone.utc) + timedelta(hours=SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS),
     )
     db.add(token)
     db.commit()
@@ -655,7 +657,7 @@ def request_file_access(
     return {
         "token": token_str,
         "purpose": purpose,
-        "expires_in": "2 hours",
+        "expires_in": f"{SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS} hours",
         "max_uses": max_uses,
         "access_url": f"/api/submissions/access/{token_str}",
         "content_url": f"/api/submissions/access/{token_str}/content",
@@ -785,21 +787,35 @@ def get_messages(
 def send_message(
     submission_id: int,
     data: MessageCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     _assert_message_access(db, submission_id, current_user)
-    if not data.message or not data.message.strip():
+    cleaned_message = (data.message or "").strip()
+    if not cleaned_message:
         raise HTTPException(400, "ข้อความไม่ควรว่าง")
-    if len(data.message) > 2000:
+    if len(cleaned_message) > 2000:
         raise HTTPException(400, "ข้อความยาวเกิน 2000 ตัวอักษร")
     msg = models.ExamMessage(
         submission_id=submission_id,
         sender_id=current_user.id,
-        message=data.message.strip(),
+        message=cleaned_message,
     )
     db.add(msg)
     db.commit()
+    audit_mutation(
+        db,
+        current_user,
+        action="SUBMISSION_MESSAGE_CREATE",
+        table_name="exam_messages",
+        record_id=msg.id,
+        new_values={
+            "submission_id": submission_id,
+            "message_length": len(cleaned_message),
+        },
+        request=request,
+    )
     return {"success": True}
 
 

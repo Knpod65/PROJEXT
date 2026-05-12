@@ -129,6 +129,13 @@ class TestPermissionsViewAllRoles:
         from models import UserRole
         assert UserRole.staff not in VIEW_ALL_ROLES
 
+    def test_permissions_effective_role_matches_auth_utils(self):
+        import permissions
+        from auth_utils import get_effective_role as auth_get_effective_role
+
+        user = _make_user("admin", view_as="teacher")
+        assert permissions.get_effective_role(user) == auth_get_effective_role(user)
+
 
 class TestPermissionServiceHelpers:
     def test_can_manage_users_admin(self):
@@ -256,8 +263,6 @@ class TestNewPermissionGuardStubs:
     def test_build_dependencies_wires_all_guards(self):
         """After build_dependencies(), none of the guards should raise NotImplementedError."""
         import permissions
-        from models import UserRole
-        from unittest.mock import patch
 
         permissions.build_dependencies()
 
@@ -271,6 +276,24 @@ class TestNewPermissionGuardStubs:
             assert not (guard.__doc__ or "").startswith("Use Depends"), (
                 f"{guard_name} appears to still be a stub after build_dependencies()"
             )
+
+    def test_require_admin_uses_effective_role(self):
+        import permissions
+        from fastapi import HTTPException
+
+        permissions.build_dependencies()
+        user = _make_user("admin", view_as="teacher")
+
+        with pytest.raises(HTTPException):
+            permissions.require_admin(user)
+
+    def test_require_base_admin_keeps_base_role_semantics(self):
+        import permissions
+
+        permissions.build_dependencies()
+        user = _make_user("admin", view_as="teacher")
+
+        assert permissions.require_base_admin(user) is user
 
 
 if __name__ == "__main__":

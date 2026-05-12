@@ -111,6 +111,11 @@ export function canAccessPrintQueue(user: UserMe | null | undefined): boolean {
   return hasAnyRole(user, "admin", "esq_head", "secretary", "print_shop");
 }
 
+/** Operational tools shared by admin and staff: pickup QR, room-floor actions, and ops exports. */
+export function canManageOperationalWork(user: UserMe | null | undefined): boolean {
+  return hasAnyRole(user, "admin", "staff");
+}
+
 /** Manage or view external (non-standard) exam entries. */
 export function canAccessExternalExams(
   user: UserMe | null | undefined,

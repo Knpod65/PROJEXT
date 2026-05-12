@@ -321,9 +321,13 @@ def upcoming_schedules(
 
 
 @router.get("/schedule/{student_id}", include_in_schema=False)
-def student_schedule_legacy(student_id: str, db: Session = Depends(get_db)):
+def student_schedule_legacy(
+    student_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     # Backward-compatible path for older clients.
-    return student_schedule(student_id, db)
+    return student_schedule(student_id, db, current_user)
 
 
 # ── GET /api/public/timeline ──────────────────────────────────

@@ -43,18 +43,16 @@ SUPERVISION_ROLES: Set[UserRole] = {
 # ── Effective role (respects view_as impersonation) ──────────────────────────
 
 def get_effective_role(user: models.User) -> UserRole:
-    if user.role == UserRole.admin and user.view_as_role:
-        return user.view_as_role
-    return user.role
+    from auth_utils import get_effective_role as resolve_effective_role
+
+    return resolve_effective_role(user)
 
 
 def get_dept_filter(user: models.User) -> Optional[str]:
     """Returns dept_code restriction, or None = see all."""
-    if user.role in VIEW_ALL_ROLES:
-        return None
-    if user.role in (UserRole.dept_supervisor, UserRole.teacher):
-        return user.dept_code
-    return None
+    from auth_utils import get_dept_filter as resolve_dept_filter
+
+    return resolve_dept_filter(user)
 
 
 def coerce_user_role(value: object) -> UserRole | None:
@@ -128,24 +126,25 @@ def build_dependencies():
     from auth_utils import get_current_user
 
     def _require_admin(cu: models.User = Depends(get_current_user)) -> models.User:
-        if cu.role != UserRole.admin:
+        if get_effective_role(cu) != UserRole.admin:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "ต้องการสิทธิ์ admin")
         return cu
 
     def _require_staff_or_admin(cu: models.User = Depends(get_current_user)) -> models.User:
-        if cu.role not in (UserRole.admin, UserRole.staff):
+        if get_effective_role(cu) not in (UserRole.admin, UserRole.staff):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "ต้องการสิทธิ์ staff หรือ admin")
         return cu
 
     def _require_view_all(cu: models.User = Depends(get_current_user)) -> models.User:
-        if cu.role not in VIEW_ALL_ROLES:
+        if get_effective_role(cu) not in VIEW_ALL_ROLES:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "ต้องการสิทธิ์ระดับ admin หรือผู้มีอำนาจ")
         return cu
 
     def _require_write(cu: models.User = Depends(get_current_user)) -> models.User:
-        if cu.role in (UserRole.esq_head, UserRole.secretary):
+        eff = get_effective_role(cu)
+        if eff in (UserRole.esq_head, UserRole.secretary):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "บัญชีนี้มีสิทธิ์อ่านอย่างเดียว")
-        if cu.role not in WRITE_ROLES:
+        if eff not in WRITE_ROLES:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "ไม่มีสิทธิ์แก้ไข")
         return cu
 
@@ -164,7 +163,8 @@ def build_dependencies():
         return cu
 
     def _require_dept_or_admin(cu: models.User = Depends(get_current_user)) -> models.User:
-        if get_effective_role(cu) not in (
+        eff = get_effective_role(cu)
+        if eff not in (
             UserRole.admin, UserRole.dept_supervisor,
             UserRole.esq_head, UserRole.secretary,
         ):
@@ -217,12 +217,12 @@ def assert_submission_access(
 
     eff = get_effective_role(user)
 
-    if user.role in VIEW_ALL_ROLES:
-        if write and user.role != UserRole.admin:
+    if eff in VIEW_ALL_ROLES:
+        if write and eff != UserRole.admin:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "บัญชีนี้มีสิทธิ์อ่านอย่างเดียว")
         return sub
 
-    if user.role == UserRole.dept_supervisor:
+    if eff == UserRole.dept_supervisor:
         # dept_supervisor can read all submissions (dept filter applied at list level)
         if write:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "dept_supervisor ไม่สามารถแก้ไข submission ได้")

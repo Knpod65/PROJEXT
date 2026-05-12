@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
-from auth_utils import log_action, require_print_shop
+from auth_utils import require_print_shop
 from database import get_db
 import models
+from services.audit_service import audit_mutation
 
 router = APIRouter()
 
@@ -96,6 +97,7 @@ def _transition_job(
     if job.status != expected_status:
         raise HTTPException(status_code=400, detail=f"Job must be {expected_status.value} before {action.lower()}.")
 
+    previous_status = job.status.value if isinstance(job.status, models.PrintJobStatus) else str(job.status)
     job.status = next_status
     setattr(job, timestamp_field, datetime.now(timezone.utc))
     if next_status == models.PrintJobStatus.processing:
@@ -103,12 +105,13 @@ def _transition_job(
 
     db.commit()
     db.refresh(job)
-    log_action(
+    audit_mutation(
         db,
         current_user,
         action,
         "print_queue_jobs",
         record_id=job.id,
+        old_values={"status": previous_status},
         new_values={"status": next_status.value},
         request=request,
     )
@@ -235,17 +238,27 @@ def update_print_job_notes(
     current_user: models.User = Depends(require_print_shop),
 ):
     job = _get_job(db, job_id)
+    old_values = {
+        "notes_present": bool((job.notes or "").strip()),
+        "delivery_note_present": bool((job.delivery_note or "").strip()),
+    }
     job.notes = data.notes
     job.delivery_note = data.delivery_note
     db.commit()
     db.refresh(job)
-    log_action(
+    audit_mutation(
         db,
         current_user,
         "PRINT_JOB_NOTES_UPDATE",
         "print_queue_jobs",
         record_id=job.id,
-        new_values={"notes": data.notes, "delivery_note": data.delivery_note},
+        old_values=old_values,
+        new_values={
+            "notes_present": bool((data.notes or "").strip()),
+            "notes_length": len((data.notes or "").strip()),
+            "delivery_note_present": bool((data.delivery_note or "").strip()),
+            "delivery_note_length": len((data.delivery_note or "").strip()),
+        },
         request=request,
     )
     return _serialize_job(job)

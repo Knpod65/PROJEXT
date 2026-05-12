@@ -1,12 +1,13 @@
 """
 M3 — PDF Generator (stub — จะ implement เต็มใน phase ถัดไป)
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from database import get_db
 import models
 from auth_utils import get_current_user
 from config.policy import PDF_TOKEN_EXPIRE_HOURS
+from services.audit_service import audit_event
 import uuid, secrets
 from datetime import datetime, timedelta, timezone
 
@@ -15,6 +16,7 @@ router = APIRouter()
 @router.post("/token/{section_id}")
 def generate_pdf_token(
     section_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -32,6 +34,15 @@ def generate_pdf_token(
     )
     db.add(token)
     db.commit()
+    audit_event(
+        db,
+        current_user,
+        action="PDF_TOKEN_ISSUED",
+        table_name="pdf_tokens",
+        record_id=token.id,
+        metadata={"section_id": section_id, "expires_in_hours": PDF_TOKEN_EXPIRE_HOURS},
+        request=request,
+    )
     return {"token": token_str, "expires_in": f"{PDF_TOKEN_EXPIRE_HOURS} hour"}
 
 

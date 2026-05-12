@@ -281,7 +281,10 @@ def health_check(db: Session = Depends(get_db)):
         }
     except Exception as e:
         from fastapi.responses import JSONResponse
-        return JSONResponse(status_code=503, content={"status": "error", "detail": str(e)})
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "detail": type(e).__name__},
+        )
 
 # Route cache: maps "/api/X" → "/api/X/" when a slash-version exists.
 # Starlette's redirect_slashes can't fire because this catch-all matches first.

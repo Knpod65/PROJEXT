@@ -97,8 +97,8 @@ curl -b cookies.txt $BASE/api/auth/me
 # List submissions (authenticated)
 curl -b cookies.txt $BASE/api/submissions/
 
-# Public student schedule (no auth)
-curl $BASE/api/public/schedule/640610001
+# Student schedule lookup (authenticated; student can only view their own record)
+curl -b cookies.txt $BASE/api/public/schedule/student/640610001
 
 # Audit logs (admin only)
 curl -b cookies.txt $BASE/api/exports/audit-logs
@@ -121,6 +121,23 @@ python -c "import secrets; print(secrets.token_hex(16))"
 # POSTGRES_PASSWORD
 python -c "import secrets; print(secrets.token_urlsafe(20))"
 ```
+
+---
+
+## ♻️ Restore Procedure
+
+```bash
+# Restore the latest PostgreSQL backup into a non-running stack
+gunzip -c ../../data/backups/db/ems_db_<timestamp>.sql.gz | \
+  docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+
+# Restore uploaded files snapshot
+rsync -av ../../data/backups/files/ ../../data/uploads/
+```
+
+Validate restore before reopening the service:
+- `curl http://localhost/health`
+- `curl http://localhost/api/health/ready -H 'X-Internal-Health: 1'`
 
 ---
 

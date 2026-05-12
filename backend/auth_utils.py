@@ -101,14 +101,9 @@ def build_workspace_rejection_detail(
 
 
 def _coerce_user_role(value: object) -> models.UserRole | None:
-    if isinstance(value, models.UserRole):
-        return value
-    if isinstance(value, str):
-        try:
-            return models.UserRole(value)
-        except ValueError:
-            return None
-    return None
+    from permissions import coerce_user_role
+
+    return coerce_user_role(value)
 
 
 def resolve_active_role(user: models.User, selected_role: str) -> models.UserRole:
