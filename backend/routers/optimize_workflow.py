@@ -41,6 +41,7 @@ from config.policy import WORKFLOW_LOCK_TTL_SECONDS
 from services.audit_service import audit_event
 from services.exceptions import EMSDomainError, EMSPermissionError
 from services import workflow_lock_service
+from services.optimization_recheck_service import run_optimization_recheck
 from services.workflow_signing_service import (
     apply_signature,
     approve_transition,
@@ -453,6 +454,73 @@ def get_session(
     if not sess:
         return {"status": "no_session", "message": "ยังไม่ได้ optimize"}
     return build_session_payload(sess)
+
+
+@router.post("/sessions/{session_id}/recheck")
+def recheck_generated_schedule(
+    session_id: int,
+    request: Request,
+    override: bool = False,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if get_effective_role(current_user) not in (
+        models.UserRole.admin,
+        models.UserRole.staff,
+        models.UserRole.esq_head,
+        models.UserRole.secretary,
+    ):
+        raise HTTPException(403, "ไม่มีสิทธิ์ตรวจ recheck")
+
+    report = run_optimization_recheck(db, session_id)
+    audit_event(
+        db,
+        current_user,
+        "OPTIMIZATION_RECHECK_RUN",
+        table_name="optimize_sessions",
+        record_id=session_id,
+        metadata={"status": report["status"], "summary": report["summary"]},
+        request=request,
+    )
+
+    if report["status"] == "FAIL":
+        audit_event(
+            db,
+            current_user,
+            "OPTIMIZATION_RECHECK_FAIL",
+            table_name="optimize_sessions",
+            record_id=session_id,
+            metadata={"hard_error_count": report["summary"]["hard_error_count"]},
+            request=request,
+        )
+        if override:
+            audit_event(
+                db,
+                current_user,
+                "OPTIMIZATION_RECHECK_OVERRIDE",
+                table_name="optimize_sessions",
+                record_id=session_id,
+                metadata={"override": True},
+                request=request,
+            )
+
+    return report
+
+
+@router.get("/sessions/{session_id}/recheck/latest")
+def get_latest_recheck_report(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if get_effective_role(current_user) not in (
+        models.UserRole.admin,
+        models.UserRole.staff,
+        models.UserRole.esq_head,
+        models.UserRole.secretary,
+    ):
+        raise HTTPException(403, "ไม่มีสิทธิ์ดู recheck report")
+    return run_optimization_recheck(db, session_id)
 
 
 @router.post("/session/init")
