@@ -9,7 +9,7 @@
 |------|--------|----------|-------|
 | Phase 1 — Architecture Governance | Complete | 100% | Done |
 | Phase 2 — DRY Configuration Layer | Near complete | 90% | Core config centralized; final cleanup still open |
-| Phase 3 — Service Layer Foundation | In progress | 45% | Foundations exist; `submissions.py` now has its first service/repository/policy slice, but major routers still need extraction |
+| Phase 3 — Service Layer Foundation | In progress | 50% | Foundations exist; workflow lock lifecycle extracted from `optimize_workflow.py` into service layer |
 | Phase 4 — PDPA / Security Enforcement | In progress | 55% | Strong controls exist; public exposure and transaction/audit coupling remain |
 | Phase 5 — Test and Delivery Maturity | In progress | 35% | Backend unit tests exist; CI and integration slices still missing |
 | Phase 6 — Faculty IT / Multi-Faculty Readiness | Started | 15% | Auth contract documented; implementation not started |
@@ -75,6 +75,8 @@ In progress
 - print-note audit minimization
 - `submissions.py` list/detail access now routes through `submission_service.py`
 - submission file-access, message-access, and print-spec validation now reuse service/policy helpers
+- workflow edit-lock lifecycle extracted to `services/workflow_lock_service.py`
+- lock acquire/release/heartbeat now emit semantic audit events (`WORKFLOW_LOCK_*`)
 
 ### Still open
 - Extract service/repository slices from:
@@ -84,6 +86,7 @@ In progress
   - `backend/routers/exam_manager.py`
 - Complete remaining mutation-heavy extraction inside `backend/routers/submissions.py`
 - Move object-level checks out of routers and into reusable policy/service helpers
+- Extract workflow signing state machine rules from `optimize_workflow.py` into dedicated service
 
 ### Exit criteria
 - Top 5 routers reduced materially in size and complexity

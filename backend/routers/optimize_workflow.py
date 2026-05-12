@@ -35,9 +35,12 @@ import models
 import permissions
 from auth_utils import (
     require_admin, require_staff_or_admin, get_current_user, log_action, hash_password, get_effective_role,
-    SIGN_ORDER_USERNAMES, is_signer, require_view_all
+    SIGN_ORDER_USERNAMES, require_view_all
 )
 from config.policy import WORKFLOW_LOCK_TTL_SECONDS
+from services.audit_service import audit_event
+from services.exceptions import EMSDomainError, EMSPermissionError
+from services import workflow_lock_service
 from staff_workloads import (
     PAPER_DISTRIBUTION_EXCLUDED_NAME_SNIPPETS,
     PAPER_DISTRIBUTION_EXCLUDED_USERNAMES,
@@ -982,10 +985,7 @@ LOCK_TTL_SECONDS = WORKFLOW_LOCK_TTL_SECONDS
 
 
 def _is_lock_expired(sess: models.OptimizeSession) -> bool:
-    if not sess.edit_lock_at:
-        return True
-    elapsed = (datetime.now(timezone.utc) - sess.edit_lock_at).total_seconds()
-    return elapsed > LOCK_TTL_SECONDS
+    return workflow_lock_service.is_lock_expired(sess)
 
 
 def _get_active_session(db: Session) -> Optional[models.OptimizeSession]:
@@ -1004,41 +1004,18 @@ def _assert_editable(sess: models.OptimizeSession, current_user: models.User):
     ตรวจสอบว่า session อยู่ใน state ที่แก้ได้
     และ user นี้ถือ lock อยู่ (หรือ lock หมดอายุแล้ว)
     """
-    if sess is None:
-        raise HTTPException(400, "ยังไม่มี optimize session")
-    if sess.status not in ("draft",):
-        raise HTTPException(400,
-            f"ไม่สามารถแก้ไขได้ — session status='{sess.status}' "
-            "(ต้องอยู่ใน draft เท่านั้น)")
-    # ตรวจสิทธิ์ลงนาม
-    if not is_signer(current_user):
-        raise HTTPException(403, "เฉพาะผู้มีสิทธิ์ลงนามเท่านั้น (admin / esq_head / secretary)")
-
-    # ตรวจ lock
-    if sess.edit_lock_user_id and sess.edit_lock_user_id != current_user.id:
-        if not _is_lock_expired(sess):
-            holder = sess.edit_lock_user
-            name   = holder.full_name if holder else f"user#{sess.edit_lock_user_id}"
-            remaining = int(LOCK_TTL_SECONDS -
-                (datetime.now(timezone.utc) - sess.edit_lock_at).total_seconds())
-            raise HTTPException(423,
-                f"กำลังถูกแก้ไขโดย {name} "
-                f"(หมดอายุใน {remaining} วินาที)")
+    try:
+        workflow_lock_service.assert_session_editable_for_lock(sess, current_user)
+    except EMSPermissionError as exc:
+        raise HTTPException(403, exc.message)
+    except EMSDomainError as exc:
+        raise HTTPException(423 if "กำลังถูกแก้ไข" in exc.message else 400, exc.message)
 
 
 def _acquire_lock(db: Session, sess: models.OptimizeSession,
                   user: models.User) -> None:
-    sess.edit_lock_user_id = user.id
-    sess.edit_lock_at      = datetime.now(timezone.utc)
+    workflow_lock_service.acquire_lock(sess, user)
     db.commit()
-
-
-def _release_lock(db: Session, sess: models.OptimizeSession,
-                  user: models.User) -> None:
-    if sess.edit_lock_user_id == user.id:
-        sess.edit_lock_user_id = None
-        sess.edit_lock_at      = None
-        db.commit()
 
 
 @router.post("/session/lock")
@@ -1060,6 +1037,15 @@ def acquire_edit_lock(
     # ถ้าตัวเองถือ lock อยู่แล้ว → ต่ออายุ
     if sess.edit_lock_user_id == current_user.id or _is_lock_expired(sess):
         _acquire_lock(db, sess, current_user)
+        audit_event(
+            db,
+            current_user,
+            "WORKFLOW_LOCK_ACQUIRED",
+            table_name="optimize_sessions",
+            record_id=sess.id,
+            metadata={"exam_period_id": sess.exam_period_id, "lock_ttl_seconds": LOCK_TTL_SECONDS},
+            request=request,
+        )
         return {
             "status":   "locked",
             "holder":   current_user.full_name,
@@ -1081,21 +1067,41 @@ def release_edit_lock(
     """Admin ปล่อย lock เมื่อแก้เสร็จ"""
     sess = _get_active_session(db)
     if sess:
-        _release_lock(db, sess, current_user)
+        released = workflow_lock_service.release_lock(sess, current_user)
+        if released:
+            db.commit()
+            audit_event(
+                db,
+                current_user,
+                "WORKFLOW_LOCK_RELEASED",
+                table_name="optimize_sessions",
+                record_id=sess.id,
+                metadata={"exam_period_id": sess.exam_period_id},
+                request=request,
+            )
     return {"status": "unlocked"}
 
 
 @router.post("/session/heartbeat")
 def heartbeat_lock(
+    request: Request,
     db:  Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
     require_active_period_for_mutation(db)
     """ต่ออายุ lock (frontend เรียกทุก 60 วิ ขณะกำลังแก้อยู่)"""
     sess = _get_active_session(db)
-    if sess and sess.edit_lock_user_id == current_user.id:
-        sess.edit_lock_at = datetime.now(timezone.utc)
+    if sess and workflow_lock_service.heartbeat_lock(sess, current_user):
         db.commit()
+        audit_event(
+            db,
+            current_user,
+            "WORKFLOW_LOCK_HEARTBEAT",
+            table_name="optimize_sessions",
+            record_id=sess.id,
+            metadata={"exam_period_id": sess.exam_period_id, "lock_ttl_seconds": LOCK_TTL_SECONDS},
+            request=request,
+        )
         return {"status": "renewed", "expires_in": LOCK_TTL_SECONDS}
     return {"status": "not_holder"}
 
@@ -1111,8 +1117,7 @@ def get_lock_status(
         return {"locked": False, "holder": None, "is_mine": False}
 
     holder = sess.edit_lock_user
-    remaining = int(LOCK_TTL_SECONDS -
-        (datetime.now(timezone.utc) - sess.edit_lock_at).total_seconds())
+    remaining = workflow_lock_service.remaining_lock_seconds(sess)
 
     return {
         "locked":       True,
