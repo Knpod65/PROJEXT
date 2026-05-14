@@ -42,6 +42,8 @@ from services.audit_service import audit_event
 from services.exceptions import EMSDomainError, EMSPermissionError
 from services import workflow_lock_service
 from services.optimization_recheck_service import run_optimization_recheck
+from services.workflow_user_service import format_user_dict, build_external_workflow_issues
+from services.workflow_reporting_service import build_staff_workload_report
 from services.workflow_signing_service import (
     apply_signature,
     approve_transition,
@@ -215,21 +217,7 @@ def toggle_user(
 
 
 def _user_dict(u: models.User) -> dict:
-    return {
-        "id":          u.id,
-        "username":    u.username,
-        "email":       u.email,
-        "role":        u.role.value if u.role else None,
-        "full_name":   u.full_name,
-        "title":       u.title,
-        "division":    u.division,
-        "unit":        u.unit,
-        "dept_code":   u.dept_code,
-        "mobile":      u.mobile,
-        "ext":         u.ext,
-        "employee_id": u.employee_id,
-        "is_active":   u.is_active,
-    }
+    return format_user_dict(u)
 
 
 # ════════════════════════════════════════════════════════════════
@@ -276,53 +264,7 @@ def _get_active_period_or_none(db: Session) -> models.ExamPeriod | None:
 
 
 def _build_external_workflow_issues(db: Session, period_id: int | None) -> list[dict[str, object]]:
-    if not period_id:
-        return []
-
-    exams = db.query(models.ExternalExam).options(
-        joinedload(models.ExternalExam.supervisions)
-    ).filter(
-        models.ExternalExam.exam_period_id == period_id
-    ).order_by(
-        models.ExternalExam.exam_date,
-        models.ExternalExam.exam_time,
-        models.ExternalExam.id,
-    ).all()
-
-    issues: list[dict[str, object]] = []
-    for exam in exams:
-        assigned = len(exam.supervisions or [])
-        needed = exam.invigilators_needed or 0
-        reference = exam.title or f"External exam #{exam.id}"
-
-        if needed > 0 and assigned == 0:
-            issues.append(
-                {
-                    "id": f"external-none-{exam.id}",
-                    "type": "no_invigilator_assigned",
-                    "severity": "error",
-                    "scope": "external",
-                    "title": "No invigilator assigned",
-                    "message": f"{reference} has no assigned staff for {exam.exam_date or '-'} {exam.exam_time or ''}.",
-                    "reference": reference,
-                }
-            )
-            continue
-
-        if assigned < needed:
-            issues.append(
-                {
-                    "id": f"external-short-{exam.id}",
-                    "type": "external_staff_shortage",
-                    "severity": "warning",
-                    "scope": "external",
-                    "title": "External exam staff shortage",
-                    "message": f"{reference} needs {needed} staff but only {assigned} are assigned.",
-                    "reference": reference,
-                }
-            )
-
-    return issues
+    return build_external_workflow_issues(db, period_id)
 
 
 @router.get("/unavailability/")
@@ -672,16 +614,8 @@ def get_staff_workload_report(
     current_user: models.User = Depends(require_staff_or_admin),
 ):
     period = _resolve_period_for_reporting(db, period_id)
-    snapshot = get_period_workload_snapshot(db, period)
-    snapshot["period"] = {
-        "id": period.id,
-        "semester": period.semester,
-        "academic_year": period.academic_year,
-        "exam_type": period.exam_type,
-        "label": period.label,
-    }
-    snapshot["viewer_role"] = current_user.role.value if current_user.role else None
-    return snapshot
+    viewer_role = current_user.role.value if current_user.role else None
+    return build_staff_workload_report(db, period, viewer_role)
 
 
 @router.get("/paper-distribution/assignments")
