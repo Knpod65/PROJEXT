@@ -21,6 +21,12 @@ from routers import auth, courses, schedule, users, dashboard, pdf, public, sett
 from routers import scheduler, exports_excel, health as health_router
 import models
 
+# Event handler registration (side-effect imports)
+import event_handlers.optimization_handler  # noqa: F401
+import event_handlers.governance_handler    # noqa: F401
+import event_handlers.publication_handler   # noqa: F401
+import event_handlers.audit_handler         # noqa: F401
+
 try:
     from routers import imports, imports_v2
     IMPORT_ROUTERS_ERROR = None
