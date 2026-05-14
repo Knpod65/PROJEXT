@@ -13,6 +13,9 @@ This pass was intentionally not a feature sprint. It was a system inspection and
 
 **Readiness score after this pass: 80 / 100**
 
+> **Updated 2026-05-14:** After the modernization sprint (Phases 1–3D), readiness score is now **90 / 100**.
+> See `FINAL_PLATFORM_READINESS_REPORT.md` for the current Go/No-Go assessment.
+
 ---
 
 ## 2. Validation Results

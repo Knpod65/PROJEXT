@@ -1,9 +1,9 @@
 # EMS Completion Gap Report
-## Academic Operations Platform — 2026-05-12
+## Academic Operations Platform — 2026-05-14 (updated after modernization sprint)
 
-> Scope: codebase reality on `main` after the ultra-detailed stabilization pass
-> Baseline head at audit start: `c4e864d` (`Finalize EMS production hardening and platform readiness`)
-> User-provided last known head: `1d4e78c` (`Add EMS service foundation, health checks, and production hardening report`)
+> Scope: codebase reality on `main` after the modernization sprint (Phases 1–3D)
+> Sprint head: `c4a909d` (`Add AI recommendation layer foundation`)
+> Previous baseline head: `c4e864d` (`Finalize EMS production hardening and platform readiness`)
 
 ---
 
@@ -11,9 +11,10 @@
 
 EMS is no longer a fragile prototype. It is a working FastAPI + React academic operations platform with healthy baseline validation, a growing service layer, typed configuration, and materially improved security posture. It is also not yet fully renovated: the largest remaining risks are still router fatness, public data-surface decisions, transaction/audit coupling, partial PDPA enforcement, and uneven frontend/i18n consistency.
 
-**Current readiness score: 80 / 100**
+**Current readiness score: 90 / 100** (up from 80 / 100 after modernization sprint)
 
-This is a real improvement from the earlier **75 / 100** user-known state and from the previously documented **78 / 100** internal report state on 2026-05-11.
+Previous score of 80/100 (2026-05-12) → 90/100 (2026-05-14) after 10 phases of modernization.
+Score increase driven by: CI/CD, transaction/audit coupling foundation, trace PII enforcement, multi-faculty policy skeleton, deterministic optimization intelligence (simulation, balancing, recommendations), governance UI contract, and 272 new tests (94 → 366).
 
 ---
 
@@ -33,11 +34,12 @@ This is a real improvement from the earlier **75 / 100** user-known state and fr
   - `SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS`
   - `WORKFLOW_LOCK_TTL_SECONDS`
 
-### Validation baseline
+### Validation baseline (updated 2026-05-14)
 - Backend compile: pass
 - Backend `import main`: pass
-- Backend tests: `94 passed`
-- Frontend build: pass
+- Backend tests: `366 passed` (was 94; +272 from modernization sprint)
+- Frontend build: pass (TypeScript zero errors)
+- CI: GitHub Actions workflow shipped (`.github/workflows/ems-ci.yml`)
 
 ### Service-layer foundation
 - `services/permission_service.py`
@@ -45,6 +47,27 @@ This is a real improvement from the earlier **75 / 100** user-known state and fr
 - `services/health_service.py`
 - `services/submission_service.py`
 - `services/exceptions.py`
+- `services/optimization_trace_service.py` ✅ NEW (Phase 1)
+- `services/event_service.py` ✅ NEW (Phase 1B) — in-memory event bus
+- `services/unit_of_work.py` ✅ NEW (Phase 2C) — transaction boundary foundation
+- `services/audit_event_service.py` ✅ NEW (Phase 2C) — coupled audit + event
+- `services/faculty_scope_service.py` ✅ NEW (Phase 3) — multi-faculty stubs
+- `services/optimization_simulation_service.py` ✅ NEW (Phase 3B)
+- `services/optimization_comparison_service.py` ✅ NEW (Phase 3B)
+- `services/predictive_balancing_service.py` ✅ NEW (Phase 3C)
+- `services/recommendation_service.py` ✅ NEW (Phase 3D)
+
+### Resolved gaps (2026-05-14 modernization sprint)
+- ~~No CI pipeline~~ → **RESOLVED**: `.github/workflows/ems-ci.yml` ships backend + frontend CI on every push
+- ~~No transaction/audit coupling~~ → **FOUNDATION IN**: `unit_of_work.py` + `audit_event_service.py`; routers not yet migrated
+- ~~No trace/explainability infrastructure~~ → **RESOLVED**: native trace events with PII stripping
+- ~~No in-memory event bus~~ → **RESOLVED**: `InMemoryEventBus` singleton, 500-event ring buffer
+- ~~No governance UI TypeScript contract~~ → **RESOLVED**: `optimizationGovernance.ts` types + utils
+- ~~No declarative policy rule registry~~ → **RESOLVED**: `optimization_rules.py`, `evaluate_schedule()`
+- ~~No multi-faculty isolation gates~~ → **FOUNDATION IN**: feature-flagged policy skeleton; DB migration pending IT approval
+- ~~No schedule simulation~~ → **RESOLVED**: deep-copy simulation + quality comparison
+- ~~No workload risk detection~~ → **RESOLVED**: deterministic heuristics, no ML, no solver
+- ~~No recommendation layer~~ → **RESOLVED**: human-approval-gated skeleton with 21 tests
 
 ---
 
@@ -99,10 +122,11 @@ This is a real improvement from the earlier **75 / 100** user-known state and fr
 
 ### Medium
 1. `backend/routers/scheduler.py` internal cron endpoints are still not audit-logged.
-2. `backend/routers/optimize_workflow.py` lock / unlock / heartbeat events are still not audit-logged.
+2. `backend/routers/optimize_workflow.py` lock / unlock / heartbeat events are still not audit-logged (foundation is in `audit_event_service.py`; routers not yet wired).
 3. `backend/routers/health.py` readiness logic still documents stricter access semantics than it currently enforces.
 4. `frontend/src/pages/Users.tsx`, `Settings.tsx`, `Period.tsx`, `Workflow.tsx`, `Swaps.tsx` are legacy-style pages with raw labels and ad hoc UX patterns.
-5. There is still no CI pipeline and no migration framework such as Alembic.
+5. ~~There is still no CI pipeline~~ **RESOLVED**: GitHub Actions CI ships backend + frontend validation.
+6. No Alembic migration framework (multi-faculty `faculty_id` column will require one).
 
 ---
 
