@@ -20,6 +20,32 @@ from staff_workloads import (
 from term_lifecycle import require_period_editable_for_values
 from time_ranges import normalize_time_range, parse_time_range, ranges_overlap
 from repositories.schedule_repository import load_unavailability_maps as _load_unavailability_maps_repo
+from services.optimization_candidate_trace_adapter import (
+    REASON_CODE_FAIRNESS_PENALTY,
+    REASON_CODE_FALLBACK_USED,
+    trace_room_candidate,
+    trace_split_candidate,
+    trace_staff_candidate,
+    trace_timeslot_candidate,
+)
+from services.optimization_constraint_trace_adapter import (
+    trace_capacity_constraint,
+    trace_document_readiness_constraint,
+    trace_fairness_constraint,
+    trace_hard_constraint,
+    trace_qr_readiness_constraint,
+    trace_room_conflict_constraint,
+    trace_soft_constraint,
+    trace_staffing_constraint,
+    trace_student_conflict_constraint,
+)
+from services.optimization_pipeline_observer_service import observe_optimization_result
+from services.optimization_selection_trace_adapter import (
+    trace_final_schedule_selection,
+    trace_room_selection,
+    trace_split_selection,
+    trace_staff_selection,
+)
 from services.schedule_query_service import (
     build_schedule_query as _build_schedule_query_service,
     group_schedules_by_date as _group_schedules_by_date,
@@ -27,6 +53,13 @@ from services.schedule_query_service import (
     schedule_time_bounds as _schedule_time_bounds_service,
     serialize_schedule as _serialize_schedule,
 )
+from services.optimization_trace_context import (
+    OptimizationTraceContext,
+    TRACE_SOURCE_FALLBACK,
+    TRACE_SOURCE_POST_HOC,
+    TRACE_SOURCE_SOLVER,
+)
+from services.optimization_recheck_service import build_recheck_report
 
 router = APIRouter()
 
@@ -82,6 +115,205 @@ def _get_schedule(section, exam_type=None):
         if s.exam_type == exam_type or s.exam_type.value == exam_type:
             return s
     return None
+
+
+def _optimizer_exam_type_value(data) -> str:
+    return data.exam_type.value if hasattr(data.exam_type, "value") else str(data.exam_type)
+
+
+def _optimizer_trace_session_id(data) -> str:
+    return f"{data.academic_year}:{data.semester}:{_optimizer_exam_type_value(data)}"
+
+
+def _slot_trace_label(exam_date: str | None, exam_time: str | None) -> str:
+    if exam_date and exam_time:
+        return f"{exam_date} {exam_time}"
+    return exam_date or exam_time or "UNSPECIFIED_SLOT"
+
+
+def _link_trace_recheck_issues(
+    trace_context: OptimizationTraceContext,
+    issues: list[dict],
+) -> None:
+    for issue in issues:
+        if not isinstance(issue, dict):
+            continue
+        code = str(issue.get("code") or "UNKNOWN_CONSTRAINT")
+        severity = str(issue.get("severity") or "INFO").upper()
+        entity_type = str(issue.get("category") or "schedule_entry").lower()
+        entity_id = issue.get("course_id") or issue.get("actor_id") or issue.get("room_id") or code
+        metadata = {
+            "category": issue.get("category"),
+            "blocking": issue.get("blocking"),
+            "can_override": issue.get("can_override"),
+            "suggested_fix": issue.get("suggested_fix"),
+            "exam_date": issue.get("exam_date"),
+            "exam_time": issue.get("exam_time"),
+            "room_id": issue.get("room_id"),
+            "actor_id": issue.get("actor_id"),
+            "message": issue.get("message"),
+        }
+
+        if code == "ROOM_CAPACITY_EXCEEDED":
+            trace_capacity_constraint(
+                trace_context,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+        elif code in {"MISSING_INVIGILATOR", "MISSING_DISTRIBUTION_STAFF", "INSTRUCTOR_CONFLICT"}:
+            trace_staffing_constraint(
+                trace_context,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+        elif code == "ROOM_CONFLICT":
+            trace_room_conflict_constraint(
+                trace_context,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+        elif code == "STUDENT_CONFLICT":
+            trace_student_conflict_constraint(
+                trace_context,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+        elif code in {"WORKLOAD_IMBALANCE", "CONSECUTIVE_INVIGILATION_OVERLOAD", "SAME_DAY_OVERLOAD"}:
+            trace_fairness_constraint(
+                trace_context,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                severity=severity,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+        elif code == "COPY_COUNT_MISMATCH":
+            trace_document_readiness_constraint(
+                trace_context,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                severity=severity,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+        elif code == "MISSING_QR_READINESS":
+            trace_qr_readiness_constraint(
+                trace_context,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                severity=severity,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+        elif severity == "HARD_FAIL":
+            trace_hard_constraint(
+                trace_context,
+                constraint_code=code,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+        else:
+            trace_soft_constraint(
+                trace_context,
+                constraint_code=code,
+                passed=False,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                reason_code=code,
+                source=TRACE_SOURCE_POST_HOC,
+                severity=severity,
+                message=issue.get("message"),
+                metadata=metadata,
+            )
+
+
+def _build_optimizer_trace_fields(
+    *,
+    period: object | None,
+    schedules: list,
+    trace_context: OptimizationTraceContext,
+) -> dict:
+    recheck = build_recheck_report(
+        period=period,
+        schedules=schedules,
+        submissions_by_section={},
+        enrollments_by_section={},
+    )
+    _link_trace_recheck_issues(trace_context, recheck.get("issues", []))
+    observer_payload = observe_optimization_result(
+        period=period,
+        schedules=schedules,
+        submissions_by_section={},
+        enrollments_by_section={},
+        trace_context=trace_context,
+    )
+    return {
+        "native_trace_summary": observer_payload.get("native_trace_summary", {}),
+        "native_trace_events": observer_payload.get("native_trace_events", []),
+        "traceability_completeness_score": observer_payload.get("traceability_completeness_score", 0.0),
+        "trace_source_breakdown": observer_payload.get("trace_source_breakdown", {}),
+    }
+
+
+def _load_optimizer_trace_schedules(
+    db: Session,
+    *,
+    period: object | None,
+    data,
+) -> list:
+    if not period:
+        return []
+    return (
+        db.query(models.ExamSchedule)
+        .join(models.Section)
+        .filter(
+            models.Section.academic_year == data.academic_year,
+            models.Section.semester == data.semester,
+            models.ExamSchedule.exam_type == _optimizer_exam_type_value(data),
+        )
+        .options(
+            joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
+            joinedload(models.ExamSchedule.section).joinedload(models.Section.teacher),
+            joinedload(models.ExamSchedule.section).joinedload(models.Section.teaching_room),
+            joinedload(models.ExamSchedule.room),
+            joinedload(models.ExamSchedule.supervisions).joinedload(models.Supervision.user),
+        )
+        .all()
+    )
 
 
 # ── CRUD ──────────────────────────────────────────────────────
@@ -171,6 +403,16 @@ def create_schedule(
     )
     db.add(sch)
     db.commit()
+    trace_schedules = _load_optimizer_trace_schedules(
+        db,
+        period=period,
+        data=data,
+    )
+    trace_fields = _build_optimizer_trace_fields(
+        period=period,
+        schedules=trace_schedules,
+        trace_context=trace_context,
+    )
     db.refresh(sch)
     log_action(db, current_user, "CREATE_SCHEDULE", "exam_schedules", sch.id,
                new_values=data.model_dump(), request=request)
@@ -469,16 +711,59 @@ def run_optimizer(
     ]
 
     if not has_ortools:
-        return _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_user, request, unavail_map, room_unavail_map)
+        return _greedy_optimizer(
+            sections,
+            rooms,
+            teachers,
+            time_slots,
+            data,
+            db,
+            current_user,
+            request,
+            unavail_map,
+            room_unavail_map,
+            trace_fallback_reason="ORTOOLS_UNAVAILABLE",
+        )
 
     return _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_user, request, unavail_map, room_unavail_map)
 
 
-def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_user, request, unavail_map=None, room_unavail_map=None):
+def _greedy_optimizer(
+    sections,
+    rooms,
+    teachers,
+    time_slots,
+    data,
+    db,
+    current_user,
+    request,
+    unavail_map=None,
+    room_unavail_map=None,
+    trace_context: OptimizationTraceContext | None = None,
+    trace_fallback_reason: str | None = None,
+):
     """Greedy fallback เมื่อ OR-Tools ไม่ได้ติดตั้ง"""
     assigned = 0
     violations = []
     details = []
+    created_schedules = []
+    trace_context = trace_context or OptimizationTraceContext(
+        session_id=_optimizer_trace_session_id(data)
+    )
+    if trace_fallback_reason:
+        trace_context.add_event(
+            event_type="FALLBACK_USED",
+            stage="SELECTION",
+            entity_type="optimization_run",
+            entity_id=_optimizer_trace_session_id(data),
+            reason_code=REASON_CODE_FALLBACK_USED,
+            source=TRACE_SOURCE_FALLBACK,
+            message="Greedy optimizer was used at the optimizer boundary.",
+            metadata={
+                "algorithm": "greedy",
+                "fallback_reason": trace_fallback_reason,
+            },
+        )
 
     # Track: slot → rooms ที่ใช้แล้ว
     slot_room_used = defaultdict(set)
@@ -558,6 +843,8 @@ def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_u
 
         sup1 = available_teachers[0] if len(available_teachers) > 0 else None
         sup2 = available_teachers[1] if len(available_teachers) > 1 else None
+        sup1_load_before = teacher_count[sup1.id] if sup1 else None
+        sup2_load_before = teacher_count[sup2.id] if sup2 else None
 
         # สร้าง ExamSchedule
         sch = models.ExamSchedule(
@@ -574,6 +861,7 @@ def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_u
         )
         db.add(sch)
         db.flush()
+        created_schedules.append(sch)
 
         # Assign supervisions
         if sup1:
@@ -609,6 +897,169 @@ def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_u
         })
 
         # Room keeper assignment — หมุนเวียนรายวัน (ใช้ day-of-year parity)
+        slot_label = _slot_trace_label(assigned_slot[0], assigned_slot[1])
+        selected_staff_ids = [staff.id for staff in (sup1, sup2) if staff is not None]
+
+        trace_timeslot_candidate(
+            trace_context,
+            entity_type="section",
+            entity_id=section.id,
+            candidate_id=slot_label,
+            source=TRACE_SOURCE_FALLBACK,
+            time_slot=slot_label,
+            message="Greedy optimizer selected a timeslot candidate.",
+        )
+        trace_room_candidate(
+            trace_context,
+            entity_type="section",
+            entity_id=section.id,
+            candidate_id=assigned_room.id,
+            source=TRACE_SOURCE_FALLBACK,
+            message="Greedy optimizer selected a room candidate.",
+            capacity=getattr(assigned_room, "capacity", None),
+            assigned_count=getattr(section, "num_students", 0),
+            building=getattr(assigned_room, "building", None),
+            room_type=getattr(assigned_room, "room_type", None),
+        )
+        trace_room_selection(
+            trace_context,
+            entity_type="section",
+            entity_id=section.id,
+            candidate_id=assigned_room.id,
+            selected_candidate={
+                "room_id": assigned_room.id,
+                "room_name": assigned_room.room_name,
+                "capacity": getattr(assigned_room, "capacity", None),
+                "building": getattr(assigned_room, "building", None),
+                "exam_date": assigned_slot[0],
+                "exam_time": assigned_slot[1],
+            },
+            accepted_reason="GREEDY_CAPACITY_MATCH",
+            tradeoffs_accepted=["FALLBACK_USED"],
+            contributing_constraints=["ROOM_CAPACITY", "ROOM_AVAILABILITY"],
+            quality_impact={"assigned_students": getattr(section, "num_students", 0)},
+            governance_relevance="RECHECK_PENDING",
+            confidence_level="MEDIUM",
+            source=TRACE_SOURCE_FALLBACK,
+        )
+        trace_capacity_constraint(
+            trace_context,
+            passed=(getattr(assigned_room, "capacity", 0) or 0) >= (getattr(section, "num_students", 0) or 0),
+            entity_type="section",
+            entity_id=section.id,
+            reason_code="ROOM_CAPACITY_CONFIRMED",
+            metadata={
+                "room_id": assigned_room.id,
+                "student_count": getattr(section, "num_students", 0),
+                "capacity": getattr(assigned_room, "capacity", None),
+            },
+        )
+        trace_split_candidate(
+            trace_context,
+            entity_type="section",
+            entity_id=section.id,
+            candidate_id="single-room-allocation",
+            source=TRACE_SOURCE_FALLBACK,
+            message="Greedy optimizer used a single-room split candidate.",
+            assigned_count=1,
+        )
+        trace_split_selection(
+            trace_context,
+            entity_type="section",
+            entity_id=section.id,
+            candidate_id="single-room-allocation",
+            selected_candidate={"split_count": 1, "split_reason": "SINGLE_ROOM_ALLOCATION"},
+            accepted_reason="NO_SPLIT_REQUIRED",
+            contributing_constraints=["ROOM_CAPACITY"],
+            governance_relevance="LOW",
+            confidence_level="MEDIUM",
+            source=TRACE_SOURCE_FALLBACK,
+        )
+        for staff_obj, staff_load_before, slot_order in (
+            (sup1, sup1_load_before, 1),
+            (sup2, sup2_load_before, 2),
+        ):
+            if staff_obj is None:
+                continue
+            trace_staff_candidate(
+                trace_context,
+                entity_type="section",
+                entity_id=section.id,
+                candidate_id=staff_obj.id,
+                source=TRACE_SOURCE_FALLBACK,
+                message="Greedy optimizer selected a staff candidate.",
+                staff_current_load=staff_load_before,
+                staff_role="INVIGILATOR",
+                time_slot=slot_label,
+            )
+            trace_staff_selection(
+                trace_context,
+                entity_type="section",
+                entity_id=section.id,
+                candidate_id=staff_obj.id,
+                selected_candidate={
+                    "staff_id": staff_obj.id,
+                    "slot_order": slot_order,
+                    "time_slot": slot_label,
+                },
+                accepted_reason="LOWEST_CURRENT_LOAD",
+                tradeoffs_accepted=[REASON_CODE_FAIRNESS_PENALTY],
+                contributing_constraints=["STAFFING_AVAILABILITY", "WORKLOAD_BALANCE"],
+                quality_impact={"staff_current_load": staff_load_before},
+                governance_relevance="RECHECK_PENDING",
+                confidence_level="MEDIUM",
+                source=TRACE_SOURCE_FALLBACK,
+            )
+        trace_staffing_constraint(
+            trace_context,
+            passed=bool(selected_staff_ids),
+            entity_type="section",
+            entity_id=section.id,
+            reason_code="STAFFING_CONFIRMED" if selected_staff_ids else "MISSING_INVIGILATOR",
+            source=TRACE_SOURCE_FALLBACK,
+            metadata={
+                "selected_staff_ids": selected_staff_ids,
+                "available_staff_count": len(available_teachers),
+                "time_slot": slot_label,
+            },
+        )
+        if selected_staff_ids:
+            trace_context.add_tradeoff_chosen(
+                entity_type="section",
+                entity_id=section.id,
+                candidate_type="STAFF",
+                candidate_id=selected_staff_ids[0],
+                reason_code=REASON_CODE_FAIRNESS_PENALTY,
+                source=TRACE_SOURCE_FALLBACK,
+                message="Greedy staff selection prioritized lower current workloads.",
+                metadata={
+                    "selected_staff_ids": selected_staff_ids,
+                    "selected_staff_loads": [load for load in (sup1_load_before, sup2_load_before) if load is not None],
+                    "available_staff_count": len(available_teachers),
+                },
+            )
+        trace_final_schedule_selection(
+            trace_context,
+            entity_type="section",
+            entity_id=section.id,
+            candidate_id=sch.id,
+            selected_candidate={
+                "schedule_id": sch.id,
+                "room_id": assigned_room.id,
+                "staff_ids": selected_staff_ids,
+                "exam_date": assigned_slot[0],
+                "exam_time": assigned_slot[1],
+                "split_count": 1,
+            },
+            accepted_reason="GREEDY_FINALIZED",
+            tradeoffs_accepted=["FALLBACK_USED"],
+            contributing_constraints=["ROOM_CAPACITY", "STAFFING_AVAILABILITY"],
+            quality_impact={"assigned_students": getattr(section, "num_students", 0)},
+            governance_relevance="RECHECK_PENDING",
+            confidence_level="MEDIUM",
+            source=TRACE_SOURCE_FALLBACK,
+        )
+
         if _room_keepers:
             try:
                 import datetime as _dt
@@ -747,6 +1198,10 @@ def _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_u
         esq_in_stat=esq_in_stat if "esq_in_stat" in dir() else [],
         room_keepers_assigned=room_keepers_assigned,
         reminder=reminder_msg,
+        native_trace_summary=trace_fields["native_trace_summary"],
+        native_trace_events=trace_fields["native_trace_events"],
+        traceability_completeness_score=trace_fields["traceability_completeness_score"],
+        trace_source_breakdown=trace_fields["trace_source_breakdown"],
     )
 
 
@@ -759,6 +1214,9 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
     n_rooms = len(rooms)
     n_slots = len(time_slots)
     n_teachers = len(teachers)
+    trace_context = OptimizationTraceContext(
+        session_id=_optimizer_trace_session_id(data)
+    )
 
     # Variables: x[s][r][t] = 1 ถ้า section s ใช้ room r ใน slot t
     x = {}
@@ -835,14 +1293,52 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
     status = solver.Solve(model)
 
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-        # Fallback to greedy
-        return _greedy_optimizer(sections, rooms, teachers, time_slots, data, db, current_user, request, unavail_map, room_unavail_map)
+        trace_context.add_event(
+            event_type="FALLBACK_USED",
+            stage="SELECTION",
+            entity_type="optimization_run",
+            entity_id=_optimizer_trace_session_id(data),
+            reason_code=REASON_CODE_FALLBACK_USED,
+            source=TRACE_SOURCE_FALLBACK,
+            message="CP-SAT did not produce a feasible result, so greedy fallback was used.",
+            metadata={
+                "algorithm": "CP-SAT",
+                "fallback_algorithm": "greedy",
+                "solver_status": int(status),
+            },
+        )
+        return _greedy_optimizer(
+            sections,
+            rooms,
+            teachers,
+            time_slots,
+            data,
+            db,
+            current_user,
+            request,
+            unavail_map,
+            room_unavail_map,
+            trace_context=trace_context,
+        )
 
     # Extract solution
     assigned = 0
     details = []
+    created_schedules = []
     teacher_count = defaultdict(int)
     slot_teacher_used = defaultdict(set)
+    trace_context.add_penalty_applied(
+        entity_type="optimization_run",
+        entity_id=_optimizer_trace_session_id(data),
+        candidate_type="STAFF",
+        reason_code=REASON_CODE_FAIRNESS_PENALTY,
+        source=TRACE_SOURCE_SOLVER,
+        message="CP-SAT minimized max-minus-min staff load as the fairness objective.",
+        metadata={
+            "objective": "MINIMIZE_MAX_MINUS_MIN_LOAD",
+            "solver_status": int(status),
+        },
+    )
 
     for s_idx, section in enumerate(sections):
         if _get_schedule(section):
@@ -867,6 +1363,8 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
                     available.sort(key=lambda t: teacher_count[t.id])
                     sup1 = available[0] if available else None
                     sup2 = available[1] if len(available) > 1 else None
+                    sup1_load_before = teacher_count[sup1.id] if sup1 else None
+                    sup2_load_before = teacher_count[sup2.id] if sup2 else None
 
                     sch = models.ExamSchedule(
                         section_id=section.id,
@@ -882,6 +1380,7 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
                     )
                     db.add(sch)
                     db.flush()
+                    created_schedules.append(sch)
 
                     if sup1:
                         db.add(models.Supervision(
@@ -907,6 +1406,167 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
                         "time": slot[1],
                         "room": room.room_name,
                     })
+                    slot_label = _slot_trace_label(slot[0], slot[1])
+                    selected_staff_ids = [staff.id for staff in (sup1, sup2) if staff is not None]
+                    solver_status_label = "OPTIMAL" if status == cp_model.OPTIMAL else "FEASIBLE"
+
+                    trace_timeslot_candidate(
+                        trace_context,
+                        entity_type="section",
+                        entity_id=section.id,
+                        candidate_id=slot_label,
+                        source=TRACE_SOURCE_SOLVER,
+                        time_slot=slot_label,
+                        message="CP-SAT selected a timeslot candidate.",
+                    )
+                    trace_room_candidate(
+                        trace_context,
+                        entity_type="section",
+                        entity_id=section.id,
+                        candidate_id=room.id,
+                        source=TRACE_SOURCE_SOLVER,
+                        message="CP-SAT selected a room candidate.",
+                        capacity=getattr(room, "capacity", None),
+                        assigned_count=getattr(section, "num_students", 0),
+                        building=getattr(room, "building", None),
+                        room_type=getattr(room, "room_type", None),
+                    )
+                    trace_room_selection(
+                        trace_context,
+                        entity_type="section",
+                        entity_id=section.id,
+                        candidate_id=room.id,
+                        selected_candidate={
+                            "room_id": room.id,
+                            "room_name": room.room_name,
+                            "capacity": getattr(room, "capacity", None),
+                            "building": getattr(room, "building", None),
+                            "exam_date": slot[0],
+                            "exam_time": slot[1],
+                        },
+                        accepted_reason="CP_SAT_FEASIBLE_ASSIGNMENT",
+                        contributing_constraints=["ROOM_CAPACITY", "ROOM_AVAILABILITY", "PERIOD_WINDOW"],
+                        quality_impact={"solver_status": solver_status_label},
+                        governance_relevance="RECHECK_PENDING",
+                        confidence_level="HIGH",
+                        source=TRACE_SOURCE_SOLVER,
+                    )
+                    trace_capacity_constraint(
+                        trace_context,
+                        passed=(getattr(room, "capacity", 0) or 0) >= (getattr(section, "num_students", 0) or 0),
+                        entity_type="section",
+                        entity_id=section.id,
+                        reason_code="ROOM_CAPACITY_CONFIRMED",
+                        metadata={
+                            "room_id": room.id,
+                            "student_count": getattr(section, "num_students", 0),
+                            "capacity": getattr(room, "capacity", None),
+                        },
+                    )
+                    trace_split_candidate(
+                        trace_context,
+                        entity_type="section",
+                        entity_id=section.id,
+                        candidate_id="single-room-allocation",
+                        source=TRACE_SOURCE_SOLVER,
+                        message="CP-SAT used a single-room split candidate.",
+                        assigned_count=1,
+                    )
+                    trace_split_selection(
+                        trace_context,
+                        entity_type="section",
+                        entity_id=section.id,
+                        candidate_id="single-room-allocation",
+                        selected_candidate={"split_count": 1, "split_reason": "SINGLE_ROOM_ALLOCATION"},
+                        accepted_reason="NO_SPLIT_REQUIRED",
+                        contributing_constraints=["ROOM_CAPACITY"],
+                        governance_relevance="LOW",
+                        confidence_level="HIGH",
+                        source=TRACE_SOURCE_SOLVER,
+                    )
+                    for staff_obj, staff_load_before, slot_order in (
+                        (sup1, sup1_load_before, 1),
+                        (sup2, sup2_load_before, 2),
+                    ):
+                        if staff_obj is None:
+                            continue
+                        trace_staff_candidate(
+                            trace_context,
+                            entity_type="section",
+                            entity_id=section.id,
+                            candidate_id=staff_obj.id,
+                            source=TRACE_SOURCE_FALLBACK,
+                            message="Boundary supervisor assignment selected a staff candidate after CP-SAT room selection.",
+                            staff_current_load=staff_load_before,
+                            staff_role="INVIGILATOR",
+                            time_slot=slot_label,
+                        )
+                        trace_staff_selection(
+                            trace_context,
+                            entity_type="section",
+                            entity_id=section.id,
+                            candidate_id=staff_obj.id,
+                            selected_candidate={
+                                "staff_id": staff_obj.id,
+                                "slot_order": slot_order,
+                                "time_slot": slot_label,
+                            },
+                            accepted_reason="LOWEST_CURRENT_LOAD",
+                            tradeoffs_accepted=[REASON_CODE_FAIRNESS_PENALTY],
+                            contributing_constraints=["STAFFING_AVAILABILITY", "WORKLOAD_BALANCE"],
+                            quality_impact={"staff_current_load": staff_load_before},
+                            governance_relevance="RECHECK_PENDING",
+                            confidence_level="MEDIUM",
+                            source=TRACE_SOURCE_FALLBACK,
+                        )
+                    trace_staffing_constraint(
+                        trace_context,
+                        passed=bool(selected_staff_ids),
+                        entity_type="section",
+                        entity_id=section.id,
+                        reason_code="STAFFING_CONFIRMED" if selected_staff_ids else "MISSING_INVIGILATOR",
+                        source=TRACE_SOURCE_FALLBACK,
+                        metadata={
+                            "selected_staff_ids": selected_staff_ids,
+                            "available_staff_count": len(available),
+                            "time_slot": slot_label,
+                        },
+                    )
+                    if selected_staff_ids:
+                        trace_context.add_tradeoff_chosen(
+                            entity_type="section",
+                            entity_id=section.id,
+                            candidate_type="STAFF",
+                            candidate_id=selected_staff_ids[0],
+                            reason_code=REASON_CODE_FAIRNESS_PENALTY,
+                            source=TRACE_SOURCE_FALLBACK,
+                            message="Boundary supervisor assignment favored lower current workloads after CP-SAT room selection.",
+                            metadata={
+                                "selected_staff_ids": selected_staff_ids,
+                                "selected_staff_loads": [load for load in (sup1_load_before, sup2_load_before) if load is not None],
+                                "available_staff_count": len(available),
+                            },
+                        )
+                    trace_final_schedule_selection(
+                        trace_context,
+                        entity_type="section",
+                        entity_id=section.id,
+                        candidate_id=sch.id,
+                        selected_candidate={
+                            "schedule_id": sch.id,
+                            "room_id": room.id,
+                            "staff_ids": selected_staff_ids,
+                            "exam_date": slot[0],
+                            "exam_time": slot[1],
+                            "split_count": 1,
+                        },
+                        accepted_reason="CP_SAT_FINALIZED",
+                        contributing_constraints=["ROOM_CAPACITY", "STAFFING_AVAILABILITY"],
+                        quality_impact={"solver_status": solver_status_label},
+                        governance_relevance="RECHECK_PENDING",
+                        confidence_level="HIGH",
+                        source=TRACE_SOURCE_SOLVER,
+                    )
 
     period = db.query(models.ExamPeriod).filter(
         models.ExamPeriod.academic_year == data.academic_year,
@@ -920,6 +1580,16 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
     )
 
     db.commit()
+    trace_schedules = _load_optimizer_trace_schedules(
+        db,
+        period=period,
+        data=data,
+    )
+    trace_fields = _build_optimizer_trace_fields(
+        period=period,
+        schedules=trace_schedules,
+        trace_context=trace_context,
+    )
     import statistics
     counts = list(teacher_count.values())
     fairness = round(statistics.stdev(counts), 2) if len(counts) > 1 else 0.0
@@ -939,4 +1609,8 @@ def _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_us
         paper_distribution_slots=distribution_result["slot_count"],
         paper_distribution_unfilled=distribution_result["unfilled_count"],
         paper_distribution_warnings=distribution_result["warnings"],
+        native_trace_summary=trace_fields["native_trace_summary"],
+        native_trace_events=trace_fields["native_trace_events"],
+        traceability_completeness_score=trace_fields["traceability_completeness_score"],
+        trace_source_breakdown=trace_fields["trace_source_breakdown"],
     )

@@ -236,6 +236,10 @@ class OptimizerResult(BaseModel):
     esq_in_stat: List[dict] = []
     room_keepers_assigned: List[dict] = []
     reminder: Optional[str] = None
+    native_trace_summary: Dict[str, Any] = {}
+    native_trace_events: List[Dict[str, Any]] = []
+    traceability_completeness_score: float = 0.0
+    trace_source_breakdown: Dict[str, int] = {}
 
 
 # ─── Questions (M1) ───────────────────────────────────────────
