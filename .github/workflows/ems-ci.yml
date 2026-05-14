@@ -1,0 +1,92 @@
+name: EMS CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  # ── Backend: compile → import → test ─────────────────────────────────────
+  backend:
+    name: Backend — compile + import + test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Compile check (syntax errors)
+        run: python -m compileall backend -q
+
+      - name: Import check (startup smoke)
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'backend')
+          import main
+          print('import main: OK')
+          "
+        env:
+          DATABASE_URL: "sqlite:///./backend/ems_ci.db"
+          SECRET_KEY: "ci-test-secret-key-not-for-production"
+          JSON_LOGS: "false"
+          ALLOWED_ORIGINS: "http://localhost:3000"
+
+      - name: Run backend tests
+        run: python -m pytest backend/tests -q --tb=short
+        env:
+          DATABASE_URL: "sqlite:///./backend/ems_ci.db"
+          SECRET_KEY: "ci-test-secret-key-not-for-production"
+          JSON_LOGS: "false"
+          ALLOWED_ORIGINS: "http://localhost:3000"
+
+      - name: Check for accidentally committed secrets
+        run: |
+          echo "Checking for .env files..."
+          if find . -name ".env" -not -path "./.git/*" | grep -q .; then
+            echo "ERROR: .env file found in commit"
+            find . -name ".env" -not -path "./.git/*"
+            exit 1
+          fi
+          echo "No .env files found — OK"
+
+      - name: Check for SQLite DB files in source
+        run: |
+          if find backend -name "*.db" -not -name "ems_ci.db" | grep -q .; then
+            echo "WARNING: SQLite .db files found in backend/"
+            find backend -name "*.db"
+          fi
+
+  # ── Frontend: type-check + build ─────────────────────────────────────────
+  frontend:
+    name: Frontend — type-check + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (tsc -b + vite build)
+        run: npm run build
