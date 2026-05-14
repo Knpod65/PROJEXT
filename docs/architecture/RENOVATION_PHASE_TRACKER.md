@@ -11,9 +11,10 @@
 | Phase 2 — DRY Configuration Layer | Near complete | 90% | Core config centralized; final cleanup still open |
 | Phase 3 — Service Layer Foundation | In progress | 85% | Workflow lock, signing lifecycle, schedule query, recheck, observer, traceability, event bus, simulation, predictive balancing, AI recommendation skeleton all in service layer |
 | Phase 4 — PDPA / Security Enforcement | In progress | 60% | Trace PII filtering added; UoW + audit-event coupling foundation in; public exposure and full router migration remain |
-| Phase 5 — Test and Delivery Maturity | Complete | 95% | 366 tests passing; CI/CD via GitHub Actions shipped; integration tests still open |
+| Phase 5 — Test and Delivery Maturity | Complete | 95% | 496 tests passing; CI/CD via GitHub Actions shipped; integration tests still open |
 | Phase 6 — Faculty IT / Multi-Faculty Readiness | In progress | 35% | Policy skeleton + feature flag shipped; DB migration and IT approval still open |
 | Modernization Sprint (Phases 1–3D) | Complete | 100% | 10 new service files, 10 new test files, 7 new architecture docs, 272 new tests |
+| Enterprise Maturity (Phases T1–T8) | Complete | 100% | Typed events, trace services, transaction audit coupling, event dispatcher, policy config audit, governance hook, router thinning, report analytics, CI split |
 
 ---
 
@@ -180,7 +181,63 @@ Started
 
 ---
 
-## 8. Modernization Sprint — New Capabilities (2026-05-14)
+## 8. Enterprise Maturity Phase — New Capabilities (T1–T8, 2026-05-14)
+
+### T1 — Typed Optimization Events + Trace Services
+| File | Capability |
+|---|---|
+| `events/optimization_events.py` | OptimizationEventType enum (15 values), stage constants |
+| `services/optimization_candidate_trace_service.py` | CandidateTrace dataclass, build_candidate_traces() |
+| `services/optimization_decision_log_service.py` | DecisionLogEntry dataclass, build_decision_log() |
+| `services/optimization_constraint_trace_service.py` | ConstraintTrace dataclass, build_constraint_traces() |
+
+### T2 — Transaction Audit Coupling
+| File | Capability |
+|---|---|
+| `services/transaction_audit_service.py` | execute_with_audit(): mutation + audit + event in one atomic call |
+
+### T3 — Typed Event Infrastructure
+| File | Capability |
+|---|---|
+| `events/base_event.py` | EventDomain, EventSeverity enums; BaseEventProtocol |
+| `events/governance_events.py` | GovernanceEventType enum (11 values) |
+| `events/audit_events.py` | AuditEventType enum (14 values) |
+| `services/event_dispatcher_service.py` | EventDispatcher: type-based routing over InMemoryEventBus |
+
+### T4 — Policy Config Audit
+- Added RECOMMENDATION_BANDS, INVIGILATOR_OVERLOAD_THRESHOLDS, WALKING_DISTANCE_THRESHOLDS to `optimization_policy.py`
+
+### T5 — Frontend Governance Hook
+| File | Capability |
+|---|---|
+| `frontend/src/hooks/useOptimizationGovernance.ts` | React hook: AsyncState<OptimizationGovernanceReport> via useAsyncData |
+
+### T6 — Router Thinning
+| File | Capability |
+|---|---|
+| `services/workflow_user_service.py` | format_user_dict(), build_external_workflow_issues() |
+| `services/workflow_reporting_service.py` | build_staff_workload_report() |
+
+### T7 — Report Builder Analytics
+- Added 7 additive analytics keys to `build_optimization_report()`: risk_matrix, rejected_candidate_analytics, invigilator_overload_summary, fairness_summary, traceability_completeness_score, quality_band_summary, optimization_confidence_score
+
+### T8 — CI/CD Split
+| File | Capability |
+|---|---|
+| `.github/workflows/backend-validation.yml` | Focused: compileall + import main + pytest |
+| `.github/workflows/frontend-validation.yml` | Focused: npm ci + npm run build |
+
+### Test growth (Enterprise Maturity)
+- T1: +62 tests
+- T2: +15 tests
+- T3: +16 tests
+- T6: +15 tests
+- T7: +22 tests
+- **Total: +130 new tests (366 → 496)**
+
+---
+
+## 9. Modernization Sprint — New Capabilities (2026-05-14)
 
 ### New service files
 | File | Phase | Capability |

@@ -9,15 +9,16 @@
 
 ## 1. Readiness Score
 
-**90 / 100**
+**94 / 100**
 
 | Sprint | Date | Score | Delta |
 |---|---|---|---|
 | Initial prototype | pre-2026-05-11 | 75/100 | — |
 | Production hardening pass | 2026-05-12 | 80/100 | +5 |
-| Modernization sprint (Phases 1–3D) | 2026-05-14 | **90/100** | **+10** |
+| Modernization sprint (Phases 1–3D) | 2026-05-14 | 90/100 | +10 |
+| Enterprise Maturity (Phases T1–T8) | 2026-05-14 | **94/100** | **+4** |
 
-Remaining 10 points blocked by: router fatness (not yet extracted), PDPA public-surface decision (not yet made), full `UnitOfWork` router migration (foundation in, not wired), and multi-faculty DB migration (requires IT/DBA approval).
+Remaining 6 points blocked by: PDPA public-surface decision (not yet made), full `UnitOfWork` router migration (foundation in, not fully wired), and multi-faculty DB migration (requires IT/DBA approval).
 
 ---
 
@@ -27,7 +28,7 @@ Remaining 10 points blocked by: router fatness (not yet extracted), PDPA public-
 |---|---|---|
 | `python -m compileall backend -q` | **PASS** | Zero syntax errors |
 | `python -c "import main"` | **PASS** | Dev-mode warnings only (expected) |
-| `python -m pytest backend/tests -q` | **PASS** | **366 passed**, 0 failed, 11 deprecation warnings |
+| `python -m pytest backend/tests -q` | **PASS** | **496 passed**, 0 failed, 11 deprecation warnings |
 | `cd frontend && npm run build` | **PASS** | TypeScript zero errors; chunk-size warning is pre-existing |
 | `git status` | **CLEAN** | Working tree clean, no unintended files |
 
