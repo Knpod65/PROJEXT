@@ -557,6 +557,160 @@ def get_publication_readiness(
     return result
 
 
+@router.get("/sessions/{session_id}/capabilities")
+def get_session_capabilities(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Return what the current user can do on this session right now.
+
+    Read-only capability matrix. No side effects.
+    """
+    from dataclasses import asdict
+    from services.publication_governance_service import assess_publication_readiness
+    from services.schedule_capability_service import compute_schedule_capabilities
+
+    session = db.query(models.OptimizeSession).filter(
+        models.OptimizeSession.id == session_id
+    ).first()
+    if not session:
+        raise HTTPException(404, "Session not found")
+    period = session.period
+    schedules = (
+        db.query(models.ExamSchedule)
+        .join(models.Section)
+        .filter(
+            models.Section.academic_year == period.academic_year,
+            models.Section.semester == period.semester,
+            models.ExamSchedule.exam_type == period.exam_type,
+        )
+        .all()
+    )
+    report = build_optimization_report(period=period, schedules=schedules)
+    governance_dict = report.get("governance", {})
+    governance_state = governance_dict.get("governance_state", "")
+    derived_state = derive_schedule_state(session.status, governance_state)
+    recheck_summary = report.get("severity_summary", {})
+    hard_fail_count = int(recheck_summary.get("hard_fail_count", recheck_summary.get("hard_error_count", 0)))
+
+    readiness = assess_publication_readiness(
+        quality_report=report.get("quality_breakdown", {}),
+        governance=governance_dict,
+        recheck_summary=recheck_summary,
+        schedule_state=derived_state,
+    )
+    blocker_codes = [
+        b.get("code", "") for b in (readiness.blockers or []) if isinstance(b, dict)
+    ]
+
+    user_role = get_effective_role(current_user).value if hasattr(get_effective_role(current_user), "value") else str(get_effective_role(current_user))
+
+    return compute_schedule_capabilities(
+        derived_schedule_state=derived_state,
+        governance_state=governance_state,
+        session_status=session.status,
+        user_role=user_role,
+        can_publish=readiness.can_publish,
+        risk_score=readiness.risk_score,
+        hard_fail_count=hard_fail_count,
+        blocker_codes=blocker_codes,
+    )
+
+
+@router.get("/sessions/{session_id}/transition-check")
+def get_transition_check(
+    session_id: int,
+    target_state: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Pre-flight check for a proposed state transition. Read-only — no mutations."""
+    from services.schedule_transition_service import attempt_transition
+
+    session = db.query(models.OptimizeSession).filter(
+        models.OptimizeSession.id == session_id
+    ).first()
+    if not session:
+        raise HTTPException(404, "Session not found")
+    period = session.period
+    schedules = (
+        db.query(models.ExamSchedule)
+        .join(models.Section)
+        .filter(
+            models.Section.academic_year == period.academic_year,
+            models.Section.semester == period.semester,
+            models.ExamSchedule.exam_type == period.exam_type,
+        )
+        .all()
+    )
+    report = build_optimization_report(period=period, schedules=schedules)
+    governance_dict = report.get("governance", {})
+    governance_state = governance_dict.get("governance_state", "")
+    derived_state = derive_schedule_state(session.status, governance_state)
+    recheck_summary = report.get("severity_summary", {})
+    hard_fail_count = int(recheck_summary.get("hard_fail_count", recheck_summary.get("hard_error_count", 0)))
+
+    user_role = get_effective_role(current_user).value if hasattr(get_effective_role(current_user), "value") else str(get_effective_role(current_user))
+
+    return attempt_transition(
+        from_state=derived_state,
+        to_state=target_state,
+        user_role=user_role,
+        governance_state=governance_state,
+        hard_fail_count=hard_fail_count,
+        actor_id=current_user.id,
+    )
+
+
+@router.get("/sessions/{session_id}/executive-risk")
+def get_executive_risk(
+    session_id: int,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_view_all),
+):
+    """Executive-facing risk summary for a session. Read-only — no side effects."""
+    from dataclasses import asdict
+    from services.publication_governance_service import assess_publication_readiness
+    from services.executive_risk_service import compute_executive_risk_report
+
+    session = db.query(models.OptimizeSession).filter(
+        models.OptimizeSession.id == session_id
+    ).first()
+    if not session:
+        raise HTTPException(404, "Session not found")
+    period = session.period
+    schedules = (
+        db.query(models.ExamSchedule)
+        .join(models.Section)
+        .filter(
+            models.Section.academic_year == period.academic_year,
+            models.Section.semester == period.semester,
+            models.ExamSchedule.exam_type == period.exam_type,
+        )
+        .all()
+    )
+    report = build_optimization_report(period=period, schedules=schedules)
+    governance_dict = report.get("governance", {})
+    governance_state = governance_dict.get("governance_state", "")
+    derived_state = derive_schedule_state(session.status, governance_state)
+    recheck_summary = report.get("severity_summary", {})
+
+    readiness = assess_publication_readiness(
+        quality_report=report.get("quality_breakdown", {}),
+        governance=governance_dict,
+        recheck_summary=recheck_summary,
+        schedule_state=derived_state,
+    )
+
+    return compute_executive_risk_report(
+        quality_report=report.get("quality_breakdown", {}),
+        governance=governance_dict,
+        recheck_summary=recheck_summary,
+        readiness_dict=asdict(readiness),
+    )
+
+
 @router.post("/session/init")
 def init_session(
     request: Request,
