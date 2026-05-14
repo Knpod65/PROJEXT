@@ -1,3 +1,5 @@
+# DEPRECATED: Replaced by backend-validation.yml and frontend-validation.yml.
+# Kept for compatibility with existing branch protection rules — do not remove until rules are updated.
 name: EMS CI
 
 on:
