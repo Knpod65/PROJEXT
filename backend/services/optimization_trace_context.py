@@ -22,6 +22,7 @@ from events.optimization_events import (
     STAGE_SELECTION,
 )
 from policies.event_pdpa_policy import classify_event_payload, mask_event_payload
+from policies.optimization_trace_pdpa_policy import mask_trace_event
 
 TRACE_EVENT_CANDIDATE_GENERATED = "CANDIDATE_GENERATED"
 TRACE_EVENT_CANDIDATE_REJECTED = "CANDIDATE_REJECTED"
@@ -118,9 +119,10 @@ def _sanitize_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
         safe_metadata = {"value": safe_metadata}
     masked = mask_event_payload(copy.deepcopy(safe_metadata))
     trace_masked = _mask_trace_payload(masked)
-    if not isinstance(trace_masked, dict):
+    trace_policy_masked = mask_trace_event(trace_masked)
+    if not isinstance(trace_policy_masked, dict):
         return {"value": trace_masked}
-    return trace_masked
+    return trace_policy_masked
 
 
 class OptimizationTraceContext:
