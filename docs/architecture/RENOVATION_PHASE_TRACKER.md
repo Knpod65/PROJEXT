@@ -16,6 +16,7 @@
 | Modernization Sprint (Phases 1–3D) | Complete | 100% | 10 new service files, 10 new test files, 7 new architecture docs, 272 new tests |
 | Enterprise Maturity (Phases T1–T8) | Complete | 100% | Typed events, trace services, transaction audit coupling, event dispatcher, policy config audit, governance hook, router thinning, report analytics, CI split |
 | Domain Stabilization (Phases S1–S8) | Complete | 100% | State machine, publication governance, event handlers, DTO contracts, analytics projection, frontend hooks, governance API endpoint, domain boundary docs |
+| Lifecycle Capability (Phases C1–C9) | Complete | 100% | Governance policy, capability matrix, lifecycle events, transition engine, governance trace, executive risk, trace aggregator, 3 new endpoints, frontend contract doc |
 
 ---
 
@@ -339,7 +340,80 @@ Started
 
 ---
 
-## 11. Next Actions
+---
+
+## 11. Lifecycle Capability Phase — New Capabilities (C1–C9, 2026-05-14)
+
+### C3 — Governance Policy Module
+| File | Capability |
+|---|---|
+| `backend/policies/schedule_governance_policy.py` | Declarative transition permission rules: is_transition_allowed(), get_transition_blockers(), requires_governance_review(), requires_audit_annotation() |
+| `backend/tests/test_schedule_governance_policy.py` | 26 tests |
+
+### C1 — Capability Authorization
+| File | Capability |
+|---|---|
+| `backend/services/schedule_capability_service.py` | compute_schedule_capabilities() — role × state × governance matrix → can_publish, can_archive, can_edit, can_finalize, etc. |
+| `backend/tests/test_schedule_capability_service.py` | 28 tests |
+
+### C2 — Lifecycle Event Builders
+| File | Capability |
+|---|---|
+| `backend/services/schedule_lifecycle_event_service.py` | build_publication_event(), build_rollback_event(), build_archive_event(), build_reopen_event(), build_governance_override_event() |
+| `backend/tests/test_schedule_lifecycle_event_service.py` | 13 tests |
+
+### C4 — Transition Engine
+| File | Capability |
+|---|---|
+| `backend/services/schedule_transition_service.py` | attempt_transition() — policy pre-flight + state machine validation in one call |
+| `backend/tests/test_schedule_transition_service.py` | 19 tests |
+
+### C5 — Governance Timeline
+| File | Capability |
+|---|---|
+| `backend/services/governance_trace_service.py` | build_governance_trace() — chronological audit timeline from session signature timestamps |
+| `backend/tests/test_governance_trace_service.py` | 14 tests |
+
+### C7 — Executive Risk Report
+| File | Capability |
+|---|---|
+| `backend/services/executive_risk_service.py` | compute_executive_risk_report() — overall_risk_band, publishability_score, pdpa_risks, governance_health |
+| `backend/tests/test_executive_risk_service.py` | 29 tests |
+
+### C6 — Optimizer Trace Aggregator
+| File | Capability |
+|---|---|
+| `backend/services/optimizer_trace_aggregator_service.py` | aggregate_optimization_traces() — facade over 4 existing trace services + rejection_breakdown |
+| `backend/tests/test_optimizer_trace_aggregator_service.py` | 12 tests |
+
+### Endpoints
+| Endpoint | Service |
+|---|---|
+| `GET /sessions/{id}/capabilities` | `compute_schedule_capabilities()` |
+| `GET /sessions/{id}/transition-check` | `attempt_transition()` |
+| `GET /sessions/{id}/executive-risk` | `compute_executive_risk_report()` |
+
+### C8+C9 — Documentation
+| File | Content |
+|---|---|
+| `docs/architecture/FRONTEND_GOVERNANCE_CONTRACT.md` | Canonical API shapes, lifecycle semantics, usage patterns, auth requirements |
+| `docs/architecture/RENOVATION_PHASE_TRACKER.md` | Updated with C1–C9 phase table |
+| `docs/architecture/FINAL_PLATFORM_READINESS_REPORT.md` | Score updated: 96 → 97/100 |
+| `docs/architecture/EMS_COMPLETION_GAP_REPORT.md` | Capability-authorization, transition engine, executive risk marked resolved |
+
+### Test growth (Lifecycle Capability)
+- C3: +26 tests
+- C1: +28 tests
+- C2: +13 tests
+- C4: +19 tests
+- C5: +14 tests
+- C7: +29 tests
+- C6: +12 tests
+- **Total: +141 new tests (613 → 754)**
+
+---
+
+## 12. Next Actions
 
 1. Wire `UnitOfWork` into highest-value router mutations (start with `optimize_workflow.py` lock acquire/release).
 2. Enable `multi_faculty_enabled=True` only after DBA adds `faculty_id` column — follow MULTI_FACULTY_ISOLATION_IMPLEMENTATION_PLAN.md.

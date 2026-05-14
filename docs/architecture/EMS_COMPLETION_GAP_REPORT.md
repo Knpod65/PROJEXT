@@ -11,9 +11,9 @@
 
 EMS is no longer a fragile prototype. It is a working FastAPI + React academic operations platform with healthy baseline validation, a growing service layer, typed configuration, and materially improved security posture. It is also not yet fully renovated: the largest remaining risks are still router fatness, public data-surface decisions, transaction/audit coupling, partial PDPA enforcement, and uneven frontend/i18n consistency.
 
-**Current readiness score: 96 / 100** (up from 94 / 100 after Domain Stabilization S1–S8)
+**Current readiness score: 97 / 100** (up from 96 / 100 after Lifecycle Capability C1–C9)
 
-Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → **96/100** (domain stabilization S1–S8, +106 tests, 602 total).
+Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → **97/100** (lifecycle capability C1–C9, +141 tests, 754 total).
 
 ---
 
@@ -36,7 +36,7 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 ### Validation baseline (updated 2026-05-14)
 - Backend compile: pass
 - Backend `import main`: pass
-- Backend tests: `602 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8)
+- Backend tests: `754 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9)
 - Frontend build: pass (TypeScript zero errors)
 - CI: GitHub Actions workflow shipped (`.github/workflows/ems-ci.yml`)
 
@@ -77,6 +77,19 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 - ~~No historical analytics projection~~ → **RESOLVED**: `analytics_projection_service.py` — 6 projection functions, 25 tests
 - ~~No publication-readiness frontend hook~~ → **RESOLVED**: `usePublicationGovernance.ts` + `useScheduleGovernance.ts`
 - ~~No domain boundary documentation~~ → **RESOLVED**: `DOMAIN_BOUNDARY_ARCHITECTURE.md` + `SCHEDULING_STATE_MACHINE.md` + `PUBLICATION_GOVERNANCE_ARCHITECTURE.md`
+
+### Resolved gaps (2026-05-14 lifecycle capability C1–C9)
+- ~~No authoritative capability answer~~ → **RESOLVED**: `schedule_capability_service.py` — role × state × governance matrix, 28 tests
+- ~~No transition pre-flight check~~ → **RESOLVED**: `schedule_transition_service.py` — policy + state machine in one call, 19 tests
+- ~~No governance permission policy~~ → **RESOLVED**: `schedule_governance_policy.py` — declarative role requirements, blocker codes, 26 tests
+- ~~No governance timeline~~ → **RESOLVED**: `governance_trace_service.py` — chronological audit trace from signature timestamps, 14 tests
+- ~~No executive risk view~~ → **RESOLVED**: `executive_risk_service.py` — risk bands, PDPA filtering, publishability score, 29 tests
+- ~~No lifecycle event builders~~ → **RESOLVED**: `schedule_lifecycle_event_service.py` — 5 event builders, 13 tests
+- ~~No unified trace facade~~ → **RESOLVED**: `optimizer_trace_aggregator_service.py` — aggregates 4 existing trace services, 12 tests
+- ~~No capabilities endpoint~~ → **RESOLVED**: `GET /sessions/{id}/capabilities`
+- ~~No transition-check endpoint~~ → **RESOLVED**: `GET /sessions/{id}/transition-check`
+- ~~No executive-risk endpoint~~ → **RESOLVED**: `GET /sessions/{id}/executive-risk`
+- ~~No canonical API shape documentation~~ → **RESOLVED**: `FRONTEND_GOVERNANCE_CONTRACT.md`
 
 ---
 
