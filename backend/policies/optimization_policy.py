@@ -33,6 +33,24 @@ STAFFING_RISK_THRESHOLDS: dict[str, int] = {
     "high_risk_load": 7,
 }
 
+RECOMMENDATION_BANDS: dict[str, int] = {
+    "excellent": 90,
+    "good": 75,
+    "review": 60,
+    "critical": 55,
+}
+
+INVIGILATOR_OVERLOAD_THRESHOLDS: dict[str, int] = {
+    "max_concurrent_exams": 1,
+    "max_daily_assignments": 3,
+}
+
+WALKING_DISTANCE_THRESHOLDS: dict[str, int] = {
+    "same_building": 0,    # minutes
+    "adjacent": 5,
+    "far": 15,
+}
+
 
 def get_optimization_governance_thresholds(overrides: Dict[str, float] | None = None) -> dict[str, float]:
     merged = dict(DEFAULT_OPTIMIZATION_GOVERNANCE_THRESHOLDS)
@@ -46,4 +64,7 @@ def build_optimization_policy_snapshot(overrides: Dict[str, float] | None = None
         "room_utilization_thresholds": dict(ROOM_UTILIZATION_THRESHOLDS),
         "split_severity_thresholds": dict(SPLIT_SEVERITY_THRESHOLDS),
         "staffing_risk_thresholds": dict(STAFFING_RISK_THRESHOLDS),
+        "recommendation_bands": dict(RECOMMENDATION_BANDS),
+        "invigilator_overload_thresholds": dict(INVIGILATOR_OVERLOAD_THRESHOLDS),
+        "walking_distance_thresholds": dict(WALKING_DISTANCE_THRESHOLDS),
     }
