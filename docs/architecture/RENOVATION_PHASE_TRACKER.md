@@ -3,6 +3,9 @@
 
 ---
 
+> D2 update: native optimization trace context, candidate/constraint/selection adapters, optimizer-boundary instrumentation, replay-ready lineage, and trace PDPA policy are now complete on `main`.
+> Current validated backend baseline: `915` passing tests, backend compile/import pass, and a clean worktree after each scoped D2 slice.
+
 ## 1. Phase Summary
 
 | Phase | Status | Progress | Notes |
@@ -11,13 +14,14 @@
 | Phase 2 — DRY Configuration Layer | Near complete | 90% | Core config centralized; final cleanup still open |
 | Phase 3 — Service Layer Foundation | In progress | 85% | Workflow lock, signing lifecycle, schedule query, recheck, observer, traceability, event bus, simulation, predictive balancing, AI recommendation skeleton all in service layer |
 | Phase 4 — PDPA / Security Enforcement | In progress | 60% | Trace PII filtering added; UoW + audit-event coupling foundation in; public exposure and full router migration remain |
-| Phase 5 — Test and Delivery Maturity | Complete | 95% | 602 tests passing; CI/CD via GitHub Actions shipped; integration tests still open |
+| Phase 5 — Test and Delivery Maturity | Complete | 97% | 915 tests passing; CI/CD via GitHub Actions shipped; targeted integration coverage still open |
 | Phase 6 — Faculty IT / Multi-Faculty Readiness | In progress | 35% | Policy skeleton + feature flag shipped; DB migration and IT approval still open |
 | Modernization Sprint (Phases 1–3D) | Complete | 100% | 10 new service files, 10 new test files, 7 new architecture docs, 272 new tests |
 | Enterprise Maturity (Phases T1–T8) | Complete | 100% | Typed events, trace services, transaction audit coupling, event dispatcher, policy config audit, governance hook, router thinning, report analytics, CI split |
 | Domain Stabilization (Phases S1–S8) | Complete | 100% | State machine, publication governance, event handlers, DTO contracts, analytics projection, frontend hooks, governance API endpoint, domain boundary docs |
 | Lifecycle Capability (Phases C1–C9) | Complete | 100% | Governance policy, capability matrix, lifecycle events, transition engine, governance trace, executive risk, trace aggregator, 3 new endpoints, frontend contract doc |
 | Enterprise Event & Audit (Phases D1.1–D1.7) | Complete | 100% | EventEnvelope (18 fields), event outbox foundation, immutable audit events, transaction bridge, lifecycle timeline, PDPA safety policy, architecture docs |
+| Optimization Native Trace Engine (Phases D2.1–D2.9) | Complete | 100% | Native trace context, adapters, observer integration, boundary instrumentation, replay lineage, trace PDPA policy, architecture docs |
 
 ---
 
@@ -62,7 +66,7 @@ Near complete
 ## 4. Phase 3 — Service Layer Foundation
 
 ### Status
-In progress
+Complete
 
 ### Done
 - `services/audit_service.py`
@@ -146,12 +150,11 @@ In progress
 
 ### Done
 - Backend test suite exists and is passing
-- Current backend test count: `94`
+- Current backend test count: `915`
 - Compile/import/build validation is runnable locally
 - Health checks now exist at router and container level
 
 ### Still open
-- CI pipeline
 - router integration tests
 - export/document generation verification
 - security regression tests for auth/public endpoints
@@ -471,11 +474,35 @@ Started
 
 ---
 
-## 13. Next Actions
+## 13. Optimization Native Trace Engine Phase — New Capabilities (D2.1–D2.9, 2026-05-14)
 
-1. Wire `UnitOfWork` into highest-value router mutations (start with `optimize_workflow.py` lock acquire/release).
-2. Enable `multi_faculty_enabled=True` only after DBA adds `faculty_id` column — follow MULTI_FACULTY_ISOLATION_IMPLEMENTATION_PLAN.md.
-3. Extract first service/repository slice from `schedule.py`.
-4. Continue `submissions.py` approval/release/print-queue extraction with regression coverage.
-5. Start EMS-side auth integration adapter design with Faculty IT.
-6. Route-level code splitting for large frontend pages (647 kB bundle).
+### D2 outcomes
+- Added `OptimizationTraceContext` as a pure in-memory collector with envelope export support
+- Added native candidate, constraint, and selection trace adapters
+- Added additive observer/report fields:
+  - `native_trace_summary`
+  - `native_trace_events`
+  - `traceability_completeness_score`
+  - `trace_source_breakdown`
+- Added safe optimizer-boundary instrumentation in `backend/routers/schedule.py`
+- Added replay-ready lineage builders and PDPA masking for trace payloads
+- Added three architecture documents for native tracing, decision lineage, and trace PDPA rules
+
+### D2 testing impact
+- New backend total: `915` passing tests
+- D2 test growth: `+55` tests over the D1 baseline
+
+### D2 maturity impact
+- Traceability maturity moved into the native-source range with replay support
+- Optimization explainability remains additive and backward-compatible
+- Deep solver internals are still intentionally deferred
+
+---
+
+## 14. Next Actions
+
+1. Start `D3 — Multi-Faculty Configuration Platform` as the next macro phase.
+2. Keep `multi_faculty_enabled=False` until the DBA-approved `faculty_id` migration exists.
+3. Continue extracting `schedule.py` and `optimize_workflow.py` service boundaries so deeper solver tracing stays low-risk.
+4. Add persisted, sanitized trace storage only after DPO review of the trace metadata allowlist.
+5. Add a read-only frontend trace explorer after the storage/API contract is stable.

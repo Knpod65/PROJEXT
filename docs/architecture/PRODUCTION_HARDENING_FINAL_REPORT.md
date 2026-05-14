@@ -4,6 +4,7 @@
 > Branch: `main`
 > Audit-start head: `c4e864d`
 > Scope: production hardening, DRY audit, PDPA/security review, DevOps verification, small safe fixes only
+> Current note: this remains the historical 2026-05-12 hardening report; the addendum below captures the current D2 state.
 
 ---
 
@@ -15,6 +16,8 @@ This pass was intentionally not a feature sprint. It was a system inspection and
 
 > **Updated 2026-05-14:** After the modernization sprint (Phases 1–3D), readiness score is now **90 / 100**.
 > See `FINAL_PLATFORM_READINESS_REPORT.md` for the current Go/No-Go assessment.
+
+> **Updated 2026-05-14 after D2:** Current readiness is **99 / 100** with `915` passing backend tests, native optimization trace instrumentation, replay-ready decision lineage, and trace-specific PDPA masking in place.
 
 ---
 
@@ -34,6 +37,15 @@ This pass was intentionally not a feature sprint. It was a system inspection and
 - backend tests: `94 passed`
 - frontend build: pass
 - bundle warning remains: `647.95 kB` main JS chunk
+
+### Current reference state after D2
+- backend compile: pass
+- backend `import main`: pass
+- backend tests: `915 passed`
+- frontend build: pass
+- native optimization trace engine: shipped
+- replay-ready decision lineage: shipped
+- optimization trace PDPA policy: shipped
 
 ---
 

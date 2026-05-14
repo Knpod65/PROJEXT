@@ -1,9 +1,8 @@
 # EMS Completion Gap Report
 ## Academic Operations Platform — 2026-05-14 (updated after modernization sprint)
 
-> Scope: codebase reality on `main` after the modernization sprint (Phases 1–3D)
-> Sprint head: `c4a909d` (`Add AI recommendation layer foundation`)
-> Previous baseline head: `c4e864d` (`Finalize EMS production hardening and platform readiness`)
+> Scope: codebase reality on `main` after D2 native trace engine delivery
+> D2 addendum: the current-state notes below supersede older counts and pre-D2 readiness numbers elsewhere in this historical gap report.
 
 ---
 
@@ -11,9 +10,9 @@
 
 EMS is no longer a fragile prototype. It is a working FastAPI + React academic operations platform with healthy baseline validation, a growing service layer, typed configuration, and materially improved security posture. It is also not yet fully renovated: the largest remaining risks are still router fatness, public data-surface decisions, transaction/audit coupling, partial PDPA enforcement, and uneven frontend/i18n consistency.
 
-**Current readiness score: 98 / 100** (up from 97 / 100 after Enterprise Event & Audit D1)
+**Current readiness score: 99 / 100** (up from 98 / 100 after Enterprise Event & Audit D1)
 
-Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → 97/100 (lifecycle capability C1–C9, +141 tests, 754 total) → **98/100** (enterprise event & audit D1, +106 tests, 860 total).
+Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → 97/100 (lifecycle capability C1–C9, +141 tests, 754 total) → 98/100 (enterprise event & audit D1, +106 tests, 860 total) → **99/100** (optimization native trace engine D2, +55 tests, 915 total).
 
 ---
 
@@ -36,7 +35,7 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 ### Validation baseline (updated 2026-05-14)
 - Backend compile: pass
 - Backend `import main`: pass
-- Backend tests: `860 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9; +106 enterprise event & audit D1)
+- Backend tests: `915 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9; +106 enterprise event & audit D1; +55 D2 native trace)
 - Frontend build: pass (TypeScript zero errors)
 - CI: GitHub Actions workflow shipped (`.github/workflows/ems-ci.yml`)
 
@@ -99,6 +98,12 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 - ~~No mixed-source event timeline~~ → **RESOLVED**: `lifecycle_timeline_service.py` — normalizes EventEnvelope/DomainEvent/governance trace events, summary with rollback/override/publication flags, 17 tests
 - ~~No PDPA payload classification~~ → **RESOLVED**: `event_pdpa_policy.py` — classify/assert/mask with nested dict/list support, 4-level classification, 20 tests
 
+### Resolved gaps (2026-05-14 optimization native trace engine D2.1–D2.9)
+- ~~Optimization explanation is still mostly post-hoc~~ → **PARTLY RESOLVED**: native trace events now capture room, timeslot, staff, split, fairness, fallback, and final-selection decisions at the optimizer boundary
+- ~~No replay-ready decision lineage~~ → **RESOLVED**: `optimization_trace_replay_service.py` builds timeline, lineage groups, rejected alternatives, and summary rollups
+- ~~No trace-specific PDPA policy~~ → **RESOLVED**: `optimization_trace_pdpa_policy.py` classifies, masks, and asserts trace-event safety
+- ~~No additive report surface for native trace~~ → **RESOLVED**: observer/report payloads now expose `native_trace_summary`, `native_trace_events`, `traceability_completeness_score`, and `trace_source_breakdown`
+
 ---
 
 ## 3. What Is Partially Complete
@@ -137,7 +142,7 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 2. Several high-value public endpoints still expose schedule metadata without a final policy decision:
    - `backend/routers/public.py:250`
    - `backend/routers/public.py:290`
-3. Router/service boundaries are still weak in the largest operational modules, limiting testability and controlled refactor depth.
+3. Router/service boundaries are still weak in the largest operational modules, limiting deeper solver-native tracing and controlled refactor depth.
 
 ### High
 1. `backend/routers/optimize_workflow.py` still owns lock state, user CRUD, unavailability, workflow signing, and reporting in one file.
@@ -149,6 +154,8 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
    - lines 147, 151, 180, 184, 185, 188
 5. Frontend production bundle remains large:
    - `647.95 kB` main JS chunk after minification
+6. Solver internals are still partly black-box:
+   - CP-SAT branch pruning, infeasibility reasoning, and deep rejected alternatives are not yet emitted as native trace events
 
 ### Medium
 1. `backend/routers/scheduler.py` internal cron endpoints are still not audit-logged.
@@ -211,18 +218,14 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 ## 7. Recommended Next 2-Week Sprint
 
 ### Sprint objective
-Close the biggest correctness and governance gaps without rewriting core workflows.
+Start `D3 — Multi-Faculty Configuration Platform` without regressing the newly shipped D2 traceability surface.
 
 ### Work order
-1. Extract `schedule_service.py` and `workflow_lock_service.py` from the two largest operational routers.
-2. Introduce a transaction-safe audit boundary so business writes and audit writes fail together when required.
-3. Decide the public schedule exposure policy and implement the chosen surface reduction.
-4. Finish the remaining frontend semantic permission migrations in hooks/components.
-5. Add CI + one router integration test slice:
-   - health
-   - auth/session
-   - public student schedule ownership
-   - print queue transitions
+1. Build multi-faculty configuration abstractions on the current FastAPI + React + Python stack.
+2. Keep `multi_faculty_enabled=False` until the DBA-approved `faculty_id` migration is available.
+3. Extract more of `schedule.py` and `optimize_workflow.py` so deeper solver tracing stays low-risk.
+4. Introduce transaction-safe audit boundaries around the highest-value mutation paths.
+5. Add a read-only trace explorer API surface after persisted trace storage and DPO review are defined.
 
 ---
 
@@ -255,4 +258,4 @@ Reasons:
 
 ## 10. Bottom Line
 
-EMS is in the right direction for a long-term Academic Operations Platform. The platform is stable enough to harden, test, and progressively renovate. The fastest path to production confidence is continued targeted extraction and governance cleanup, not rewrite energy.
+EMS is in the right direction for a long-term Academic Operations Platform and now has a credible native traceability foundation. The fastest path forward is still progressive extraction and governance cleanup, followed by `D3 — Multi-Faculty Configuration Platform`, not a rewrite.
