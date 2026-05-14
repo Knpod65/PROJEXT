@@ -9,7 +9,7 @@
 
 ## 1. Readiness Score
 
-**97 / 100**
+**98 / 100**
 
 | Sprint | Date | Score | Delta |
 |---|---|---|---|
@@ -18,9 +18,10 @@
 | Modernization sprint (Phases 1–3D) | 2026-05-14 | 90/100 | +10 |
 | Enterprise Maturity (Phases T1–T8) | 2026-05-14 | 94/100 | +4 |
 | Domain Stabilization (Phases S1–S8) | 2026-05-14 | 96/100 | +2 |
-| Lifecycle Capability (Phases C1–C9) | 2026-05-14 | **97/100** | **+1** |
+| Lifecycle Capability (Phases C1–C9) | 2026-05-14 | 97/100 | +1 |
+| Enterprise Event & Audit (Phases D1.1–D1.7) | 2026-05-14 | **98/100** | **+1** |
 
-Remaining 3 points blocked by: PDPA public-surface decision (not yet made), full `UnitOfWork` router migration (foundation in, not fully wired), and multi-faculty DB migration (requires IT/DBA approval).
+Remaining 2 points blocked by: PDPA public-surface decision (not yet made) and multi-faculty DB migration (requires IT/DBA approval). Full `UnitOfWork` router migration foundation is in; bridge pattern (D1.4) enables opt-in adoption.
 
 ---
 
@@ -30,7 +31,7 @@ Remaining 3 points blocked by: PDPA public-surface decision (not yet made), full
 |---|---|---|
 | `python -m compileall backend -q` | **PASS** | Zero syntax errors |
 | `python -c "import main"` | **PASS** | Dev-mode warnings only (expected) |
-| `python -m pytest backend/tests -q` | **PASS** | **754 passed**, 0 failed, 11 deprecation warnings |
+| `python -m pytest backend/tests -q` | **PASS** | **860 passed**, 0 failed, 11 deprecation warnings |
 | `cd frontend && npm run build` | **PASS** | TypeScript zero errors; chunk-size warning is pre-existing |
 | `git status` | **CLEAN** | Working tree clean, no unintended files |
 

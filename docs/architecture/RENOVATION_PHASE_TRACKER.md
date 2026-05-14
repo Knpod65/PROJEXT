@@ -17,6 +17,7 @@
 | Enterprise Maturity (Phases T1–T8) | Complete | 100% | Typed events, trace services, transaction audit coupling, event dispatcher, policy config audit, governance hook, router thinning, report analytics, CI split |
 | Domain Stabilization (Phases S1–S8) | Complete | 100% | State machine, publication governance, event handlers, DTO contracts, analytics projection, frontend hooks, governance API endpoint, domain boundary docs |
 | Lifecycle Capability (Phases C1–C9) | Complete | 100% | Governance policy, capability matrix, lifecycle events, transition engine, governance trace, executive risk, trace aggregator, 3 new endpoints, frontend contract doc |
+| Enterprise Event & Audit (Phases D1.1–D1.7) | Complete | 100% | EventEnvelope (18 fields), event outbox foundation, immutable audit events, transaction bridge, lifecycle timeline, PDPA safety policy, architecture docs |
 
 ---
 
@@ -413,7 +414,64 @@ Started
 
 ---
 
-## 12. Next Actions
+## 12. Enterprise Event & Audit Phase — New Capabilities (D1.1–D1.7, 2026-05-14)
+
+### D1.1 — Event Envelope Standardization
+| File | Capability |
+|---|---|
+| `backend/events/event_envelope.py` | EventEnvelope frozen dataclass (18 fields), create_event_envelope(), event_envelope_to_dict(), sanitize_event_payload() |
+| `backend/tests/test_event_envelope.py` | 22 tests |
+
+### D1.2 — Event Outbox Foundation
+| File | Capability |
+|---|---|
+| `backend/services/event_outbox_service.py` | stage_event(), list_staged_events(), clear_staged_events(), mark_event_dispatched(), get_staged_event(), build_outbox_record() |
+| `backend/tests/test_event_outbox_service.py` | 16 tests |
+| `docs/architecture/EVENT_OUTBOX_FOUNDATION.md` | Outbox design + deferred DB DDL |
+
+### D1.3 — Immutable Audit Event Model
+| File | Capability |
+|---|---|
+| `backend/services/immutable_audit_service.py` | build_immutable_audit_event(): SHA-256 hashing, PII sanitization, immutable marker |
+| `backend/tests/test_immutable_audit_service.py` | 20 tests |
+| `docs/architecture/IMMUTABLE_AUDIT_EVENT_MODEL.md` | Hash design, PII list, deferred persistence |
+
+### D1.4 — Transaction Audit Outbox Bridge
+| File | Capability |
+|---|---|
+| `backend/services/transaction_event_bridge_service.py` | build_transaction_event_bundle(), stage_transaction_events() |
+| `backend/tests/test_transaction_event_bridge_service.py` | 11 tests |
+
+### D1.5 — Lifecycle Timeline Reconstruction
+| File | Capability |
+|---|---|
+| `backend/services/lifecycle_timeline_service.py` | build_lifecycle_timeline(), summarize_lifecycle_timeline() |
+| `backend/tests/test_lifecycle_timeline_service.py` | 17 tests |
+| `docs/architecture/LIFECYCLE_TIMELINE_RECONSTRUCTION.md` | Field fallback table, usage, deferred items |
+
+### D1.6 — PDPA Event Safety Policy
+| File | Capability |
+|---|---|
+| `backend/policies/event_pdpa_policy.py` | classify_event_payload(), assert_event_payload_safe(), mask_event_payload() |
+| `backend/tests/test_event_pdpa_policy.py` | 20 tests |
+
+### D1.7 — Documentation
+| File | Content |
+|---|---|
+| `docs/architecture/ENTERPRISE_EVENT_AUDIT_ARCHITECTURE.md` | Full D1 architecture overview, component map, deferred items, test coverage |
+
+### Test growth (Enterprise Event & Audit)
+- D1.1: +22 tests
+- D1.2: +16 tests
+- D1.3: +20 tests
+- D1.4: +11 tests
+- D1.5: +17 tests
+- D1.6: +20 tests
+- **Total: +106 new tests (754 → 860)**
+
+---
+
+## 13. Next Actions
 
 1. Wire `UnitOfWork` into highest-value router mutations (start with `optimize_workflow.py` lock acquire/release).
 2. Enable `multi_faculty_enabled=True` only after DBA adds `faculty_id` column — follow MULTI_FACULTY_ISOLATION_IMPLEMENTATION_PLAN.md.

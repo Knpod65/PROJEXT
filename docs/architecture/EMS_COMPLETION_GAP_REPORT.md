@@ -11,9 +11,9 @@
 
 EMS is no longer a fragile prototype. It is a working FastAPI + React academic operations platform with healthy baseline validation, a growing service layer, typed configuration, and materially improved security posture. It is also not yet fully renovated: the largest remaining risks are still router fatness, public data-surface decisions, transaction/audit coupling, partial PDPA enforcement, and uneven frontend/i18n consistency.
 
-**Current readiness score: 97 / 100** (up from 96 / 100 after Lifecycle Capability C1–C9)
+**Current readiness score: 98 / 100** (up from 97 / 100 after Enterprise Event & Audit D1)
 
-Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → **97/100** (lifecycle capability C1–C9, +141 tests, 754 total).
+Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → 97/100 (lifecycle capability C1–C9, +141 tests, 754 total) → **98/100** (enterprise event & audit D1, +106 tests, 860 total).
 
 ---
 
@@ -36,7 +36,7 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 ### Validation baseline (updated 2026-05-14)
 - Backend compile: pass
 - Backend `import main`: pass
-- Backend tests: `754 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9)
+- Backend tests: `860 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9; +106 enterprise event & audit D1)
 - Frontend build: pass (TypeScript zero errors)
 - CI: GitHub Actions workflow shipped (`.github/workflows/ems-ci.yml`)
 
@@ -90,6 +90,14 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 - ~~No transition-check endpoint~~ → **RESOLVED**: `GET /sessions/{id}/transition-check`
 - ~~No executive-risk endpoint~~ → **RESOLVED**: `GET /sessions/{id}/executive-risk`
 - ~~No canonical API shape documentation~~ → **RESOLVED**: `FRONTEND_GOVERNANCE_CONTRACT.md`
+
+### Resolved gaps (2026-05-14 enterprise event & audit D1.1–D1.7)
+- ~~Event envelope lacks PDPA/traceability fields~~ → **RESOLVED**: `event_envelope.py` — 18-field EventEnvelope with actor_role, causation_id, aggregate_type/id, pdpa_classification, contains_pii, retention_hint, schema_version, 22 tests
+- ~~No event outbox pattern~~ → **RESOLVED**: `event_outbox_service.py` — in-memory outbox foundation with full API, 16 tests; DB table design documented
+- ~~No immutable audit event model~~ → **RESOLVED**: `immutable_audit_service.py` — SHA-256 hashed snapshots, PII sanitization, immutable marker, 20 tests
+- ~~No transaction audit bridge~~ → **RESOLVED**: `transaction_event_bridge_service.py` — composes envelope + audit + outbox into opt-in bundle, 11 tests
+- ~~No mixed-source event timeline~~ → **RESOLVED**: `lifecycle_timeline_service.py` — normalizes EventEnvelope/DomainEvent/governance trace events, summary with rollback/override/publication flags, 17 tests
+- ~~No PDPA payload classification~~ → **RESOLVED**: `event_pdpa_policy.py` — classify/assert/mask with nested dict/list support, 4-level classification, 20 tests
 
 ---
 
