@@ -11,10 +11,11 @@
 | Phase 2 — DRY Configuration Layer | Near complete | 90% | Core config centralized; final cleanup still open |
 | Phase 3 — Service Layer Foundation | In progress | 85% | Workflow lock, signing lifecycle, schedule query, recheck, observer, traceability, event bus, simulation, predictive balancing, AI recommendation skeleton all in service layer |
 | Phase 4 — PDPA / Security Enforcement | In progress | 60% | Trace PII filtering added; UoW + audit-event coupling foundation in; public exposure and full router migration remain |
-| Phase 5 — Test and Delivery Maturity | Complete | 95% | 496 tests passing; CI/CD via GitHub Actions shipped; integration tests still open |
+| Phase 5 — Test and Delivery Maturity | Complete | 95% | 602 tests passing; CI/CD via GitHub Actions shipped; integration tests still open |
 | Phase 6 — Faculty IT / Multi-Faculty Readiness | In progress | 35% | Policy skeleton + feature flag shipped; DB migration and IT approval still open |
 | Modernization Sprint (Phases 1–3D) | Complete | 100% | 10 new service files, 10 new test files, 7 new architecture docs, 272 new tests |
 | Enterprise Maturity (Phases T1–T8) | Complete | 100% | Typed events, trace services, transaction audit coupling, event dispatcher, policy config audit, governance hook, router thinning, report analytics, CI split |
+| Domain Stabilization (Phases S1–S8) | Complete | 100% | State machine, publication governance, event handlers, DTO contracts, analytics projection, frontend hooks, governance API endpoint, domain boundary docs |
 
 ---
 
@@ -274,7 +275,71 @@ Started
 
 ---
 
-## 9. Next Actions
+## 10. Domain Stabilization Phase — New Capabilities (S1–S8, 2026-05-14)
+
+### S1 — Domain Boundary Documentation + Governance Endpoint
+| File | Capability |
+|---|---|
+| `docs/architecture/DOMAIN_BOUNDARY_ARCHITECTURE.md` | 8 logical domains, stable interfaces, dependency graph |
+| `backend/routers/optimize_workflow.py` | `GET /sessions/{id}/governance` endpoint (closes useOptimizationGovernance API gap) |
+
+### S2 — Schedule State Machine
+| File | Capability |
+|---|---|
+| `backend/services/schedule_state_machine.py` | 9-state lifecycle: DRAFT→OPTIMIZED→RECHECKED→GOVERNANCE_REVIEW→APPROVED→PUBLISHED→LOCKED→ARCHIVED + ROLLED_BACK recovery |
+| `backend/tests/test_schedule_state_machine.py` | 37 tests: all transitions, guards, rollback, result immutability |
+
+### S3 — Publication Governance Service
+| File | Capability |
+|---|---|
+| `backend/services/publication_governance_service.py` | assess_publication_readiness(), assess_rollback_safety(), build_publish_audit_payload(), build_emergency_override_payload() |
+| `backend/tests/test_publication_governance_service.py` | 27 tests: readiness, blockers, rollback safety, override protocol |
+| `backend/routers/optimize_workflow.py` | `GET /sessions/{id}/publication-readiness` stub endpoint |
+
+### S4 — Typed Event Handlers
+| File | Capability |
+|---|---|
+| `backend/event_handlers/optimization_handler.py` | Handles: GOVERNANCE_ESCALATED, HARD_CONSTRAINT_FAILED, RECHECK_WARNING_GENERATED, QUALITY_SCORE_ADJUSTED |
+| `backend/event_handlers/governance_handler.py` | Handles: OVERRIDE_REQUESTED, OVERRIDE_APPROVED, OVERRIDE_REJECTED, AUTO_APPROVED, GOVERNANCE_ESCALATED, AUTO_APPROVAL_BLOCKED |
+| `backend/event_handlers/publication_handler.py` | Handles: SCHEDULE_PUBLISHED, SCHEDULE_ROLLED_BACK, EMERGENCY_PUBLICATION_OVERRIDE, SCHEDULE_LOCKED |
+| `backend/event_handlers/audit_handler.py` | Handles: MUTATION_COMMITTED, MUTATION_ROLLED_BACK, UNAUTHORIZED_ACCESS_ATTEMPT, SENSITIVE_ACCESS, EXPORT_INITIATED |
+| `backend/tests/test_event_handlers.py` | 17 tests: registration, dispatch, exception isolation |
+
+### S5 — DTO Contract TypedDicts
+| File | Capability |
+|---|---|
+| `backend/contracts/optimization_contracts.py` | QualityContract, RecheckSummaryContract, ObserverContract, ReportContract |
+| `backend/contracts/governance_contracts.py` | GovernanceDecisionContract, OverrideRequestContract |
+| `backend/contracts/publication_contracts.py` | PublicationReadinessContract, PublishAuditContract, EmergencyOverrideContract |
+
+### S6 — Analytics Projection Service
+| File | Capability |
+|---|---|
+| `backend/services/analytics_projection_service.py` | project_governance_trend(), project_quality_trend(), project_invigilator_overload_trend(), project_room_utilization_trend(), project_fairness_trend(), compare_periods() |
+| `backend/tests/test_analytics_projection_service.py` | 25 tests: all projections, empty inputs, deltas, trend directions |
+
+### S7 — Frontend Governance Hooks
+| File | Capability |
+|---|---|
+| `frontend/src/hooks/useScheduleGovernance.ts` | AsyncState<OptimizationGovernanceReport> via /governance endpoint |
+| `frontend/src/hooks/usePublicationGovernance.ts` | AsyncState<PublicationReadiness> via /publication-readiness endpoint |
+
+### S8 — Architecture Documentation
+| File | Capability |
+|---|---|
+| `docs/architecture/SCHEDULING_STATE_MACHINE.md` | 9 states, transition table, guard conditions, design rationale |
+| `docs/architecture/PUBLICATION_GOVERNANCE_ARCHITECTURE.md` | Publication lifecycle, rollback safety, emergency override protocol |
+
+### Test growth (Domain Stabilization)
+- S2: +37 tests
+- S3: +27 tests
+- S4: +17 tests
+- S6: +25 tests
+- **Total: +106 new tests (496 → 602)**
+
+---
+
+## 11. Next Actions
 
 1. Wire `UnitOfWork` into highest-value router mutations (start with `optimize_workflow.py` lock acquire/release).
 2. Enable `multi_faculty_enabled=True` only after DBA adds `faculty_id` column — follow MULTI_FACULTY_ISOLATION_IMPLEMENTATION_PLAN.md.

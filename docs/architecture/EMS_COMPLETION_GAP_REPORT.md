@@ -11,10 +11,9 @@
 
 EMS is no longer a fragile prototype. It is a working FastAPI + React academic operations platform with healthy baseline validation, a growing service layer, typed configuration, and materially improved security posture. It is also not yet fully renovated: the largest remaining risks are still router fatness, public data-surface decisions, transaction/audit coupling, partial PDPA enforcement, and uneven frontend/i18n consistency.
 
-**Current readiness score: 90 / 100** (up from 80 / 100 after modernization sprint)
+**Current readiness score: 96 / 100** (up from 94 / 100 after Domain Stabilization S1–S8)
 
-Previous score of 80/100 (2026-05-12) → 90/100 (2026-05-14) after 10 phases of modernization.
-Score increase driven by: CI/CD, transaction/audit coupling foundation, trace PII enforcement, multi-faculty policy skeleton, deterministic optimization intelligence (simulation, balancing, recommendations), governance UI contract, and 272 new tests (94 → 366).
+Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → **96/100** (domain stabilization S1–S8, +106 tests, 602 total).
 
 ---
 
@@ -37,7 +36,7 @@ Score increase driven by: CI/CD, transaction/audit coupling foundation, trace PI
 ### Validation baseline (updated 2026-05-14)
 - Backend compile: pass
 - Backend `import main`: pass
-- Backend tests: `366 passed` (was 94; +272 from modernization sprint)
+- Backend tests: `602 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8)
 - Frontend build: pass (TypeScript zero errors)
 - CI: GitHub Actions workflow shipped (`.github/workflows/ems-ci.yml`)
 
@@ -68,6 +67,16 @@ Score increase driven by: CI/CD, transaction/audit coupling foundation, trace PI
 - ~~No schedule simulation~~ → **RESOLVED**: deep-copy simulation + quality comparison
 - ~~No workload risk detection~~ → **RESOLVED**: deterministic heuristics, no ML, no solver
 - ~~No recommendation layer~~ → **RESOLVED**: human-approval-gated skeleton with 21 tests
+
+### Resolved gaps (2026-05-14 domain stabilization S1–S8)
+- ~~No schedule lifecycle state machine~~ → **RESOLVED**: `schedule_state_machine.py` — 9 states, 4 guards, 37 tests
+- ~~No publication lifecycle decisions~~ → **RESOLVED**: `publication_governance_service.py` — readiness, rollback, override, audit payloads, 27 tests
+- ~~Missing governance API endpoint~~ → **RESOLVED**: `GET /sessions/{id}/governance` closes useOptimizationGovernance gap
+- ~~No event consumers registered~~ → **RESOLVED**: `event_handlers/` — 4 typed handler files, 17 tests, registered in main.py
+- ~~No payload contracts~~ → **RESOLVED**: `contracts/` — TypedDict shapes for optimization, governance, publication domains
+- ~~No historical analytics projection~~ → **RESOLVED**: `analytics_projection_service.py` — 6 projection functions, 25 tests
+- ~~No publication-readiness frontend hook~~ → **RESOLVED**: `usePublicationGovernance.ts` + `useScheduleGovernance.ts`
+- ~~No domain boundary documentation~~ → **RESOLVED**: `DOMAIN_BOUNDARY_ARCHITECTURE.md` + `SCHEDULING_STATE_MACHINE.md` + `PUBLICATION_GOVERNANCE_ARCHITECTURE.md`
 
 ---
 
