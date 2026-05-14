@@ -51,6 +51,33 @@ _VALID_TRANSITIONS: dict[ScheduleState, set[ScheduleState]] = {
 
 _TERMINAL_STATES: frozenset[ScheduleState] = frozenset({ScheduleState.ARCHIVED})
 
+# Maps OptimizeSession.status → ScheduleState without touching the DB.
+# PUBLISHED / ARCHIVED / ROLLED_BACK are not derivable until SchedulePublicationState table exists.
+_SESSION_STATUS_TO_SCHEDULE_STATE: dict[str, str] = {
+    "draft":           "OPTIMIZED",         # CP-SAT ran; session under review
+    "confirming":      "GOVERNANCE_REVIEW", # Round-1 signing in progress
+    "confirmed":       "APPROVED",          # Round-1 complete; baseline_saved=True
+    "swap_open":       "APPROVED",          # Swap window open; approval holds
+    "swap_confirming": "GOVERNANCE_REVIEW", # Round-2 signing in progress
+    "locked":          "APPROVED",          # All signatures; maximally approved
+}
+
+
+def derive_schedule_state(session_status: str, governance_state: str = "") -> str:
+    """Map OptimizeSession.status to a ScheduleState string — pure logic, no DB.
+
+    PUBLISHED / ARCHIVED / ROLLED_BACK are not derivable from session.status alone;
+    they require a future SchedulePublicationState table.
+
+    Governance override: if governance_state is BLOCKED and the derived state would
+    be APPROVED, downgrade to GOVERNANCE_REVIEW — a blocked governance gate prevents
+    publication regardless of signing completion.
+    """
+    derived = _SESSION_STATUS_TO_SCHEDULE_STATE.get(session_status, "OPTIMIZED")
+    if derived == "APPROVED" and governance_state == "BLOCKED":
+        return "GOVERNANCE_REVIEW"
+    return derived
+
 
 class ScheduleTransitionError(ValueError):
     """Raised when a transition violates the state machine rules."""

@@ -11,6 +11,7 @@ from services.schedule_state_machine import (
     ScheduleTransitionError,
     ScheduleTransitionResult,
     schedule_state_machine,
+    derive_schedule_state,
 )
 
 
@@ -237,3 +238,54 @@ def test_all_nine_states_defined():
         "APPROVED", "PUBLISHED", "LOCKED", "ARCHIVED", "ROLLED_BACK",
     }
     assert states == expected
+
+
+# ── derive_schedule_state ─────────────────────────────────────────────────────
+
+def test_derive_draft_is_optimized():
+    assert derive_schedule_state("draft") == "OPTIMIZED"
+
+
+def test_derive_confirming_is_governance_review():
+    assert derive_schedule_state("confirming") == "GOVERNANCE_REVIEW"
+
+
+def test_derive_confirmed_is_approved():
+    assert derive_schedule_state("confirmed") == "APPROVED"
+
+
+def test_derive_swap_open_is_approved():
+    assert derive_schedule_state("swap_open") == "APPROVED"
+
+
+def test_derive_swap_confirming_is_governance_review():
+    assert derive_schedule_state("swap_confirming") == "GOVERNANCE_REVIEW"
+
+
+def test_derive_locked_is_approved():
+    assert derive_schedule_state("locked") == "APPROVED"
+
+
+def test_derive_unknown_falls_back_to_optimized():
+    assert derive_schedule_state("nonexistent_status") == "OPTIMIZED"
+
+
+def test_derive_blocked_governance_downgrades_approved_to_governance_review():
+    assert derive_schedule_state("locked", "BLOCKED") == "GOVERNANCE_REVIEW"
+    assert derive_schedule_state("confirmed", "BLOCKED") == "GOVERNANCE_REVIEW"
+    assert derive_schedule_state("swap_open", "BLOCKED") == "GOVERNANCE_REVIEW"
+
+
+def test_derive_blocked_governance_does_not_affect_governance_review_states():
+    assert derive_schedule_state("confirming", "BLOCKED") == "GOVERNANCE_REVIEW"
+    assert derive_schedule_state("swap_confirming", "BLOCKED") == "GOVERNANCE_REVIEW"
+
+
+def test_derive_non_blocked_governance_leaves_approved_intact():
+    assert derive_schedule_state("locked", "AUTO_APPROVED") == "APPROVED"
+    assert derive_schedule_state("confirmed", "APPROVAL_REQUIRED") == "APPROVED"
+
+
+def test_derive_empty_governance_state_leaves_approved_intact():
+    assert derive_schedule_state("locked", "") == "APPROVED"
+    assert derive_schedule_state("locked") == "APPROVED"

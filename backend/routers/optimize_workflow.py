@@ -43,6 +43,7 @@ from services.exceptions import EMSDomainError, EMSPermissionError
 from services import workflow_lock_service
 from services.optimization_recheck_service import run_optimization_recheck
 from services.optimization_report_builder import build_optimization_report
+from services.schedule_state_machine import derive_schedule_state, schedule_state_machine
 from services.workflow_user_service import format_user_dict, build_external_workflow_issues
 from services.workflow_reporting_service import build_staff_workload_report
 from services.workflow_signing_service import (
@@ -501,7 +502,13 @@ def get_session_governance_report(
         )
         .all()
     )
-    return build_optimization_report(period=period, schedules=schedules)
+    report = build_optimization_report(period=period, schedules=schedules)
+    governance_state = report.get("governance", {}).get("governance_state", "")
+    derived_state = derive_schedule_state(session.status, governance_state)
+    report["derived_schedule_state"] = derived_state
+    report["valid_next_states"] = schedule_state_machine.valid_next_states(derived_state)
+    report["session_status"] = session.status
+    return report
 
 
 @router.get("/sessions/{session_id}/publication-readiness")
@@ -533,14 +540,21 @@ def get_publication_readiness(
         .all()
     )
     report = build_optimization_report(period=period, schedules=schedules)
+    governance_dict = report.get("governance", {})
+    governance_state = governance_dict.get("governance_state", "")
+    derived_state = derive_schedule_state(session.status, governance_state)
     readiness = assess_publication_readiness(
         quality_report=report.get("quality_breakdown", {}),
-        governance=report.get("governance", {}),
+        governance=governance_dict,
         recheck_summary=report.get("severity_summary", {}),
-        schedule_state=session.status,
+        schedule_state=derived_state,
     )
     from dataclasses import asdict
-    return asdict(readiness)
+    result = asdict(readiness)
+    result["derived_schedule_state"] = derived_state
+    result["valid_next_states"] = schedule_state_machine.valid_next_states(derived_state)
+    result["session_status"] = session.status
+    return result
 
 
 @router.post("/session/init")
