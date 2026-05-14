@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 from policies.optimization_policy import DEFAULT_OPTIMIZATION_GOVERNANCE_THRESHOLDS
 from services.optimization_pipeline_observer_service import observe_optimization_result
+from services.optimization_trace_context import OptimizationTraceContext
 
 
 # ── Private helpers for additive analytics sections ───────────────────────────
@@ -170,12 +171,14 @@ def build_optimization_report(
     schedules: list,
     submissions_by_section: dict | None = None,
     enrollments_by_section: dict | None = None,
+    trace_context: OptimizationTraceContext | dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     observer = observe_optimization_result(
         period=period,
         schedules=schedules,
         submissions_by_section=submissions_by_section or {},
         enrollments_by_section=enrollments_by_section or {},
+        trace_context=trace_context,
     )
 
     quality = observer.get("quality_summary", {})
@@ -183,6 +186,9 @@ def build_optimization_report(
     issues = observer.get("issues", [])
     governance = observer.get("governance", {})
     explanation = observer.get("explanation_summary", {})
+    native_trace_summary = observer.get("native_trace_summary", {})
+    native_trace_events = observer.get("native_trace_events", [])
+    trace_source_breakdown = observer.get("trace_source_breakdown", {})
 
     executive = {
         "status": observer.get("status", "UNKNOWN"),
@@ -226,7 +232,13 @@ def build_optimization_report(
         "rejected_candidate_analytics": _build_rejected_candidate_analytics(schedules),
         "invigilator_overload_summary": _build_invigilator_overload_summary(quality, recheck_summary),
         "fairness_summary": _build_fairness_summary(quality),
-        "traceability_completeness_score": _compute_traceability_score(schedules, explanation, governance),
+        "native_trace_summary": native_trace_summary,
+        "native_trace_events": native_trace_events,
+        "traceability_completeness_score": observer.get(
+            "traceability_completeness_score",
+            _compute_traceability_score(schedules, explanation, governance),
+        ),
+        "trace_source_breakdown": trace_source_breakdown,
         "quality_band_summary": _build_quality_band_summary(quality, governance),
         "optimization_confidence_score": _compute_confidence_score(explanation),
     }

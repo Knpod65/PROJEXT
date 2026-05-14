@@ -42,6 +42,18 @@ def _make_observer(
         "review_priority": "LOW",
         "escalation_reason": None,
     }
+    native_trace_summary = {
+        "trace_id": "trace-1",
+        "session_id": "session-1",
+        "mode": "POST_HOC_FALLBACK",
+        "total_events": 0,
+        "candidate_trace_count": 0,
+        "constraint_trace_count": 0,
+        "selection_trace_count": 0,
+        "final_selection_trace_count": 0,
+        "highest_severity": None,
+        "source_breakdown": {"POST_HOC_TRACE": checked_schedule_count},
+    }
     return {
         "quality_summary": quality,
         "recheck_summary": {
@@ -58,6 +70,10 @@ def _make_observer(
             "categories_seen": [],
         },
         "checked_schedule_count": checked_schedule_count,
+        "native_trace_summary": native_trace_summary,
+        "native_trace_events": [],
+        "traceability_completeness_score": 20.0,
+        "trace_source_breakdown": {"POST_HOC_TRACE": checked_schedule_count},
     }
 
 
@@ -108,7 +124,8 @@ def test_all_new_keys_present():
     r = _build_report()
     for key in (
         "risk_matrix", "rejected_candidate_analytics", "invigilator_overload_summary",
-        "fairness_summary", "traceability_completeness_score",
+        "fairness_summary", "native_trace_summary", "native_trace_events",
+        "traceability_completeness_score", "trace_source_breakdown",
         "quality_band_summary", "optimization_confidence_score",
     ):
         assert key in r, f"Missing new key: {key}"
