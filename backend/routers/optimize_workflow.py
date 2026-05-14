@@ -42,6 +42,7 @@ from services.audit_service import audit_event
 from services.exceptions import EMSDomainError, EMSPermissionError
 from services import workflow_lock_service
 from services.optimization_recheck_service import run_optimization_recheck
+from services.optimization_report_builder import build_optimization_report
 from services.workflow_user_service import format_user_dict, build_external_workflow_issues
 from services.workflow_reporting_service import build_staff_workload_report
 from services.workflow_signing_service import (
@@ -466,6 +467,80 @@ def get_latest_recheck_report(
     ):
         raise HTTPException(403, "ไม่มีสิทธิ์ดู recheck report")
     return run_optimization_recheck(db, session_id)
+
+
+@router.get("/sessions/{session_id}/governance")
+def get_session_governance_report(
+    session_id: int,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_view_all),
+):
+    """Return the full governance report for a session's current allocation.
+
+    Used by the useOptimizationGovernance and useScheduleGovernance hooks.
+    Read-only — no side effects.
+    """
+    session = db.query(models.OptimizeSession).filter(
+        models.OptimizeSession.id == session_id
+    ).first()
+    if not session:
+        raise HTTPException(404, "Session not found")
+    period = session.period
+    schedules = (
+        db.query(models.ExamSchedule)
+        .join(models.Section)
+        .filter(
+            models.Section.academic_year == period.academic_year,
+            models.Section.semester == period.semester,
+            models.ExamSchedule.exam_type == period.exam_type,
+        )
+        .options(
+            joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
+            joinedload(models.ExamSchedule.room),
+            joinedload(models.ExamSchedule.supervisions),
+        )
+        .all()
+    )
+    return build_optimization_report(period=period, schedules=schedules)
+
+
+@router.get("/sessions/{session_id}/publication-readiness")
+def get_publication_readiness(
+    session_id: int,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_view_all),
+):
+    """Return publication readiness assessment for a session.
+
+    Used by the usePublicationGovernance hook.
+    Read-only — no side effects.
+    """
+    from services.publication_governance_service import assess_publication_readiness
+    session = db.query(models.OptimizeSession).filter(
+        models.OptimizeSession.id == session_id
+    ).first()
+    if not session:
+        raise HTTPException(404, "Session not found")
+    period = session.period
+    schedules = (
+        db.query(models.ExamSchedule)
+        .join(models.Section)
+        .filter(
+            models.Section.academic_year == period.academic_year,
+            models.Section.semester == period.semester,
+            models.ExamSchedule.exam_type == period.exam_type,
+        )
+        .all()
+    )
+    report = build_optimization_report(period=period, schedules=schedules)
+    readiness = assess_publication_readiness(
+        quality_report=report.get("quality_breakdown", {}),
+        governance=report.get("governance", {}),
+        recheck_summary=report.get("severity_summary", {}),
+        schedule_state=session.status,
+    )
+    from dataclasses import asdict
+    return asdict(readiness)
 
 
 @router.post("/session/init")
