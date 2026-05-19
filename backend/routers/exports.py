@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from database import get_db
 import models
 from auth_utils import get_current_user, require_admin, require_staff_or_admin, require_view_all, log_action, get_effective_role
+from utils.error_response import error_detail
 from config.audit_actions import (
     EXPORT_PAPER_DISTRIBUTION_PDF,
     EXPORT_SCHEDULE_PDF,
@@ -114,7 +115,7 @@ def export_schedule_pdf(
 
         schedules = ExportService.get_schedule_export_data(db, semester, academic_year, exam_type)
         if not schedules:
-            raise HTTPException(404, "ไม่พบข้อมูลตารางสอบ")
+            raise HTTPException(404, error_detail("ไม่พบข้อมูลตารางสอบ", "errors.exports.periodNotFound"))
 
         from collections import defaultdict
         by_date = defaultdict(lambda: defaultdict(list))

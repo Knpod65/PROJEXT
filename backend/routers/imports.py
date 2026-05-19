@@ -14,6 +14,7 @@ from auth_utils import require_admin
 from services.import_service import ImportService
 from serializers.import_serializer import serialize_session_audit
 from sqlalchemy import and_, func, case
+from utils.error_response import error_detail
 
 router = APIRouter()
 
@@ -258,7 +259,7 @@ def session_row_logs(
 ):
     sess = db.query(models.ImportSession).filter(models.ImportSession.id == session_id).first()
     if not sess:
-        raise HTTPException(404, "ไม่พบ session")
+        raise HTTPException(404, error_detail("ไม่พบ session", "errors.imports.sessionNotFound"))
 
     query = db.query(models.ImportRowLog).filter(models.ImportRowLog.session_id == session_id)
 
