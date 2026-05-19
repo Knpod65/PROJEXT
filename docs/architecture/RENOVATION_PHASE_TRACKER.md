@@ -30,13 +30,17 @@ Tracks progress on the EMS platform renovation from fat routers to Laravel-style
 ### L2.4 Analytics/Governance Router Thinning
 - **Status**: ✅ COMPLETED
 - **Slices**:
-  - L2.4-s1: analytics.py thinned (223 → ~90 lines), AnalyticsService created
-  - L2.4-s2: dashboard.py thinned (154 → ~50 lines), DashboardService created
-  - L2.4-s3: optimize_workflow.py governance endpoints extracted (1507 → ~1330 lines), GovernanceEndpointService created
+  - L2.4-s1: analytics.py thinned (223 → ~90 lines), AnalyticsService / Policy / Validator / Serializer created
+  - L2.4-s2: dashboard.py thinned (154 → ~50 lines), DashboardService / Policy / Validator / Serializer created
+  - L2.4-s3: optimize_workflow.py governance endpoints extracted (1507 → ~1330 lines), GovernanceEndpointService / Policy / Validator / Serializer created
+  - L2.4-s4: i18n raw string audit + coverage checker added
+  - L2.4-s5: serializer coverage audit completed
+  - L2.4-s6: final docs updated
 - **Services**: analytics_service.py, dashboard_service.py, governance_endpoint_service.py
 - **Policies**: analytics_policy.py, dashboard_policy.py, governance_policy.py
 - **Validators**: analytics_validator.py, dashboard_validator.py, governance_validator.py
 - **Serializers**: analytics_serializer.py, dashboard_serializer.py, governance_serializer.py
+- **Docs**: I18N_AUDIT_REPORT.md, SERIALIZER_COVERAGE_AUDIT.md
 
 ---
 
@@ -75,7 +79,7 @@ Tracks progress on the EMS platform renovation from fat routers to Laravel-style
 | L2.1 | query/group | ✅ Done | 100% |
 | L2.2 | CRUD/supervision | ✅ Done | 100% |
 | L2.3 | import/export | ✅ Done | 100% |
-| L2.4 | analytics/governance | ✅ Done | 100% |
+| L2.4 | analytics + dashboard + governance (6 slices) | ✅ Done | 100% |
 | L3 | Serializers | ⏳ Pending | 0% |
 | L4 | Validators | ⏳ Pending | 0% |
 | L5 | Policies | ⏳ Pending | 0% |
