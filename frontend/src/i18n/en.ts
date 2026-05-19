@@ -1316,4 +1316,18 @@ export const en = {
   "platformConfig.table.ownerUnit": "Owner Unit",
   "platformConfig.table.category": "Category",
   "platformConfig.table.pdpaLevel": "PDPA Level",
+
+  // Operational Health
+  "operationalHealth.noData": "No health data",
+  "operationalHealth.noDataDesc": "Operational health data is not available yet.",
+  "operationalHealth.backendHealth": "Backend Health",
+  "operationalHealth.liveness": "Liveness",
+  "operationalHealth.okStatus": "OK",
+  "operationalHealth.unreachable": "Unreachable",
+  "operationalHealth.lastCheck": "Last Check",
+  "operationalHealth.analyticsHealth": "Analytics Health",
+  "operationalHealth.healthScore": "Health Score",
+  "operationalHealth.integrationReadiness": "Integration Readiness",
+  "operationalHealth.activeContracts": "Active Contracts",
+  "operationalHealth.autoRefreshNote": "Auto-refresh every 60s",
 } as const;

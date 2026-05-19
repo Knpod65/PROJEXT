@@ -1304,4 +1304,18 @@ export const th = {
   "platformConfig.table.ownerUnit": "หน่วยรับผิดชอบ",
   "platformConfig.table.category": "หมวดหมู่",
   "platformConfig.table.pdpaLevel": "ระดับ PDPA",
+
+  // Operational Health
+  "operationalHealth.noData": "ไม่มีข้อมูลสุขภาพ",
+  "operationalHealth.noDataDesc": "ข้อมูลสุขภาพการดำเนินงานยังไม่มีในขณะนี้",
+  "operationalHealth.backendHealth": "สุขภาพแบ็กเอนด์",
+  "operationalHealth.liveness": "สถานะการทำงาน",
+  "operationalHealth.okStatus": "ปกติ",
+  "operationalHealth.unreachable": "ไม่สามารถเชื่อมต่อได้",
+  "operationalHealth.lastCheck": "ตรวจสอบล่าสุด",
+  "operationalHealth.analyticsHealth": "สุขภาพการวิเคราะห์",
+  "operationalHealth.healthScore": "คะแนนสุขภาพ",
+  "operationalHealth.integrationReadiness": "ความพร้อมของการเชื่อมต่อ",
+  "operationalHealth.activeContracts": "สัญญาที่ใช้งาน",
+  "operationalHealth.autoRefreshNote": "รีเฟรชอัตโนมัติทุก 60 วินาที",
 } as const;
