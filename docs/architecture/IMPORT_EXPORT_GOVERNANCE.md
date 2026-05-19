@@ -128,6 +128,21 @@ that created it.
 
 All supported export types, their API endpoints, required permissions, and output format.
 
+### Laravel-Style Export Boundaries
+
+The export system follows a clean layered architecture:
+
+| Layer | Component | Responsibility |
+|-------|-----------|----------------|
+| **Router** | `routers/exports.py` | Thin endpoint handlers, delegates to services |
+| **Router** | `routers/exports_excel.py` | Thin endpoint handlers for Excel exports |
+| **Service** | `services/export_service.py` | Orchestration, delegates to repository |
+| **Service** | `services/export_excel_service.py` | Excel workbook generation |
+| **Repository** | `repositories/export_repository.py` | Direct DB queries, joined loads |
+| **Policy** | `policies/export_policy.py` | Role-based permission checks |
+| **Validator** | `validators/export_validator.py` | Parameter validation |
+| **Validator** | `validators/export_excel_validator.py` | Excel-specific validation |
+
 ### Document Exports (Exam Operations)
 
 | Export Type | Endpoint | Roles Allowed | Output Format | Contains PII? | Audit Logged? |
