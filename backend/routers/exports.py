@@ -615,3 +615,59 @@ def get_import_report(
         "enrollment_records": records,
         "created_at":       sess.created_at.isoformat() if sess.created_at else None,
     }
+
+
+# ── Platform Config Admin ─────────────────────────────────────────────────────
+# D5.3 thin pass-through. Aggregates read-only config objects from the D3 config
+# layer and the D4 analytics layer into a single admin-visible JSON snapshot.
+# All values are safe to display — no DB credentials, no raw secrets.
+
+@router.get("/admin/platform-config")
+def get_platform_config(
+    current_user: models.User = Depends(require_admin),
+):
+    """Return a read-only platform configuration snapshot for admin UI.
+    
+    Sections returned:
+    - faculty_configs    (list of D3 faculty configs)
+    - workload_policies  (current effective policy from D3 registry)
+    - integration_contracts (5 contracts from D4)
+    - analytics_metrics  (11 KPIs from D4 metric registry)
+    """
+    from services.platform_config_export_service import build_platform_snapshot
+    from services.workload_policy_service import get_effective_policy
+    from services.integration_contract_registry_service import list_contracts
+    from services.analytics_metric_registry_service import list_metrics
+
+    contracts = list_contracts()
+    metrics = list_metrics()
+    workload_policy = get_effective_policy()
+
+    snapshot = build_platform_snapshot(
+        faculty_configs=[],
+        workload_policies=[workload_policy],
+        governance_flows=[],
+        academic_group_configs=[],
+        role_mappings=[],
+        export_metadata={
+            "source": "ems-platform-config",
+            "note": (
+                "faculty_configs, governance_flows, academic_group_configs and "
+                "role_mappings are empty in this release because they are stored "
+                "in the D3 config registry and require a DB session to retrieve. "
+                "This endpoint will be expanded when the D3 repository layer is "
+                "fully wired."
+            ),
+        },
+    )
+
+    return {
+        "faculty_configs":       snapshot["faculty_configs"],
+        "workload_policies":     snapshot["workload_policies"],
+        "governance_flows":      snapshot["governance_flows"],
+        "academic_group_configs": snapshot["academic_group_configs"],
+        "role_mappings":         snapshot["role_mappings"],
+        "integration_contracts": contracts,
+        "analytics_metrics":     metrics,
+        "export_metadata":       snapshot["export_metadata"],
+    }

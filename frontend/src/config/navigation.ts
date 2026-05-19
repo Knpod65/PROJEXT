@@ -281,6 +281,15 @@ export const appPages: AppPageConfig[] = [
     allowBaseAdminPreview: true,
   },
   {
+    key: "platform-configuration",
+    title: "Platform Configuration",
+    description: "View D3 faculty config, workload policy, governance flow, integration contracts, and analytics metrics.",
+    path: "/platform-config",
+    icon: "tune",
+    roles: ["admin"],
+    navGroup: "system",
+  },
+  {
     key: "exammanager",
     title: "Course Ownership",
     description: "Department-scoped teacher responsibility assignment for each exam cycle.",
