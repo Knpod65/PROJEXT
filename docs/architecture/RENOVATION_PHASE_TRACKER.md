@@ -46,13 +46,18 @@ Tracks progress on the EMS platform renovation from fat routers to Laravel-style
 
 ## Phase L3 — Serializer/Resource Layer
 
-### L3.1 Response Transformer Layer
-- **Status**: ⏳ PENDING
-- **Target**: Extract inline dict transformations
-
-### L3.2 Full i18n Audit
-- **Status**: ⏳ PENDING
-- **Target**: Centralize all strings, add parity checker
+### L3 — Full Serializer / Resource Layer Completion
+- **Status**: ✅ COMPLETED
+- **Slices**:
+  - L3-s1: Base helpers + registry added
+  - L3-s2: Governance / Publication / Lifecycle serializers
+  - L3-s3: Optimization / Trace / Recheck serializers
+  - L3-s4: Analytics / Dashboard consolidation
+  - L3-s5: Submission / Exam Manager / User serializers
+  - L3-s6: Targeted adoption pass
+  - L3-s7: Coverage docs updated
+- **Coverage**: ~95% SAFE
+- **Next**: I1 — Full i18n parity conversion
 
 ---
 

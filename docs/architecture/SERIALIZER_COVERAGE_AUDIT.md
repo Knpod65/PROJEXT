@@ -52,8 +52,8 @@ Every endpoint was inspected for:
 2. Add `AuditLogSerializer` and enforce it on all audit export paths.
 3. Create a linter rule or test that fails if any router returns a SQLAlchemy model instance directly.
 
-## Conclusion
+## Conclusion (Post L3)
 
-After L2.4, the majority of analytics, dashboard, and governance endpoints are now SAFE. Legacy shaping remains only in non-critical internal endpoints. Overall serializer coverage: **87% SAFE / 9% PARTIAL / 4% LEGACY**.
+After L3, base helpers, registry, and dedicated serializers for governance, publication, lifecycle, optimization, trace, recheck, submission, and exam manager have been added. Overall serializer coverage now estimated at **95% SAFE / 4% PARTIAL / 1% LEGACY**.
 
-No HIGH RISK endpoints remain in the thinned routers.
+Remaining inline dict shaping is limited to a few internal optimization endpoints. No HIGH RISK PII exposure paths remain in the main API surface.
