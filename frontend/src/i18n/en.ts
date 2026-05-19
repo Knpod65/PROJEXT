@@ -1286,6 +1286,22 @@ export const en = {
   "severity.error": "Error",
   "severity.critical": "Critical",
 
+  // Audit Explorer
+  "auditEvents.tab": "Audit Events",
+  "governanceTimeline.tab": "Governance Timeline",
+  "lifecycleTimeline.tab": "Lifecycle Timeline",
+  "audit.noEvents": "No audit events found",
+  "audit.filterByAction": "Filter by action",
+  "audit.filterByDate": "Filter by date range",
+
+  // Executive Analytics
+  "executiveAnalytics.overallHealthScore": "Overall Health Score",
+  "executiveAnalytics.riskBand": "Risk Band",
+  "executiveAnalytics.topRisks": "Top Risks",
+  "executiveAnalytics.recommendations": "Recommendations",
+  "executiveAnalytics.governanceBlockers": "Governance Blockers",
+  "executiveAnalytics.publicationReady": "Publication Ready",
+
   // Platform Configuration
   "platformConfig.readOnlyNotice": "Configuration is read-only in this release",
   "platformConfig.facultyConfig": "Faculty Config",

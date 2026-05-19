@@ -1274,6 +1274,22 @@ export const th = {
   "severity.error": "ข้อผิดพลาด",
   "severity.critical": "วิกฤต",
 
+  // Audit Explorer
+  "auditEvents.tab": "เหตุการณ์ตรวจสอบ",
+  "governanceTimeline.tab": "ไทม์ไลน์ธรรมาภิบาล",
+  "lifecycleTimeline.tab": "ไทม์ไลน์วงจรชีวิต",
+  "audit.noEvents": "ไม่พบเหตุการณ์ตรวจสอบ",
+  "audit.filterByAction": "กรองตามการกระทำ",
+  "audit.filterByDate": "กรองตามช่วงวันที่",
+
+  // Executive Analytics
+  "executiveAnalytics.overallHealthScore": "คะแนนสุขภาพโดยรวม",
+  "executiveAnalytics.riskBand": "ระดับความเสี่ยง",
+  "executiveAnalytics.topRisks": "ความเสี่ยงสำคัญ",
+  "executiveAnalytics.recommendations": "ข้อแนะนำ",
+  "executiveAnalytics.governanceBlockers": "ตัวบล็อกจากธรรมาภิบาล",
+  "executiveAnalytics.publicationReady": "พร้อมเผยแพร่",
+
   // Platform Configuration
   "platformConfig.readOnlyNotice": "การกำหนดค่ายังเป็นแบบอ่านอย่างเดียวในรุ่นนี้",
   "platformConfig.facultyConfig": "การกำหนดค่าคณะ",
