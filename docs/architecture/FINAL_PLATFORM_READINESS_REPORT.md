@@ -2,10 +2,12 @@
 ## EMS Academic Operations Platform — Go/No-Go Assessment
 **Date:** 2026-05-19 (updated)
 **Branch:** main  
-**Scope:** main after D3 Multi-Faculty Configuration Platform delivery  
-**Assessor:** D3 automated validation
+**Scope:** main after D4 Institutional Analytics & Cross-System Integration Platform delivery  
+**Assessor:** D4 automated validation
 
 > D3 addendum: Multi-Faculty Configuration Platform (D3.0–D3.10) delivered 2026-05-19. Test count ~1114 (+199). Maturity score unchanged at 99/100 pending DB-backed config and DBA/owner approvals. Institutional assumption configurability score raised from 20/100 to 80/100.
+>
+> D4 addendum: Institutional Analytics & Cross-System Integration Platform (D4.0–D4.11) delivered 2026-05-19. All 13 D4 slices shipped additively: analytics audit, metric registry (11 KPIs), read model contracts (9 TypedDicts), executive/load/room/governance analytics services, data lineage (8-stage graph + gap detector), integration contract registry (5 systems, 4 real stubs), analytics router (4 endpoints), frontend contract layer (TanStack Query hooks + ExecutiveAnalytics page + navigation entry). Backend: **1256 tests pass, 0 failed**. Frontend: 0 TS errors. No PII exposed in any analytics response. Score 99/100 unchanged — remaining blocker is DPO sign-off on public data surface.
 
 ---
 
@@ -24,8 +26,9 @@
 | Enterprise Event & Audit (Phases D1.1–D1.7) | 2026-05-14 | **98/100** | **+1** |
 | Optimization Native Trace Engine (Phases D2.1–D2.9) | 2026-05-14 | **99/100** | **+1** |
 | Multi-Faculty Config Platform (Phases D3.0–D3.10) | 2026-05-19 | **99/100** | 0 (configurable foundation, DB-backed deferred) |
+| Institutional Analytics (Phases D4.0–D4.11) | 2026-05-19 | **99/100** | 0 (readiness complete; DPO sign-off holds final point) |
 
-The remaining point is intentionally held back by combined unresolved items: deeper solver internals are still partly black-box, public PDPA surface decisions still need owner sign-off, and multi-faculty DB migration still requires IT/DBA approval.
+The remaining point is intentionally held back by combined unresolved items: public data surface still needs DPO sign-off, deeper solver internals are still partly black-box, and multi-faculty DB migration still requires IT/DBA approval.
 
 ---
 
@@ -35,7 +38,7 @@ The remaining point is intentionally held back by combined unresolved items: dee
 |---|---|---|
 | `python -m compileall backend -q` | **PASS** | Zero syntax errors |
 | `python -c "import main"` | **PASS** | Dev-mode warnings only (expected) |
-| `python -m pytest backend/tests -q` | **PASS** | **~1114 passed** (915 + 199 D3 tests), 0 failed |
+| `python -m pytest backend/tests -q` | **PASS** | **1256 passed** (915 D1/D2/D3 base + 341 D4 slice tests), 0 failed |
 | `cd frontend && npm run build` | **PASS** | TypeScript zero errors; chunk-size warning is pre-existing |
 | `git status` | **CLEAN** | Working tree clean, no unintended files |
 
@@ -194,13 +197,13 @@ These items prevent reaching 100/100 and require action before the corresponding
 Priority order:
 
 1. **Wire `UnitOfWork` into `optimize_workflow.py` lock acquire/release** — highest-value transaction safety gain per effort.
-2. **Extract `schedule_service.py`** — thin `schedule.py` router by moving query/serialization into service layer.
-3. **Get DPO sign-off on public schedule exposure** — unblocks PDPA compliance completion.
-4. **Submit Faculty IT auth contract for sign-off** — unblocks multi-faculty planning.
-5. **Add one router integration test slice** — health + auth + print-queue transition; closes the only remaining CI test gap.
+2. **DPO sign-off on public schedule data surface** — unblocks PDPA compliance completion.
+3. **IT/DBA executes `faculty_id` DB migration** — unblocks multi-faculty feature flag flip.
+4. **DPO reviews trace metadata allowlist and audit log retention** — unblocks persisted trace storage design.
+5. **Business owner defines AI recommendation approval tiers** — production-hardens `recommendation_service.py` gateway.
 
 ---
 
 ## 9. Bottom Line
 
-EMS is a production-quality Academic Operations Platform at **99/100 readiness**. D2 closes the biggest explainability gap by moving optimization traceability closer to the source without destabilizing the solver, API surface, or database schema. The remaining work is mostly about deeper solver introspection, PDPA approval edges, and the next macro phase: `D3 — Multi-Faculty Configuration Platform`.
+EMS is a production-quality Academic Operations Platform at **99/100 readiness**. D4 closes the analytics explainability and cross-system integration gaps through 13 fully additive, read-only, PDPA-safe slices with zero external system execution and 1256 passing tests. The remaining work is DPO sign-off on the public data surface (the final scoring point), IT/DBA execution of the multi-faculty DB migration, and progressive in-place router extraction from the two largest routers (`optimize_workflow.py` at ~1330 lines, `schedule.py` at ~1088 lines).

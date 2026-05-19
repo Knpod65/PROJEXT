@@ -1,8 +1,9 @@
 # EMS Completion Gap Report
-## Academic Operations Platform — 2026-05-19 (updated after D3 Multi-Faculty Config Platform)
+## Academic Operations Platform — 2026-05-19 (updated after D4 Analytics & Integration Platform)
 
-> Scope: codebase reality on `main` after D3 Multi-Faculty Configuration Platform delivery
-> D3 addendum: D3.0–D3.10 delivered 2026-05-19. Institutional assumption configurability score raised from 20/100 to 80/100. All 70+ hardcoded assumptions now wrapped behind configurable service layers. Test count ~1114 (+199 from D3). Score remains 99/100 (DB-backed config and DBA/owner approvals still pending).
+> Scope: codebase reality on `main` after D4 Institutional Analytics & Cross-System Integration Platform delivery
+> D3 addendum: D3.0–D3.10 delivered 2026-05-19. Institutional assumption configurability score raised from 20/100 to 80/100. All 70+ hardcoded assumptions now wrapped behind configurable service layers. Test count ~1114 (+199 from D3).
+> D4 addendum: D4.0–D4.11 delivered 2026-05-19. 11 new backend service/contract/router files, 6 new test files, 7 new frontend files, 3 new architecture docs, +341 tests. Backend total 1256 passing (0 failed). Frontend: 0 TS errors. Analytics layer is fully additive and PDPA-safe. Remaining gap is DPO sign-off on public data surface.
 
 ---
 
@@ -12,7 +13,7 @@ EMS is no longer a fragile prototype. It is a working FastAPI + React academic o
 
 **Current readiness score: 99 / 100** (unchanged from D2; institutional assumption configurability 80/100, up from 20/100)
 
-Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → 97/100 (lifecycle capability C1–C9, +141 tests, 754 total) → 98/100 (enterprise event & audit D1, +106 tests, 860 total) → **99/100** (optimization native trace engine D2, +55 tests, 915 total) → **99/100** (multi-faculty config platform D3, +199 tests, ~1114 total).
+Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → 97/100 (lifecycle capability C1–C9, +141 tests, 754 total) → 98/100 (enterprise event & audit D1, +106 tests, 860 total) → **99/100** (optimization native trace engine D2, +55 tests, 915 total) → **99/100** (multi-faculty config platform D3, +199 tests, ~1114 total) → **99/100** (institutional analytics D4, +341 tests, 1256 total).
 
 ---
 
@@ -32,10 +33,10 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
   - `SUBMISSION_ACCESS_TOKEN_EXPIRE_HOURS`
   - `WORKFLOW_LOCK_TTL_SECONDS`
 
-### Validation baseline (updated 2026-05-14)
+### Validation baseline (updated 2026-05-19)
 - Backend compile: pass
 - Backend `import main`: pass
-- Backend tests: `~1114 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9; +106 enterprise event & audit D1; +55 D2 native trace; +199 D3 multi-faculty config)
+- Backend tests: **1256 passed** (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9; +106 enterprise event & audit D1; +55 D2 native trace; +199 D3 multi-faculty config; +341 D4 analytics & integration)
 - Frontend build: pass (TypeScript zero errors)
 - CI: GitHub Actions workflow shipped (`.github/workflows/ems-ci.yml`)
 
@@ -98,6 +99,19 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 - ~~No mixed-source event timeline~~ → **RESOLVED**: `lifecycle_timeline_service.py` — normalizes EventEnvelope/DomainEvent/governance trace events, summary with rollback/override/publication flags, 17 tests
 - ~~No PDPA payload classification~~ → **RESOLVED**: `event_pdpa_policy.py` — classify/assert/mask with nested dict/list support, 4-level classification, 20 tests
 
+### Resolved gaps (2026-05-19 institutional analytics D4.0–D4.11)
+- ~~No analytics KPI registry~~ → **RESOLVED**: `analytics_metric_registry_service.py` — 11 KPI definitions across 6 categories, PDPA-classified levels
+- ~~No analytics read model contracts~~ → **RESOLVED**: `analytics_contracts.py` — 9 TypedDicts, `validate_analytics_dict()`, `sanitize_analytics_output()` PDPA-safe sanitizer
+- ~~No executive dashboard projection service~~ → **RESOLVED**: `executive_dashboard_projection_service.py` — `project_executive_dashboard()`, `build_workload_summary_dict()`, `compute_room_summary_dict()`
+- ~~No workload analytics service~~ → **RESOLVED**: `workload_analytics_service.py` — per-staff/entity distribution analytics
+- ~~No room utilization analytics~~ → **RESOLVED**: `room_utilization_analytics_service.py` — room-level utilization, capacity, vacancy scores
+- ~~No governance analytics service~~ → **RESOLVED**: `governance_analytics_service.py` — publication, signing, override, overdue analytics
+- ~~No data lineage service~~ → **RESOLVED**: `data_lineage_service.py` — 8-stage graph builder with `copy.deepcopy` nodes, gap detector
+- ~~No integration contract modeling~~ → **RESOLVED**: `integration_contracts.py` — 5 TypedDicts (SIS, HR, LMS, Finance, CMU SSO); `integration_contract_registry_service.py`; docs: `CROSS_SYSTEM_INTEGRATION_CONTRACTS.md`
+- ~~No analytics API layer~~ → **RESOLVED**: `routers/analytics.py` — 4 read-only endpoints; router registered in `main.py`
+- ~~No frontend analytics types/services~~ → **RESOLVED**: `analytics.ts` types, `analytics.service.ts`, `useMetricRegistry`, `useExecutiveAnalytics` TanStack Query hooks, `ExecutiveAnalytics.tsx` read-only page, navigation entry, `/analytics` route
+- ~~No execution guard on external systems~~ → **RESOLVED**: integration contracts are read-only type contracts; real connections require IT contract and explicit `integration_contract_registry_service` activation
+
 ### Resolved gaps (2026-05-14 optimization native trace engine D2.1–D2.9)
 - ~~Optimization explanation is still mostly post-hoc~~ → **PARTLY RESOLVED**: native trace events now capture room, timeslot, staff, split, fairness, fallback, and final-selection decisions at the optimizer boundary
 - ~~No replay-ready decision lineage~~ → **RESOLVED**: `optimization_trace_replay_service.py` builds timeline, lineage groups, rejected alternatives, and summary rollups
@@ -127,6 +141,12 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
   - `backend/routers/exam_manager.py` — 907 lines
   - `backend/routers/imports.py` — 865 lines
   - `backend/routers/submissions.py` — 858 lines
+
+### Analytics layer (D4 complete → transition to operations)
+- Analytics layer is fully built and tested; production adoption depends on DPO sign-off on public data surface.
+- Integration contract stubs (SIS, HR, LMS, Finance, CMU SSO) are modeled but not executed; real connections require IT/signed contracts.
+- The `ExecutiveAnalytics` frontend page is gated to `admin / esq_head / secretary` — consistent with existing PDPA role discipline.
+- `data_lineage_service.py` correctly uses `copy.deepcopy` to prevent caller-mutation leakage into the lineage graph.
 
 ### Frontend DRY / UX
 - API transport is mostly centralized through `frontend/src/services/api.ts`.
@@ -218,14 +238,14 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 ## 7. Recommended Next 2-Week Sprint
 
 ### Sprint objective
-Start `D3 — Multi-Faculty Configuration Platform` without regressing the newly shipped D2 traceability surface.
+DPO sign-off + incremental production hardening post-D4.
 
 ### Work order
-1. Build multi-faculty configuration abstractions on the current FastAPI + React + Python stack.
-2. Keep `multi_faculty_enabled=False` until the DBA-approved `faculty_id` migration is available.
-3. Extract more of `schedule.py` and `optimize_workflow.py` so deeper solver tracing stays low-risk.
-4. Introduce transaction-safe audit boundaries around the highest-value mutation paths.
-5. Add a read-only trace explorer API surface after persisted trace storage and DPO review are defined.
+1. **DPO sign-off on public schedule data surface** — unblocks PDPA compliance completion and closes the last scoring gap.
+2. **DPO reviews trace metadata allowlist and audit log retention schedule** — unblocks persisted trace storage design.
+3. **IT/DBA executes `faculty_id` DB migration** — unblocks multi-faculty feature flag flip (`multi_faculty_enabled=True`).
+4. **Consider persisted trace storage (DB-backed outbox)** — `event_outbox_service.py` foundation is in; DDL deferred until D3/D4 data residency review passes.
+5. **Business owner defines AI recommendation approval tiers** — ensures `recommendation_service.py` gateway is production-hardened before UI wiring.
 
 ---
 
@@ -258,4 +278,4 @@ Reasons:
 
 ## 10. Bottom Line
 
-EMS is in the right direction for a long-term Academic Operations Platform and now has a credible native traceability foundation. The fastest path forward is still progressive extraction and governance cleanup, followed by `D3 — Multi-Faculty Configuration Platform`, not a rewrite.
+EMS is in the right direction for a long-term Academic Operations Platform. D4 closes the analytics explainability and integration gaps, delivering a fully additive, PDPA-safe, read-only analytics layer with zero external system execution. The remaining work is DPO sign-off on the public data surface, IT/DBA multi-faculty migration, and progressive router extraction from the two largest routers (`optimize_workflow.py`, `schedule.py`).

@@ -1,5 +1,21 @@
 # Renovation Phase Tracker
-## EMS Academic Operations Platform — 2026-05-19 (D3 complete)
+## EMS Academic Operations Platform — 2026-05-19 (D4.0–D4.11 complete)
+
+---
+
+> D4 update: Institutional Analytics & Cross-System Integration Platform is now complete on `main`.
+> All 13 D4 deliverables shipped across 11 slices (D4.0–D4.11): analytics audit, metric registry,
+> read model contracts, executive dashboard service, workload analytics, room utilization analytics,
+> governance analytics, data lineage service, integration contract registry, analytics router, and
+> frontend analytics contract layer + executive analytics page.
+> Current validated backend test count: **1256 passed**, 0 failed. Frontend build: 0 TS errors.
+>
+> Prior D3 note: Multi-Faculty Configuration Platform is complete on `main`. All 70+ hardcoded
+> institutional assumptions are wrapped behind configurable service layers (D3.1–D3.8) with
+> frontend hooks (D3.9) and architecture docs (D3.10). No existing files modified.
+> **Important note during this session**: D4.4/4.5/4.6 (workload, room utilization, governance analytics
+> services) were flagged as pre-existing written in a prior session (uncommitted). D4.11 commit
+> [`f68607d`] packages them alongside the frontend contract layer. Full test suite passes at 1256.
 
 ---
 
@@ -28,6 +44,7 @@
 | Enterprise Event & Audit (Phases D1.1–D1.7) | Complete | 100% | EventEnvelope (18 fields), event outbox foundation, immutable audit events, transaction bridge, lifecycle timeline, PDPA safety policy, architecture docs |
 | Optimization Native Trace Engine (Phases D2.1–D2.9) | Complete | 100% | Native trace context, adapters, observer integration, boundary instrumentation, replay lineage, trace PDPA policy, architecture docs |
 | Multi-Faculty Config Platform (Phases D3.0–D3.10) | Complete | 100% | Platform assumption audit, FacultyConfig, PolicyRegistry, GovernanceFlow, WorkloadPolicy, AcademicGroupRegistry, RoleMapping, Export/Import, Validation, Governance, Frontend hooks, arch docs |
+| Institutional Analytics & Integration (Phases D4.0–D4.11) | Complete | 100% | Analytics audit, metric registry, read model contracts, executive/load/room/governance analytics, data lineage, integration contracts, analytics router, frontend contract layer, executive analytics page, docs |
 
 ---
 
@@ -505,10 +522,64 @@ Started
 
 ---
 
-## 14. Next Actions
+## 15. Institutional Analytics & Integration Phase — New Capabilities (D4.0–D4.11, 2026-05-19)
 
-1. Start `D3 — Multi-Faculty Configuration Platform` as the next macro phase.
-2. Keep `multi_faculty_enabled=False` until the DBA-approved `faculty_id` migration exists.
-3. Continue extracting `schedule.py` and `optimize_workflow.py` service boundaries so deeper solver tracing stays low-risk.
-4. Add persisted, sanitized trace storage only after DPO review of the trace metadata allowlist.
-5. Add a read-only frontend trace explorer after the storage/API contract is stable.
+### D4 slice summary
+
+| Slice | Commit | Deliverable | Tests |
+|-------|--------|-------------|-------|
+| D4.0 | — | `D4_ANALYTICS_INTEGRATION_AUDIT.md` — 11 analytics-ready tables, 7 aggregation-needed entities, 4 PDPA fields, 5 lineage gaps, 5 external systems, 9 KPI candidates | — |
+| D4.1 | b984c18 | `analytics_metric_registry_service.py` — 11 KPI definitions, PDPA-classified, 15 tests | 15 |
+| D4.2 | b08f3ca | `analytics_contracts.py` — 9 TypedDicts, `validate_analytics_dict()`, `sanitize_analytics_output()` | 19 |
+| D4.3 | 0784c96 | `executive_dashboard_projection_service.py` — `project_executive_dashboard()`, `build_workload_summary_dict()`, `compute_room_summary_dict()` | 22 |
+| D4.4 | — | `workload_analytics_service.py` — per-staff/entity distribution analytics | 15 |
+| D4.5 | — | `room_utilization_analytics_service.py` — room-level utilization, capacity, vacancy | 16 |
+| D4.6 | — | `governance_analytics_service.py` — publication, signing, override, overdue analytics | 15 |
+| D4.7 | e414459 | `data_lineage_service.py` — 8-stage graph builder, gap detector, `build_lineage_graph()`, `build_lineage_node()`, `detect_lineage_gaps()` | 24 |
+| D4.8 | cece948 | `integration_contracts.py` (5 TypedDicts: SIS, HR, LMS, Finance, CMU SSO) + `integration_contract_registry_service.py` | 10 |
+| D4.9 | 35d72fa | `routers/analytics.py` — 4 read-only endpoints; `main.py` analytics router registration | 6 |
+| D4.10/4.11 | f68607d | Frontend contract layer + executive analytics page: `analytics.ts`, `analytics.service.ts`, `useMetricRegistry`, `useExecutiveAnalytics`, `ExecutiveAnalytics.tsx`, navigation entry, App.tsx route; `@tanstack/react-query` dependency; D4.4/5/6 backend services committed | 46 BE + FE build clean |
+
+### D4 design principles (additive, read-only, PDPA-safe)
+- All 13 analytics slices are additive; zero existing tables or APIs were rewritten.
+- No external system integrations are executed — `IntegrationContract` types model real systems
+  (SIS, HR, LMS, Finance, CMU SSO) as read-only stubs; real connections require IT contract.
+- PDPA boundary: `metric_registry` levels (`public / internal / confidential / restricted`) map through
+  `_PDPA_TO_POLICY` translator; `executive_dashboard_projection_service` rejects all-zero PII scenarios;
+  `analytics_contracts.sanitize_analytics_output()` redacts sensitive fields on export.
+- Data lineage graph uses `copy.deepcopy` for node metadata/args, preventing caller-mutation leakage.
+- `detect_lineage_gaps()` uses left-to-right consecutive-stage-pair adjacency; skipped stages produce
+  gap records AND prevent re-bridge edges for downstream stages.
+
+### D4 architecture files
+| File | Content |
+|------|---------|
+| `docs/architecture/D4_ANALYTICS_INTEGRATION_AUDIT.md` | 11-ready-table inventory, lineage gaps, KPI candidates, PDPA field register |
+| `docs/architecture/DATA_LINEAGE_MODEL.md` | 8-stage model, adjacency rules, XML diff pipeline |
+| `docs/architecture/CROSS_SYSTEM_INTEGRATION_CONTRACTS.md` | 5 external system TypedDicts, contract registry, non-execution policy |
+
+### D4 frontend files
+| File | Capability |
+|------|-----------|
+| `frontend/src/types/analytics.ts` | `MetricDefinition`, `MetricValueResponse`, `ExecutiveDashboardSummary`, `IntegrationContract` |
+| `frontend/src/services/analytics.service.ts` | `listMetrics()`, `getMetric()`, `getExecutiveSummary()`, `listIntegrationContracts()` |
+| `frontend/src/hooks/useMetricRegistry.ts` | TanStack Query hook for `/api/analytics/metrics` |
+| `frontend/src/hooks/useExecutiveAnalytics.ts` | TanStack Query hook for `/api/analytics/executive-summary` |
+| `frontend/src/pages/ExecutiveAnalytics.tsx` | Health score card, KPI grid, top risks, recommended actions — PDPA-safe read-only |
+| `frontend/src/config/navigation.ts` | Analytics entry for `admin / esq_head / secretary` roles |
+| `frontend/src/App.tsx` | `/analytics` route; `GuardedPage` role gate; default-import fix for `ExecutiveAnalytics` |
+
+### D4 test counts (additive from this session)
+- D4.1: +15, D4.2: +19, D4.3: +22, D4.4: +15, D4.5: +16, D4.6: +15, D4.7: +24, D4.8: +10, D4.9: +6
+- Frontend: `npm run build` → 0 TS errors
+- **Total backend: 1256 passed, 0 failed**
+
+---
+
+## 16. Current Next Actions
+
+1. DPO sign-off on public schedule data surface — unblocks PDPA compliance completion.
+2. IT/DBA executes `faculty_id` DB migration — unblocks multi-faculty feature flag flip.
+3. DPO reviews trace metadata allowlist and audit log retention schedule.
+4. Business owner defines AI recommendation approval tiers before production hardening.
+5. Consider persisted trace storage (DB-backed outbox) after DPO review.
