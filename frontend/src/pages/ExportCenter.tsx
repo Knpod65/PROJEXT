@@ -140,10 +140,10 @@ export function ExportCenterPage() {
                 ]}
               />
               <ExportCard
-                title="Historical schedule review"
-                description="Open the imported final-adjusted and optimized-baseline 2/2568 snapshots, compare differences, and export historical workload CSV files."
+                title={t("exportCenter.cards.historicalSchedule.title")}
+                description={t("exportCenter.cards.historicalSchedule.description")}
                 actions={[
-                  { label: "Open historical review", onClick: () => { window.location.href = "/historical-schedules"; } },
+                  { label: t("exportCenter.actions.openHistoricalReview"), onClick: () => { window.location.href = "/historical-schedules"; } },
                 ]}
               />
             </>
