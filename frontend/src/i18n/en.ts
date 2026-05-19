@@ -1278,4 +1278,11 @@ export const en = {
   "analytics.workloadBalance": "Workload Balance Score",
   "analytics.roomUtilization": "Room Utilization Score",
   "analytics.pdpaAlerts": "PDPA Alert Count",
+
+  // Trace / Severity
+  "trace.qualityOf100": "Quality / 100",
+  "severity.info": "Info",
+  "severity.warning": "Warning",
+  "severity.error": "Error",
+  "severity.critical": "Critical",
 } as const;

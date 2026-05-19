@@ -11,9 +11,10 @@ function RiskBadge({ severity }: { severity: string }) {
       : severity === "medium"
         ? "bg-yellow-100 text-yellow-800"
         : "bg-green-100 text-green-800";
+  const label = translate(`severity.${severity}`) || severity.toUpperCase();
   return (
     <span className={`px-2 py-1 rounded text-xs font-medium ${cls}`}>
-      {severity.toUpperCase()}
+      {label}
     </span>
   );
 }

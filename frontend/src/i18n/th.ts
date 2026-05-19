@@ -1266,4 +1266,11 @@ export const th = {
   "analytics.workloadBalance": "คะแนนความสมดุลของปริมาณงาน",
   "analytics.roomUtilization": "คะแนนการใช้ห้อง",
   "analytics.pdpaAlerts": "จำนวนแจ้งเตือน PDPA",
+
+  // Trace / Severity
+  "trace.qualityOf100": "คุณภาพ / 100",
+  "severity.info": "ข้อมูล",
+  "severity.warning": "คำเตือน",
+  "severity.error": "ข้อผิดพลาด",
+  "severity.critical": "วิกฤต",
 } as const;

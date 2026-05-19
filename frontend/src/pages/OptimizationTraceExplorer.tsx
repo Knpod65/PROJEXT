@@ -10,9 +10,10 @@ function SeverityBadge({ severity }: { severity: string }) {
       : severity === "warning"
         ? "bg-yellow-100 text-yellow-800"
         : "bg-gray-100 text-gray-800";
+  const label = translate(`severity.${severity}`) || severity.toUpperCase();
   return (
     <span className={`px-2 py-1 rounded text-xs font-medium ${cls}`}>
-      {severity.toUpperCase()}
+      {label}
     </span>
   );
 }
