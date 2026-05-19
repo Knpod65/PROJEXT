@@ -1,4 +1,5 @@
 import { translate, translateApiMessage } from "@/i18n";
+import { withTimeout, DEFAULT_TIMEOUT_MS } from "@/utils/httpTimeout";
 
 export class ApiError extends Error {
   status: number;
@@ -126,8 +127,13 @@ export async function request<T>(
   return payload as T;
 }
 
-export const get = <T>(path: string, options?: Omit<RequestOptions, "body" | "formData">) =>
-  request<T>("GET", path, options);
+export const get = <T>(
+  path: string,
+  options?: Omit<RequestOptions, "body" | "formData"> & { timeoutMs?: number },
+) => {
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  return withTimeout(request<T>("GET", path, options), timeoutMs);
+};
 
 export const post = <T>(path: string, body?: unknown, options?: Omit<RequestOptions, "body">) =>
   request<T>("POST", path, { ...options, body });
