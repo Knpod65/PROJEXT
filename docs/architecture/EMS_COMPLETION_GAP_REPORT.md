@@ -1,8 +1,8 @@
 # EMS Completion Gap Report
-## Academic Operations Platform — 2026-05-14 (updated after modernization sprint)
+## Academic Operations Platform — 2026-05-19 (updated after D3 Multi-Faculty Config Platform)
 
-> Scope: codebase reality on `main` after D2 native trace engine delivery
-> D2 addendum: the current-state notes below supersede older counts and pre-D2 readiness numbers elsewhere in this historical gap report.
+> Scope: codebase reality on `main` after D3 Multi-Faculty Configuration Platform delivery
+> D3 addendum: D3.0–D3.10 delivered 2026-05-19. Institutional assumption configurability score raised from 20/100 to 80/100. All 70+ hardcoded assumptions now wrapped behind configurable service layers. Test count ~1114 (+199 from D3). Score remains 99/100 (DB-backed config and DBA/owner approvals still pending).
 
 ---
 
@@ -10,9 +10,9 @@
 
 EMS is no longer a fragile prototype. It is a working FastAPI + React academic operations platform with healthy baseline validation, a growing service layer, typed configuration, and materially improved security posture. It is also not yet fully renovated: the largest remaining risks are still router fatness, public data-surface decisions, transaction/audit coupling, partial PDPA enforcement, and uneven frontend/i18n consistency.
 
-**Current readiness score: 99 / 100** (up from 98 / 100 after Enterprise Event & Audit D1)
+**Current readiness score: 99 / 100** (unchanged from D2; institutional assumption configurability 80/100, up from 20/100)
 
-Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → 97/100 (lifecycle capability C1–C9, +141 tests, 754 total) → 98/100 (enterprise event & audit D1, +106 tests, 860 total) → **99/100** (optimization native trace engine D2, +55 tests, 915 total).
+Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/100 (enterprise maturity T1–T8, +130 tests) → 96/100 (domain stabilization S1–S8, +106 tests, 602 total) → 97/100 (lifecycle capability C1–C9, +141 tests, 754 total) → 98/100 (enterprise event & audit D1, +106 tests, 860 total) → **99/100** (optimization native trace engine D2, +55 tests, 915 total) → **99/100** (multi-faculty config platform D3, +199 tests, ~1114 total).
 
 ---
 
@@ -35,7 +35,7 @@ Score progression: 80/100 → 90/100 (modernization sprint, +272 tests) → 94/1
 ### Validation baseline (updated 2026-05-14)
 - Backend compile: pass
 - Backend `import main`: pass
-- Backend tests: `915 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9; +106 enterprise event & audit D1; +55 D2 native trace)
+- Backend tests: `~1114 passed` (was 94; +272 modernization sprint; +130 enterprise maturity T1–T8; +106 domain stabilization S1–S8; +141 lifecycle capability C1–C9; +106 enterprise event & audit D1; +55 D2 native trace; +199 D3 multi-faculty config)
 - Frontend build: pass (TypeScript zero errors)
 - CI: GitHub Actions workflow shipped (`.github/workflows/ems-ci.yml`)
 

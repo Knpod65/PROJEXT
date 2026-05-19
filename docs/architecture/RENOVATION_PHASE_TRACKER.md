@@ -1,10 +1,15 @@
 # Renovation Phase Tracker
-## EMS Academic Operations Platform — 2026-05-14 (updated)
+## EMS Academic Operations Platform — 2026-05-19 (D3 complete)
 
 ---
 
-> D2 update: native optimization trace context, candidate/constraint/selection adapters, optimizer-boundary instrumentation, replay-ready lineage, and trace PDPA policy are now complete on `main`.
-> Current validated backend baseline: `915` passing tests, backend compile/import pass, and a clean worktree after each scoped D2 slice.
+> D3 update: Multi-Faculty Configuration Platform is now complete on `main`. All 70+ hardcoded
+> institutional assumptions are wrapped behind configurable service layers (D3.1–D3.8) with
+> frontend hooks (D3.9) and architecture docs (D3.10). No existing files modified.
+> Current validated backend baseline: `~1114` passing tests (915 + 199 new), backend compile/import pass.
+>
+> Prior D2 note: native optimization trace context, candidate/constraint/selection adapters,
+> optimizer-boundary instrumentation, replay-ready lineage, and trace PDPA policy are complete on `main`.
 
 ## 1. Phase Summary
 
@@ -22,6 +27,7 @@
 | Lifecycle Capability (Phases C1–C9) | Complete | 100% | Governance policy, capability matrix, lifecycle events, transition engine, governance trace, executive risk, trace aggregator, 3 new endpoints, frontend contract doc |
 | Enterprise Event & Audit (Phases D1.1–D1.7) | Complete | 100% | EventEnvelope (18 fields), event outbox foundation, immutable audit events, transaction bridge, lifecycle timeline, PDPA safety policy, architecture docs |
 | Optimization Native Trace Engine (Phases D2.1–D2.9) | Complete | 100% | Native trace context, adapters, observer integration, boundary instrumentation, replay lineage, trace PDPA policy, architecture docs |
+| Multi-Faculty Config Platform (Phases D3.0–D3.10) | Complete | 100% | Platform assumption audit, FacultyConfig, PolicyRegistry, GovernanceFlow, WorkloadPolicy, AcademicGroupRegistry, RoleMapping, Export/Import, Validation, Governance, Frontend hooks, arch docs |
 
 ---
 

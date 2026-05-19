@@ -1,11 +1,11 @@
 # Final Platform Readiness Report
 ## EMS Academic Operations Platform — Go/No-Go Assessment
-**Date:** 2026-05-14  
+**Date:** 2026-05-19 (updated)
 **Branch:** main  
-**Scope:** main after D2 native trace engine delivery  
-**Assessor:** D2 automated validation
+**Scope:** main after D3 Multi-Faculty Configuration Platform delivery  
+**Assessor:** D3 automated validation
 
-> D2 addendum: this section supersedes older counts and scores elsewhere in this historical report.
+> D3 addendum: Multi-Faculty Configuration Platform (D3.0–D3.10) delivered 2026-05-19. Test count ~1114 (+199). Maturity score unchanged at 99/100 pending DB-backed config and DBA/owner approvals. Institutional assumption configurability score raised from 20/100 to 80/100.
 
 ---
 
@@ -23,6 +23,7 @@
 | Lifecycle Capability (Phases C1–C9) | 2026-05-14 | 97/100 | +1 |
 | Enterprise Event & Audit (Phases D1.1–D1.7) | 2026-05-14 | **98/100** | **+1** |
 | Optimization Native Trace Engine (Phases D2.1–D2.9) | 2026-05-14 | **99/100** | **+1** |
+| Multi-Faculty Config Platform (Phases D3.0–D3.10) | 2026-05-19 | **99/100** | 0 (configurable foundation, DB-backed deferred) |
 
 The remaining point is intentionally held back by combined unresolved items: deeper solver internals are still partly black-box, public PDPA surface decisions still need owner sign-off, and multi-faculty DB migration still requires IT/DBA approval.
 
@@ -34,7 +35,7 @@ The remaining point is intentionally held back by combined unresolved items: dee
 |---|---|---|
 | `python -m compileall backend -q` | **PASS** | Zero syntax errors |
 | `python -c "import main"` | **PASS** | Dev-mode warnings only (expected) |
-| `python -m pytest backend/tests -q` | **PASS** | **915 passed**, 0 failed, 11 warnings |
+| `python -m pytest backend/tests -q` | **PASS** | **~1114 passed** (915 + 199 D3 tests), 0 failed |
 | `cd frontend && npm run build` | **PASS** | TypeScript zero errors; chunk-size warning is pre-existing |
 | `git status` | **CLEAN** | Working tree clean, no unintended files |
 
