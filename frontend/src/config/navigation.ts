@@ -157,6 +157,15 @@ export const appPages: AppPageConfig[] = [
     navGroup: "operations",
   },
   {
+    key: "optimizer-trace",
+    title: "Optimization Trace",
+    description: "Candidate lineage, rejected alternatives, constraint hits, and quality scoring for optimizer runs.",
+    path: "/optimizer-trace",
+    icon: "hub",
+    roles: ["admin"],
+    navGroup: "operations",
+  },
+  {
     key: "staff-availability",
     title: "Staff Availability",
     description: "Block operational availability for invigilation, distribution, and external-exam staffing.",

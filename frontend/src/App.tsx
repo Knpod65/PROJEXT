@@ -30,6 +30,7 @@ import { LoginPage } from "@/pages/Login";
 import { MyExamPage } from "@/pages/MyExam";
 import { OptimizerPage } from "@/pages/Optimizer";
 import { PeriodPage } from "@/pages/Period";
+import OptimizerTraceExplorerPage from "@/pages/OptimizationTraceExplorer";
 import { PrintQueuePage } from "@/pages/PrintQueue";
 import { PrintReviewPage } from "@/pages/PrintReview";
 import { RoleSelectionPage } from "@/pages/RoleSelection";
@@ -159,6 +160,7 @@ export function App() {
             <Route path="/workflow-v2" element={<Navigate replace to="/workflow" />} />
             <Route path="/coexam" element={<GuardedPage roles={["admin"]}><CoExamPage /></GuardedPage>} />
             <Route path="/optimizer" element={<GuardedPage roles={["admin"]}><OptimizerPage /></GuardedPage>} />
+            <Route path="/optimizer-trace" element={<GuardedPage roles={["admin"]}><OptimizerTraceExplorerPage /></GuardedPage>} />
             <Route path="/staff-availability" element={<GuardedPage roles={["admin"]}><StaffAvailabilityPage /></GuardedPage>} />
             <Route path="/printreview" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><PrintReviewPage /></GuardedPage>} />
             <Route path="/external" element={<GuardedPage roles={["admin", "staff"]}><ExternalPage /></GuardedPage>} />
