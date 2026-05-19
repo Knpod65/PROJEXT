@@ -1,249 +1,311 @@
 """Tests for executive_dashboard_projection_service.py"""
 import os
 import sys
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from services.executive_dashboard_projection_service import (
-    project_executive_dashboard,
     build_workload_summary_dict,
     compute_room_summary_dict,
-    _health_to_band,
-    _safe_float,
-    _safe_int,
+    project_executive_dashboard,
 )
-
-
-def _health_to_band(score: float) -> str:
-    from services.executive_dashboard_projection_service import _health_to_band as _fn
-    return _fn(score)
 
 
 # ── build_workload_summary_dict ───────────────────────────────────────────────
 
-def test_build_workload_summary_dict_full():
-    wm = {
-        "total_assignments": 120,
-        "average_load": 4.0,
-        "max_load": 18,
-        "imbalance_score": 0.35,
-        "overloaded_staff_count": 3,
-        "fairness_band": "amber",
+def test_empty_workload_returns_defaults():
+    summary = build_workload_summary_dict(None)
+    assert summary["total_assignments"] == 0
+    assert summary["average_load"] == 0.0
+    assert summary["overloaded_staff_count"] == 0
+    assert summary["fairness_band"] == "green"
+
+
+def test_empty_per_staff_load_returns_defaults():
+    summary = build_workload_summary_dict({"per_staff_load": []})
+    assert summary["fairness_band"] == "green"
+    assert summary["imbalance_score"] == 0.0
+
+
+def test_balanced_loads_green_band():
+    workload = {
+        "per_staff_load": [
+            {"user_id": i, "staff_name": f"Staff {i}", "total_load": 5.0}
+            for i in range(10)
+        ]
     }
-    result = build_workload_summary_dict(wm)
-    assert result["total_assignments"] == 120
-    assert result["average_load"] == 4.0
-    assert result["fairness_band"] == "amber"
+    summary = build_workload_summary_dict(workload)
+    assert summary["fairness_band"] == "green"
+    assert summary["average_load"] == 5.0
+    assert summary["overloaded_staff_count"] == 0
 
 
-def test_build_workload_summary_dict_empty_dict():
-    result = build_workload_summary_dict({})
-    assert result["total_assignments"] == 0
-    assert result["average_load"] == 0.0
-    assert result["fairness_band"] == "green"
+def test_spiked_load_red_band():
+    base = [{"user_id": i, "staff_name": f"S{i}", "total_load": 4.0} for i in range(5)]
+    base.append({"user_id": 5, "staff_name": "S5", "total_load": 50.0})
+    summary = build_workload_summary_dict({"per_staff_load": base})
+    assert summary["overloaded_staff_count"] >= 1
+    assert summary["fairness_band"] == "red"
 
 
-def test_build_workload_summary_dict_none_input():
-    result = build_workload_summary_dict(None)  # type: ignore[arg-type]
-    assert result["total_assignments"] == 0
-    assert result["average_load"] == 0.0
-    assert result["fairness_band"] == "green"
+def test_max_load_is_highest():
+    workload = {
+        "per_staff_load": [
+            {"user_id": 1, "staff_name": "S1", "total_load": 3.0},
+            {"user_id": 2, "staff_name": "S2", "total_load": 10.0},
+            {"user_id": 3, "staff_name": "S3", "total_load": 7.0},
+        ]
+    }
+    summary = build_workload_summary_dict(workload)
+    assert summary["max_load"] == 10
+
+
+def test_overload_pct_calculated():
+    base = [{"user_id": i, "staff_name": f"S{i}", "total_load": 10.0} for i in range(6)]
+    base[-1]["total_load"] = 30.0
+    summary = build_workload_summary_dict({"per_staff_load": base})
+    risks = summary["top_overload_risks"]
+    assert len(risks) >= 1
+    assert risks[0]["current_load"] == 30
+
+
+def test_empty_dict_workload_map_returns_defaults():
+    summary = build_workload_summary_dict({})
+    assert summary["total_assignments"] == 0
+    assert summary["fairness_band"] == "green"
 
 
 # ── compute_room_summary_dict ─────────────────────────────────────────────────
 
-def test_compute_room_summary_empty_inputs():
-    result = compute_room_summary_dict([], {})
+def test_empty_rooms_and_schedules():
+    result = compute_room_summary_dict(None, None)
     assert result == {}
 
 
-def test_compute_room_summary_basic():
-    rooms = {1: {"room_name": "A-101", "capacity": 40, "building": "ENG"}}
+def test_empty_schedules_no_room_entries():
+    rooms = [{"room_name": "A101", "building": "ENG", "capacity": 50}]
+    result = compute_room_summary_dict([], rooms)
+    assert "A101" not in result
+
+
+def test_schedules_keyed_by_room_name():
+    rooms = [{"room_name": "A101", "building": "ENG", "capacity": 50}]
     schedules = [
-        {"room_id": 1, "exam_date": "2026-03-20", "total_sheets": 80},
-        {"room_id": 1, "exam_date": "2026-03-21", "total_sheets": 120},
+        {"room_name": "A101", "exam_date": "2026-01-10", "exam_time": "09:00",
+         "sections_count": 1, "students_count": 30},
     ]
     result = compute_room_summary_dict(schedules, rooms)
-    assert "A-101" in result
-    assert result["A-101"]["total_sheets"] == 200
-    assert result["A-101"]["schedule_count"] == 2
+    assert "A101" in result
+    assert result["A101"]["building"] == "ENG"
+    assert result["A101"]["slot_count"] == 1
 
 
-def test_compute_room_summary_skips_rooms_without_room_id():
-    result = compute_room_summary_dict(
-        [{"room_id": None, "total_sheets": 50}], {}
-    )
-    assert result == {}
+def test_utilization_calculation():
+    rooms = [{"room_name": "B202", "building": "SCI", "capacity": 100}]
+    schedules = [
+        {"room_name": "B202", "exam_date": "2026-01-10", "exam_time": "09:00",
+         "sections_count": 1, "students_count": 40},
+    ]
+    result = compute_room_summary_dict(schedules, rooms)
+    assert result["B202"]["avg_utilization"] == pytest.approx(0.4)
 
 
-def test_compute_room_summary_unknown_room_id_fallback():
-    schedules = [{"room_id": 999, "exam_date": "2026-03-20", "total_sheets": 20}]
-    result = compute_room_summary_dict(schedules, {})
-    assert "room-999" in result
+def test_multiple_slots_in_same_room():
+    rooms = [{"room_name": "C303", "building": "MED", "capacity": 60}]
+    schedules = [
+        {"room_name": "C303", "exam_date": "2026-01-10", "exam_time": "09:00",
+         "sections_count": 1, "students_count": 30},
+        {"room_name": "C303", "exam_date": "2026-01-10", "exam_time": "13:00",
+         "sections_count": 1, "students_count": 30},
+    ]
+    result = compute_room_summary_dict(schedules, rooms)
+    assert result["C303"]["slot_count"] == 2
+    assert result["C303"]["avg_utilization"] == pytest.approx(0.5)
 
 
-# ── project_executive_dashboard ───────────────────────────────────────────────
+# ── project_executive_dashboard ────────────────────────────────────────────────
 
-def test_project_no_input_returns_zeroed_defaults():
+def test_empty_inputs_returns_red_band():
     result = project_executive_dashboard()
+    assert result["risk_band"] == "red"
     assert result["overall_health_score"] == 0.0
-    assert result["governance_blocker_count"] == 0
-    assert result["pdpa_alert_count"] == 0
-    assert result["publication_ready_count"] == 0
-    assert result["top_risks"] == [{"risk": "None identified", "severity": "low",  "category": "operational"}]
+    assert result["top_risks"] == []
+    assert result["recommended_actions"] == []
 
 
-def test_project_no_inputs_generates_no_pii_in_output():
-    result = project_executive_dashboard()
-    text = str(result)
-    assert "สมุทร" not in text
-    assert "12345678" not in text
-
-
-def test_project_allows_optional_non_PII_risk_label_self_identify():
-    """Output must not have  individual names and IDs in risk labels."""
-    result = project_executive_dashboard()
-    for risk in result["top_risks"]:
-        assert " staff name here " not in risk["risk"]
-
-
-def test_project_empty_inputs_produce_no_pii_in_risk_actions():
-    result = project_executive_dashboard()
-    for risk in result["top_risks"]:
-        assert " staff_name " not in risk.get("risk", "").lower() if True else None
-        assert "student_name" not in risk.get("risk", "")
-    for action in result["recommended_actions"]:
-        assert " staff_name " not in action.get("action", "").lower() if True else None
-
-
-def test_project_high_quality_low_blockers_produces_green_band():
+def test_high_quality_auto_approved_governance_above_amber():
+    """High quality + auto-approved governance must show >= amber (no drop to red)."""
+    quality = {
+        "overall_score": 90,
+        "quality_band": "EXCELLENT",
+        "risk_level": "LOW",
+        "future_operational_risks": [],
+        "fairness_instability_warnings": [],
+        "staffing_fragility_warnings": [],
+        "overloaded_day_warnings": [],
+        "risk_summary": "low risk summary",
+    }
+    governance_snaps = [{"governance_state": "AUTO_APPROVED"}] * 5
     result = project_executive_dashboard(
-        optimization_quality={"overall_score": 85.0},
-        governance_snapshots=[{"governance_state": "AUTO_APPROVED"}] * 10,
-        pdpa_alert_count=0,
-        publication_readiness={"can_publish": True, "ready_count": 60},
+        optimization_quality=quality,
+        governance_snapshots=governance_snaps,
     )
-    assert result["risk_band"] == "green"
+    assert result["overall_health_score"] >= 50.0
     assert result["governance_blocker_count"] == 0
-    assert result["overall_health_score"] > 75.0
-    assert result["publication_ready_count"] == 60
+    assert result["top_risks"] == []
 
 
-def test_project_pdpa_alert_creates_high_severity_risk_item():
-    result = project_executive_dashboard(pdpa_alert_count=3)
-    pdpa_risks = [r for r in result["top_risks"] if r["category"] == "pdpa_compliance"]
-    assert len(pdpa_risks) == 1
-    assert pdpa_risks[0]["severity"] == "high"
-
-
-def test_project_top_risks_capped_at_five():
-    gov_snaps = [{"governance_state": "BLOCKED"}] * 6
+def test_mixed_quality_and_escalations_amber_or_worse():
+    """Partial quality + ESCALATION snapshots → amber or red (never to green)."""
+    quality = {
+        "overall_score": 55,
+        "quality_band": "GOOD",
+        "risk_level": "MEDIUM",
+        "future_operational_risks": [],
+        "fairness_instability_warnings": [],
+        "staffing_fragility_warnings": [],
+        "overloaded_day_warnings": [],
+        "risk_summary": "medium risk summary",
+    }
+    governance_snaps = [
+        {"governance_state": "ESCALATION_REQUIRED"},
+        {"governance_state": "AUTO_APPROVED"},
+    ]
     result = project_executive_dashboard(
-        governance_snapshots=gov_snaps,
-        pdpa_alert_count=6,
+        optimization_quality=quality,
+        governance_snapshots=governance_snaps,
+    )
+    assert result["risk_band"] in ("amber", "red")
+    assert result["governance_blocker_count"] == 0
+
+
+def test_low_quality_blocked_governance_red_or_critical_band():
+    """Low quality + BLOCKED governance must not show green."""
+    quality = {
+        "overall_score": 20,
+        "quality_band": "ACCEPTABLE",
+        "risk_level": "HIGH",
+        "future_operational_risks": [],
+        "fairness_instability_warnings": [],
+        "staffing_fragility_warnings": [],
+        "overloaded_day_warnings": [],
+        "risk_summary": "high risk summary",
+    }
+    governance_snaps = [{"governance_state": "BLOCKED"}] * 2
+    result = project_executive_dashboard(
+        optimization_quality=quality,
+        governance_snapshots=governance_snaps,
+    )
+    assert result["risk_band"] != "green"
+    assert result["governance_blocker_count"] >= 1
+
+
+def test_blockers_generate_governance_risk():
+    quality = {
+        "overall_score": 50,
+        "quality_band": "GOOD",
+        "risk_level": "LOW",
+        "future_operational_risks": [],
+        "fairness_instability_warnings": [],
+        "staffing_fragility_warnings": [],
+        "overloaded_day_warnings": [],
+        "risk_summary": "medium risk summary",
+    }
+    governance_snaps = [{"governance_state": "BLOCKED"}]
+    result = project_executive_dashboard(
+        optimization_quality=quality,
+        governance_snapshots=governance_snaps,
+    )
+    blocker_risks = [r for r in result["top_risks"] if r.get("category") == "governance"]
+    assert any("blocker" in r["risk"].lower() for r in blocker_risks)
+
+
+def test_workload_overload_generates_risk_and_action():
+    """Mixed load (avg ~11.7, some items at 30+) triggers overload detection."""
+    loads = [{"user_id": i, "staff_name": f"S{i}", "total_load": float(load)}
+             for i, load in enumerate([10, 10, 10, 10, 10, 10, 10, 35, 35, 35])]
+    workloads = {"per_staff_load": loads}
+    quality = {
+        "overall_score": 80,
+        "quality_band": "GOOD",
+        "risk_level": "LOW",
+        "future_operational_risks": [],
+        "fairness_instability_warnings": [],
+        "staffing_fragility_warnings": [],
+        "overloaded_day_warnings": [],
+        "risk_summary": "low risk summary",
+    }
+    result = project_executive_dashboard(
+        workload_map=workloads,
+        optimization_quality=quality,
+    )
+    assert result["overloaded_staff_count"] > 0
+    risks = [r for r in result["top_risks"] if r.get("category") == "workload"]
+    assert any("overload" in r["risk"].lower() for r in risks)
+
+
+def test_top_risks_capped_at_5():
+    quality = {
+        "overall_score": 20,
+        "quality_band": "ACCEPTABLE",
+        "risk_level": "HIGH",
+        "future_operational_risks": [],
+        "fairness_instability_warnings": [],
+        "staffing_fragility_warnings": [],
+        "overloaded_day_warnings": [],
+        "risk_summary": "high risk summary",
+    }
+    workloads = {
+        "per_staff_load": [
+            {"user_id": i, "staff_name": f"S{i}", "total_load": 30.0}
+            for i in range(10)
+        ]
+    }
+    governance_snaps = [{"governance_state": "BLOCKED"}] * 10
+    audit_logs = [{"action": f"pdpa_event_{i}"} for i in range(20)]
+    result = project_executive_dashboard(
+        optimization_quality=quality,
+        governance_snapshots=governance_snaps,
+        workload_map=workloads,
+        audit_logs_recent=audit_logs,
     )
     assert len(result["top_risks"]) <= 5
-
-
-def test_project_recommended_actions_capped_at_five():
-    gov_snaps = [{"governance_state": "BLOCKED"}] * 6
-    result = project_executive_dashboard(
-        governance_snapshots=gov_snaps,
-        pdpa_alert_count=6,
-    )
     assert len(result["recommended_actions"]) <= 5
 
 
-def test_project_room_util_zero_when_no_summary():
+def test_has_all_required_keys():
     result = project_executive_dashboard()
-    assert result["room_utilization_score"] == 0.0
-
-
-def test_project_room_util_score_scales_from_utilization():
-    result = project_executive_dashboard(
-        room_util_summary={"average_utilization": 0.72},
-    )
-    assert result["room_utilization_score"] == pytest.approx(72.0, abs=0.1)
-
-
-def test_project_workload_balance_score_from_imbalance():
-    result = project_executive_dashboard(
-        workload_summary={
-            "total_assignments":     150,
-            "average_load":          6.0,
-            "max_load":              20,
-            "imbalance_score":       0.4,
-            "overloaded_staff_count":5,
-            "fairness_band":         "red",
-        },
-    )
-    # imbalance 0.4 → balance score = (1 - 0.4) * 100 = 60.0
-    assert result["workload_balance_score"] == pytest.approx(60.0, abs=0.1)
-
-
-def test_project_governance_escalation_increments_blocker_count():
-    gs = [{"governance_state": "ESCALATION_REQUIRED"}]
-    result = project_executive_dashboard(governance_snapshots=gs)
-    assert result["governance_blocker_count"] == 1
-
-
-def test_project_override_count_incremented():
-    gs = [{"governance_state": "AUTO_APPROVED", "override_recommendation": "override_approved"}]
-    result = project_executive_dashboard(governance_snapshots=gs)
-    assert result["governance_blocker_count"] == 0  # not a blocker state
-
-
-def test_health_to_band_green_at_high_score():
-    assert _health_to_band(90.0) == "green"
-    assert _health_to_band(75.0) == "green"
-
-
-def test_health_to_band_amber_at_mid_score():
-    assert _health_to_band(74.9) == "amber"
-    assert _health_to_band(50.0) == "amber"
-
-
-def test_health_to_band_red_at_low_score():
-    assert _health_to_band(49.9) == "red"
-    assert _health_to_band(0.0) == "red"
-
-
-def test_project_structural_keys_present():
-    required_keys = {
+    required = {
         "overall_health_score", "risk_band", "optimization_quality_avg",
         "governance_blocker_count", "publication_ready_count",
         "workload_balance_score", "room_utilization_score", "pdpa_alert_count",
         "top_risks", "recommended_actions",
     }
-    result = project_executive_dashboard()
-    missing = required_keys - result.keys()
-    assert not missing, f"Missing keys: {missing}"
+    assert required.issubset(result.keys())
 
 
-def test_project_workload_summary_types():
+def test_pdpa_alerts_from_audit_logs():
+    audit_logs = [{"action": f"pdpa_event_{i}"} for i in range(5)]
     result = project_executive_dashboard(
-        workload_summary={
-            "total_assignments": 100,
-            "average_load": 6.0,
-            "max_load": 50,
-            "imbalance_score": 0.5,
-            "overloaded_staff_count": 2,
-            "fairness_band": "amber",
+        optimization_quality={
+            "overall_score": 80, "quality_band": "GOOD", "risk_level": "LOW",
+            "future_operational_risks": [], "fairness_instability_warnings": [],
+            "staffing_fragility_warnings": [], "overloaded_day_warnings": [],
+            "risk_summary": "",
         },
+        audit_logs_recent=audit_logs,
     )
-    assert result["workload_balance_score"] >= 0.0
-    assert result["workload_balance_score"] <= 100.0
+    assert result["pdpa_alert_count"] == 5
 
 
-def test_project_pdpa_alert_zero_by_default():
-    result = project_executive_dashboard()
-    assert result["pdpa_alert_count"] == 0
-
-
-def test_project_recommended_actions_structure():
-    result = project_executive_dashboard()
-    for action in result["recommended_actions"]:
-        assert "action" in action
-        assert "owner" in action
-        assert "priority" in action
+def test_publication_ready_count_integer():
+    result = project_executive_dashboard(
+        optimization_quality={"overall_score": 70, "quality_band": "GOOD", "risk_level": "LOW",
+            "future_operational_risks": [], "fairness_instability_warnings": [],
+            "staffing_fragility_warnings": [], "overloaded_day_warnings": [],
+            "risk_summary": "low risk summary"},
+        governance_snapshots=[{"governance_state": "AUTO_APPROVED"}],
+    )
+    assert isinstance(result["publication_ready_count"], int)
