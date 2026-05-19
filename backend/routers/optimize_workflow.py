@@ -42,8 +42,9 @@ from services.audit_service import audit_event
 from services.exceptions import EMSDomainError, EMSPermissionError
 from services import workflow_lock_service
 from services.optimization_recheck_service import run_optimization_recheck
-from services.optimization_report_builder import build_optimization_report
-from services.schedule_state_machine import derive_schedule_state, schedule_state_machine
+from services.governance_endpoint_service import GovernanceEndpointService
+from validators.governance_validator import GovernanceValidator
+from serializers.governance_serializer import GovernanceSerializer
 from services.workflow_user_service import format_user_dict, build_external_workflow_issues
 from services.workflow_reporting_service import build_staff_workload_report
 from services.workflow_signing_service import (
@@ -476,39 +477,9 @@ def get_session_governance_report(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_view_all),
 ):
-    """Return the full governance report for a session's current allocation.
-
-    Used by the useOptimizationGovernance and useScheduleGovernance hooks.
-    Read-only — no side effects.
-    """
-    session = db.query(models.OptimizeSession).filter(
-        models.OptimizeSession.id == session_id
-    ).first()
-    if not session:
-        raise HTTPException(404, "Session not found")
-    period = session.period
-    schedules = (
-        db.query(models.ExamSchedule)
-        .join(models.Section)
-        .filter(
-            models.Section.academic_year == period.academic_year,
-            models.Section.semester == period.semester,
-            models.ExamSchedule.exam_type == period.exam_type,
-        )
-        .options(
-            joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
-            joinedload(models.ExamSchedule.room),
-            joinedload(models.ExamSchedule.supervisions),
-        )
-        .all()
-    )
-    report = build_optimization_report(period=period, schedules=schedules)
-    governance_state = report.get("governance", {}).get("governance_state", "")
-    derived_state = derive_schedule_state(session.status, governance_state)
-    report["derived_schedule_state"] = derived_state
-    report["valid_next_states"] = schedule_state_machine.valid_next_states(derived_state)
-    report["session_status"] = session.status
-    return report
+    GovernanceValidator.validate_session_id(session_id)
+    report = GovernanceEndpointService.get_governance_report(db, session_id)
+    return GovernanceSerializer.serialize_governance_report(report)
 
 
 @router.get("/sessions/{session_id}/publication-readiness")
@@ -517,44 +488,9 @@ def get_publication_readiness(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_view_all),
 ):
-    """Return publication readiness assessment for a session.
-
-    Used by the usePublicationGovernance hook.
-    Read-only — no side effects.
-    """
-    from services.publication_governance_service import assess_publication_readiness
-    session = db.query(models.OptimizeSession).filter(
-        models.OptimizeSession.id == session_id
-    ).first()
-    if not session:
-        raise HTTPException(404, "Session not found")
-    period = session.period
-    schedules = (
-        db.query(models.ExamSchedule)
-        .join(models.Section)
-        .filter(
-            models.Section.academic_year == period.academic_year,
-            models.Section.semester == period.semester,
-            models.ExamSchedule.exam_type == period.exam_type,
-        )
-        .all()
-    )
-    report = build_optimization_report(period=period, schedules=schedules)
-    governance_dict = report.get("governance", {})
-    governance_state = governance_dict.get("governance_state", "")
-    derived_state = derive_schedule_state(session.status, governance_state)
-    readiness = assess_publication_readiness(
-        quality_report=report.get("quality_breakdown", {}),
-        governance=governance_dict,
-        recheck_summary=report.get("severity_summary", {}),
-        schedule_state=derived_state,
-    )
-    from dataclasses import asdict
-    result = asdict(readiness)
-    result["derived_schedule_state"] = derived_state
-    result["valid_next_states"] = schedule_state_machine.valid_next_states(derived_state)
-    result["session_status"] = session.status
-    return result
+    GovernanceValidator.validate_session_id(session_id)
+    result = GovernanceEndpointService.get_publication_readiness(db, session_id)
+    return GovernanceSerializer.serialize_publication_readiness(result)
 
 
 @router.get("/sessions/{session_id}/capabilities")
@@ -563,59 +499,10 @@ def get_session_capabilities(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Return what the current user can do on this session right now.
-
-    Read-only capability matrix. No side effects.
-    """
-    from dataclasses import asdict
-    from services.publication_governance_service import assess_publication_readiness
-    from services.schedule_capability_service import compute_schedule_capabilities
-
-    session = db.query(models.OptimizeSession).filter(
-        models.OptimizeSession.id == session_id
-    ).first()
-    if not session:
-        raise HTTPException(404, "Session not found")
-    period = session.period
-    schedules = (
-        db.query(models.ExamSchedule)
-        .join(models.Section)
-        .filter(
-            models.Section.academic_year == period.academic_year,
-            models.Section.semester == period.semester,
-            models.ExamSchedule.exam_type == period.exam_type,
-        )
-        .all()
-    )
-    report = build_optimization_report(period=period, schedules=schedules)
-    governance_dict = report.get("governance", {})
-    governance_state = governance_dict.get("governance_state", "")
-    derived_state = derive_schedule_state(session.status, governance_state)
-    recheck_summary = report.get("severity_summary", {})
-    hard_fail_count = int(recheck_summary.get("hard_fail_count", recheck_summary.get("hard_error_count", 0)))
-
-    readiness = assess_publication_readiness(
-        quality_report=report.get("quality_breakdown", {}),
-        governance=governance_dict,
-        recheck_summary=recheck_summary,
-        schedule_state=derived_state,
-    )
-    blocker_codes = [
-        b.get("code", "") for b in (readiness.blockers or []) if isinstance(b, dict)
-    ]
-
+    GovernanceValidator.validate_session_id(session_id)
     user_role = get_effective_role(current_user).value if hasattr(get_effective_role(current_user), "value") else str(get_effective_role(current_user))
-
-    return compute_schedule_capabilities(
-        derived_schedule_state=derived_state,
-        governance_state=governance_state,
-        session_status=session.status,
-        user_role=user_role,
-        can_publish=readiness.can_publish,
-        risk_score=readiness.risk_score,
-        hard_fail_count=hard_fail_count,
-        blocker_codes=blocker_codes,
-    )
+    result = GovernanceEndpointService.get_session_capabilities(db, session_id, user_role)
+    return GovernanceSerializer.serialize_capabilities(result)
 
 
 @router.get("/sessions/{session_id}/transition-check")
@@ -625,42 +512,13 @@ def get_transition_check(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Pre-flight check for a proposed state transition. Read-only — no mutations."""
-    from services.schedule_transition_service import attempt_transition
-
-    session = db.query(models.OptimizeSession).filter(
-        models.OptimizeSession.id == session_id
-    ).first()
-    if not session:
-        raise HTTPException(404, "Session not found")
-    period = session.period
-    schedules = (
-        db.query(models.ExamSchedule)
-        .join(models.Section)
-        .filter(
-            models.Section.academic_year == period.academic_year,
-            models.Section.semester == period.semester,
-            models.ExamSchedule.exam_type == period.exam_type,
-        )
-        .all()
-    )
-    report = build_optimization_report(period=period, schedules=schedules)
-    governance_dict = report.get("governance", {})
-    governance_state = governance_dict.get("governance_state", "")
-    derived_state = derive_schedule_state(session.status, governance_state)
-    recheck_summary = report.get("severity_summary", {})
-    hard_fail_count = int(recheck_summary.get("hard_fail_count", recheck_summary.get("hard_error_count", 0)))
-
+    GovernanceValidator.validate_session_id(session_id)
+    GovernanceValidator.validate_target_state(target_state)
     user_role = get_effective_role(current_user).value if hasattr(get_effective_role(current_user), "value") else str(get_effective_role(current_user))
-
-    return attempt_transition(
-        from_state=derived_state,
-        to_state=target_state,
-        user_role=user_role,
-        governance_state=governance_state,
-        hard_fail_count=hard_fail_count,
-        actor_id=current_user.id,
+    result = GovernanceEndpointService.get_transition_check(
+        db, session_id, target_state, user_role, current_user.id,
     )
+    return GovernanceSerializer.serialize_transition_check(result)
 
 
 @router.get("/sessions/{session_id}/executive-risk")
@@ -669,46 +527,9 @@ def get_executive_risk(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_view_all),
 ):
-    """Executive-facing risk summary for a session. Read-only — no side effects."""
-    from dataclasses import asdict
-    from services.publication_governance_service import assess_publication_readiness
-    from services.executive_risk_service import compute_executive_risk_report
-
-    session = db.query(models.OptimizeSession).filter(
-        models.OptimizeSession.id == session_id
-    ).first()
-    if not session:
-        raise HTTPException(404, "Session not found")
-    period = session.period
-    schedules = (
-        db.query(models.ExamSchedule)
-        .join(models.Section)
-        .filter(
-            models.Section.academic_year == period.academic_year,
-            models.Section.semester == period.semester,
-            models.ExamSchedule.exam_type == period.exam_type,
-        )
-        .all()
-    )
-    report = build_optimization_report(period=period, schedules=schedules)
-    governance_dict = report.get("governance", {})
-    governance_state = governance_dict.get("governance_state", "")
-    derived_state = derive_schedule_state(session.status, governance_state)
-    recheck_summary = report.get("severity_summary", {})
-
-    readiness = assess_publication_readiness(
-        quality_report=report.get("quality_breakdown", {}),
-        governance=governance_dict,
-        recheck_summary=recheck_summary,
-        schedule_state=derived_state,
-    )
-
-    return compute_executive_risk_report(
-        quality_report=report.get("quality_breakdown", {}),
-        governance=governance_dict,
-        recheck_summary=recheck_summary,
-        readiness_dict=asdict(readiness),
-    )
+    GovernanceValidator.validate_session_id(session_id)
+    result = GovernanceEndpointService.get_executive_risk(db, session_id)
+    return GovernanceSerializer.serialize_executive_risk(result)
 
 
 @router.post("/session/init")
