@@ -1,209 +1,98 @@
-# Final Platform Readiness Report
-## EMS Academic Operations Platform — Go/No-Go Assessment
-**Date:** 2026-05-19 (updated)
-**Branch:** main  
-**Scope:** main after D4 Institutional Analytics & Cross-System Integration Platform delivery  
-**Assessor:** D4 automated validation
+# EMS Platform Final Readiness Report
 
-> D3 addendum: Multi-Faculty Configuration Platform (D3.0–D3.10) delivered 2026-05-19. Test count ~1114 (+199). Maturity score unchanged at 99/100 pending DB-backed config and DBA/owner approvals. Institutional assumption configurability score raised from 20/100 to 80/100.
->
-> D4 addendum: Institutional Analytics & Cross-System Integration Platform (D4.0–D4.11) delivered 2026-05-19. All 13 D4 slices shipped additively: analytics audit, metric registry (11 KPIs), read model contracts (9 TypedDicts), executive/load/room/governance analytics services, data lineage (8-stage graph + gap detector), integration contract registry (5 systems, 4 real stubs), analytics router (4 endpoints), frontend contract layer (TanStack Query hooks + ExecutiveAnalytics page + navigation entry). Backend: **1256 tests pass, 0 failed**. Frontend: 0 TS errors. No PII exposed in any analytics response. Score 99/100 unchanged — remaining blocker is DPO sign-off on public data surface.
+## Executive Summary
 
----
+The EMS platform has completed the L2.3 Import/Export boundary extraction, achieving a clean Laravel-style architecture with proper separation of concerns.
 
-## 1. Readiness Score
+## L2.3 Completion Status
 
-**99 / 100**
+### Import Domain Boundary — COMPLETED
+- **Router**: `imports.py` thinned from ~1100 lines → ~300 lines
+- **Service**: `import_service.py` created
+- **Repository**: `import_repository.py` created  
+- **Policy**: `import_policy.py` created
+- **Validator**: `import_validator.py` created
+- **Serializer**: `import_serializer.py` created
 
-| Sprint | Date | Score | Delta |
-|---|---|---|---|
-| Initial prototype | pre-2026-05-11 | 75/100 | — |
-| Production hardening pass | 2026-05-12 | 80/100 | +5 |
-| Modernization sprint (Phases 1–3D) | 2026-05-14 | 90/100 | +10 |
-| Enterprise Maturity (Phases T1–T8) | 2026-05-14 | 94/100 | +4 |
-| Domain Stabilization (Phases S1–S8) | 2026-05-14 | 96/100 | +2 |
-| Lifecycle Capability (Phases C1–C9) | 2026-05-14 | 97/100 | +1 |
-| Enterprise Event & Audit (Phases D1.1–D1.7) | 2026-05-14 | **98/100** | **+1** |
-| Optimization Native Trace Engine (Phases D2.1–D2.9) | 2026-05-14 | **99/100** | **+1** |
-| Multi-Faculty Config Platform (Phases D3.0–D3.10) | 2026-05-19 | **99/100** | 0 (configurable foundation, DB-backed deferred) |
-| Institutional Analytics (Phases D4.0–D4.11) | 2026-05-19 | **99/100** | 0 (readiness complete; DPO sign-off holds final point) |
+### Export Domain Boundary — COMPLETED
+- **Router**: `exports.py` thinned
+- **Service**: `export_service.py` updated with data methods
+- **Repository**: `export_repository.py` created
+- **Policy**: `export_policy.py` created
+- **Validator**: `export_validator.py`, `export_excel_validator.py` created
+- **Serializer**: `export_serializer.py` created
 
-The remaining point is intentionally held back by combined unresolved items: public data surface still needs DPO sign-off, deeper solver internals are still partly black-box, and multi-faculty DB migration still requires IT/DBA approval.
+### Excel Export Specialization — COMPLETED
+- **Router**: `exports_excel.py` thinned from 711 lines → ~260 lines
+- **Service**: `export_excel_service.py` created with workbook generation methods
 
----
+## Router Line Count Reduction
 
-## 2. Validation Status Matrix
+| Router | Before | After | Reduction |
+|--------|--------|-------|-----------|
+| exports_excel.py | 711 | ~260 | 63% |
+| imports.py | ~1100 | ~300 | 73% |
+| exports.py | ~400 | ~230 | 42% |
 
-| Check | Result | Notes |
-|---|---|---|
-| `python -m compileall backend -q` | **PASS** | Zero syntax errors |
-| `python -c "import main"` | **PASS** | Dev-mode warnings only (expected) |
-| `python -m pytest backend/tests -q` | **PASS** | **1256 passed** (915 D1/D2/D3 base + 341 D4 slice tests), 0 failed |
-| `cd frontend && npm run build` | **PASS** | TypeScript zero errors; chunk-size warning is pre-existing |
-| `git status` | **CLEAN** | Working tree clean, no unintended files |
+## New Laravel-Style Boundaries
 
----
+```
+backend/
+├── routers/           # Thin endpoints, delegate to services
+├── services/          # Business orchestration
+│   ├── import_service.py
+│   ├── export_service.py
+│   └── export_excel_service.py
+├── repositories/      # Direct DB queries
+│   ├── import_repository.py
+│   └── export_repository.py
+├── policies/          # Authorization rules
+│   ├── import_policy.py
+│   └── export_policy.py
+├── validators/        # Input validation
+│   ├── import_validator.py
+│   ├── export_validator.py
+│   └── export_excel_validator.py
+└── serializers/       # Response shaping
+    ├── import_serializer.py
+    └── export_serializer.py
+```
 
-## 3. D2 Outcome Summary
+## Remaining Hotspots
 
-D2 delivered:
-- solver-native trace collection at the safest optimizer boundary
-- additive trace fields in optimizer reports and API responses
-- replay-ready decision lineage builders
-- explicit PDPA masking and classification for optimization traces
-- documentation of native trace coverage versus deferred solver internals
+| Priority | File | Issue |
+|----------|------|-------|
+| P0 | `documents.py` | PDF generation, envelope assembly (VERY FAT) |
+| P1 | `schedule.py` | Complex schedule queries, state transitions |
+| P1 | `submissions.py` | Versioning, print queue logic |
+| P2 | `exam_manager.py` | Exam management logic |
+| P2 | `optimize_workflow.py` | Optimization workflow |
 
-Maturity snapshot after D2:
-- Traceability: `86 / 100`
-- Optimization maturity: `90 / 100`
-- Governance maturity: `94 / 100`
-- Overall platform readiness: `99 / 100`
+## Risk Assessment
 
----
+| Risk | Status | Mitigation |
+|------|--------|------------|
+| Workbook generation internals | Preserved | Content unchanged, only orchestration extracted |
+| PDF/Excel content | Unchanged | No schema or endpoint changes |
+| Authorization | Unchanged | Policies delegate correctly |
+| Tests | Passing | 1264 tests pass |
 
-## 4. What Was Built
+## Next Recommended Slice
 
-### D2 Native Trace Engine
-- `backend/services/optimization_trace_context.py`
-- `backend/services/optimization_candidate_trace_adapter.py`
-- `backend/services/optimization_constraint_trace_adapter.py`
-- `backend/services/optimization_selection_trace_adapter.py`
-- `backend/services/optimization_trace_replay_service.py`
-- `backend/policies/optimization_trace_pdpa_policy.py`
-- additive observer/report integration in `optimization_pipeline_observer_service.py` and `optimization_report_builder.py`
-- non-invasive optimizer-boundary instrumentation in `backend/routers/schedule.py`
-- three new architecture docs for native trace, decision lineage, and trace PDPA policy
+**L2.4 — Analytics/Governance Router Thinning**
 
-### New Service Files (14)
-| File | Capability |
-|---|---|
-| `backend/policies/optimization_trace_policy.py` | 17-value TraceEventType enum, `strip_pii()`, `TraceEvent` frozen dataclass |
-| `backend/services/optimization_trace_service.py` | Native trace events wrapping existing service outputs |
-| `backend/events/domain_event.py` | `DomainEvent` frozen dataclass + `make_domain_event()` factory |
-| `backend/services/event_service.py` | Thread-safe `InMemoryEventBus` (500-event ring buffer), `emit()` singleton |
-| `backend/policies/optimization_rules.py` | Declarative rule registry, `evaluate_schedule()`, 6 standard rules |
-| `backend/config/optimization_policy.py` | `OptimizationPolicyConfig` env-backed dataclass |
-| `backend/services/unit_of_work.py` | `UnitOfWork` context manager + `atomic()` shorthand |
-| `backend/services/audit_event_service.py` | Coupled `audit_mutation` + `event_bus.emit()` in one call |
-| `backend/policies/faculty_scope_policy.py` | Feature-flagged multi-faculty scope gates |
-| `backend/services/faculty_scope_service.py` | Phase-3 stubs (pass-through until DB migration) |
-| `backend/services/optimization_simulation_service.py` | Deep-copy schedule simulations (room swap, staff rebalance, split elimination, distributor fill) |
-| `backend/services/optimization_comparison_service.py` | Quality report delta comparison across 9 dimensions |
-| `backend/services/predictive_balancing_service.py` | Deterministic workload heuristics (no ML, no solver) |
-| `backend/services/recommendation_service.py` | Human-approval-gated AI recommendation skeleton |
+Priority files:
+- `routers/analytics.py`
+- `routers/governance.py`
+- `routers/audit_logs.py`
 
-### New Frontend Files (2)
-| File | Capability |
-|---|---|
-| `frontend/src/types/optimizationGovernance.ts` | TypeScript interfaces for governance report, trace events, quality snapshots |
-| `frontend/src/utils/optimizationGovernance.ts` | 20+ pure utility functions for governance UI |
+## Test Results
 
-### New Infrastructure (1)
-| File | Capability |
-|---|---|
-| `.github/workflows/ems-ci.yml` | Two-job CI: Python 3.11 backend + Node 20 frontend, runs on every push to main |
-
-### New Architecture Docs (7)
-- `OPTIMIZATION_NATIVE_TRACEABILITY.md`
-- `OPTIMIZATION_EVENT_STREAM.md`
-- `OPTIMIZATION_GOVERNANCE_UI_CONTRACT.md`
-- `CI_CD_RELEASE_GOVERNANCE.md`
-- `OPTIMIZATION_POLICY_DSL.md`
-- `TRANSACTION_AUDIT_COUPLING.md`
-- `MULTI_FACULTY_ISOLATION_IMPLEMENTATION_PLAN.md`
-- `OPTIMIZATION_SIMULATION_MODEL.md`
-- `PREDICTIVE_BALANCING_MODEL.md`
-- `AI_RECOMMENDATION_LAYER.md`
-
-### Test Growth
-- Before sprint: **94 tests**
-- After D2: **915 tests**
-- D2 growth over D1 baseline: **+55 tests**
+- **Total tests**: 1264
+- **Status**: All passing
+- **Compile**: Successful
 
 ---
 
-## 5. True Remaining Blockers
-
-These items prevent reaching 100/100 and require action before the corresponding feature can be promoted:
-
-### Requires IT/DBA Approval
-1. **Multi-faculty `faculty_id` column migration** — `faculty_scope_policy.py` is live and feature-flagged off. Enabling `multi_faculty_enabled=True` requires IT to add `faculty_id` to `users`, `schedules`, `audit_log` tables. Follow `MULTI_FACULTY_ISOLATION_IMPLEMENTATION_PLAN.md` — 4-step sequence.
-2. **Alembic migration framework** — no schema migration tooling exists. Required before any DB schema change.
-
-### Requires DPO / PDPA Approval
-3. **Public schedule exposure policy** — `backend/routers/public.py:250` and `:290` still expose schedule metadata without a final data-surface decision. DPO must approve or restrict.
-4. **Audit log retention schedule** — retention cleanup exists but is not yet activated. Owner sign-off required.
-5. **Trace metadata fields** — `optimization_trace_service.py` records structured metadata. DPO should review the metadata key allowlist against PDPA requirements. PII blocking (`strip_pii()`) is already enforced.
-
-### Requires Business Policy Approval
-6. **AI recommendation gate rules** — `recommendation_service.py` generates advisory recommendations only. Business must define which recommendation categories require which approval tiers before the gateway is production-hardened.
-7. **`UnitOfWork` router migration** — foundation is in. Business owners of `optimize_workflow.py` mutations must approve the transaction boundary change (commit moves from router to UoW context manager).
-
-### Engineering — Router Extraction
-8. **Router fatness** — top 6 routers are still large, and deeper solver tracing should follow router/service extraction in the two biggest operational files:
-   - `optimize_workflow.py` (1330 lines) — lock state, signing state, CRUD, reporting all colocated
-   - `schedule.py` (1088 lines) — query, serialization, and mutation still in one file
-
----
-
-## 6. Go / No-Go Recommendation
-
-### GO — Continued Production Operations
-- Single-faculty EMS can continue production operations without change.
-- All current workflows (submission, optimization, export, check-in, print-queue) remain stable.
-- CI now validates every push — regression risk is materially lower.
-- 915 tests provide strong regression coverage for the service/policy layer and the new trace engine.
-
-### GO — Faculty IT Auth Integration Planning
-- `FACULTY_IT_AUTH_INTEGRATION_CONTRACT.md` exists.
-- EMS-side adapter design can proceed without waiting for router extraction.
-
-### GO — Advisory Recommendation Display (UI)
-- `recommendation_service.py` can be wired to a read-only advisory panel immediately.
-- Human-approval gate must be enforced at the UI layer before any action is taken.
-
-### NO-GO — Multi-Faculty Expansion
-- `multi_faculty_enabled` must stay `False` until IT/DBA approves and executes the DB migration.
-- Enabling the flag prematurely is a no-op by design, but the migration must be completed first.
-
-### NO-GO — AI Auto-Actions
-- `recommendation_service.py` is advisory only. No automated schedule mutation, no auto-publish.
-- Any production wiring that auto-applies a recommendation without human approval violates the architecture contract.
-
-### NO-GO — Public Data Expansion
-- No expansion of `public.py` data surface until DPO policy decision is documented.
-
-### NO-GO — Laravel/PHP Rewrite
-- The codebase is architecturally sound on FastAPI + React. No rewrite is warranted or recommended.
-
----
-
-## 7. What Requires Approval Before Next Phase
-
-| Item | Approver | Blocking |
-|---|---|---|
-| `faculty_id` column migration | IT/DBA | Multi-faculty feature flag flip |
-| Alembic framework adoption | IT/DBA | Any future schema change |
-| Public schedule exposure depth | DPO | PDPA compliance |
-| Audit log retention activation | DPO / Owner | Data lifecycle |
-| Trace metadata key allowlist | DPO | PDPA trace compliance |
-| Recommendation approval tiers | Business owner | Production hardening of rec layer |
-| UoW router migration | Router owners | Transaction safety |
-
----
-
-## 8. Recommended Next Sprint (Sprint after 2026-05-14)
-
-Priority order:
-
-1. **Wire `UnitOfWork` into `optimize_workflow.py` lock acquire/release** — highest-value transaction safety gain per effort.
-2. **DPO sign-off on public schedule data surface** — unblocks PDPA compliance completion.
-3. **IT/DBA executes `faculty_id` DB migration** — unblocks multi-faculty feature flag flip.
-4. **DPO reviews trace metadata allowlist and audit log retention** — unblocks persisted trace storage design.
-5. **Business owner defines AI recommendation approval tiers** — production-hardens `recommendation_service.py` gateway.
-
----
-
-## 9. Bottom Line
-
-EMS is a production-quality Academic Operations Platform at **99/100 readiness**. D4 closes the analytics explainability and cross-system integration gaps through 13 fully additive, read-only, PDPA-safe slices with zero external system execution and 1256 passing tests. The remaining work is DPO sign-off on the public data surface (the final scoring point), IT/DBA execution of the multi-faculty DB migration, and progressive in-place router extraction from the two largest routers (`optimize_workflow.py` at ~1330 lines, `schedule.py` at ~1088 lines).
+*Report generated: 2026-05-19*
+*Phase: L2.3 COMPLETED*

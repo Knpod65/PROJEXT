@@ -1,585 +1,84 @@
-# Renovation Phase Tracker
-## EMS Academic Operations Platform — 2026-05-19 (D4.0–D4.11 complete)
+# EMS Renovation Phase Tracker
+
+## Overview
+
+Tracks progress on the EMS platform renovation from fat routers to Laravel-style architecture.
 
 ---
 
-> D4 update: Institutional Analytics & Cross-System Integration Platform is now complete on `main`.
-> All 13 D4 deliverables shipped across 11 slices (D4.0–D4.11): analytics audit, metric registry,
-> read model contracts, executive dashboard service, workload analytics, room utilization analytics,
-> governance analytics, data lineage service, integration contract registry, analytics router, and
-> frontend analytics contract layer + executive analytics page.
-> Current validated backend test count: **1256 passed**, 0 failed. Frontend build: 0 TS errors.
->
-> Prior D3 note: Multi-Faculty Configuration Platform is complete on `main`. All 70+ hardcoded
-> institutional assumptions are wrapped behind configurable service layers (D3.1–D3.8) with
-> frontend hooks (D3.9) and architecture docs (D3.10). No existing files modified.
-> **Important note during this session**: D4.4/4.5/4.6 (workload, room utilization, governance analytics
-> services) were flagged as pre-existing written in a prior session (uncommitted). D4.11 commit
-> [`f68607d`] packages them alongside the frontend contract layer. Full test suite passes at 1256.
+## Phase L2 — Router Thinning
+
+### L2.1 Query/List/Group Boundary Extraction
+- **Status**: ✅ COMPLETED
+- **Files**: schedule.py, submissions.py query methods extracted
+- **Service**: schedule_query_service.py created
+
+### L2.2 CRUD + Supervision Boundary Extraction
+- **Status**: ✅ COMPLETED
+- **Files**: schedule.py CRUD methods extracted
+- **Service**: schedule_service.py, supervision_service.py
+
+### L2.3 Import/Export Boundary Extraction
+- **Status**: ✅ COMPLETED
+- **Files**: imports.py, exports.py, exports_excel.py thinned
+- **Services**: import_service.py, export_service.py, export_excel_service.py
+- **Repositories**: import_repository.py, export_repository.py
+- **Policies**: import_policy.py, export_policy.py
+- **Validators**: import_validator.py, export_validator.py, export_excel_validator.py
+- **Serializers**: import_serializer.py, export_serializer.py
+
+### L2.4 Analytics/Governance Router Thinning
+- **Status**: ⏳ IN PROGRESS
+- **Target Files**: analytics.py, governance.py, audit_logs.py
+- **Next Steps**: Extract analytics_service.py, governance_service.py
 
 ---
 
-> D3 update: Multi-Faculty Configuration Platform is now complete on `main`. All 70+ hardcoded
-> institutional assumptions are wrapped behind configurable service layers (D3.1–D3.8) with
-> frontend hooks (D3.9) and architecture docs (D3.10). No existing files modified.
-> Current validated backend baseline: `~1114` passing tests (915 + 199 new), backend compile/import pass.
->
-> Prior D2 note: native optimization trace context, candidate/constraint/selection adapters,
-> optimizer-boundary instrumentation, replay-ready lineage, and trace PDPA policy are complete on `main`.
+## Phase L3 — Serializer/Resource Layer
 
-## 1. Phase Summary
+### L3.1 Response Transformer Layer
+- **Status**: ⏳ PENDING
+- **Target**: Extract inline dict transformations
 
-| Phase | Status | Progress | Notes |
-|------|--------|----------|-------|
-| Phase 1 — Architecture Governance | Complete | 100% | Done |
-| Phase 2 — DRY Configuration Layer | Near complete | 90% | Core config centralized; final cleanup still open |
-| Phase 3 — Service Layer Foundation | In progress | 85% | Workflow lock, signing lifecycle, schedule query, recheck, observer, traceability, event bus, simulation, predictive balancing, AI recommendation skeleton all in service layer |
-| Phase 4 — PDPA / Security Enforcement | In progress | 60% | Trace PII filtering added; UoW + audit-event coupling foundation in; public exposure and full router migration remain |
-| Phase 5 — Test and Delivery Maturity | Complete | 97% | 915 tests passing; CI/CD via GitHub Actions shipped; targeted integration coverage still open |
-| Phase 6 — Faculty IT / Multi-Faculty Readiness | In progress | 35% | Policy skeleton + feature flag shipped; DB migration and IT approval still open |
-| Modernization Sprint (Phases 1–3D) | Complete | 100% | 10 new service files, 10 new test files, 7 new architecture docs, 272 new tests |
-| Enterprise Maturity (Phases T1–T8) | Complete | 100% | Typed events, trace services, transaction audit coupling, event dispatcher, policy config audit, governance hook, router thinning, report analytics, CI split |
-| Domain Stabilization (Phases S1–S8) | Complete | 100% | State machine, publication governance, event handlers, DTO contracts, analytics projection, frontend hooks, governance API endpoint, domain boundary docs |
-| Lifecycle Capability (Phases C1–C9) | Complete | 100% | Governance policy, capability matrix, lifecycle events, transition engine, governance trace, executive risk, trace aggregator, 3 new endpoints, frontend contract doc |
-| Enterprise Event & Audit (Phases D1.1–D1.7) | Complete | 100% | EventEnvelope (18 fields), event outbox foundation, immutable audit events, transaction bridge, lifecycle timeline, PDPA safety policy, architecture docs |
-| Optimization Native Trace Engine (Phases D2.1–D2.9) | Complete | 100% | Native trace context, adapters, observer integration, boundary instrumentation, replay lineage, trace PDPA policy, architecture docs |
-| Multi-Faculty Config Platform (Phases D3.0–D3.10) | Complete | 100% | Platform assumption audit, FacultyConfig, PolicyRegistry, GovernanceFlow, WorkloadPolicy, AcademicGroupRegistry, RoleMapping, Export/Import, Validation, Governance, Frontend hooks, arch docs |
-| Institutional Analytics & Integration (Phases D4.0–D4.11) | Complete | 100% | Analytics audit, metric registry, read model contracts, executive/load/room/governance analytics, data lineage, integration contracts, analytics router, frontend contract layer, executive analytics page, docs |
+### L3.2 Full i18n Audit
+- **Status**: ⏳ PENDING
+- **Target**: Centralize all strings, add parity checker
 
 ---
 
-## 2. Phase 1 — Architecture Governance
+## Phase L4 — FormRequest Validators
 
-### Status
-Complete
-
-### Completed outcomes
-- Platform direction held: FastAPI + React retained
-- Long-term Academic Operations Platform framing established
-- Phase documents and architecture maps exist
-- No-Laravel-rewrite decision is stable
+### L4.1 Request Validation Classes
+- **Status**: ⏳ PENDING
+- **Target**: Pydantic per-request classes
 
 ---
 
-## 3. Phase 2 — DRY Configuration Layer
+## Phase L5 — Policy Consolidation
 
-### Status
-Near complete
-
-### Done
-- `backend/config/settings.py` is canonical
-- `backend/config/policy.py` compatibility re-exports remain intact
-- Token/lock timing values were further centralized in this pass
-- `permissions.coerce_user_role()` is now reused by `auth_utils._coerce_user_role()`
-
-### Still open
-- Move remaining environment/config scatter out of:
-  - `backend/database.py`
-  - `backend/email_notifications.py`
-  - `backend/cmu_sso.py`
-- Move faculty/business labels out of export/document code and toward config or DB-backed metadata
-- Decide which per-faculty rules should become tables instead of environment variables
-
-### Exit criteria
-- No duplicated auth/config thresholds outside settings/policy except explicit transitional exceptions
-- Remaining faculty-specific constants documented as intentional until DB-backed
+### L5.1 Authorization Pass
+- **Status**: ⏳ PENDING
+- **Target**: Replace inline role checks with named predicates
 
 ---
 
-## 4. Phase 3 — Service Layer Foundation
+## Progress Dashboard
 
-### Status
-Complete
-
-### Done
-- `services/audit_service.py`
-- `services/permission_service.py`
-- `services/health_service.py`
-- `services/submission_service.py`
-- `services/exceptions.py`
-- `repositories/submission_repository.py`
-- `policies/submission_policy.py`
-
-### This pass improved
-- permission semantics in `permissions.py`
-- PDF token auditing
-- submission message auditing
-- print-note audit minimization
-- `submissions.py` list/detail access now routes through `submission_service.py`
-- submission file-access, message-access, and print-spec validation now reuse service/policy helpers
-- workflow edit-lock lifecycle extracted to `services/workflow_lock_service.py`
-- lock acquire/release/heartbeat now emit semantic audit events (`WORKFLOW_LOCK_*`)
-- workflow signing state machine extracted to `services/workflow_signing_service.py`
-- signing order, next-signer detection, and round transitions centralized in workflow policy/service
-- schedule query, serialization, and unavailability maps extracted to schedule service/repository/policy layers
-- optimization recheck foundation added for post-generation validation
-- optimization pipeline observer added to aggregate explainability, quality, and recheck outputs without changing optimizer decisions
-- optimization explainability payloads expanded with source, confidence, tradeoffs, rejected alternatives, and review actions
-- optimization quality scoring expanded with additional readiness metrics and quality notes
-
-### Still open
-- Extract service/repository slices from:
-  - `backend/routers/optimize_workflow.py`
-  - `backend/routers/schedule.py`
-  - `backend/routers/documents.py`
-  - `backend/routers/exam_manager.py`
-- Complete remaining mutation-heavy extraction inside `backend/routers/submissions.py`
-- Move object-level checks out of routers and into reusable policy/service helpers
-- Extract workflow signing state machine rules from `optimize_workflow.py` into dedicated service
-- Extract remaining optimize workflow CRUD and reporting helpers into domain services
-- Continue thinning `backend/routers/schedule.py` beyond query/serialization helpers
-- Consider wiring recheck into confirmation gate only after contract-safe review
-- Continue governed optimization hardening: report builder, audit events, frontend contract docs, and override policy rules
-
-### Exit criteria
-- Top 5 routers reduced materially in size and complexity
-- Transaction boundaries owned by services, not route handlers
+| Phase | Target | Status | Progress |
+|-------|--------|--------|----------|
+| L2.1 | 8 routers | 1/8 | 12.5% |
+| L2.2 | 8 routers | 1/8 | 12.5% |
+| L2.3 | 3 routers | 3/3 | 100% |
+| L2.4 | 3 routers | 0/3 | 0% |
+| L3 | Serializers | 0/1 | 0% |
+| L4 | Validators | 0/1 | 0% |
+| L5 | Policies | 0/1 | 0% |
 
 ---
 
-## 5. Phase 4 — PDPA / Security Enforcement
-
-### Status
-In progress
-
-### Done
-- HttpOnly session cookies
-- token revocation
-- hashed IP/UA audit fields
-- centralized production secret validation
-- public `/health` failure sanitization
-- audit coverage improved for messages and PDF token issuance
-- raw print-note content removed from audit payloads
-
-### Still open
-- Public schedule exposure policy decision
-- student ownership mapping without `username == student_id`
-- object-level guards for swaps and check-ins
-- audit transaction unification
-- readiness endpoint access semantics
-- retention cleanup activation after owner sign-off
-
-### Exit criteria
-- Sensitive public endpoints explicitly approved or reduced
-- All high-value mutations logged without raw sensitive payloads
-- Retention procedure documented and approved
-
----
-
-## 6. Phase 5 — Test and Delivery Maturity
-
-### Status
-In progress
-
-### Done
-- Backend test suite exists and is passing
-- Current backend test count: `915`
-- Compile/import/build validation is runnable locally
-- Health checks now exist at router and container level
-
-### Still open
-- router integration tests
-- export/document generation verification
-- security regression tests for auth/public endpoints
-
-### Exit criteria
-- CI on every push
-- smoke integration suite for auth, health, public ownership, and print queue
-
----
-
-## 7. Phase 6 — Faculty IT / Multi-Faculty Readiness
-
-### Status
-Started
-
-### Done
-- Integration contract document added:
-  - `docs/architecture/FACULTY_IT_AUTH_INTEGRATION_CONTRACT.md`
-
-### Still open
-- Callback/authen payload sign-off
-- CMU/faculty token verification adapter
-- controlled provisioning/mapping workflow
-- multi-faculty data isolation
-
-### Exit criteria
-- Faculty IT contract approved
-- EMS-side adapter implemented without changing session model
-- faculty expansion blockers resolved
-
----
-
-## 8. Enterprise Maturity Phase — New Capabilities (T1–T8, 2026-05-14)
-
-### T1 — Typed Optimization Events + Trace Services
-| File | Capability |
-|---|---|
-| `events/optimization_events.py` | OptimizationEventType enum (15 values), stage constants |
-| `services/optimization_candidate_trace_service.py` | CandidateTrace dataclass, build_candidate_traces() |
-| `services/optimization_decision_log_service.py` | DecisionLogEntry dataclass, build_decision_log() |
-| `services/optimization_constraint_trace_service.py` | ConstraintTrace dataclass, build_constraint_traces() |
-
-### T2 — Transaction Audit Coupling
-| File | Capability |
-|---|---|
-| `services/transaction_audit_service.py` | execute_with_audit(): mutation + audit + event in one atomic call |
-
-### T3 — Typed Event Infrastructure
-| File | Capability |
-|---|---|
-| `events/base_event.py` | EventDomain, EventSeverity enums; BaseEventProtocol |
-| `events/governance_events.py` | GovernanceEventType enum (11 values) |
-| `events/audit_events.py` | AuditEventType enum (14 values) |
-| `services/event_dispatcher_service.py` | EventDispatcher: type-based routing over InMemoryEventBus |
-
-### T4 — Policy Config Audit
-- Added RECOMMENDATION_BANDS, INVIGILATOR_OVERLOAD_THRESHOLDS, WALKING_DISTANCE_THRESHOLDS to `optimization_policy.py`
-
-### T5 — Frontend Governance Hook
-| File | Capability |
-|---|---|
-| `frontend/src/hooks/useOptimizationGovernance.ts` | React hook: AsyncState<OptimizationGovernanceReport> via useAsyncData |
-
-### T6 — Router Thinning
-| File | Capability |
-|---|---|
-| `services/workflow_user_service.py` | format_user_dict(), build_external_workflow_issues() |
-| `services/workflow_reporting_service.py` | build_staff_workload_report() |
-
-### T7 — Report Builder Analytics
-- Added 7 additive analytics keys to `build_optimization_report()`: risk_matrix, rejected_candidate_analytics, invigilator_overload_summary, fairness_summary, traceability_completeness_score, quality_band_summary, optimization_confidence_score
-
-### T8 — CI/CD Split
-| File | Capability |
-|---|---|
-| `.github/workflows/backend-validation.yml` | Focused: compileall + import main + pytest |
-| `.github/workflows/frontend-validation.yml` | Focused: npm ci + npm run build |
-
-### Test growth (Enterprise Maturity)
-- T1: +62 tests
-- T2: +15 tests
-- T3: +16 tests
-- T6: +15 tests
-- T7: +22 tests
-- **Total: +130 new tests (366 → 496)**
-
----
-
-## 9. Modernization Sprint — New Capabilities (2026-05-14)
-
-### New service files
-| File | Phase | Capability |
-|---|---|---|
-| `services/optimization_trace_service.py` | 1 | Native trace events, PII stripping |
-| `policies/optimization_trace_policy.py` | 1 | TraceEventType enum (17), strip_pii() |
-| `events/domain_event.py` | 1B | DomainEvent frozen dataclass |
-| `services/event_service.py` | 1B | InMemoryEventBus singleton, emit() |
-| `policies/optimization_rules.py` | 2B | Declarative rule registry, evaluate_schedule() |
-| `config/optimization_policy.py` | 2B | OptimizationPolicyConfig env-backed |
-| `services/unit_of_work.py` | 2C | UnitOfWork context manager, atomic() |
-| `services/audit_event_service.py` | 2C | Coupled audit + event emission |
-| `policies/faculty_scope_policy.py` | 3 | Faculty isolation gates, feature-flagged |
-| `services/faculty_scope_service.py` | 3 | Phase 3 stubs for faculty scoping |
-| `services/optimization_simulation_service.py` | 3B | Deep-copy schedule simulations |
-| `services/optimization_comparison_service.py` | 3B | Quality report delta comparison |
-| `services/predictive_balancing_service.py` | 3C | Deterministic workload heuristics |
-| `services/recommendation_service.py` | 3D | Human-approval-gated AI rec skeleton |
-
-### New frontend files
-| File | Phase | Capability |
-|---|---|---|
-| `frontend/src/types/optimizationGovernance.ts` | 1C | TypeScript governance interfaces |
-| `frontend/src/utils/optimizationGovernance.ts` | 1C | 20+ governance utility functions |
-
-### New infrastructure
-| File | Phase | Capability |
-|---|---|---|
-| `.github/workflows/ems-ci.yml` | 2 | GitHub Actions CI: backend + frontend |
-
-### Test growth
-- Before modernization sprint: **94 tests**
-- After modernization sprint: **366 tests** (+272)
-
----
-
-## 10. Domain Stabilization Phase — New Capabilities (S1–S8, 2026-05-14)
-
-### S1 — Domain Boundary Documentation + Governance Endpoint
-| File | Capability |
-|---|---|
-| `docs/architecture/DOMAIN_BOUNDARY_ARCHITECTURE.md` | 8 logical domains, stable interfaces, dependency graph |
-| `backend/routers/optimize_workflow.py` | `GET /sessions/{id}/governance` endpoint (closes useOptimizationGovernance API gap) |
-
-### S2 — Schedule State Machine
-| File | Capability |
-|---|---|
-| `backend/services/schedule_state_machine.py` | 9-state lifecycle: DRAFT→OPTIMIZED→RECHECKED→GOVERNANCE_REVIEW→APPROVED→PUBLISHED→LOCKED→ARCHIVED + ROLLED_BACK recovery |
-| `backend/tests/test_schedule_state_machine.py` | 37 tests: all transitions, guards, rollback, result immutability |
-
-### S3 — Publication Governance Service
-| File | Capability |
-|---|---|
-| `backend/services/publication_governance_service.py` | assess_publication_readiness(), assess_rollback_safety(), build_publish_audit_payload(), build_emergency_override_payload() |
-| `backend/tests/test_publication_governance_service.py` | 27 tests: readiness, blockers, rollback safety, override protocol |
-| `backend/routers/optimize_workflow.py` | `GET /sessions/{id}/publication-readiness` stub endpoint |
-
-### S4 — Typed Event Handlers
-| File | Capability |
-|---|---|
-| `backend/event_handlers/optimization_handler.py` | Handles: GOVERNANCE_ESCALATED, HARD_CONSTRAINT_FAILED, RECHECK_WARNING_GENERATED, QUALITY_SCORE_ADJUSTED |
-| `backend/event_handlers/governance_handler.py` | Handles: OVERRIDE_REQUESTED, OVERRIDE_APPROVED, OVERRIDE_REJECTED, AUTO_APPROVED, GOVERNANCE_ESCALATED, AUTO_APPROVAL_BLOCKED |
-| `backend/event_handlers/publication_handler.py` | Handles: SCHEDULE_PUBLISHED, SCHEDULE_ROLLED_BACK, EMERGENCY_PUBLICATION_OVERRIDE, SCHEDULE_LOCKED |
-| `backend/event_handlers/audit_handler.py` | Handles: MUTATION_COMMITTED, MUTATION_ROLLED_BACK, UNAUTHORIZED_ACCESS_ATTEMPT, SENSITIVE_ACCESS, EXPORT_INITIATED |
-| `backend/tests/test_event_handlers.py` | 17 tests: registration, dispatch, exception isolation |
-
-### S5 — DTO Contract TypedDicts
-| File | Capability |
-|---|---|
-| `backend/contracts/optimization_contracts.py` | QualityContract, RecheckSummaryContract, ObserverContract, ReportContract |
-| `backend/contracts/governance_contracts.py` | GovernanceDecisionContract, OverrideRequestContract |
-| `backend/contracts/publication_contracts.py` | PublicationReadinessContract, PublishAuditContract, EmergencyOverrideContract |
-
-### S6 — Analytics Projection Service
-| File | Capability |
-|---|---|
-| `backend/services/analytics_projection_service.py` | project_governance_trend(), project_quality_trend(), project_invigilator_overload_trend(), project_room_utilization_trend(), project_fairness_trend(), compare_periods() |
-| `backend/tests/test_analytics_projection_service.py` | 25 tests: all projections, empty inputs, deltas, trend directions |
-
-### S7 — Frontend Governance Hooks
-| File | Capability |
-|---|---|
-| `frontend/src/hooks/useScheduleGovernance.ts` | AsyncState<OptimizationGovernanceReport> via /governance endpoint |
-| `frontend/src/hooks/usePublicationGovernance.ts` | AsyncState<PublicationReadiness> via /publication-readiness endpoint |
-
-### S8 — Architecture Documentation
-| File | Capability |
-|---|---|
-| `docs/architecture/SCHEDULING_STATE_MACHINE.md` | 9 states, transition table, guard conditions, design rationale |
-| `docs/architecture/PUBLICATION_GOVERNANCE_ARCHITECTURE.md` | Publication lifecycle, rollback safety, emergency override protocol |
-
-### Test growth (Domain Stabilization)
-- S2: +37 tests
-- S3: +27 tests
-- S4: +17 tests
-- S6: +25 tests
-- **Total: +106 new tests (496 → 602)**
-
----
-
----
-
-## 11. Lifecycle Capability Phase — New Capabilities (C1–C9, 2026-05-14)
-
-### C3 — Governance Policy Module
-| File | Capability |
-|---|---|
-| `backend/policies/schedule_governance_policy.py` | Declarative transition permission rules: is_transition_allowed(), get_transition_blockers(), requires_governance_review(), requires_audit_annotation() |
-| `backend/tests/test_schedule_governance_policy.py` | 26 tests |
-
-### C1 — Capability Authorization
-| File | Capability |
-|---|---|
-| `backend/services/schedule_capability_service.py` | compute_schedule_capabilities() — role × state × governance matrix → can_publish, can_archive, can_edit, can_finalize, etc. |
-| `backend/tests/test_schedule_capability_service.py` | 28 tests |
-
-### C2 — Lifecycle Event Builders
-| File | Capability |
-|---|---|
-| `backend/services/schedule_lifecycle_event_service.py` | build_publication_event(), build_rollback_event(), build_archive_event(), build_reopen_event(), build_governance_override_event() |
-| `backend/tests/test_schedule_lifecycle_event_service.py` | 13 tests |
-
-### C4 — Transition Engine
-| File | Capability |
-|---|---|
-| `backend/services/schedule_transition_service.py` | attempt_transition() — policy pre-flight + state machine validation in one call |
-| `backend/tests/test_schedule_transition_service.py` | 19 tests |
-
-### C5 — Governance Timeline
-| File | Capability |
-|---|---|
-| `backend/services/governance_trace_service.py` | build_governance_trace() — chronological audit timeline from session signature timestamps |
-| `backend/tests/test_governance_trace_service.py` | 14 tests |
-
-### C7 — Executive Risk Report
-| File | Capability |
-|---|---|
-| `backend/services/executive_risk_service.py` | compute_executive_risk_report() — overall_risk_band, publishability_score, pdpa_risks, governance_health |
-| `backend/tests/test_executive_risk_service.py` | 29 tests |
-
-### C6 — Optimizer Trace Aggregator
-| File | Capability |
-|---|---|
-| `backend/services/optimizer_trace_aggregator_service.py` | aggregate_optimization_traces() — facade over 4 existing trace services + rejection_breakdown |
-| `backend/tests/test_optimizer_trace_aggregator_service.py` | 12 tests |
-
-### Endpoints
-| Endpoint | Service |
-|---|---|
-| `GET /sessions/{id}/capabilities` | `compute_schedule_capabilities()` |
-| `GET /sessions/{id}/transition-check` | `attempt_transition()` |
-| `GET /sessions/{id}/executive-risk` | `compute_executive_risk_report()` |
-
-### C8+C9 — Documentation
-| File | Content |
-|---|---|
-| `docs/architecture/FRONTEND_GOVERNANCE_CONTRACT.md` | Canonical API shapes, lifecycle semantics, usage patterns, auth requirements |
-| `docs/architecture/RENOVATION_PHASE_TRACKER.md` | Updated with C1–C9 phase table |
-| `docs/architecture/FINAL_PLATFORM_READINESS_REPORT.md` | Score updated: 96 → 97/100 |
-| `docs/architecture/EMS_COMPLETION_GAP_REPORT.md` | Capability-authorization, transition engine, executive risk marked resolved |
-
-### Test growth (Lifecycle Capability)
-- C3: +26 tests
-- C1: +28 tests
-- C2: +13 tests
-- C4: +19 tests
-- C5: +14 tests
-- C7: +29 tests
-- C6: +12 tests
-- **Total: +141 new tests (613 → 754)**
-
----
-
-## 12. Enterprise Event & Audit Phase — New Capabilities (D1.1–D1.7, 2026-05-14)
-
-### D1.1 — Event Envelope Standardization
-| File | Capability |
-|---|---|
-| `backend/events/event_envelope.py` | EventEnvelope frozen dataclass (18 fields), create_event_envelope(), event_envelope_to_dict(), sanitize_event_payload() |
-| `backend/tests/test_event_envelope.py` | 22 tests |
-
-### D1.2 — Event Outbox Foundation
-| File | Capability |
-|---|---|
-| `backend/services/event_outbox_service.py` | stage_event(), list_staged_events(), clear_staged_events(), mark_event_dispatched(), get_staged_event(), build_outbox_record() |
-| `backend/tests/test_event_outbox_service.py` | 16 tests |
-| `docs/architecture/EVENT_OUTBOX_FOUNDATION.md` | Outbox design + deferred DB DDL |
-
-### D1.3 — Immutable Audit Event Model
-| File | Capability |
-|---|---|
-| `backend/services/immutable_audit_service.py` | build_immutable_audit_event(): SHA-256 hashing, PII sanitization, immutable marker |
-| `backend/tests/test_immutable_audit_service.py` | 20 tests |
-| `docs/architecture/IMMUTABLE_AUDIT_EVENT_MODEL.md` | Hash design, PII list, deferred persistence |
-
-### D1.4 — Transaction Audit Outbox Bridge
-| File | Capability |
-|---|---|
-| `backend/services/transaction_event_bridge_service.py` | build_transaction_event_bundle(), stage_transaction_events() |
-| `backend/tests/test_transaction_event_bridge_service.py` | 11 tests |
-
-### D1.5 — Lifecycle Timeline Reconstruction
-| File | Capability |
-|---|---|
-| `backend/services/lifecycle_timeline_service.py` | build_lifecycle_timeline(), summarize_lifecycle_timeline() |
-| `backend/tests/test_lifecycle_timeline_service.py` | 17 tests |
-| `docs/architecture/LIFECYCLE_TIMELINE_RECONSTRUCTION.md` | Field fallback table, usage, deferred items |
-
-### D1.6 — PDPA Event Safety Policy
-| File | Capability |
-|---|---|
-| `backend/policies/event_pdpa_policy.py` | classify_event_payload(), assert_event_payload_safe(), mask_event_payload() |
-| `backend/tests/test_event_pdpa_policy.py` | 20 tests |
-
-### D1.7 — Documentation
-| File | Content |
-|---|---|
-| `docs/architecture/ENTERPRISE_EVENT_AUDIT_ARCHITECTURE.md` | Full D1 architecture overview, component map, deferred items, test coverage |
-
-### Test growth (Enterprise Event & Audit)
-- D1.1: +22 tests
-- D1.2: +16 tests
-- D1.3: +20 tests
-- D1.4: +11 tests
-- D1.5: +17 tests
-- D1.6: +20 tests
-- **Total: +106 new tests (754 → 860)**
-
----
-
-## 13. Optimization Native Trace Engine Phase — New Capabilities (D2.1–D2.9, 2026-05-14)
-
-### D2 outcomes
-- Added `OptimizationTraceContext` as a pure in-memory collector with envelope export support
-- Added native candidate, constraint, and selection trace adapters
-- Added additive observer/report fields:
-  - `native_trace_summary`
-  - `native_trace_events`
-  - `traceability_completeness_score`
-  - `trace_source_breakdown`
-- Added safe optimizer-boundary instrumentation in `backend/routers/schedule.py`
-- Added replay-ready lineage builders and PDPA masking for trace payloads
-- Added three architecture documents for native tracing, decision lineage, and trace PDPA rules
-
-### D2 testing impact
-- New backend total: `915` passing tests
-- D2 test growth: `+55` tests over the D1 baseline
-
-### D2 maturity impact
-- Traceability maturity moved into the native-source range with replay support
-- Optimization explainability remains additive and backward-compatible
-- Deep solver internals are still intentionally deferred
-
----
-
-## 15. Institutional Analytics & Integration Phase — New Capabilities (D4.0–D4.11, 2026-05-19)
-
-### D4 slice summary
-
-| Slice | Commit | Deliverable | Tests |
-|-------|--------|-------------|-------|
-| D4.0 | — | `D4_ANALYTICS_INTEGRATION_AUDIT.md` — 11 analytics-ready tables, 7 aggregation-needed entities, 4 PDPA fields, 5 lineage gaps, 5 external systems, 9 KPI candidates | — |
-| D4.1 | b984c18 | `analytics_metric_registry_service.py` — 11 KPI definitions, PDPA-classified, 15 tests | 15 |
-| D4.2 | b08f3ca | `analytics_contracts.py` — 9 TypedDicts, `validate_analytics_dict()`, `sanitize_analytics_output()` | 19 |
-| D4.3 | 0784c96 | `executive_dashboard_projection_service.py` — `project_executive_dashboard()`, `build_workload_summary_dict()`, `compute_room_summary_dict()` | 22 |
-| D4.4 | — | `workload_analytics_service.py` — per-staff/entity distribution analytics | 15 |
-| D4.5 | — | `room_utilization_analytics_service.py` — room-level utilization, capacity, vacancy | 16 |
-| D4.6 | — | `governance_analytics_service.py` — publication, signing, override, overdue analytics | 15 |
-| D4.7 | e414459 | `data_lineage_service.py` — 8-stage graph builder, gap detector, `build_lineage_graph()`, `build_lineage_node()`, `detect_lineage_gaps()` | 24 |
-| D4.8 | cece948 | `integration_contracts.py` (5 TypedDicts: SIS, HR, LMS, Finance, CMU SSO) + `integration_contract_registry_service.py` | 10 |
-| D4.9 | 35d72fa | `routers/analytics.py` — 4 read-only endpoints; `main.py` analytics router registration | 6 |
-| D4.10/4.11 | f68607d | Frontend contract layer + executive analytics page: `analytics.ts`, `analytics.service.ts`, `useMetricRegistry`, `useExecutiveAnalytics`, `ExecutiveAnalytics.tsx`, navigation entry, App.tsx route; `@tanstack/react-query` dependency; D4.4/5/6 backend services committed | 46 BE + FE build clean |
-
-### D4 design principles (additive, read-only, PDPA-safe)
-- All 13 analytics slices are additive; zero existing tables or APIs were rewritten.
-- No external system integrations are executed — `IntegrationContract` types model real systems
-  (SIS, HR, LMS, Finance, CMU SSO) as read-only stubs; real connections require IT contract.
-- PDPA boundary: `metric_registry` levels (`public / internal / confidential / restricted`) map through
-  `_PDPA_TO_POLICY` translator; `executive_dashboard_projection_service` rejects all-zero PII scenarios;
-  `analytics_contracts.sanitize_analytics_output()` redacts sensitive fields on export.
-- Data lineage graph uses `copy.deepcopy` for node metadata/args, preventing caller-mutation leakage.
-- `detect_lineage_gaps()` uses left-to-right consecutive-stage-pair adjacency; skipped stages produce
-  gap records AND prevent re-bridge edges for downstream stages.
-
-### D4 architecture files
-| File | Content |
-|------|---------|
-| `docs/architecture/D4_ANALYTICS_INTEGRATION_AUDIT.md` | 11-ready-table inventory, lineage gaps, KPI candidates, PDPA field register |
-| `docs/architecture/DATA_LINEAGE_MODEL.md` | 8-stage model, adjacency rules, XML diff pipeline |
-| `docs/architecture/CROSS_SYSTEM_INTEGRATION_CONTRACTS.md` | 5 external system TypedDicts, contract registry, non-execution policy |
-
-### D4 frontend files
-| File | Capability |
-|------|-----------|
-| `frontend/src/types/analytics.ts` | `MetricDefinition`, `MetricValueResponse`, `ExecutiveDashboardSummary`, `IntegrationContract` |
-| `frontend/src/services/analytics.service.ts` | `listMetrics()`, `getMetric()`, `getExecutiveSummary()`, `listIntegrationContracts()` |
-| `frontend/src/hooks/useMetricRegistry.ts` | TanStack Query hook for `/api/analytics/metrics` |
-| `frontend/src/hooks/useExecutiveAnalytics.ts` | TanStack Query hook for `/api/analytics/executive-summary` |
-| `frontend/src/pages/ExecutiveAnalytics.tsx` | Health score card, KPI grid, top risks, recommended actions — PDPA-safe read-only |
-| `frontend/src/config/navigation.ts` | Analytics entry for `admin / esq_head / secretary` roles |
-| `frontend/src/App.tsx` | `/analytics` route; `GuardedPage` role gate; default-import fix for `ExecutiveAnalytics` |
-
-### D4 test counts (additive from this session)
-- D4.1: +15, D4.2: +19, D4.3: +22, D4.4: +15, D4.5: +16, D4.6: +15, D4.7: +24, D4.8: +10, D4.9: +6
-- Frontend: `npm run build` → 0 TS errors
-- **Total backend: 1256 passed, 0 failed**
-
----
-
-## 16. Current Next Actions
-
-1. DPO sign-off on public schedule data surface — unblocks PDPA compliance completion.
-2. IT/DBA executes `faculty_id` DB migration — unblocks multi-faculty feature flag flip.
-3. DPO reviews trace metadata allowlist and audit log retention schedule.
-4. Business owner defines AI recommendation approval tiers before production hardening.
-5. Consider persisted trace storage (DB-backed outbox) after DPO review.
+## Quick Links
+
+- [Laravel-style Audit](LARAVEL_STYLE_FINAL_ALIGNMENT_AUDIT.md)
+- [Import/Export Governance](IMPORT_EXPORT_GOVERNANCE.md)
+- [Final Readiness Report](FINAL_PLATFORM_READINESS_REPORT.md)
+- [Completion Gap Report](EMS_COMPLETION_GAP_REPORT.md)
