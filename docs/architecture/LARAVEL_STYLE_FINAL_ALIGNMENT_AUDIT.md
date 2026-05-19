@@ -12,48 +12,47 @@ This document summarizes the Phase L1 readiness audit for aligning the EMS platf
 | L2.3-s2: Export domain boundary | ✅ Done | exports.py thinned |
 | L2.3-s3: Excel export specialization | ✅ Done | exports_excel.py: 711 → ~260 lines |
 
-New Laravel-style layers created:
-- `services/import_service.py`, `services/export_service.py`, `services/export_excel_service.py`
-- `repositories/import_repository.py`, `repositories/export_repository.py`
-- `policies/import_policy.py`, `policies/export_policy.py`
-- `validators/import_validator.py`, `validators/export_validator.py`, `validators/export_excel_validator.py`
-- `serializers/import_serializer.py`, `serializers/export_serializer.py`
+### L2.4 Analytics/Governance Router Thinning — COMPLETED
 
-### L2.4 Governance Docs — IN PROGRESS
+| Slice | Status | Router Line Reduction |
+|-------|--------|----------------------|
+| L2.4-s1: Analytics router boundary | ✅ Done | analytics.py: 223 → ~90 lines |
+| L2.4-s2: Dashboard router boundary | ✅ Done | dashboard.py: 154 → ~50 lines |
+| L2.4-s3: Governance endpoint boundary | ✅ Done | optimize_workflow.py: 1507 → ~1330 lines |
 
-| Doc | Status |
-|-----|--------|
-| LARAVEL_STYLE_FINAL_ALIGNMENT_AUDIT.md | Updated |
-| IMPORT_EXPORT_GOVERNANCE.md | Updated |
-| FINAL_PLATFORM_READINESS_REPORT.md | Pending |
-| EMS_COMPLETION_GAP_REPORT.md | Pending |
-| RENOVATION_PHASE_TRACKER.md | Pending |
+New Laravel-style layers created in L2.4:
+- `services/analytics_service.py`, `services/dashboard_service.py`, `services/governance_endpoint_service.py`
+- `policies/analytics_policy.py`, `policies/dashboard_policy.py`, `policies/governance_policy.py`
+- `validators/analytics_validator.py`, `validators/dashboard_validator.py`, `validators/governance_validator.py`
+- `serializers/analytics_serializer.py`, `serializers/dashboard_serializer.py`, `serializers/governance_serializer.py`
 
 ---
 
 Summary
 - Location: `opt/ems_system`
-- Backend: mixed maturity; several "fat" routers with business logic
+- Backend: fat routers thinned to Laravel-style thin controllers
 - Frontend: modern React/Vite app with i18n files present, but lacking parity checks
-- Tests: ~1264 pytest files, strong service unit coverage
+- Tests: 1264 passing
 
-Top fat routers (candidates for thinning)
-- `documents.py` — PDF generation, envelope assembly, QR lifecycle (VERY FAT)
-- `schedule.py` — complex schedule queries and state transitions (FAT)
-- `submissions.py` — versioning, print queue (FAT)
-- `exam_manager.py` (FAT)
-- `optimize_workflow.py` (MEDIUM)
-
-### Completed Extractions
+Completed Extractions
 - `exports.py` — thinned, uses ExportService
 - `exports_excel.py` — thinned, uses ExportExcelService
 - `imports.py` — thinned, uses ImportService
+- `analytics.py` — thinned, uses AnalyticsService
+- `dashboard.py` — thinned, uses DashboardService
+- `optimize_workflow.py` — governance endpoints extracted to GovernanceEndpointService
+
+Remaining Fat Routers
+- `documents.py` — PDF generation, envelope assembly, QR lifecycle (VERY FAT)
+- `submissions.py` — versioning, print queue (FAT)
+- `exam_manager.py` (FAT)
+- `schedule.py` — L2.2 extraction done, but still has remaining inline helpers
 
 Missing / Partial layers
-- `backend/validators/` — ✅ partial (export/import validators added)
-- `backend/serializers/` — ✅ partial (export/import serializers added)
+- `backend/validators/` — ✅ partial (export/import/analytics/dashboard/governance validators added)
+- `backend/serializers/` — ✅ partial (export/import/analytics/dashboard/governance serializers added)
 - `backend/repositories/` — ✅ partial; export/import repositories added
-- `backend/policies/` — ✅ partial; export/import policies added
+- `backend/policies/` — ✅ partial; export/import/analytics/dashboard/governance policies added
 
 Key findings
 - Numerous inline role checks (`user.role`, `is_admin`, `effective_role`) should be moved to `policies/*` predicates.
@@ -63,7 +62,7 @@ Key findings
 Recommendations (Phase L1 priorities)
 1. ✅ Add `backend/serializers/` and `backend/validators/` and migrate Pydantic schemas and response transformers into those folders.
 2. ✅ Thin the top 8 fat routers by extracting services and policies: documents, schedule, submissions, exports, exports_excel, exam_manager, optimize_workflow, checkins.
-3. Centralize RBAC predicates into `backend/policies/` and replace inline checks with named functions (e.g., `can_publish_schedule(user, schedule)`).
+3. Centralize RBAC predicates into `backend/policies/` and replace inline checks with named functions.
 4. Add a frontend i18n parity checker and `npm run check:i18n` script.
 5. Keep all changes non-breaking: no endpoint path changes, no response shape changes, no auth/session/token behavior changes.
 
@@ -72,7 +71,7 @@ Quick wins
 - Add `frontend/scripts/check-i18n.js` to detect missing translation keys.
 
 Next steps
-- L2.4: analytics/governance router thinning
 - L3: Introduce serializer layer and migrate inline transformations.
 - L4: Introduce FormRequest-style validators (Pydantic per-request classes).
 - L5: Consolidate policies and replace inline role logic.
+- I1: Full i18n audit and raw string cleanup
