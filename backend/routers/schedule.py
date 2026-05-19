@@ -328,25 +328,23 @@ def list_schedules(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if limit > 500:
-        limit = 500
-    if page < 1:
-        page = 1
-    offset = (page - 1) * limit
-    target_date = exam_date or date
-    q = _build_schedule_query(
+    from services.schedule_service import ScheduleService
+    from validators.schedule_validator import normalize_date_params, validate_pagination_clamp
+    
+    # Normalize and validate inputs
+    target_date = normalize_date_params(date, exam_date)
+    page, limit = validate_pagination_clamp(page, limit)
+    
+    # Delegate to service layer
+    return ScheduleService.list_schedules(
         db=db,
         current_user=current_user,
         exam_date=target_date,
         room_id=room_id,
         status=status,
+        page=page,
+        limit=limit
     )
-
-    # Teacher เห็นเฉพาะตารางของตัวเอง
-    return q.order_by(
-        models.ExamSchedule.exam_date,
-        models.ExamSchedule.exam_time
-    ).offset(offset).limit(limit).all()
 
 
 @router.get("/grouped")
@@ -355,14 +353,8 @@ def schedule_grouped(
     current_user: models.User = Depends(get_current_user)
 ):
     """ตารางสอบจัดกลุ่มตามวันที่ สำหรับหน้า Schedule"""
-    schedules = _build_schedule_query(
-        db=db,
-        current_user=current_user,
-    ).order_by(
-        models.ExamSchedule.exam_date,
-        models.ExamSchedule.exam_time
-    ).all()
-    return _group_schedules_by_date(schedules)
+    from services.schedule_service import ScheduleService
+    return ScheduleService.get_schedule_grouped(db=db, current_user=current_user)
 
 
 def _sch_to_dict(s: models.ExamSchedule) -> dict:

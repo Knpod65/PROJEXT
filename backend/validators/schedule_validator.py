@@ -1,16 +1,38 @@
-"""Schedule filter request validator (example).
+"""schedule_validator.py — pure validation helpers for schedule params.
 
-Use Pydantic models for request validation. Keep these classes in `backend/validators`
-so routers can refer to them and keep validation consistent and testable.
+Existing Pydantic models (ScheduleFilterRequest) are retained above.
+Pure functions below are side-effect-free and testable without DB.
 """
-from pydantic import BaseModel, Field
-from typing import Optional
 
 
-class ScheduleFilterRequest(BaseModel):
-    faculty_id: Optional[int] = Field(None, description="Faculty id to filter schedules")
-    date_from: Optional[str] = Field(None, description="Start date (ISO) for filter")
-    date_to: Optional[str] = Field(None, description="End date (ISO) for filter")
-    include_archived: bool = Field(False, description="Include archived schedules")
-    page: int = Field(1, ge=1)
-    per_page: int = Field(50, ge=1, le=500)
+def normalize_date_params(date: str | None, exam_date: str | None) -> str | None:
+    """Return the effective date: exam_date takes priority, date is the fallback."""
+    return exam_date if exam_date else date
+
+
+def validate_pagination_clamp(page: int, limit: int) -> tuple[int, int]:
+    """Clamp page ≥ 1 and limit 1–500."""
+    if page < 1:
+        page = 1
+    if limit < 1:
+        limit = 1
+    if limit > 500:
+        limit = 500
+    return page, limit
+
+
+def validate_status(status: str | None) -> str | None:
+    """Return validated status string or None."""
+    if status is None:
+        return None
+    allowed = {"draft", "published", "locked", "archived"}
+    if status.lower() not in allowed:
+        raise ValueError(f"status ไม่ถูกต้อง: {status}")
+    return status.lower()
+
+
+def validate_exam_type_coerce(raw) -> str:
+    """Coerce exam_type enum or string to a plain string value."""
+    if hasattr(raw, "value"):
+        return raw.value
+    return str(raw)
