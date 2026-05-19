@@ -311,3 +311,71 @@ class ScheduleService:
         db.commit()
         log_action(db, current_user, "DELETE_SUPERVISION", "supervisions", sup_id, request=request)
         return {"success": True}
+
+    @staticmethod
+    def copy_count_summary(
+        db,
+        semester: str = "2",
+        academic_year: str = "2568",
+    ):
+        """Generate copy count summary for a semester."""
+        from sqlalchemy.orm import joinedload
+
+        schedules = db.query(models.ExamSchedule).join(models.Section).options(
+            joinedload(models.ExamSchedule.section).joinedload(models.Section.course),
+            joinedload(models.ExamSchedule.room),
+        ).filter(
+            models.Section.semester == semester,
+            models.Section.academic_year == academic_year,
+        ).all()
+
+        section_ids = [schedule.section_id for schedule in schedules]
+        submission_map = {}
+        if section_ids:
+            submissions = db.query(models.ExamSubmission).options(
+                joinedload(models.ExamSubmission.material_request),
+            ).filter(models.ExamSubmission.section_id.in_(section_ids)).all()
+            submission_map = {submission.section_id: submission for submission in submissions}
+
+        rows = []
+        total = 0
+        for s in schedules:
+            sec = s.section
+            course = sec.course if sec else None
+            submission = submission_map.get(sec.id if sec else -1)
+            material_request = submission.material_request if submission else None
+            rows.append({
+                "course_id": course.course_id if course else "",
+                "course_name_th": course.course_name_th if course else "",
+                "section_no": sec.section_no if sec else "",
+                "num_students": sec.num_students if sec else 0,
+                "num_pages": s.num_pages,
+                "total_sheets": s.total_sheets,
+                "exam_date": s.exam_date,
+                "exam_time": s.exam_time,
+                "room": s.room.room_name if s.room else "",
+                "print_duplex": bool(submission.print_duplex) if submission else False,
+                "print_staple": submission.print_staple if submission and submission.print_staple else "none",
+                "print_staple_page": submission.print_staple_page if submission else None,
+                "print_note": submission.print_note if submission else None,
+                "a4_pages_count": submission.a4_pages_count if submission else 0,
+                "answer_formats": submission.answer_formats if submission else [],
+                "answer_paper_sheets": material_request.answer_paper_sheets if material_request else 0,
+                "answer_paper_staple": material_request.answer_paper_staple if material_request else False,
+                "answer_booklet_count": material_request.answer_booklet_count if material_request else 0,
+                "omr_sheet_count": material_request.omr_sheet_count if material_request else 0,
+                "scratch_paper_sheets": material_request.scratch_paper_sheets if material_request else 0,
+                "special_note": material_request.special_note if material_request else None,
+            })
+            total += s.total_sheets
+
+        fraud_forms = 150
+        grand_total = total + fraud_forms
+        return {
+            "rows": rows,
+            "subtotal_exam": total,
+            "fraud_forms": fraud_forms,
+            "grand_total": grand_total,
+            "cost": grand_total * 0.50,
+            "sections_count": len(rows),
+        }
