@@ -1219,4 +1219,63 @@ export const en = {
   "sections.table.teacher": "Teacher",
   "sections.table.unmapped": "Unmapped",
   "sections.emptyDescription": "No sections are available for the active visibility scope.",
+
+  // Governance
+  "governance.title": "Governance Cockpit",
+  "governance.overallHealth": "Overall Health",
+  "governance.riskBand": "Risk Band",
+  "governance.blockerCount": "Blockers",
+  "governance.overrideCount": "Overrides",
+  "governance.rollbackCount": "Rollbacks",
+  "governance.escalationCount": "Escalations",
+  "governance.publicationReady": "Publication Ready",
+  "governance.publicationBlocked": "Publication Blocked",
+  "governance.pendingApproval": "Pending Approvals",
+  "governance.overdueSigning": "Overdue Signing",
+  "governance.topRisks": "Top Risks",
+  "governance.recentEvents": "Recent Events",
+  "governance.facultySummary": "Faculty Summary",
+
+  // Optimization Trace
+  "optimization.traceExplorer": "Optimization Trace Explorer",
+  "optimization.overallQuality": "Overall Quality Score",
+  "optimization.traceability": "Traceability Completeness",
+  "optimization.candidates": "Candidates",
+  "optimization.constraintHits": "Constraint Hits",
+  "optimization.rejectedAlternatives": "Rejected Alternatives",
+  "optimization.recheckIssues": "Recheck Issues",
+
+  // Platform Configuration
+  "config.title": "Platform Configuration",
+  "config.facultyConfig": "Faculty Config",
+  "config.workloadPolicy": "Workload Policy",
+  "config.governanceFlow": "Governance Flow",
+  "config.integrationContracts": "Integration Contracts",
+  "config.analyticsMetrics": "Analytics Metrics",
+  "config.policyRegistry": "Policy Registry",
+
+  // Operational Health
+  "health.title": "Operational Health",
+  "health.backend": "Backend Health",
+  "health.analytics": "Analytics Health",
+  "health.integration": "Integration Readiness",
+  "health.queue": "Queue / Backlog",
+  "health.audit": "Audit Pipeline",
+
+  // Audit Explorer
+  "audit.title": "Audit Explorer",
+  "audit.events": "Audit Events",
+  "audit.governanceTimeline": "Governance Timeline",
+  "audit.lifecycleTimeline": "Lifecycle Timeline",
+
+  // Executive Analytics
+  "analytics.title": "Executive Analytics",
+  "analytics.overallHealthScore": "Overall Health Score",
+  "analytics.riskBand": "Risk Band",
+  "analytics.optimizationQuality": "Optimization Quality Avg",
+  "analytics.governanceBlockers": "Governance Blocker Count",
+  "analytics.publicationReady": "Publication Ready Count",
+  "analytics.workloadBalance": "Workload Balance Score",
+  "analytics.roomUtilization": "Room Utilization Score",
+  "analytics.pdpaAlerts": "PDPA Alert Count",
 } as const;

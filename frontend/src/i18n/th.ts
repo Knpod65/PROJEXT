@@ -1207,4 +1207,63 @@ export const th = {
   "sections.table.teacher": "อาจารย์",
   "sections.table.unmapped": "ยังไม่จัดกลุ่ม",
   "sections.emptyDescription": "ไม่มีตอนเรียนภายใต้ขอบเขตการมองเห็นที่ใช้งานอยู่",
+
+  // Governance
+  "governance.title": "ศูนย์ควบคุมธรรมาภิบาล",
+  "governance.overallHealth": "สุขภาพโดยรวม",
+  "governance.riskBand": "ระดับความเสี่ยง",
+  "governance.blockerCount": "ตัวบล็อก",
+  "governance.overrideCount": "การแทนที่",
+  "governance.rollbackCount": "การย้อนกลับ",
+  "governance.escalationCount": "การยกระดับ",
+  "governance.publicationReady": "พร้อมเผยแพร่",
+  "governance.publicationBlocked": "ถูกบล็อกจากการเผยแพร่",
+  "governance.pendingApproval": "รออนุมัติ",
+  "governance.overdueSigning": "ลงนามล่าช้า",
+  "governance.topRisks": "ความเสี่ยงสำคัญ",
+  "governance.recentEvents": "เหตุการณ์ล่าสุด",
+  "governance.facultySummary": "สรุปตามคณะ",
+
+  // Optimization Trace
+  "optimization.traceExplorer": "ตัวสำรวจร่องรอยการเพิ่มประสิทธิภาพ",
+  "optimization.overallQuality": "คะแนนคุณภาพโดยรวม",
+  "optimization.traceability": "ความสมบูรณ์ของร่องรอย",
+  "optimization.candidates": "ตัวเลือก",
+  "optimization.constraintHits": "การชนข้อจำกัด",
+  "optimization.rejectedAlternatives": "ทางเลือกที่ถูกปฏิเสธ",
+  "optimization.recheckIssues": "ปัญหาจากการตรวจสอบซ้ำ",
+
+  // Platform Configuration
+  "config.title": "การกำหนดค่าของระบบ",
+  "config.facultyConfig": "การกำหนดค่าคณะ",
+  "config.workloadPolicy": "นโยบายปริมาณงาน",
+  "config.governanceFlow": "ขั้นตอนธรรมาภิบาล",
+  "config.integrationContracts": "สัญญาการเชื่อมต่อ",
+  "config.analyticsMetrics": "ตัวชี้วัดวิเคราะห์",
+  "config.policyRegistry": "ทะเบียนนโยบาย",
+
+  // Operational Health
+  "health.title": "สุขภาพการดำเนินงาน",
+  "health.backend": "สุขภาพแบ็กเอนด์",
+  "health.analytics": "สุขภาพการวิเคราะห์",
+  "health.integration": "ความพร้อมของการเชื่อมต่อ",
+  "health.queue": "คิว / งานค้าง",
+  "health.audit": "ไปป์ไลน์ตรวจสอบ",
+
+  // Audit Explorer
+  "audit.title": "ตัวสำรวจบันทึกการตรวจสอบ",
+  "audit.events": "เหตุการณ์ตรวจสอบ",
+  "audit.governanceTimeline": "ไทม์ไลน์ธรรมาภิบาล",
+  "audit.lifecycleTimeline": "ไทม์ไลน์วงจรชีวิต",
+
+  // Executive Analytics
+  "analytics.title": "การวิเคราะห์ผู้บริหาร",
+  "analytics.overallHealthScore": "คะแนนสุขภาพโดยรวม",
+  "analytics.riskBand": "ระดับความเสี่ยง",
+  "analytics.optimizationQuality": "คุณภาพการเพิ่มประสิทธิภาพเฉลี่ย",
+  "analytics.governanceBlockers": "จำนวนตัวบล็อกจากธรรมาภิบาล",
+  "analytics.publicationReady": "จำนวนพร้อมเผยแพร่",
+  "analytics.workloadBalance": "คะแนนความสมดุลของปริมาณงาน",
+  "analytics.roomUtilization": "คะแนนการใช้ห้อง",
+  "analytics.pdpaAlerts": "จำนวนแจ้งเตือน PDPA",
 } as const;
