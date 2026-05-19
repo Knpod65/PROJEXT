@@ -97,7 +97,13 @@ export default function PlatformConfiguration() {
       {/* Faculty Config */}
       <SectionCard title={translate("platformConfig.facultyConfig")}>
         <ConfigTable
-          headers={["ID", "Code", "Name (TH)", "Name (EN)", "Active"]}
+          headers={[
+            translate("platformConfig.table.id"),
+            translate("platformConfig.table.code"),
+            translate("platformConfig.table.nameTh"),
+            translate("platformConfig.table.nameEn"),
+            translate("platformConfig.table.active"),
+          ]}
           rows={data.faculty_configs}
           render={(row: any, i) => (
             <tr key={i} className="border-b last:border-0">
@@ -121,7 +127,12 @@ export default function PlatformConfiguration() {
       {/* Workload Policy */}
       <SectionCard title={translate("platformConfig.workloadPolicy")}>
         <ConfigTable
-          headers={["Faculty ID", "Division", "Max Supervision", "Cross-Dept"]}
+          headers={[
+            translate("platformConfig.table.facultyId"),
+            translate("platformConfig.table.division"),
+            translate("platformConfig.table.maxSupervision"),
+            translate("platformConfig.table.crossDept"),
+          ]}
           rows={(data as any).workload_policies}
           render={(row: any, i) => (
             <tr key={i} className="border-b last:border-0">
