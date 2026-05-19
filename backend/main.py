@@ -20,6 +20,12 @@ from config.policy import ALLOWED_ORIGINS, LOGIN_RATE_MAX, LOGIN_RATE_WINDOW
 from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing, historical_schedules, analytics as analytics_router
 from routers import scheduler, exports_excel, health as health_router
 import models
+import logging
+import os
+
+# Warn if SECRET_KEY is using dev default
+if os.getenv("SECRET_KEY", "") in ("", "dev-secret-key-change-me"):
+    logging.warning("SECRET_KEY is using the default dev value. In production, set a random 32+ character SECRET_KEY.")
 
 # Event handler registration (side-effect imports)
 import event_handlers.optimization_handler  # noqa: F401
