@@ -59,6 +59,7 @@ from services.optimization_trace_context import (
     TRACE_SOURCE_SOLVER,
 )
 from services.optimization_recheck_service import build_recheck_report
+from services.schedule_optimizer_service import ScheduleOptimizerService
 
 router = APIRouter()
 
@@ -125,18 +126,8 @@ def _get_schedule(section, exam_type=None):
     return None
 
 
-def _optimizer_exam_type_value(data) -> str:
-    return data.exam_type.value if hasattr(data.exam_type, "value") else str(data.exam_type)
-
-
 def _optimizer_trace_session_id(data) -> str:
     return f"{data.academic_year}:{data.semester}:{_optimizer_exam_type_value(data)}"
-
-
-def _slot_trace_label(exam_date: str | None, exam_time: str | None) -> str:
-    if exam_date and exam_time:
-        return f"{exam_date} {exam_time}"
-    return exam_date or exam_time or "UNSPECIFIED_SLOT"
 
 
 def _link_trace_recheck_issues(
@@ -487,77 +478,23 @@ def run_optimizer(
     Input:  semester + academic_year + exam_type
     Output: assign ห้อง + กรรมการ + วันเวลา
     """
-    try:
-        from ortools.sat.python import cp_model
-        has_ortools = True
-    except ImportError:
-        has_ortools = False
+    from services.schedule_optimizer_service import ScheduleOptimizerService
 
-    require_period_editable_for_values(
-        db,
-        data.academic_year,
-        data.semester,
-        data.exam_type.value if hasattr(data.exam_type, "value") else data.exam_type,
-    )
-
-    sections = db.query(models.Section).filter(
-        models.Section.semester == data.semester,
-        models.Section.academic_year == data.academic_year,
-    ).options(
-        joinedload(models.Section.course),
-        joinedload(models.Section.teacher),
-    ).all()
-
-    rooms = db.query(models.Room).filter(models.Room.is_active == True).all()
-    teachers = db.query(models.User).filter(
-        models.User.role == models.UserRole.teacher,
-        models.User.is_active == True
-    ).all()
-
-    unavail_map, room_unavail_map = _load_unavailability_maps(db, data)
-
-    if not sections:
-        raise HTTPException(400, "ไม่พบ sections ในเทอมที่ระบุ")
-    if not rooms:
-        raise HTTPException(400, "ไม่พบห้องสอบ")
-
-    # Time slots ที่ใช้ได้ (จาก exam_dates จริงในระบบ หรือ default)
-    time_slots = [
-        ("2569-03-19", "15.30-18.30"),
-        ("2569-03-20", "15.30-18.30"),
-        ("2569-03-23", "09.00-12.00"),
-        ("2569-03-23", "12.00-15.00"),
-        ("2569-03-23", "15.30-18.30"),
-        ("2569-03-24", "08.00-11.00"),
-        ("2569-03-24", "12.00-15.00"),
-        ("2569-03-24", "15.30-18.30"),
-        ("2569-03-25", "09.00-12.00"),
-        ("2569-03-25", "12.00-15.00"),
-        ("2569-03-26", "09.00-12.00"),
-        ("2569-03-26", "12.00-15.00"),
-        ("2569-03-26", "15.30-18.30"),
-        ("2569-03-27", "09.00-12.00"),
-        ("2569-03-27", "12.00-15.00"),
-        ("2569-03-27", "15.30-18.30"),
-        ("2569-03-28", "09.00-12.00"),
-        ("2569-03-28", "12.00-15.00"),
-        ("2569-03-28", "15.30-18.30"),
-    ]
-
-    if not has_ortools:
+    if not ScheduleOptimizerService.check_ortools_available():
+        sections, rooms, teachers, unavail_map, room_unavail_map = (
+            ScheduleOptimizerService.prepare_optimization_inputs(db, data)
+        )
+        time_slots = ScheduleOptimizerService.get_default_time_slots()
         return _greedy_optimizer(
-            sections,
-            rooms,
-            teachers,
-            time_slots,
-            data,
-            db,
-            current_user,
-            request,
-            unavail_map,
-            room_unavail_map,
+            sections, rooms, teachers, time_slots, data, db, current_user, request,
+            unavail_map=unavail_map, room_unavail_map=room_unavail_map,
             trace_fallback_reason="ORTOOLS_UNAVAILABLE",
         )
+
+    sections, rooms, teachers, unavail_map, room_unavail_map = (
+        ScheduleOptimizerService.prepare_optimization_inputs(db, data)
+    )
+    time_slots = ScheduleOptimizerService.get_default_time_slots()
 
     return _cpsat_optimizer(sections, rooms, teachers, time_slots, data, db, current_user, request, unavail_map, room_unavail_map)
 
