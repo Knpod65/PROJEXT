@@ -298,6 +298,15 @@ export const appPages: AppPageConfig[] = [
     roles: ["admin", "dept_supervisor"],
     navGroup: "examManagement",
   },
+  {
+    key: "operational-health",
+    title: "Operational Health",
+    description: "Backend health, analytics health, integration readiness, and service status.",
+    path: "/operational-health",
+    icon: "health_and_safety",
+    roles: ["admin", "esq_head"],
+    navGroup: "system",
+  },
 
   // ── Hidden utility pages (routes still registered, not in nav) ─
   {

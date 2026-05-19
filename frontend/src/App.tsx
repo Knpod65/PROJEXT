@@ -40,6 +40,7 @@ import { SchedulePage } from "@/pages/Schedule";
 import { SectionsPage } from "@/pages/Sections";
 import { SettingsV2Page } from "@/pages/SettingsV2";
 import PlatformConfigurationPage from "@/pages/PlatformConfiguration";
+import OperationalHealthPage from "@/pages/OperationalHealth";
 import { StaffAvailabilityPage } from "@/pages/StaffAvailability";
 import { StudentsV2Page } from "@/pages/StudentsV2";
 import { StudentSearchPage } from "@/pages/StudentSearch";
@@ -173,6 +174,7 @@ export function App() {
             <Route path="/settings" element={<GuardedPage roles={["admin"]} allowBaseAdminPreview><SettingsV2Page /></GuardedPage>} />
             <Route path="/settings-v2" element={<Navigate replace to="/settings" />} />
             <Route path="/platform-config" element={<GuardedPage roles={["admin"]}><PlatformConfigurationPage /></GuardedPage>} />
+            <Route path="/operational-health" element={<GuardedPage roles={["admin", "esq_head"]}><OperationalHealthPage /></GuardedPage>} />
             <Route path="/rooms-v2" element={<GuardedPage roles={["admin"]}><RoomManagementV2Page /></GuardedPage>} />
             <Route path="/venues-v2" element={<GuardedPage roles={["admin"]}><VenueManagementV2Page /></GuardedPage>} />
             <Route path="/students-v2" element={<GuardedPage roles={["admin"]}><StudentsV2Page /></GuardedPage>} />

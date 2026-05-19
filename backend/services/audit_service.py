@@ -130,3 +130,32 @@ def audit_permission_denied(
         new_values=new_values,
         request=request,
     )
+
+
+def count_audit_logs(
+    db: Session,
+    table_name: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+) -> int:
+    """Return count of audit log records, optionally filtered."""
+    from sqlalchemy import select, func
+    from datetime import datetime, timedelta
+    import models
+
+    q = db.query(models.AuditLog)
+    if table_name:
+        q = q.filter(models.AuditLog.table_name == table_name)
+    if from_date:
+        try:
+            from_dt = datetime.fromisoformat(from_date)
+            q = q.filter(models.AuditLog.timestamp >= from_dt)
+        except ValueError:
+            pass
+    if to_date:
+        try:
+            to_dt = datetime.fromisoformat(to_date) + timedelta(days=1)
+            q = q.filter(models.AuditLog.timestamp < to_dt)
+        except ValueError:
+            pass
+    return q.count()
