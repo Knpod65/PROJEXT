@@ -91,6 +91,15 @@ export const appPages: AppPageConfig[] = [
     roles: ["admin", "esq_head", "secretary"],
     navGroup: "dashboard",
   },
+  {
+    key: "governance-cockpit",
+    title: "Governance Cockpit",
+    description: "Blocker counts, pending approvals, publication gates, escalation and rollback events.",
+    path: "/governance",
+    icon: "admin_panel_settings",
+    roles: ["admin", "esq_head", "secretary"],
+    navGroup: "dashboard",
+  },
 
   // ── Operations group ──────────────────────────────────────────
   {
