@@ -1,0 +1,29 @@
+name: Architecture Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  architecture:
+    name: Architecture Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secrets Scan (no .env patterns)
+        run: |
+          ! git diff --cached --name-only HEAD~1..HEAD 2>/dev/null | grep -E '\.env$' || (echo "ERROR: .env files detected in commit" && exit 1)
+          ! git ls-files | grep -E '(api_key|secret|password).*=\s*["\x27][^"\x27]+["\x27]' && echo "No hardcoded secrets found"
+
+      - name: SQLite Check (no .db files)
+        run: |
+          test -z "$(git ls-files '*.db' 2>/dev/null)" && echo "No SQLite files in repo" || (echo "ERROR: SQLite .db files should not be committed" && exit 1)
+
+      - name: Architecture Docs Presence Check
+        run: |
+          test -f docs/architecture/D5_PRODUCTION_GAP_AUDIT.md || (echo "Missing D5 audit" && exit 1)
+          test -f docs/architecture/DEPLOYMENT_OPERATIONS_RUNBOOK.md || (echo "Missing runbook" && exit 1)

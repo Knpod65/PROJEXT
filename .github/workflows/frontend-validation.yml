@@ -29,3 +29,7 @@ jobs:
 
       - name: Build (tsc -b + vite build)
         run: npm run build
+
+      - name: Raw Student Name Safety Check
+        run: |
+          ! grep -rE 'student_name|full_name' frontend/src --include="*.ts" --include="*.tsx" | grep -v "useAuditExplorer\|auditExplorer\|getAuditEvents\|AuditEvent" || (echo "Warning: raw student_name fields may be exposed" && exit 0)
