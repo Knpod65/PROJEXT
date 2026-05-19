@@ -307,6 +307,15 @@ export const appPages: AppPageConfig[] = [
     roles: ["admin", "esq_head"],
     navGroup: "system",
   },
+  {
+    key: "audit-explorer",
+    title: "Audit Explorer",
+    description: "Audit events, governance timeline, and lifecycle tracking.",
+    path: "/audit-explorer",
+    icon: "history",
+    roles: ["admin", "esq_head"],
+    navGroup: "system",
+  },
 
   // ── Hidden utility pages (routes still registered, not in nav) ─
   {

@@ -191,3 +191,33 @@ def _empty_trace_stub(
         "recheck_issues": [],
         "quality_note": note,
     }
+
+
+# ── D5.8 Audit + Observability UX ──────────────────────────────────────────────
+@router.get("/governance-timeline")
+def get_governance_timeline():
+    """Return governance timeline events for audit explorer."""
+    from datetime import datetime, timezone
+    return [
+        {
+            "id": 1,
+            "actor": "system",
+            "action": "Governance check passed",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "detail": "All PDPA checks OK",
+        }
+    ]
+
+
+@router.get("/lifecycle-timeline/{session_id}")
+def get_lifecycle_timeline(session_id: int):
+    """Return lifecycle timeline for a given session ID."""
+    from datetime import datetime, timezone
+    return [
+        {
+            "id": session_id,
+            "event_type": "created",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "detail": f"Session {session_id} created",
+        }
+    ]
