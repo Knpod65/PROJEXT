@@ -1,33 +1,53 @@
-# I18N Final Coverage Report
+# I18N_FINAL_COVERAGE_REPORT
 
-**Date:** 2026-05-19  
-**Phase:** I1 — Full Thai/English i18n Parity Conversion
+## I1.5 Completion Summary
 
-## Summary
+- I1.5-s1A: PlatformConfiguration / OperationalHealth localized (table headers + states)
+- I1.5-s1B: AuditExplorer / ExecutiveAnalytics localized (audit.* + executiveAnalytics.* namespaces)
+- I1.5-s1C: ExportCenter + Settings localized (historical schedule card + settings sections)
+- I1.5-s2: Shared components localized (Modal close button using existing common.close; EmptyState/DataTable/ConfirmDialog already using i18n)
+- I1.5-s3: Backend message_key helper introduced; high-value errors updated in imports.py and exports.py (partial, ~35-45% of user-facing errors)
+- I1.5-s4: Raw string scanner added to check-i18n.js with --raw (warning) and --strict modes
 
-The I1 phase successfully improved bilingual consistency across the EMS frontend.
+## Metrics (honest estimates as of 2026-05-19)
 
-## Key Achievements
+- i18n key parity: 100% (en=1290, th=1290, check:i18n passes)
+- enterprise page namespace coverage: 95–98%
+- shared component i18n coverage: 95%+
+- backend message_key coverage: partial/high-value start (35–45%)
+- raw string scanner maturity: 70–75% (noisy heuristic, ~100 candidates reported)
+- overall Thai/English readiness: 94–96%
 
-- **Key Parity Hardening (I1-s1):** Added comprehensive keys for Governance, Optimization Trace, Platform Configuration, Operational Health, Audit Explorer, and Executive Analytics to both `en.ts` and `th.ts`.
-- **Label Centralization (I1-s3):** Created reusable label utilities in `frontend/src/utils/labels/` for roles, statuses, and severities.
-- **Enterprise Page Readiness:** Major enterprise pages (GovernanceCockpit, OptimizationTraceExplorer, etc.) now have the necessary translation keys available for full extraction.
+## Validation Status
 
-## Current Coverage Estimate
+- npm run build: PASS
+- npm run check:i18n: PASS
+- npm run check:i18n:raw: ~100 candidates (mostly import paths and code fragments)
+- npm run check:i18n:strict: exits 1 when candidates exist (intentional)
 
-- **Core UI (Login, Dashboard, Navigation):** ~95%
-- **Enterprise Modules (Governance, Analytics, Audit):** ~85% (keys added, extraction in progress)
-- **System Components (Loading, Error, Empty states):** ~90%
+## Remaining Known Gaps
 
-## Remaining Work
+1. Raw scanner reports ~100 candidates and requires allowlist refinement
+2. Backend message_key only started for imports/exports/auth; remaining routers deferred
+3. Some raw strings may remain in legacy/non-enterprise pages
+4. check:i18n validates key parity only, not semantic translation quality
+5. Thai wording should be reviewed by operations/business owner before production release
 
-1.  **Full Extraction (I1-s2):** Replace remaining raw strings in the 8 enterprise pages with `translate()` calls.
-2.  **Backend Message Keys (I1-s5):** Adopt `message_key` pattern in high-value backend error responses.
-3.  **Scanner Hardening:** Improve the raw string detection script to handle the ESM environment correctly.
+## Future PR Checklist
 
-## Policy Going Forward
+Before merging new UI:
+- No new raw UI strings without translation key
+- en/th keys must both be added
+- Status/severity/role labels must use central label utilities
+- Shared component defaults must use i18n
+- Backend user-facing errors should include message_key
+- Run: npm run build, npm run check:i18n, npm run check:i18n:raw
+- Strict mode may be used for focused cleanup branches
 
-- New UI text **must** be added via translation keys in the appropriate namespace.
-- Raw strings in new components are prohibited unless they are purely technical (IDs, URLs, numbers).
+## Next Recommended Phase
 
-**Status:** I1 phase foundational work complete. Full extraction is the remaining tactical task.
+U1 — Frontend ViewModel / MVC Cleanup
+
+---
+
+Generated during I1.5-s5 final documentation pass.
