@@ -1,15 +1,14 @@
 """
 M2 — Schedule Router + CP-SAT Optimizer (OR-Tools)
 """
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from database import get_db
 import models, schemas
-from academic_groups import build_course_group_clause
 from auth_utils import (
     get_current_user, require_staff_or_admin, require_admin,
-    get_effective_role, log_action, get_dept_filter, is_view_all_role
+    get_effective_role, log_action, get_dept_filter, is_view_all_role, is_room_keeper, show_in_fairness_stat
 )
 from collections import defaultdict
 from exam_ownership import get_active_exam_period, get_teacher_owned_section_ids
@@ -103,6 +102,15 @@ def _is_room_unavailable(
     block_end: Optional[str] = None,
 ) -> bool:
     return _is_room_unavailable_service(room_unavail_map, room_id, block_date, block_time, block_start, block_end)
+
+def _to_date(date_str: str | None):
+    import datetime as _dt
+    if not date_str:
+        return None
+    try:
+        return _dt.datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        return None
 
 def _get_schedule(section, exam_type=None):
     """Helper: ดึง ExamSchedule จาก section.schedules (list)
@@ -368,50 +376,13 @@ def create_schedule(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin)
 ):
-    # Check section ไม่มี schedule แล้ว
-    exists = db.query(models.ExamSchedule).filter(
-        models.ExamSchedule.section_id == data.section_id
-    ).first()
-    if exists:
-        raise HTTPException(400, "Section นี้มีตารางสอบแล้ว")
-
-    section = db.query(models.Section).filter(
-        models.Section.id == data.section_id
-    ).first()
-    if not section:
-        raise HTTPException(404, "ไม่พบ section")
-
-    require_period_editable_for_values(
-        db,
-        section.academic_year,
-        section.semester,
-        data.exam_type.value if hasattr(data.exam_type, "value") else data.exam_type,
-    )
-    total_sheets = section.num_students * data.num_pages
-    sch = models.ExamSchedule(
-        **data.model_dump(),
-        **_normalize_schedule_time_fields(data.exam_time),
-        total_sheets=total_sheets,
-    )
-    db.add(sch)
-    db.commit()
-    trace_schedules = _load_optimizer_trace_schedules(
-        db,
-        period=period,
+    from services.schedule_service import ScheduleService
+    return ScheduleService.create_schedule(
+        db=db,
+        current_user=current_user,
         data=data,
+        request=request,
     )
-    trace_fields = _build_optimizer_trace_fields(
-        period=period,
-        schedules=trace_schedules,
-        trace_context=trace_context,
-    )
-    db.refresh(sch)
-    log_action(db, current_user, "CREATE_SCHEDULE", "exam_schedules", sch.id,
-               new_values=data.model_dump(), request=request)
-    return db.query(models.ExamSchedule).options(
-        joinedload(models.ExamSchedule.room),
-        joinedload(models.ExamSchedule.supervisions),
-    ).filter(models.ExamSchedule.id == sch.id).first()
 
 
 @router.put("/{sid}", response_model=schemas.ScheduleOut)
@@ -422,45 +393,14 @@ def update_schedule(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin)
 ):
-    if is_view_all_role(current_user):
-        raise HTTPException(403, "บัญชีนี้มีสิทธิ์อ่านอย่างเดียว")
-    sch = db.query(models.ExamSchedule).filter(models.ExamSchedule.id == sid).first()
-    if not sch:
-        raise HTTPException(404, "ไม่พบตารางสอบ")
-
-    section = sch.section or db.query(models.Section).filter(
-        models.Section.id == sch.section_id
-    ).first()
-    if section:
-        require_period_editable_for_values(
-            db,
-            section.academic_year,
-            section.semester,
-            sch.exam_type.value if hasattr(sch.exam_type, "value") else sch.exam_type,
-        )
-
-    for k, v in data.model_dump(exclude_none=True).items():
-        setattr(sch, k, v)
-    if data.exam_time is not None:
-        time_fields = _normalize_schedule_time_fields(data.exam_time)
-        sch.exam_time_start = time_fields["exam_time_start"]
-        sch.exam_time_end = time_fields["exam_time_end"]
-
-    # คำนวณ total_sheets ใหม่
-    if data.num_pages is not None:
-        section = db.query(models.Section).filter(
-            models.Section.id == sch.section_id
-        ).first()
-        if section:
-            sch.total_sheets = section.num_students * sch.num_pages
-
-    db.commit()
-    db.refresh(sch)
-    log_action(db, current_user, "UPDATE_SCHEDULE", "exam_schedules", sid, request=request)
-    return db.query(models.ExamSchedule).options(
-        joinedload(models.ExamSchedule.room),
-        joinedload(models.ExamSchedule.supervisions),
-    ).filter(models.ExamSchedule.id == sid).first()
+    from services.schedule_service import ScheduleService
+    return ScheduleService.update_schedule(
+        db=db,
+        current_user=current_user,
+        sid=sid,
+        data=data,
+        request=request,
+    )
 
 
 @router.delete("/{sid}")
@@ -470,23 +410,13 @@ def delete_schedule(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin)
 ):
-    sch = db.query(models.ExamSchedule).filter(models.ExamSchedule.id == sid).first()
-    if not sch:
-        raise HTTPException(404, "ไม่พบตารางสอบ")
-    section = sch.section or db.query(models.Section).filter(
-        models.Section.id == sch.section_id
-    ).first()
-    if section:
-        require_period_editable_for_values(
-            db,
-            section.academic_year,
-            section.semester,
-            sch.exam_type.value if hasattr(sch.exam_type, "value") else sch.exam_type,
-        )
-    db.delete(sch)
-    db.commit()
-    log_action(db, current_user, "DELETE_SCHEDULE", "exam_schedules", sid, request=request)
-    return {"success": True}
+    from services.schedule_service import ScheduleService
+    return ScheduleService.delete_schedule(
+        db=db,
+        current_user=current_user,
+        sid=sid,
+        request=request,
+    )
 
 
 # ── Supervision ───────────────────────────────────────────────
@@ -499,38 +429,15 @@ def assign_supervision(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin)
 ):
-    sch = db.query(models.ExamSchedule).filter(models.ExamSchedule.id == sid).first()
-    if not sch:
-        raise HTTPException(404, "ไม่พบตารางสอบ")
-
-    section = sch.section or db.query(models.Section).filter(
-        models.Section.id == sch.section_id
-    ).first()
-    if section:
-        require_period_editable_for_values(
-            db,
-            section.academic_year,
-            section.semester,
-            sch.exam_type.value if hasattr(sch.exam_type, "value") else sch.exam_type,
-        )
-
-    existing = db.query(models.Supervision).filter(
-        models.Supervision.schedule_id == sid,
-        models.Supervision.user_id == user_id
-    ).first()
-    if existing:
-        raise HTTPException(400, "อาจารย์ท่านนี้อยู่ในตารางนี้แล้ว")
-
-    sup = models.Supervision(
-        schedule_id=sid,
+    from services.schedule_service import ScheduleService
+    return ScheduleService.assign_supervision(
+        db=db,
+        current_user=current_user,
+        sid=sid,
         user_id=user_id,
         slot_order=slot_order,
-        compensation=300.0 if slot_order == 1 else 200.0,
+        request=request,
     )
-    db.add(sup)
-    db.commit()
-    log_action(db, current_user, "ASSIGN_SUPERVISION", "supervisions", sup.id, request=request)
-    return {"success": True, "supervision_id": sup.id}
 
 
 @router.delete("/{sid}/supervision/{sup_id}")
@@ -541,27 +448,14 @@ def remove_supervision(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin)
 ):
-    sup = db.query(models.Supervision).filter(
-        models.Supervision.id == sup_id,
-        models.Supervision.schedule_id == sid
-    ).first()
-    if not sup:
-        raise HTTPException(404, "ไม่พบข้อมูลกรรมการ")
-    schedule = sup.schedule or db.query(models.ExamSchedule).filter(
-        models.ExamSchedule.id == sid
-    ).first()
-    section = schedule.section if schedule else None
-    if section:
-        require_period_editable_for_values(
-            db,
-            section.academic_year,
-            section.semester,
-            schedule.exam_type.value if hasattr(schedule.exam_type, "value") else schedule.exam_type,
-        )
-    db.delete(sup)
-    db.commit()
-    log_action(db, current_user, "DELETE_SUPERVISION", "supervisions", sup_id, request=request)
-    return {"success": True}
+    from services.schedule_service import ScheduleService
+    return ScheduleService.remove_supervision(
+        db=db,
+        current_user=current_user,
+        sid=sid,
+        sup_id=sup_id,
+        request=request,
+    )
 
 
 # ── Copy Count Summary ────────────────────────────────────────
