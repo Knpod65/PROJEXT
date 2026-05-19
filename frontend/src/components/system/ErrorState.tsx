@@ -15,7 +15,7 @@ export function ErrorState({ title, description, retry }: ErrorStateProps) {
         icon={<Icon name="error" />}
         title={title || translate("errors.generic")}
         description={description || translate("errors.tryAgain")}
-        action={retry ? { label: translate("common.retry"), onClick: retry } : undefined}
+        action={retry ? <button onClick={retry} className="btn-primary">{translate("common.retry")}</button> : undefined}
       />
     </div>
   );
