@@ -20,6 +20,7 @@ import { CopyPage } from "@/pages/Copy";
 import { DashboardPage } from "@/pages/Dashboard";
 import { ExamManagerPage } from "@/pages/ExamManager";
 import { ExportCenterPage } from "@/pages/ExportCenter";
+import ExecutiveAnalytics from "@/pages/ExecutiveAnalytics";
 import { ExternalPage } from "@/pages/External";
 import { HistoricalSchedulesPage } from "@/pages/HistoricalSchedules";
 import { ImportV2Page } from "@/pages/ImportV2";
@@ -143,6 +144,7 @@ export function App() {
           <Route element={<ProtectedAppLayout />}>
             <Route path="/dashboard" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"]}><DashboardPage /></GuardedPage>} />
             <Route path="/schedule" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"]}><SchedulePage /></GuardedPage>} />
+            <Route path="/analytics" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><ExecutiveAnalytics /></GuardedPage>} />
             <Route path="/submissions" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "teacher"]}><SubmissionsPage /></GuardedPage>} />
             <Route path="/attendance" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"]}><RoomAttendancePage /></GuardedPage>} />
             <Route path="/checkins" element={<GuardedPage roles={["admin", "dept_supervisor", "staff", "teacher"]}><CheckinsPage /></GuardedPage>} />

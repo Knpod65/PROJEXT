@@ -79,6 +79,17 @@ export const appPages: AppPageConfig[] = [
     icon: "swap_horiz",
     roles: ["admin", "dept_supervisor", "staff", "teacher"],
     navGroup: "dashboard",
+    mobile: true,
+  },
+
+  {
+    key: "executive-analytics",
+    title: "Executive Analytics",
+    description: "Institutional health score, workload trends, and governance metrics.",
+    path: "/analytics",
+    icon: "insights",
+    roles: ["admin", "esq_head", "secretary"],
+    navGroup: "dashboard",
   },
 
   // ── Operations group ──────────────────────────────────────────
