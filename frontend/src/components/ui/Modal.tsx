@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
+import { useI18n } from "@/i18n";
 import { Button } from "./Button";
 
 interface ModalProps {
@@ -12,6 +13,7 @@ interface ModalProps {
 }
 
 export function Modal({ children, footer, onClose, open, title }: ModalProps) {
+  const { t } = useI18n();
   useEffect(() => {
     if (!open) return undefined;
 
@@ -44,7 +46,7 @@ export function Modal({ children, footer, onClose, open, title }: ModalProps) {
         <header className="modal__header">
           <h2 id="modal-title">{title}</h2>
           <Button variant="ghost" onClick={onClose} type="button">
-            ปิด
+            {t("common.close")}
           </Button>
         </header>
         <div className="modal__body">{children}</div>
