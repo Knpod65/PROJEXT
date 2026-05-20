@@ -7,14 +7,21 @@ export interface WorkloadSummaryCard {
   hint: string;
 }
 
+function safeNumber(value: any, fallback = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export function presentWorkloadPerson(person: WorkloadDutyAnalyticsPerson) {
   return {
     personId: person.person_id,
-    displayName: person.display_name,
-    roleGroup: translateWithFallback(`workloadDashboard.roleGroup.${person.role_group}`, person.role_group),
-    invigilation: person.invigilation_count,
-    distribution: person.distribution_count,
-    combined: person.combined_count,
+    displayName: person.display_name || translateWithFallback("common.unknown", "Unknown"),
+    roleGroup: person.role_group
+      ? translateWithFallback(`workloadDashboard.roleGroup.${person.role_group}`, person.role_group)
+      : translateWithFallback("common.unknown", "Unknown"),
+    invigilation: safeNumber(person.invigilation_count),
+    distribution: safeNumber(person.distribution_count),
+    combined: safeNumber(person.combined_count),
   };
 }
 
