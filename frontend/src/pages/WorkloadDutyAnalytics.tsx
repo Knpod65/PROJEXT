@@ -9,7 +9,11 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/store/auth.store";
 import { useI18n } from "@/i18n";
 import { useWorkloadDutyAnalytics } from "@/hooks/domain/useWorkloadDutyAnalytics";
-import { presentWorkloadPerson, presentWorkloadSummary } from "@/utils/presenters/workloadDutyAnalyticsPresenter";
+import {
+  hasWorkloadAnalyticsResults,
+  presentWorkloadPerson,
+  presentWorkloadSummary,
+} from "@/utils/presenters/workloadDutyAnalyticsPresenter";
 import type { DutyType, WorkloadRoleGroup } from "@/types/workloadDutyAnalytics";
 
 function SummaryCard({ label, value, hint }: { label: string; value: string; hint: string }) {
@@ -91,6 +95,10 @@ export default function WorkloadDutyAnalytics() {
   const dailyValues = data.daily_series.map((row) => row.cumulative_combined);
   const slotLabels = data.time_slot_series.map((row) => row.time_slot);
   const slotValues = data.time_slot_series.map((row) => row.combined_count);
+  const hasAnyAnalyticsData = hasWorkloadAnalyticsResults(data);
+  const hasPersonData = presentedPeople.length > 0;
+  const hasDailyData = data.daily_series.length > 0;
+  const hasTimeSlotData = data.time_slot_series.length > 0;
 
   return (
     <div className="p-6 space-y-6">
@@ -183,6 +191,16 @@ export default function WorkloadDutyAnalytics() {
         ))}
       </section>
 
+      {!hasAnyAnalyticsData ? (
+        <Card className="p-4">
+          <EmptyState
+            icon={<Icon name="info" />}
+            title={t("workloadDashboard.empty.noFilteredResults")}
+            description={t("workloadDashboard.empty.adjustFilters")}
+          />
+        </Card>
+      ) : null}
+
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <Card className="p-4 xl:col-span-3">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -195,14 +213,30 @@ export default function WorkloadDutyAnalytics() {
             </div>
           </div>
           <div className="mt-4">
-            <BarChart labels={byPersonLabels} values={byPersonValues} color="var(--crimson)" />
+            {hasPersonData ? (
+              <BarChart labels={byPersonLabels} values={byPersonValues} color="var(--crimson)" />
+            ) : (
+              <EmptyState
+                icon={<Icon name="info" />}
+                title={t("workloadDashboard.empty.noPersonData")}
+                description={t("workloadDashboard.empty.adjustFilters")}
+              />
+            )}
           </div>
         </Card>
 
         <Card className="p-4 xl:col-span-2">
           <h2 className="text-lg font-semibold">{t("workloadDashboard.charts.dailyCumulative")}</h2>
           <div className="mt-4">
-            <BarChart labels={dailyLabels} values={dailyValues} color="var(--teal)" />
+            {hasDailyData ? (
+              <BarChart labels={dailyLabels} values={dailyValues} color="var(--teal)" />
+            ) : (
+              <EmptyState
+                icon={<Icon name="info" />}
+                title={t("workloadDashboard.empty.noDailyData")}
+                description={t("workloadDashboard.empty.adjustFilters")}
+              />
+            )}
           </div>
         </Card>
 
@@ -223,7 +257,7 @@ export default function WorkloadDutyAnalytics() {
                 {data.fairness.overloaded_people.slice(0, 4).map((person) => (
                   <li key={person.person_id}>{person.display_name} - {person.combined_count}</li>
                 ))}
-                {data.fairness.overloaded_people.length === 0 && <li>{t("workloadDashboard.empty.noData")}</li>}
+                {data.fairness.overloaded_people.length === 0 && <li>{t("workloadDashboard.empty.noOverloadedPeople")}</li>}
               </ul>
             </div>
             <div>
@@ -232,7 +266,7 @@ export default function WorkloadDutyAnalytics() {
                 {data.fairness.underloaded_people.slice(0, 4).map((person) => (
                   <li key={person.person_id}>{person.display_name} - {person.combined_count}</li>
                 ))}
-                {data.fairness.underloaded_people.length === 0 && <li>{t("workloadDashboard.empty.noData")}</li>}
+                {data.fairness.underloaded_people.length === 0 && <li>{t("workloadDashboard.empty.noUnderloadedPeople")}</li>}
               </ul>
             </div>
           </div>
@@ -241,7 +275,15 @@ export default function WorkloadDutyAnalytics() {
         <Card className="p-4 xl:col-span-3">
           <h2 className="text-lg font-semibold">{t("workloadDashboard.charts.timeSlot")}</h2>
           <div className="mt-4">
-            <BarChart labels={slotLabels} values={slotValues} color="#f59e0b" />
+            {hasTimeSlotData ? (
+              <BarChart labels={slotLabels} values={slotValues} color="#f59e0b" />
+            ) : (
+              <EmptyState
+                icon={<Icon name="info" />}
+                title={t("workloadDashboard.empty.noTimeSlotData")}
+                description={t("workloadDashboard.empty.adjustFilters")}
+              />
+            )}
           </div>
         </Card>
       </section>
@@ -269,6 +311,13 @@ export default function WorkloadDutyAnalytics() {
                   <td className="py-2 pr-4">{person.combined}</td>
                 </tr>
               ))}
+              {!hasPersonData ? (
+                <tr>
+                  <td className="py-4 text-center text-sm text-gray-500" colSpan={5}>
+                    {t("workloadDashboard.empty.noPersonData")} {t("workloadDashboard.empty.adjustFilters")}
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>

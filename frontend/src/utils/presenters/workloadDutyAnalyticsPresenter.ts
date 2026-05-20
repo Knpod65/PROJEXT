@@ -52,3 +52,13 @@ export function presentWorkloadSummary(payload: WorkloadDutyAnalyticsPayload): W
     },
   ];
 }
+
+export function hasWorkloadAnalyticsResults(payload: WorkloadDutyAnalyticsPayload) {
+  return (
+    payload.by_person.length > 0 ||
+    payload.daily_series.length > 0 ||
+    payload.time_slot_series.length > 0 ||
+    payload.fairness.overloaded_people.length > 0 ||
+    payload.fairness.underloaded_people.length > 0
+  );
+}
