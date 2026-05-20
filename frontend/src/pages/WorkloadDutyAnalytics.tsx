@@ -103,24 +103,44 @@ export default function WorkloadDutyAnalytics() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <label className="space-y-1 text-sm">
             <span className="block text-gray-500">{t("workloadDashboard.filters.semester")}</span>
-            <input className="w-full rounded border px-3 py-2" value={semester} onChange={(event) => setSemester(event.target.value)} placeholder="1 / 2 / summer" />
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={semester}
+              onChange={(event) => setSemester(event.target.value)}
+              placeholder={t("workloadDashboard.filters.semesterPlaceholder")}
+            />
           </label>
           <label className="space-y-1 text-sm">
             <span className="block text-gray-500">{t("workloadDashboard.filters.academicYear")}</span>
-            <input className="w-full rounded border px-3 py-2" value={academicYear} onChange={(event) => setAcademicYear(event.target.value)} placeholder="2568" />
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={academicYear}
+              onChange={(event) => setAcademicYear(event.target.value)}
+              placeholder={t("workloadDashboard.filters.academicYearPlaceholder")}
+            />
           </label>
           <label className="space-y-1 text-sm">
             <span className="block text-gray-500">{t("workloadDashboard.filters.period")}</span>
-            <input className="w-full rounded border px-3 py-2" value={periodId} onChange={(event) => setPeriodId(event.target.value)} placeholder="1" />
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={periodId}
+              onChange={(event) => setPeriodId(event.target.value)}
+              placeholder={t("workloadDashboard.filters.periodPlaceholder")}
+            />
           </label>
           <label className="space-y-1 text-sm">
             <span className="block text-gray-500">{t("workloadDashboard.filters.examType")}</span>
-            <input className="w-full rounded border px-3 py-2" value={examType} onChange={(event) => setExamType(event.target.value)} placeholder="final" />
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={examType}
+              onChange={(event) => setExamType(event.target.value)}
+              placeholder={t("workloadDashboard.filters.examTypePlaceholder")}
+            />
           </label>
           <label className="space-y-1 text-sm">
             <span className="block text-gray-500">{t("workloadDashboard.filters.roleGroup")}</span>
             <select className="w-full rounded border px-3 py-2" value={roleGroup} onChange={(event) => setRoleGroup(event.target.value as WorkloadRoleGroup)}>
-              <option value="all">{t("common.all")}</option>
+              <option value="all">{t("workloadDashboard.roleGroup.all")}</option>
               <option value="admin">{t("workloadDashboard.roleGroup.admin")}</option>
               <option value="staff">{t("workloadDashboard.roleGroup.staff")}</option>
               <option value="supervisor">{t("workloadDashboard.roleGroup.supervisor")}</option>
@@ -130,10 +150,10 @@ export default function WorkloadDutyAnalytics() {
           <label className="space-y-1 text-sm">
             <span className="block text-gray-500">{t("workloadDashboard.filters.dutyType")}</span>
             <select className="w-full rounded border px-3 py-2" value={dutyType} onChange={(event) => setDutyType(event.target.value as DutyType)}>
-              <option value="all">{t("common.all")}</option>
-              <option value="invigilation">Invigilation</option>
-              <option value="paper_distribution">Paper distribution</option>
-              <option value="combined">Combined</option>
+              <option value="all">{t("workloadDashboard.dutyTypes.all")}</option>
+              <option value="invigilation">{t("workloadDashboard.dutyTypes.invigilation")}</option>
+              <option value="paper_distribution">{t("workloadDashboard.dutyTypes.paperDistribution")}</option>
+              <option value="combined">{t("workloadDashboard.dutyTypes.combined")}</option>
             </select>
           </label>
           <label className="space-y-1 text-sm md:col-span-2 xl:col-span-3">
@@ -195,7 +215,7 @@ export default function WorkloadDutyAnalytics() {
             </div>
             <div>
               <span className="text-gray-500">{t("workloadDashboard.fairness.riskBand")}: </span>
-              <strong>{data.fairness.risk_band}</strong>
+              <strong>{t(`workloadDashboard.fairness.band.${data.fairness.risk_band}`)}</strong>
             </div>
             <div>
               <div className="font-medium text-gray-700">{t("workloadDashboard.fairness.overloaded")}</div>
@@ -232,11 +252,11 @@ export default function WorkloadDutyAnalytics() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="text-left border-b">
-                <th className="py-2 pr-4">{t("common.role")}</th>
-                <th className="py-2 pr-4">{t("workloadDashboard.filters.personSearch")}</th>
-                <th className="py-2 pr-4">{t("workloadDashboard.summary.totalInvigilation")}</th>
-                <th className="py-2 pr-4">{t("workloadDashboard.summary.totalDistribution")}</th>
-                <th className="py-2 pr-4">{t("workloadDashboard.summary.combined")}</th>
+                <th className="py-2 pr-4">{t("workloadDashboard.labels.roleGroup")}</th>
+                <th className="py-2 pr-4">{t("workloadDashboard.labels.person")}</th>
+                <th className="py-2 pr-4">{t("workloadDashboard.labels.invigilationCount")}</th>
+                <th className="py-2 pr-4">{t("workloadDashboard.labels.distributionCount")}</th>
+                <th className="py-2 pr-4">{t("workloadDashboard.labels.combinedCount")}</th>
               </tr>
             </thead>
             <tbody>
