@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from contextlib import asynccontextmanager
 import uvicorn
+from pathlib import Path
 
 from database import engine, Base, get_db
 import permissions
@@ -23,6 +24,9 @@ from routers import dashboard_intelligence
 import models
 import logging
 import os
+
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
 
 # Warn if SECRET_KEY is using dev default
 if os.getenv("SECRET_KEY", "") in ("", "dev-secret-key-change-me"):
@@ -228,7 +232,10 @@ app.include_router(dashboard_intelligence.router, tags=["dashboard-intelligence"
 app.include_router(analytics_router.router, tags=["analytics"])
 
 # Serve frontend
-app.mount("/static", StaticFiles(directory="static"), name="static")
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+else:
+    logging.warning("Static directory not found; skipping static mount: %s", STATIC_DIR)
 
 
 
