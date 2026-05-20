@@ -16,6 +16,9 @@
 | **UAT Test Script** | `docs/UAT_TEST_SCRIPT.md` | Admin, Staff, Teacher | User acceptance testing |
 | **Rollback Incident Runbook** | `docs/ROLLBACK_INCIDENT_RUNBOOK.md` | IT, DevOps | Incident response procedures |
 | **Final Platform Readiness Report** | `docs/FINAL_PLATFORM_READINESS_REPORT.md` | Management, Dean | Executive readiness summary |
+| **Workload Duty Analytics Architecture** | `docs/architecture/WORKLOAD_DUTY_ANALYTICS.md` | Admin, QA, Architect | Dashboard logic, fairness, and governance interpretation |
+| **Workload Duty Analytics QA Checklist** | `docs/architecture/WORKLOAD_DUTY_ANALYTICS_QA_CHECKLIST.md` | QA, Pilot Users | Manual dashboard verification |
+| **Workload Duty Analytics Browser Smoke** | `docs/architecture/WORKLOAD_DUTY_ANALYTICS_BROWSER_SMOKE.md` | QA, Admin | Route-by-route smoke evidence capture |
 
 ---
 
@@ -31,7 +34,7 @@
 
 ### Admin/Staff/Teacher Users
 - **Primary:** UAT Test Script
-- **Reference:** Pilot Deployment Checklist
+- **Reference:** Pilot Deployment Checklist, Workload Duty Analytics QA Checklist
 
 ### Project Owner
 - **Primary:** Final Platform Readiness Report
@@ -49,16 +52,16 @@
 
 ## Quick Links
 
-```
+```text
 docs/
-├── P1_FINAL_SYSTEM_STATE_AUDIT.md
-├── PILOT_DEPLOYMENT_READINESS_CHECKLIST.md
-├── IT_HANDOFF_PACKAGE.md
-├── PDPA_SECURITY_REVIEW_PACKAGE.md
-├── UAT_TEST_SCRIPT.md
-├── ROLLBACK_INCIDENT_RUNBOOK.md
-├── FINAL_PLATFORM_READINESS_REPORT.md
-└── P1_PILOT_READINESS_INDEX.md  ← you are here
+|-- P1_FINAL_SYSTEM_STATE_AUDIT.md
+|-- PILOT_DEPLOYMENT_READINESS_CHECKLIST.md
+|-- IT_HANDOFF_PACKAGE.md
+|-- PDPA_SECURITY_REVIEW_PACKAGE.md
+|-- UAT_TEST_SCRIPT.md
+|-- ROLLBACK_INCIDENT_RUNBOOK.md
+|-- FINAL_PLATFORM_READINESS_REPORT.md
+`-- P1_PILOT_READINESS_INDEX.md  <- you are here
 ```
 
 ---
@@ -69,3 +72,4 @@ docs/
 - `docs/architecture/FINAL_PLATFORM_READINESS_REPORT.md` — Readiness metrics
 - `docs/architecture/EMS_COMPLETION_GAP_REPORT.md` — Known gaps
 - `docs/architecture/LARAVEL_STYLE_FINAL_ALIGNMENT_AUDIT.md` — Architecture alignment
+- `docs/architecture/WORKLOAD_DUTY_ANALYTICS.md` — Workload analytics routes, metrics, fairness model, and PDPA posture

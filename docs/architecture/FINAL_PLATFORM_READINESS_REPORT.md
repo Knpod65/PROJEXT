@@ -28,7 +28,32 @@
 
 ---
 
-## P1 Pilot Readiness Status: ✅ COMPLETE
+## OPS-DASH Workload Duty Analytics: COMPLETE
+
+**Updated:** 2026-05-20
+
+### Capability Status
+- Role-routed workload duty analytics is available for admin, staff/supervisor/esq/secretary, and teacher flows
+- Workload page i18n cleanup is complete
+- Empty-state handling is explicit for no-result chart, fairness, and table scenarios
+- Backend endpoint, policy, serializer, validator, schema, and tests already exist and remain unchanged
+
+### Readiness Evidence
+- Frontend build: PASS
+- Frontend i18n parity: PASS
+- Raw string scan: warning mode only, with no workload page regressions
+- Backend workload analytics tests: PASS
+- Architecture and QA/supporting docs added for pilot use
+
+### Remaining Non-Blocking Follow-Ups
+- Live browser verification with real pilot data
+- Very large dataset chart performance review
+- Route-level lazy loading to reduce bundle size
+- Export fairness reporting and duplicate-duty anomaly review
+
+---
+
+## P1 Pilot Readiness Status: COMPLETE
 
 **Updated:** 2026-05-20
 
@@ -41,6 +66,9 @@
 - `docs/ROLLBACK_INCIDENT_RUNBOOK.md`
 - `docs/FINAL_PLATFORM_READINESS_REPORT.md`
 - `docs/P1_PILOT_READINESS_INDEX.md`
+- `docs/architecture/WORKLOAD_DUTY_ANALYTICS.md`
+- `docs/architecture/WORKLOAD_DUTY_ANALYTICS_QA_CHECKLIST.md`
+- `docs/architecture/WORKLOAD_DUTY_ANALYTICS_BROWSER_SMOKE.md`
 
 ### Readiness Score: 85/100
 - Architecture maturity: ~98%
@@ -48,6 +76,7 @@
 - Frontend build: PASS
 - i18n parity: 100%
 - Authorization alignment: Complete (L5 helpers in place)
+- OPS-DASH workload duty analytics: Pilot-ready
 
 ### Remaining Non-Blocking Gaps
 - Raw string scanner noise (~100 pre-existing candidates)
