@@ -1,4 +1,4 @@
-import { useOptimizationTrace } from "@/hooks/useOptimizationTrace";
+import { useOptimizationTraceExplorer } from "@/hooks/domain/useOptimizationTraceExplorer";
 import { translate } from "@/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
@@ -50,16 +50,21 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 export default function OptimizationTraceExplorer() {
-  // This page requires an active optimizer session ID. For now the session
-  // ID comes from URL state / query parameter wiring (future: ctx from layout).
-  // We render a session selector for manual selection.
-  const sessions = [
-    { id: 1, label: translate("trace.session1"), created: "2026-05-19 10:00" },
-    { id: 2, label: translate("trace.session2"), created: "2026-05-18 14:30" },
-  ];
-
-  const activeSessionId = sessions[0]?.id ?? 0;
-  const { data: trace, isLoading, error } = useOptimizationTrace(activeSessionId);
+  const {
+    isLoading,
+    error,
+    refresh,
+    trace,
+    traceSummary,
+    timelineItems,
+    rejectedAlternatives,
+    constraintItems,
+    selectedSessionId,
+    setSelectedSessionId,
+    mockSessions,
+    hasData,
+    emptyStateKey,
+  } = useOptimizationTraceExplorer();
 
   if (isLoading) {
     return (
@@ -85,36 +90,30 @@ export default function OptimizationTraceExplorer() {
     );
   }
 
-  const { candidates, constraint_hits, events, recheck_issues, quality_note } = trace;
-  const hasCandidates = candidates.length > 0;
-  const hasConstraints = constraint_hits.length > 0;
-  const hasEvents = events.length > 0;
-  const hasRecheck = recheck_issues.length > 0;
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{translate("trace.pageTitle")}</h1>
           <p className="text-sm text-gray-500">
-            {translate("trace.sessionLabel")}: {sessions[0]?.label}
+            {translate("trace.sessionLabel")}: {mockSessions.find((s) => s.id === selectedSessionId)?.label}
           </p>
         </div>
-        <ScoreRing score={trace.overall_quality_score} />
+        <ScoreRing score={traceSummary.overallQualityScore} />
       </div>
 
-      {quality_note ? (
+      {trace.quality_note ? (
         <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
-          {quality_note}
+          {trace.quality_note}
         </div>
       ) : null}
 
       {/* Trace events timeline */}
-      {hasEvents ? (
+      {timelineItems.length > 0 ? (
         <div className="bg-white rounded-lg shadow p-4 space-y-2">
           <h2 className="text-lg font-semibold mb-3">{translate("trace.events")}</h2>
-          {events.map((evt, i) => (
-            <div key={i} className="flex items-start justify-between border-b pb-2 last:border-0">
+          {timelineItems.map((evt) => (
+            <div key={evt.id} className="flex items-start justify-between border-b pb-2 last:border-0">
               <div>
                 <p className="font-medium text-sm">{evt.detail}</p>
                 <p className="text-xs text-gray-400">{evt.event_type} · {evt.stage}</p>
@@ -133,9 +132,9 @@ export default function OptimizationTraceExplorer() {
       {/* Candidate table */}
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-lg font-semibold mb-3">
-          {translate("trace.candidates")} ({candidates.length})
+          {translate("trace.candidates")} ({trace.candidates.length})
         </h2>
-        {hasCandidates ? (
+        {trace.candidates.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
@@ -149,7 +148,7 @@ export default function OptimizationTraceExplorer() {
                 </tr>
               </thead>
               <tbody>
-                {candidates.map((c, i) => (
+                {trace.candidates.map((c, i) => (
                   <tr key={i} className="border-b last:border-0">
                     <td className="py-2 px-3">{c.room_code}</td>
                     <td className="py-2 px-3">{c.timeslot}</td>
@@ -172,13 +171,13 @@ export default function OptimizationTraceExplorer() {
       </div>
 
       {/* Constraint hits */}
-      {hasConstraints ? (
+      {constraintItems.length > 0 ? (
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold mb-3">
-            {translate("trace.constraints")} ({constraint_hits.length})
+            {translate("trace.constraints")} ({constraintItems.length})
           </h2>
           <div className="space-y-2">
-            {constraint_hits.map((c, i) => (
+            {constraintItems.map((c, i) => (
               <div key={i} className="flex items-start justify-between border-b pb-2 last:border-0">
                 <div>
                   <p className="font-medium text-sm">{c.constraint_type}</p>
@@ -195,13 +194,13 @@ export default function OptimizationTraceExplorer() {
       ) : null}
 
       {/* Recheck issues */}
-      {hasRecheck ? (
+      {trace.recheck_issues.length > 0 ? (
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold mb-3">
-            {translate("trace.recheckIssues")} ({recheck_issues.length})
+            {translate("trace.recheckIssues")} ({trace.recheck_issues.length})
           </h2>
           <ul className="space-y-1">
-            {recheck_issues.map((issue, i) => (
+            {trace.recheck_issues.map((issue, i) => (
               <li key={i} className="flex items-center gap-2 text-sm">
                 <SeverityBadge severity={issue.severity} />
                 <span>{issue.issue}</span>

@@ -1226,6 +1226,36 @@ export const th = {
   "governance.topRisks": "ความเสี่ยงสำคัญ",
   "governance.recentEvents": "เหตุการณ์ล่าสุด",
   "governance.facultySummary": "สรุปตามคณะ",
+  "governance.of100": "/ 100",
+  "governance.healthNote": "คะแนนเหมาะจากการวิเคราะห์ข้อมูลธรรมาภิบาล",
+  "governance.noData": "ไม่มีข้อมูลธรรมาภิบาล",
+  "governance.noDataDesc": "ไม่มีข้อมูล",
+  "governance.loadError": "ไม่สามารถโหลดข้อมูลธรรมาภิบาลได้",
+  "governance.noRisks": "ไม่มีความเสี่ยงที่ระบุ",
+  "governance.noEvents": "ไม่พบเหตุการณ์ล่าสุด",
+  "governance.noFacultyData": "ไม่มีข้อมูลคณะ",
+
+  // Trace
+  "trace.qualityOf100": "ความสมบูรณ์ / 100",
+  "trace.of100": "/ 100",
+  "trace.pageTitle": "ตัวสำรวจร่องรอยการเพิ่มประสิทธิภาพ",
+  "trace.sessionLabel": "เซสชัน",
+  "trace.session1": "เซสชัน 1",
+  "trace.session2": "เซสชัน 2",
+  "trace.noData": "ไม่มีข้อมูลร่องรอย",
+  "trace.loadError": "ไม่สามารถโหลดข้อมูลร่องรอยได้",
+  "trace.selectSessionHint": "เลือกเซสชันเพื่อดูร่องรอย",
+  "trace.events": "เหตุการณ์ร่องรอย",
+  "trace.candidates": "ตัวเลือก",
+  "trace.room": "ห้อง",
+  "trace.timeslot": "ช่วงเวลา",
+  "trace.staff": "เจ้าหน้าที่",
+  "trace.score": "คะแนน",
+  "trace.status": "สถานะ",
+  "trace.rejectionReasons": "เหตุผลที่ถูกปฏิเสธ",
+  "trace.noCandidates": "ไม่มีตัวเลือกในเซสชันนี้",
+  "trace.constraints": "การชนข้อจำกัด",
+  "trace.recheckIssues": "ปัญหจากการตรวจสอบซ้ำ",
 
   // Optimization Trace
   "optimization.traceExplorer": "ตัวสำรวจร่องรอยการเพิ่มประสิทธิภาพ",
@@ -1271,7 +1301,6 @@ export const th = {
   "analytics.pdpaAlerts": "จำนวนแจ้งเตือน PDPA",
 
   // Trace / Severity
-  "trace.qualityOf100": "คุณภาพ / 100",
   "severity.info": "ข้อมูล",
   "severity.warning": "คำเตือน",
   "severity.error": "ข้อผิดพลาด",
@@ -1279,6 +1308,12 @@ export const th = {
 
   // Audit Explorer
   "auditEvents.tab": "เหตุการณ์ตรวจสอบ",
+  "auditEvents.col.id": "ID",
+  "auditEvents.col.actor": "ผู้กระทำ",
+  "auditEvents.col.action": "การกระทำ",
+  "auditEvents.col.table": "ตาราง",
+  "auditEvents.col.time": "เวลา",
+  "auditEvents.noData": "ไม่มีบันทึกการตรวจสอบ",
   "governanceTimeline.tab": "ไทม์ไลน์ธรรมาภิบาล",
   "lifecycleTimeline.tab": "ไทม์ไลน์วงจรชีวิต",
   "audit.noEvents": "ไม่พบเหตุการณ์ตรวจสอบ",
