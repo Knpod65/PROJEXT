@@ -6,6 +6,19 @@ Audit Explorer helps users see what happened, when it happened, and whether the 
 
 It is the place to go when a decision needs evidence.
 
+## Live Screenshot
+
+![Audit Explorer](../screenshot-atlas/images/governance/audit-explorer-viewport.png)
+
+Full page:
+[audit-explorer-full.png](../screenshot-atlas/images/governance/audit-explorer-full.png)
+
+## Current Capture Note
+
+The route loaded successfully and displayed a valid empty-state result: `No audit events recorded`.
+
+That is useful because it shows the difference between a working trace explorer with no records and a broken route.
+
 ## What Matters Most
 
 - Who did what
@@ -13,6 +26,13 @@ It is the place to go when a decision needs evidence.
 - Which workflow path was taken
 - Whether the event was expected
 - Whether any step is missing or unusual
+
+## Dashboard Reading Order
+
+1. Choose the correct tab: audit events, governance timeline, or lifecycle timeline.
+2. Check whether the page is empty or whether it contains a usable trace.
+3. Open the event sequence only after confirming the record belongs to the right workflow.
+4. Escalate if the timeline cannot explain a real decision.
 
 ## Metric Interpretation
 
@@ -47,6 +67,12 @@ If the trace is weak, the institution may not be able to justify a release, appr
 2. Compare the trace against the expected path.
 3. Look for missing ownership, time, or approval details.
 4. Escalate if the record cannot be explained confidently.
+
+## What Action Should I Take?
+
+- Use the explorer to confirm evidence, not just to browse logs.
+- Treat an empty explorer differently from an error state.
+- Open governance review if the audit trail is missing for a publication-sensitive action.
 
 ## Escalation Triggers
 

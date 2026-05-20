@@ -20,12 +20,46 @@ The workflow should feel like a clear checklist with visible progress.
 6. Confirm that the status changed to complete.
 7. Escalate if the status does not update or if the assignment looks wrong.
 
-## Screenshot Placeholders
+## Screenshot Sequence
 
-- Screenshot 1: teacher dashboard with assigned tasks highlighted
-- Screenshot 2: submission screen with required fields highlighted
-- Screenshot 3: success confirmation or status update
-- Screenshot 4: error state or missing-information warning
+### Screenshot 1: teacher dashboard
+
+![Teacher Dashboard](../screenshot-atlas/images/teacher/teacher-dashboard-overview-viewport.png)
+
+Look here first:
+The hero action and the first task block that points the teacher toward the next responsibility.
+
+Common mistake:
+Treating the dashboard as a report page instead of a launch point into the actual exam work record.
+
+What to do next:
+Open `My Exam Work`.
+
+### Screenshot 2: teacher exam work
+
+![Teacher Exam Work](../screenshot-atlas/images/teacher/teacher-exam-work-viewport.png)
+
+Look here first:
+Assigned responsibilities, pending count, and the first `Start submission` button.
+
+Common mistake:
+Opening the wrong section when multiple cards share a similar course title.
+
+What to do next:
+Open the exact responsibility record that matches the active deadline.
+
+### Screenshot 3: teacher submissions
+
+![Teacher Submissions](../screenshot-atlas/images/teacher/teacher-submissions-viewport.png)
+
+Look here first:
+The status counters, the submission-state tabs, and the empty-state or result list.
+
+Common mistake:
+Assuming nothing was submitted just because the list is empty under the current tab or search filter.
+
+What to do next:
+Refresh the data, change the tab if needed, and confirm the visible status before escalating.
 
 ## Annotation Instructions
 

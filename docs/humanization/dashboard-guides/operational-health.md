@@ -6,12 +6,29 @@ Operational Health shows whether the system is stable enough to keep working nor
 
 It is the best dashboard for noticing whether the operation is drifting before a failure becomes visible.
 
+## Live Screenshot
+
+![Operational Health](../screenshot-atlas/images/governance/operational-health-viewport.png)
+
+Full page:
+[operational-health-full.png](../screenshot-atlas/images/governance/operational-health-full.png)
+
+Responsive variants:
+[operational-health-tablet.png](../screenshot-atlas/images/governance/operational-health-tablet.png) · [operational-health-mobile.png](../screenshot-atlas/images/governance/operational-health-mobile.png)
+
 ## What Matters Most
 
 - Whether the system is stable or under strain
 - Whether warnings are isolated or repeated
 - Whether any active workflow is at risk
 - Whether the period is moving toward overload
+
+## Dashboard Reading Order
+
+1. Check Backend Health first.
+2. Read Analytics Health second so you know whether surrounding dashboards are trustworthy.
+3. Read Integration Readiness before escalating platform-wide concerns.
+4. Cross-check the affected workflow page if the health signal is low.
 
 ## Metric Interpretation
 
@@ -46,6 +63,12 @@ Operational health is part of governance because stable operations reduce risk, 
 2. Open the related workflow or dashboard.
 3. Check whether the cause is staffing, data, or process related.
 4. Escalate if the issue affects active or imminent operations.
+
+## What Action Should I Take?
+
+- Continue operating if the page is stable and the issue is isolated.
+- Pause trust in analytics-heavy dashboards if the analytics-health signal is weak.
+- Escalate faster when backend and integration signals degrade together.
 
 ## Escalation Triggers
 

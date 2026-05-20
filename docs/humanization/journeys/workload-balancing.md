@@ -17,12 +17,46 @@ The user should look for fairness, not just totals.
 5. Decide whether reassignment is needed.
 6. Escalate if the imbalance affects fairness or readiness.
 
-## Screenshot Placeholders
+## Screenshot Sequence
 
-- Screenshot 1: workload summary view
-- Screenshot 2: people comparison table
-- Screenshot 3: time-slot pressure chart
-- Screenshot 4: fairness warning or recommendation
+### Screenshot 1: admin workload analytics
+
+![Workload Duty Analytics](../screenshot-atlas/images/admin/workload-duty-analytics-viewport.png)
+
+Look here first:
+The current empty-state message for the admin workload scope.
+
+Common mistake:
+Treating a valid empty state as a broken route and skipping the filter or data check.
+
+What to do next:
+Confirm the route is correct, then review the staff or teacher variants if a narrower scope is needed.
+
+### Screenshot 2: staff duty workload
+
+![Duty Workload](../screenshot-atlas/images/staff/duty-workload-viewport.png)
+
+Look here first:
+The staff-role variant and whether the current filter set returns real rows or a no-data warning.
+
+Common mistake:
+Assuming the staff view should look identical to the admin view.
+
+What to do next:
+Escalate only if repeated empty states conflict with known assignment records.
+
+### Screenshot 3: teacher workload
+
+![My Workload](../screenshot-atlas/images/teacher/my-workload-viewport.png)
+
+Look here first:
+Teacher-facing summary cards and the personal workload context.
+
+Common mistake:
+Comparing the teacher view directly to institution-wide fairness without switching to an admin or staff scope first.
+
+What to do next:
+Use the correct role scope for fairness decisions.
 
 ## Annotation Instructions
 

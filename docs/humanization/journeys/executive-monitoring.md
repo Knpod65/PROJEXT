@@ -17,12 +17,46 @@ The leader should look for one or two important signals, not every detail.
 5. Decide whether to monitor, request review, or escalate.
 6. Confirm the next action owner.
 
-## Screenshot Placeholders
+## Screenshot Sequence
 
-- Screenshot 1: executive summary dashboard
-- Screenshot 2: supporting analytics dashboard
-- Screenshot 3: risk or blocker detail view
-- Screenshot 4: decision or escalation state
+### Screenshot 1: main dashboard
+
+![Admin Dashboard](../screenshot-atlas/images/admin/admin-dashboard-overview-viewport.png)
+
+Look here first:
+The hero summary and the top metric cards.
+
+Common mistake:
+Reading too far down the page before deciding which single signal matters most.
+
+What to do next:
+Open the specialized page that matches the risk.
+
+### Screenshot 2: executive analytics
+
+![Executive Analytics](../screenshot-atlas/images/executive/executive-analytics-viewport.png)
+
+Look here first:
+The current error state shown in the local runtime.
+
+Common mistake:
+Assuming route access means analytics readiness.
+
+What to do next:
+If the page is in error, fall back to `Governance Cockpit` and `Operational Health`.
+
+### Screenshot 3: governance cockpit
+
+![Governance Cockpit](../screenshot-atlas/images/governance/governance-cockpit-viewport.png)
+
+Look here first:
+The blocker and governance summary area.
+
+Common mistake:
+Escalating from a trend page before confirming whether the issue is really a governance blocker.
+
+What to do next:
+Use governance signals to decide whether to monitor, intervene, or block release.
 
 ## Annotation Instructions
 

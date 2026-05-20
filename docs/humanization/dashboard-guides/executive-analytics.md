@@ -6,6 +6,19 @@ Executive Analytics gives leaders a strategic view of readiness, workload, gover
 
 It should support decisions without requiring the leader to inspect every underlying workflow.
 
+## Live Screenshot
+
+![Executive Analytics](../screenshot-atlas/images/executive/executive-analytics-viewport.png)
+
+Full page:
+[executive-analytics-full.png](../screenshot-atlas/images/executive/executive-analytics-full.png)
+
+## Current Capture Note
+
+The route shell was reachable during the screenshot pass, but the local stack rendered `Error loading executive analytics: Not Found`.
+
+Use this guide together with the screenshot capture report. The image is an honest record of the current failure state, not a fully healthy analytics render.
+
 ## What Matters Most
 
 - Readiness
@@ -13,6 +26,13 @@ It should support decisions without requiring the leader to inspect every underl
 - Workload imbalance
 - Governance backlog
 - Whether the institution is moving in a stable direction
+
+## Reading Order
+
+1. Confirm whether the analytics board loaded or failed.
+2. If it loaded, read the readiness and trend summary before opening detail.
+3. If it failed, cross-check `Dashboard`, `Governance Cockpit`, and `Operational Health`.
+4. Escalate if leadership decisions depend on the missing analytics layer.
 
 ## Metric Interpretation
 
@@ -47,6 +67,12 @@ This dashboard helps leaders protect trust, timing, and continuity.
 2. Identify the one issue that changes the plan.
 3. Open the supporting dashboard if detail is needed.
 4. Escalate only when the issue affects publication, fairness, or continuity.
+
+## What Action Should I Take?
+
+- Use the executive page for trend confirmation, not for first discovery of operational detail.
+- If the route shows the captured error state, treat it as a platform issue and document the workaround path.
+- Shift to `Governance Cockpit` when approval or publication safety is the primary concern.
 
 ## Escalation Triggers
 

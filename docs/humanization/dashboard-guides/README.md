@@ -22,6 +22,7 @@ Each dashboard guide should include:
 ## Starter Guides
 
 - [Dashboard](dashboard.md)
+- [Admin Intelligence Dashboard](admin-intelligence-dashboard.md)
 - [Governance Cockpit](governance-cockpit.md)
 - [Executive Analytics](executive-analytics.md)
 - [Operational Health](operational-health.md)

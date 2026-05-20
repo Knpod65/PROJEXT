@@ -17,12 +17,33 @@ The user should verify safety before trusting the result.
 5. Approve, revise, or reject the result.
 6. Escalate if the plan is not safe to publish.
 
-## Screenshot Placeholders
+## Screenshot Sequence
 
-- Screenshot 1: optimization summary
-- Screenshot 2: quality or constraint warning
-- Screenshot 3: trace or candidate detail
-- Screenshot 4: publish-ready or blocked state
+### Screenshot 1: optimization dashboard
+
+![Optimization Dashboard](../screenshot-atlas/images/admin/optimization-dashboard-viewport.png)
+
+Look here first:
+Pre-optimization setup, the run controls, and the assignment-results section.
+
+Common mistake:
+Running the optimizer before confirming the term, semester, and exam-type context.
+
+What to do next:
+Launch or refresh the optimizer only after the setup is trustworthy.
+
+### Screenshot 2: optimization trace
+
+![Optimization Trace](../screenshot-atlas/images/admin/optimization-trace-viewport.png)
+
+Look here first:
+The session label, quality score area, and candidate count.
+
+Common mistake:
+Assuming an empty trace means the optimizer succeeded cleanly.
+
+What to do next:
+Review whether the chosen session has usable candidate lineage before publishing.
 
 ## Annotation Instructions
 
