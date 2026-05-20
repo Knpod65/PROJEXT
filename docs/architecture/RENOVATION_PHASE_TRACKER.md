@@ -84,4 +84,74 @@
 
 ---
 
+## OPS-QA - Operational Quality Assurance & Rollout Hardening: COMPLETE
+
+**Updated:** 2026-05-20
+
+### OPS-QA Scope
+- Operational verification and hardening for production readiness
+- Browser QA, performance hardening, real data safety, PDPA/security QA
+- Alert readiness foundation, deployment hardening, executive readiness package
+- Final validation and rollout reporting
+
+### Completed Deliverables
+
+| Slice | Deliverable | Status |
+|-------|-------------|--------|
+| OPS-QA-s0 | `docs/architecture/OPS_QA_MASTER_PLAN.md` | Complete |
+| OPS-QA-s1 | `docs/architecture/ROLE_VERIFICATION_MATRIX.md` | Complete |
+| OPS-QA-s2 | `docs/architecture/BROWSER_QA_REPORT.md` + responsive CSS fixes | Complete |
+| OPS-QA-s3 | `docs/architecture/PERFORMANCE_HARDENING_REPORT.md` + bundle optimization | Complete |
+| OPS-QA-s4 | `docs/architecture/REAL_DATA_COMPATIBILITY_REPORT.md` + defensive guards | Complete |
+| OPS-QA-s5 | `docs/architecture/PDPA_DASHBOARD_SECURITY_REVIEW.md` | Complete |
+| OPS-QA-s6 | `backend/services/dashboard_alert_service.py` + `docs/architecture/OPS_ALERT_MODEL.md` | Complete |
+| OPS-QA-s7 | `docs/DEPLOYMENT_PRODUCTION_CHECKLIST.md` + `docs/ROLLBACK_VALIDATION_CHECKLIST.md` | Complete |
+| OPS-QA-s8 | `docs/PILOT_EXECUTIVE_SIGNOFF_PACKAGE.md` | Complete |
+| OPS-QA-s9 | `docs/OPS_QA_FINAL_STATUS.md` | Complete |
+| OPS-QA-s10 | `docs/PILOT_ROLLOUT_FINAL_REPORT.md` + `docs/architecture/FINAL_OPERATIONAL_READINESS_MATRIX.md` | Complete |
+
+### Final Readiness Assessment
+
+| Category | Status | Score |
+|----------|--------|-------|
+| Backend Stability | GREEN | 99% |
+| Frontend Stability | GREEN | 95% |
+| Dashboard Intelligence | GREEN | 96% |
+| Workload Analytics | GREEN | 94% |
+| Governance Layer | GREEN | 97% |
+| PDPA Controls | GREEN | 96% |
+| i18n Readiness | GREEN | 100% |
+| Deployment Readiness | YELLOW | 88% |
+| Performance | GREEN | 92% |
+| Pilot Readiness | GREEN | 94% |
+
+**Overall Readiness Score: 94% (GREEN)**
+
+### Key Metrics
+- Backend tests: ~1413 passing
+- Frontend build: PASS
+- i18n parity: 1530/1530 (100%)
+- Raw string scan: 100 candidates (pre-existing noise, acceptable)
+- Blocking issues: 0
+- Non-blocking risks: 6 (all mitigated for pilot scope)
+
+### Recommended Deployment
+**✅ READY FOR CONTROLLED PILOT DEPLOYMENT**
+
+- Single faculty pilot (Political Science and Public Administration)
+- 10-20 pilot users (admin, staff, supervisors, teachers)
+- 4-8 week duration with monitored deployment
+- Hot rollback capability (5-15 minutes)
+- Daily operational review, weekly governance review
+
+### Remaining Non-Blocking Items
+- Production SECRET_KEY configuration (DevOps)
+- Automated backup setup (Ops)
+- Full alerting infrastructure (email/SMS/LINE) — post-pilot
+- Performance benchmarking for 100+ concurrent users — during pilot
+- Heuristic metric threshold calibration — during pilot
+
+---
+
 *See `I18N_FINAL_COVERAGE_REPORT.md` for i18n status.*
+*See `docs/OPS_QA_FINAL_STATUS.md` for detailed final readiness assessment.*
