@@ -42,6 +42,7 @@ import { SettingsV2Page } from "@/pages/SettingsV2";
 import PlatformConfigurationPage from "@/pages/PlatformConfiguration";
 import OperationalHealthPage from "@/pages/OperationalHealth";
 import AuditExplorerPage from "@/pages/AuditExplorer";
+import WorkloadDutyAnalytics from "@/pages/WorkloadDutyAnalytics";
 import { StaffAvailabilityPage } from "@/pages/StaffAvailability";
 import { StudentsV2Page } from "@/pages/StudentsV2";
 import { StudentSearchPage } from "@/pages/StudentSearch";
@@ -150,6 +151,9 @@ export function App() {
             <Route path="/dashboard" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"]}><DashboardPage /></GuardedPage>} />
             <Route path="/schedule" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"]}><SchedulePage /></GuardedPage>} />
             <Route path="/analytics" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><ExecutiveAnalytics /></GuardedPage>} />
+            <Route path="/workload-duty-analytics" element={<GuardedPage roles={["admin"]}><WorkloadDutyAnalytics /></GuardedPage>} />
+            <Route path="/duty-workload" element={<GuardedPage roles={["staff", "dept_supervisor", "esq_head", "secretary"]}><WorkloadDutyAnalytics /></GuardedPage>} />
+            <Route path="/my-workload" element={<GuardedPage roles={["teacher"]}><WorkloadDutyAnalytics /></GuardedPage>} />
             <Route path="/governance" element={<GuardedPage roles={["admin", "esq_head", "secretary"]}><GovernanceCockpitPage /></GuardedPage>} />
             <Route path="/submissions" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "teacher"]}><SubmissionsPage /></GuardedPage>} />
             <Route path="/attendance" element={<GuardedPage roles={["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"]}><RoomAttendancePage /></GuardedPage>} />
