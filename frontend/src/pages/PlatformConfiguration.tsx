@@ -1,4 +1,4 @@
-import { usePlatformConfig } from "@/hooks/usePlatformConfig";
+import { usePlatformConfigurationPage } from "@/hooks/domain/usePlatformConfigurationPage";
 import { translate } from "@/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
@@ -49,7 +49,21 @@ function ConfigTable({
 }
 
 export default function PlatformConfiguration() {
-  const { data, isLoading, error } = usePlatformConfig();
+  const {
+    isLoading,
+    error,
+    data,
+    facultyConfigs,
+    workloadPolicies,
+    governanceFlows,
+    integrationContracts,
+    analyticsMetrics,
+    facultyHeaders,
+    workloadHeaders,
+    governanceHeaders,
+    integrationHeaders,
+    analyticsHeaders,
+  } = usePlatformConfigurationPage();
 
   if (isLoading) {
     return (
@@ -97,18 +111,13 @@ export default function PlatformConfiguration() {
       {/* Faculty Config */}
       <SectionCard title={translate("platformConfig.facultyConfig")}>
         <ConfigTable
-          headers={[
-            translate("platformConfig.table.id"),
-            translate("platformConfig.table.code"),
-            translate("platformConfig.table.nameTh"),
-            translate("platformConfig.table.nameEn"),
-            translate("platformConfig.table.active"),
-          ]}
-          rows={data.faculty_configs}
+          headers={facultyHeaders}
+          rows={facultyConfigs}
           render={(row: any, i) => (
             <tr key={i} className="border-b last:border-0">
               <td className="py-2 px-3">{row.faculty_id}</td>
               <td className="py-2 px-3">{row.code}</td>
+              <td className="py-2 px-3">{row.name}</td>
               <td className="py-2 px-3">{row.name_th}</td>
               <td className="py-2 px-3">{row.name_en}</td>
               <td className="py-2 px-3">
@@ -127,13 +136,8 @@ export default function PlatformConfiguration() {
       {/* Workload Policy */}
       <SectionCard title={translate("platformConfig.workloadPolicy")}>
         <ConfigTable
-          headers={[
-            translate("platformConfig.table.facultyId"),
-            translate("platformConfig.table.division"),
-            translate("platformConfig.table.maxSupervision"),
-            translate("platformConfig.table.crossDept"),
-          ]}
-          rows={(data as any).workload_policies}
+          headers={workloadHeaders}
+          rows={workloadPolicies}
           render={(row: any, i) => (
             <tr key={i} className="border-b last:border-0">
               <td className="py-2 px-3">{row.faculty_id ?? "—"}</td>
@@ -150,8 +154,8 @@ export default function PlatformConfiguration() {
       {/* Governance Flow */}
       <SectionCard title={translate("platformConfig.governanceFlow")}>
         <ConfigTable
-          headers={["Faculty ID", "Flow Name", "Requires Review", "Quorum"]}
-          rows={(data as any).governance_flows}
+          headers={governanceHeaders}
+          rows={governanceFlows}
           render={(row: any, i) => (
             <tr key={i} className="border-b last:border-0">
               <td className="py-2 px-3">{row.faculty_id ?? "—"}</td>
@@ -168,8 +172,8 @@ export default function PlatformConfiguration() {
       {/* Integration Contracts */}
       <SectionCard title={translate("platformConfig.integrationContracts")}>
         <ConfigTable
-          headers={["System", "Direction", "Domain", "Sync Mode", "Owner Unit"]}
-          rows={(data as any).integration_contracts}
+          headers={integrationHeaders}
+          rows={integrationContracts}
           render={(row: any, i) => (
             <tr key={i} className="border-b last:border-0">
               <td className="py-2 px-3">{row.system_code}</td>
@@ -185,8 +189,8 @@ export default function PlatformConfiguration() {
       {/* Analytics Metrics */}
       <SectionCard title={translate("platformConfig.analyticsMetrics")}>
         <ConfigTable
-          headers={["Code", "Name", "Category", "Unit", "PDPA Level"]}
-          rows={(data as any).analytics_metrics}
+          headers={analyticsHeaders}
+          rows={analyticsMetrics}
           render={(row: any, i) => (
             <tr key={i} className="border-b last:border-0">
               <td className="py-2 px-3 font-mono text-xs">{row.metric_code}</td>

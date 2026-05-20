@@ -1358,6 +1358,12 @@ export const th = {
   "platformConfig.table.ownerUnit": "หน่วยรับผิดชอบ",
   "platformConfig.table.category": "หมวดหมู่",
   "platformConfig.table.pdpaLevel": "ระดับ PDPA",
+  "platformConfig.table.name": "ชื่อ",
+  "platformConfig.table.unit": "หน่วย",
+
+  // Analytics
+  "analytics.noData": "ไม่มีข้อมูลการวิเคราะห์",
+  "analytics.scoreSuffix": "/ 100",
 
   // Operational Health
   "operationalHealth.noData": "ไม่มีข้อมูลสุขภาพ",

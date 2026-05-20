@@ -1,4 +1,4 @@
-import { useOperationalHealth } from "@/hooks/useOperationalHealth";
+import { useOperationalHealthPage } from "@/hooks/domain/useOperationalHealthPage";
 import { translate } from "@/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
@@ -29,7 +29,18 @@ function StatLine({
 }
 
 export default function OperationalHealth() {
-  const { data, isLoading, error } = useOperationalHealth();
+  const {
+    isLoading,
+    error,
+    backendHealthy,
+    analyticsScore,
+    analyticsBand,
+    analyticsBandColor,
+    integrationRatio,
+    healthTimestamp,
+    livenessLabel,
+    emptyStateKey,
+  } = useOperationalHealthPage();
 
   if (isLoading) {
     return (
@@ -50,31 +61,7 @@ export default function OperationalHealth() {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="p-6">
-        <EmptyState
-          icon={<Icon name="info" />}
-          title={translate("operationalHealth.noData")}
-          description={translate("operationalHealth.noDataDesc")}
-        />
-      </div>
-    );
-  }
-
-  const analyticsBand =
-    data.analytics_score == null
-      ? null
-      : data.analytics_score >= 75
-        ? "green"
-        : data.analytics_score >= 50
-          ? "amber"
-          : "red";
-
-  const integrationRatio =
-    data.integration_total > 0
-      ? `${data.integration_active}/${data.integration_total}`
-      : "—";
+  const analyticsOk = analyticsBand === "green" ? true : analyticsBand === "red" ? false : null;
 
   return (
     <div className="p-6 space-y-6">
@@ -88,18 +75,14 @@ export default function OperationalHealth() {
         </h2>
         <StatLine
           label={translate("operationalHealth.liveness")}
-          value={
-            data.backend_healthy
-              ? translate("operationalHealth.okStatus")
-              : translate("operationalHealth.unreachable")
-          }
-          ok={data.backend_healthy}
+          value={livenessLabel}
+          ok={backendHealthy}
         />
         <StatLine
           label={translate("operationalHealth.lastCheck")}
           value={
-            data.health_timestamp
-              ? new Date(data.health_timestamp).toLocaleTimeString()
+            healthTimestamp
+              ? new Date(healthTimestamp).toLocaleTimeString()
               : translate("common.notAvailable")
           }
         />
@@ -112,11 +95,11 @@ export default function OperationalHealth() {
         <StatLine
           label={translate("operationalHealth.healthScore")}
           value={
-            data.analytics_score != null
-              ? `${data.analytics_score} / 100`
+            analyticsScore != null
+              ? `${analyticsScore} ${translate("analytics.scoreSuffix")}`
               : translate("common.notAvailable")
           }
-          ok={analyticsBand === "green" ? true : analyticsBand === "red" ? false : null}
+          ok={analyticsOk}
         />
       </div>
 

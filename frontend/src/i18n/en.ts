@@ -1368,6 +1368,12 @@ export const en = {
   "platformConfig.table.ownerUnit": "Owner Unit",
   "platformConfig.table.category": "Category",
   "platformConfig.table.pdpaLevel": "PDPA Level",
+  "platformConfig.table.name": "Name",
+  "platformConfig.table.unit": "Unit",
+
+  // Analytics
+  "analytics.noData": "No analytics data",
+  "analytics.scoreSuffix": "/ 100",
 
   // Operational Health
   "operationalHealth.noData": "No health data",
