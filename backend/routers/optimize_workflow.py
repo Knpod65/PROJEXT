@@ -37,6 +37,7 @@ from auth_utils import (
     require_admin, require_staff_or_admin, get_current_user, log_action, hash_password, get_effective_role,
     require_view_all
 )
+from services.permission_service import can_run_optimization_recheck
 from config.policy import WORKFLOW_LOCK_TTL_SECONDS
 from services.audit_service import audit_event
 from services.exceptions import EMSDomainError, EMSPermissionError
@@ -409,12 +410,7 @@ def recheck_generated_schedule(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    if get_effective_role(current_user) not in (
-        models.UserRole.admin,
-        models.UserRole.staff,
-        models.UserRole.esq_head,
-        models.UserRole.secretary,
-    ):
+    if not can_run_optimization_recheck(current_user):
         raise HTTPException(403, "ไม่มีสิทธิ์ตรวจ recheck")
 
     report = run_optimization_recheck(db, session_id)
@@ -461,12 +457,7 @@ def get_latest_recheck_report(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    if get_effective_role(current_user) not in (
-        models.UserRole.admin,
-        models.UserRole.staff,
-        models.UserRole.esq_head,
-        models.UserRole.secretary,
-    ):
+    if not can_run_optimization_recheck(current_user):
         raise HTTPException(403, "ไม่มีสิทธิ์ดู recheck report")
     return run_optimization_recheck(db, session_id)
 

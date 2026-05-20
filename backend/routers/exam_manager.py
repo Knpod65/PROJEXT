@@ -31,6 +31,7 @@ from auth_utils import (
     is_view_all_role,
     assert_dept_access,
 )
+from services.permission_service import can_manage_schedule, can_impersonate_admin
 from exam_ownership import (
     OWNER_SOURCE_AUTO,
     OWNER_SOURCE_MANUAL,
@@ -310,7 +311,7 @@ def propose_manager(
         raise HTTPException(404, "ไม่พบ section")
 
     eff = get_effective_role(current_user)
-    is_admin = current_user.role == models.UserRole.admin
+    is_admin = can_impersonate_admin(current_user)
 
     # esq_head + secretary = read-only
     if is_view_all_role(current_user):

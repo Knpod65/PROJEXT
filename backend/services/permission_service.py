@@ -49,6 +49,11 @@ def can_use_view_as(user: "models.User") -> bool:
     return user.role == UserRole.admin
 
 
+def can_impersonate_admin(user: "models.User") -> bool:
+    """Alias for can_use_view_as - check if user has real admin role (not impersonated)."""
+    return can_use_view_as(user)
+
+
 # ── Data visibility ───────────────────────────────────────────
 
 def can_view_all(user: "models.User") -> bool:
@@ -202,3 +207,26 @@ def can_view_student_schedule(
     if role == UserRole.student:
         return user.id == requested_student_id
     return False
+
+
+# ── Optimization helpers ─────────────────────────────────────────
+
+def can_run_optimization_recheck(user: "models.User") -> bool:
+    """Run optimization recheck. admin, staff, esq_head, secretary."""
+    from models import UserRole
+    return _effective_role(user) in (
+        UserRole.admin,
+        UserRole.staff,
+        UserRole.esq_head,
+        UserRole.secretary,
+    )
+
+
+def can_view_governance_report(user: "models.User") -> bool:
+    """View governance reports. admin, esq_head, secretary."""
+    from models import UserRole
+    return _effective_role(user) in (
+        UserRole.admin,
+        UserRole.esq_head,
+        UserRole.secretary,
+    )

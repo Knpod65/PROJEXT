@@ -26,7 +26,7 @@ import { usePeriod } from "@/store/period.store";
 import { useUi } from "@/store/ui.store";
 import type { ScheduleWithSection } from "@/types/api";
 import { formatDate } from "@/utils/format";
-import { getEffectiveRole } from "@/utils/roles";
+import { canManageExamPeriods } from "@/utils/permissions";
 
 function UnavailabilityPanel({
   rows,
@@ -338,8 +338,7 @@ export function OptimizerPage() {
   const { toast } = useUi();
   const { activePeriod } = usePeriod();
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
-  const isAdmin = role === "admin";
+  const isAdmin = canManageExamPeriods(user);
 
   const [form, setForm] = useState({
     semester: activePeriod?.semester ?? "2",
