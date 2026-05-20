@@ -5,49 +5,26 @@ import { SettingsTermPreviewPanel } from "@/components/settings/SettingsTermPrev
 import { SettingsToggle } from "@/components/settings/SettingsToggle";
 import { SettingsViewAsSwitcher } from "@/components/settings/SettingsViewAsSwitcher";
 import { Button } from "@/components/ui/Button";
-import { useSettingsData } from "@/hooks/useSettingsData";
+import { useSettingsV2Page } from "@/hooks/domain/useSettingsV2Page";
 import { useI18n } from "@/i18n";
-import { useUi } from "@/store/ui.store";
 import { formatRole } from "@/utils/format";
 
 export function SettingsV2Page() {
   const { t } = useI18n();
-  const { toast } = useUi();
   const {
     accessSettings,
     activeRole,
     activeTheme,
     generalSettings,
     localizationSettings,
-    resetViewAs,
-    switchViewAs,
-    updateAccessSetting,
+    viewAsOptions,
     updateGeneralSetting,
     updateLocalizationSetting,
-    viewAsOptions,
-  } = useSettingsData();
-
-  const handleSaveDraft = (label: string) => {
-    toast(t("settings.toastSaved", { label }), "success");
-  };
-
-  const handleSwitchViewAs = async (role: Parameters<typeof switchViewAs>[0]) => {
-    try {
-      await switchViewAs(role);
-      toast(t("settings.viewAsSwitched", { role: formatRole(role) }), "info");
-    } catch (error) {
-      toast(error instanceof Error ? error.message : t("errors.switchViewAs"), "error");
-    }
-  };
-
-  const handleResetViewAs = async () => {
-    try {
-      await resetViewAs();
-      toast(t("settings.viewAsReset"), "info");
-    } catch (error) {
-      toast(error instanceof Error ? error.message : t("errors.resetViewAs"), "error");
-    }
-  };
+    updateAccessSetting,
+    handleSaveDraft,
+    handleSwitchViewAs,
+    handleResetViewAs,
+  } = useSettingsV2Page();
 
   return (
     <div className="page-stack page-stack--spacious">
@@ -58,7 +35,7 @@ export function SettingsV2Page() {
           <p className="page-hero__description">{t("settings.heroDescription")}</p>
         </div>
         <div className="page-hero__actions">
-          <Button type="button" variant="outline" onClick={handleResetViewAs}>
+          <Button type="button" variant="outline" onClick={() => void handleResetViewAs()}>
             {t("settings.resetViewAs")}
           </Button>
           <Button type="button" onClick={() => handleSaveDraft(t("settings.saveDraft"))}>

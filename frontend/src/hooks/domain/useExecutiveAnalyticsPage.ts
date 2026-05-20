@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useExecutiveAnalytics } from "@/hooks/useExecutiveAnalytics";
 import { translate } from "@/i18n";
 import type { ExecutiveDashboardSummary } from "@/types/analytics";
+import { getBandColor, getSeverityBandColor, getPriorityBandColor } from "@/utils/presenters";
 
 export interface UseExecutiveAnalyticsPageReturn {
   isLoading: boolean;
@@ -22,28 +23,15 @@ export function useExecutiveAnalyticsPage(): UseExecutiveAnalyticsPageReturn {
   const { data, isLoading, error, refetch } = useExecutiveAnalytics();
 
   const healthBandColor = useMemo(() => {
-    if (!data) return "bg-green-100 text-green-800";
-    return data.risk_band === "green"
-      ? "bg-green-100 text-green-800"
-      : data.risk_band === "amber"
-        ? "bg-yellow-100 text-yellow-800"
-        : "bg-red-100 text-red-800";
+    return getBandColor(data?.risk_band);
   }, [data]);
 
   const severityBandColor = (severity: string) => {
-    return severity === "high"
-      ? "bg-red-100 text-red-800"
-      : severity === "medium"
-        ? "bg-yellow-100 text-yellow-800"
-        : "bg-green-100 text-green-800";
+    return getSeverityBandColor(severity);
   };
 
   const priorityBandColor = (priority: string) => {
-    return priority === "high"
-      ? "bg-red-100 text-red-800"
-      : priority === "medium"
-        ? "bg-yellow-100 text-yellow-800"
-        : "bg-green-100 text-green-800";
+    return getPriorityBandColor(priority);
   };
 
   const kpiGrid = useMemo(() => {

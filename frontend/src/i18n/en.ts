@@ -323,6 +323,8 @@ export const en = {
   "dashboard.noActivity": "No recent exam operations activity yet.",
 
   "settings.toastSaved": "{label} saved in preview mode.",
+  "settings.saved": "Settings saved.",
+  "settings.saveFailed": "Failed to save settings.",
   "settings.viewAsSwitched": "Now viewing as {role}.",
   "settings.viewAsReset": "Returned to the default admin preview.",
   "settings.heroEyebrow": "Settings and View-As V2",

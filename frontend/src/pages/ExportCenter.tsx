@@ -1,26 +1,12 @@
-import { useCallback } from "react";
-
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
-import { useAsyncData } from "@/hooks/useAsyncData";
+import { useExportCenterPage } from "@/hooks/domain/useExportCenterPage";
 import { useI18n } from "@/i18n";
-import { buildDocumentExportUrl } from "@/services/documents.service";
-import {
-  getPaperDistributionAssignments,
-  getStaffWorkloadReport,
-  type PaperDistributionAssignmentRow,
-  type WorkloadSummaryRow,
-} from "@/services/optimizer.service";
-import { useAuth } from "@/store/auth.store";
-import { formatDate, formatNumber } from "@/utils/format";
-import { getEffectiveRole } from "@/utils/roles";
-
-function openExport(url: string) {
-  window.open(url, "_blank", "noopener,noreferrer");
-}
+import { type PaperDistributionAssignmentRow, type WorkloadSummaryRow } from "@/services/optimizer.service";
+import { formatDate } from "@/utils/format";
 
 function ExportCard({
   title,
@@ -48,111 +34,39 @@ function ExportCard({
 
 export function ExportCenterPage() {
   const { t } = useI18n();
-  const { user } = useAuth();
-  const effectiveRole = getEffectiveRole(user);
-  const isAdmin = effectiveRole === "admin";
-
-  const workloadLoader = useCallback(() => getStaffWorkloadReport(), []);
-  const distributionLoader = useCallback(() => getPaperDistributionAssignments(), []);
-
-  const workloadState = useAsyncData(workloadLoader, [workloadLoader]);
-  const distributionState = useAsyncData(distributionLoader, [distributionLoader]);
-
-  const workloadSummary = workloadState.data?.summary ?? [];
-  const distributionRows = distributionState.data?.rows ?? [];
+  const {
+    stats,
+    exportCards,
+    isAdmin,
+    workloadLoading,
+    workloadSummary,
+    distributionLoading,
+    distributionRows,
+  } = useExportCenterPage();
 
   return (
     <div className="page-stack">
       <Card title={t("exportCenter.title")} subtitle={t("exportCenter.subtitle")}>
         <div className="summary-grid">
-          <div className="summary-box">
-            <span>{t("exportCenter.stats.staffWorkloadRows")}</span>
-            <strong>{formatNumber(workloadSummary.length)}</strong>
-          </div>
-          <div className="summary-box">
-            <span>{t("exportCenter.stats.paperDistributionSlots")}</span>
-            <strong>{formatNumber(distributionRows.length)}</strong>
-          </div>
-          <div className="summary-box">
-            <span>{t("exportCenter.stats.totalDutyAssignments")}</span>
-            <strong>{formatNumber(workloadState.data?.total_assignments ?? 0)}</strong>
-          </div>
-          <div className="summary-box">
-            <span>{t("exportCenter.stats.fairnessSnapshot")}</span>
-            <strong>{workloadState.data?.fairness_score ?? 0}</strong>
-          </div>
+          {stats.map((stat) => (
+            <div key={stat.label} className="summary-box">
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+            </div>
+          ))}
         </div>
       </Card>
 
       <Card title={t("exportCenter.channels.title")} subtitle={t("exportCenter.channels.subtitle")}>
         <div className="import-summary-grid">
-          <ExportCard
-            title={t("exportCenter.cards.examDocuments.title")}
-            description={t("exportCenter.cards.examDocuments.description")}
-            actions={[
-              { label: t("exportCenter.actions.allDocuments"), onClick: () => openExport(buildDocumentExportUrl({ document_type: "all" })) },
-              { label: t("exportCenter.actions.participantCodes"), onClick: () => openExport(buildDocumentExportUrl({ document_type: "participant_codes" })) },
-              { label: t("exportCenter.actions.signatureSheets"), onClick: () => openExport(buildDocumentExportUrl({ document_type: "signature_sheet" })) },
-              { label: t("exportCenter.actions.coverSheets"), onClick: () => openExport(buildDocumentExportUrl({ document_type: "envelope_cover" })) },
-            ]}
-          />
-          <ExportCard
-            title={t("exportCenter.cards.optimizationResults.title")}
-            description={t("exportCenter.cards.optimizationResults.description")}
-            actions={[
-              { label: t("exportCenter.actions.schedulePdf"), onClick: () => openExport("/api/exports/schedule") },
-              { label: t("exportCenter.actions.scheduleExcel"), onClick: () => openExport("/api/exports/schedule-excel") },
-              { label: t("exportCenter.actions.paperDistributionPdf"), onClick: () => openExport("/api/exports/paper-distribution-pdf") },
-              { label: t("exportCenter.actions.paperDistributionExcel"), onClick: () => openExport("/api/exports/paper-distribution-excel") },
-            ]}
-          />
-          <ExportCard
-            title={t("exportCenter.cards.staffWorkload.title")}
-            description={t("exportCenter.cards.staffWorkload.description")}
-            actions={[
-              { label: t("exportCenter.actions.summaryPdf"), onClick: () => openExport("/api/exports/workload-summary-pdf") },
-              { label: t("exportCenter.actions.workloadSummary"), onClick: () => openExport("/api/exports/workload-summary-excel") },
-              { label: t("exportCenter.actions.dutyDetail"), onClick: () => openExport("/api/exports/workload-detail-excel") },
-              { label: t("exportCenter.actions.fairnessSheet"), onClick: () => openExport("/api/exports/workload-summary-excel") },
-            ]}
-          />
-          <ExportCard
-            title={t("exportCenter.cards.copyReports.title")}
-            description={t("exportCenter.cards.copyReports.description")}
-            actions={[
-              { label: t("exportCenter.actions.openCopyCount"), onClick: () => { window.location.href = "/copy"; } },
-            ]}
-          />
-          {isAdmin ? (
-            <>
-              <ExportCard
-                title={t("exportCenter.cards.workflowReports.title")}
-                description={t("exportCenter.cards.workflowReports.description")}
-                actions={[
-                  { label: t("exportCenter.actions.openWorkflow"), onClick: () => { window.location.href = "/workflow"; } },
-                ]}
-              />
-              <ExportCard
-                title={t("exportCenter.cards.externalExams.title")}
-                description={t("exportCenter.cards.externalExams.description")}
-                actions={[
-                  { label: t("exportCenter.actions.openExternalExams"), onClick: () => { window.location.href = "/external"; } },
-                ]}
-              />
-              <ExportCard
-                title={t("exportCenter.cards.historicalSchedule.title")}
-                description={t("exportCenter.cards.historicalSchedule.description")}
-                actions={[
-                  { label: t("exportCenter.actions.openHistoricalReview"), onClick: () => { window.location.href = "/historical-schedules"; } },
-                ]}
-              />
-            </>
-          ) : null}
+          {exportCards.map((card) => (
+            <ExportCard key={card.title} title={card.title} description={card.description} actions={card.actions} />
+          ))}
         </div>
       </Card>
 
       <Card title={t("exportCenter.workload.title")} subtitle={t("exportCenter.workload.subtitle")}>
-        {workloadState.loading ? (
+        {workloadLoading ? (
           <div className="page-stack">
             <div className="dashboard-skeleton" />
           </div>
@@ -239,7 +153,7 @@ export function ExportCenterPage() {
           ]}
           emptyTitle={t("exportCenter.paperDistribution.emptyTitle")}
           emptyDescription={t("exportCenter.paperDistribution.emptyDescription")}
-          loading={distributionState.loading}
+          loading={distributionLoading}
           rowKey={(row) => row.id}
           rows={distributionRows}
           scrollThreshold={5}

@@ -319,6 +319,8 @@ export const th = {
   "dashboard.noActivity": "ยังไม่มีกิจกรรมการปฏิบัติงานสอบล่าสุด",
 
   "settings.toastSaved": "บันทึก {label} ในโหมดตัวอย่างแล้ว",
+  "settings.saved": "บันทึกการตั้งค่าแล้ว",
+  "settings.saveFailed": "บันทึกไม่สำเร็จ",
   "settings.viewAsSwitched": "กำลังดูเป็นบทบาท {role}",
   "settings.viewAsReset": "กลับสู่ตัวอย่างผู้ดูแลระบบเริ่มต้นแล้ว",
   "settings.heroEyebrow": "ตั้งค่าและ View-As V2",

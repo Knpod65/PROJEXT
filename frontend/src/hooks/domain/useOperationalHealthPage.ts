@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useOperationalHealth } from "@/hooks/useOperationalHealth";
 import { translate } from "@/i18n";
+import { getBandColor, getRiskBand } from "@/utils/presenters";
 
 export interface UseOperationalHealthPageReturn {
   isLoading: boolean;
@@ -30,17 +31,11 @@ export function useOperationalHealthPage(): UseOperationalHealthPageReturn {
   const analyticsScore = data?.analytics_score ?? null;
 
   const analyticsBand = useMemo(() => {
-    if (analyticsScore === null) return null;
-    return analyticsScore >= 75 ? "green" : analyticsScore >= 50 ? "amber" : "red";
+    return getRiskBand(analyticsScore);
   }, [analyticsScore]);
 
   const analyticsBandColor = useMemo(() => {
-    if (!analyticsBand) return "";
-    return analyticsBand === "green"
-      ? "bg-green-100 text-green-800"
-      : analyticsBand === "amber"
-        ? "bg-yellow-100 text-yellow-800"
-        : "bg-red-100 text-red-800";
+    return getBandColor(analyticsBand);
   }, [analyticsBand]);
 
   const integrationRatio = useMemo(() => {

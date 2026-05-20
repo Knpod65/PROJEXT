@@ -1,7 +1,7 @@
 # Frontend MVC-Style Guide
 ## EMS Academic Operations Platform - 2026-05-12
 
-> Objective: map the Laravel “view/controller/model” mindset into the current React + TypeScript frontend without changing frameworks.
+> Objective: map the Laravel "view/controller/model" mindset into the current React + TypeScript frontend without changing frameworks.
 
 ---
 
@@ -67,6 +67,7 @@ Components should not:
 - `frontend/src/services/auth.service.ts` and `frontend/src/store/auth.store.tsx` create a clean auth/session flow.
 - `frontend/src/utils/permissions.ts` provides a growing semantic permission layer.
 - Several pages already use controller-like hooks such as `useAsyncData`, `useRoomOperationsData`, `useUsersData`, and `usePrintQueueData`.
+- **U1 COMPLETE:** Enterprise pages now use domain hooks: GovernanceCockpit, OptimizationTraceExplorer, AuditExplorer, ExecutiveAnalytics, PlatformConfiguration, OperationalHealth, ExportCenter, Settings, SettingsV2.
 
 ### Partially aligned
 - Many pages consume services correctly but still contain large controller blocks internally.
@@ -99,6 +100,8 @@ These files already resemble a repository/client layer in Laravel terms.
 - `frontend/src/hooks/useRoomOperationsData.ts`
 - `frontend/src/hooks/usePrintQueueData.ts`
 - `frontend/src/hooks/useUsersData.ts`
+- `frontend/src/hooks/domain/useGovernanceCockpit.ts`
+- `frontend/src/hooks/domain/useExecutiveAnalyticsPage.ts`
 
 These are the best starting patterns for future page thinning.
 
@@ -147,7 +150,7 @@ This file already behaves like a centralized auth/session controller for the fro
 ### Standard
 - Use `frontend/src/utils/permissions.ts` for semantic access rules.
 - Use `frontend/src/utils/roles.ts` only for low-level role extraction helpers.
-- Let pages ask “can this user do X?” instead of checking raw role strings.
+- Let pages ask "can this user do X?" instead of checking raw role strings.
 
 ### Examples
 
@@ -168,9 +171,12 @@ if (effectiveRole === "admin" || effectiveRole === "staff") {
 ```
 
 ### Current remaining cleanup targets
+- `frontend/src/pages/Checkins.tsx`
+- `frontend/src/pages/MyExam.tsx`
 - `frontend/src/pages/Optimizer.tsx`
-- `frontend/src/pages/ExportCenter.tsx`
-- `frontend/src/pages/ExamManager.tsx`
+- `frontend/src/pages/RoomManagementV2.tsx`
+- `frontend/src/pages/WorkflowV2.tsx`
+- `frontend/src/pages/External.tsx`
 - `frontend/src/hooks/useSwapsData.ts`
 
 ---
