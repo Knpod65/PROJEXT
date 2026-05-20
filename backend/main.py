@@ -19,6 +19,7 @@ from cmu_sso import router as sso_router
 from config.policy import ALLOWED_ORIGINS, LOGIN_RATE_MAX, LOGIN_RATE_WINDOW
 from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing, historical_schedules, analytics as analytics_router
 from routers import scheduler, exports_excel, health as health_router
+from routers import dashboard_intelligence
 import models
 import logging
 import os
@@ -221,6 +222,7 @@ app.include_router(exam_manager.router,      prefix="/api/exam-manager",    tags
 app.include_router(historical_schedules.router, prefix="/api/historical-schedules", tags=["historical-schedules"])
 app.include_router(scheduler.router,         prefix="/api/scheduler",       tags=["scheduler"])
 app.include_router(exports_excel.router,     prefix="/api/exports",         tags=["exports-excel"])
+app.include_router(dashboard_intelligence.router, tags=["dashboard-intelligence"])
 
 # Analytics router (D4.9)
 app.include_router(analytics_router.router, tags=["analytics"])

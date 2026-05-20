@@ -475,6 +475,39 @@ class DashboardStats(BaseModel):
     recent_logs: List[dict] = []
 
 
+# ─── Dashboard Intelligence (OPS-DASH) ─────────────────────────
+
+class AdminIntelligenceDashboard(BaseModel):
+    role: str
+    overall_health_score: Optional[float] = None
+    overall_risk_band: Optional[str] = None
+    last_computed_at: Optional[str] = None
+    groups: list[dict]                          # list[DashboardMetricGroup] as plain dict
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class ExecutiveDashboardSummary(BaseModel):
+    overall_health_score: float
+    risk_band: str
+    optimization_quality_avg: float
+    governance_blocker_count: int
+    publication_ready_count: int
+    workload_balance_score: float
+    room_utilization_score: float
+    pdpa_alert_count: int
+    top_risks: List[dict[str, str]] = []
+    recommended_actions: List[dict[str, str]] = []
+
+
+class RoleDashboardPayload(BaseModel):
+    role: str
+    role_label_i18n_key: str
+    summary: dict          # DashboardRoleSummary as plain dict
+    groups: list[dict]     # list[DashboardMetricGroup] as plain dict
+    unauthorized: bool
+
+
+
 # ─── Audit ────────────────────────────────────────────────────
 class AuditOut(BaseModel):
     id: int

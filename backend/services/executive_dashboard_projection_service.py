@@ -331,6 +331,44 @@ def _risk_band(health: float) -> str:
 _RISK_ALERT_MESSAGE = "[REDACTED]"
 
 
+# ── Public class wrapper ─────────────────────────────────────────────────────────
+
+class ExecutiveDashboardProjectionService:
+    """Namespace class providing a stable class-based API for OPS-DASH consumers.
+
+    The underlying logic lives in the module-level ``project_executive_dashboard``
+    function. This class simply delegates to it so that imports of the form
+    ``ExecutiveDashboardProjectionService.build_executive_dashboard_summary(...)``
+    resolve consistently across analytics and dashboard-intelligence routers.
+    """
+
+    @staticmethod
+    def build_executive_dashboard_summary(
+        workload: dict | None = None,
+        governance: dict | None = None,
+        room: dict | None = None,
+        pdpa: list | None = None,
+    ) -> dict:
+        """Return an ``ExecutiveDashboardSummary``-shaped dict.
+
+        Maps dashboard-intelligence kwargs to the underlying ``project_executive_dashboard``
+        call which expects ``(workload_map, room_schedules, rooms, governance_snapshots,
+        audit_logs_recent, optimization_quality, recent_import_sessions)``.
+
+        All missing inputs fall back to empty/default values; the underlying function
+        returns safe defaults rather than raising.
+        """
+        return project_executive_dashboard(
+            workload_map=workload or {},
+            room_schedules=room.get("rooms", []) if isinstance(room, dict) else [],
+            rooms=room.get("rooms", []) if isinstance(room, dict) else [],
+            governance_snapshots=governance.get("governance_decisions", []) if isinstance(governance, dict) else [],
+            audit_logs_recent=pdpa if pdpa else [],
+            optimization_quality=None,
+            recent_import_sessions=None,
+        )
+
+
 def _build_top_risks(
     quality_proj: dict,
     gov_proj: dict,

@@ -81,3 +81,47 @@ def assert_production_secrets() -> None:
         secret = os.getenv("SECRET_KEY", "")
         if not secret or len(secret) < 32 or secret == "dev-secret-key-change-me":
             raise RuntimeError("SECRET_KEY must be set to a random 32+ char string in production")
+
+
+# ── PDPARuntimeGuardService class wrapper ───────────────────────────────────────
+
+class PDPARuntimeGuardService:
+    """Namespace class providing a stable class-based API for OPS-DASH consumers.
+
+    All underlying logic lives in the module-level functions above.
+    """
+
+    @staticmethod
+    def validate_analytics_not_exposing_pii(data: dict[str, Any]) -> bool:
+        return validate_analytics_not_exposing_pii(data)
+
+    @staticmethod
+    def validate_export_payload(data: dict[str, Any]) -> bool:
+        return validate_export_payload(data)
+
+    @staticmethod
+    def validate_config_for_secrets(data: dict[str, Any]) -> bool:
+        return validate_config_for_secrets(data)
+
+    @staticmethod
+    def validate_trace_for_unsafe_fields(data: dict[str, Any]) -> bool:
+        return validate_trace_for_unsafe_fields(data)
+
+    @staticmethod
+    def is_production_environment() -> bool:
+        return is_production_environment()
+
+    @staticmethod
+    def assert_production_secrets() -> None:
+        return assert_production_secrets()
+
+    @staticmethod
+    def get_recent_alerts(db=None, hours: int = 24) -> list[dict[str, Any]]:
+        """Return a list of recent PDPA-relevant alert dicts.
+
+        This is a safe stub for OPS-DASH — returns an empty list by default.
+        The actual alert source requires the audit log table which is
+        pre-populated outside this module's scope; callers should wrap
+        calls in try/except.
+        """
+        return []
