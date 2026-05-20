@@ -89,6 +89,9 @@ Every metric must carry these fields:
 | `avg_invigilation_load` | Avg. total slots or sections per staff member | Redistribute if avg > threshold | admin / staff | internal | daily |
 | `overloaded_staff_count` | Staff carrying > threshold load | Reassign 1+ invigilation blocks | admin / staff | internal | daily |
 | `supervision_fill_rate` | % of sections with a confirmed supervisor | Assign remaining supervisors | admin / staff | internal | daily |
+| `workload_combined_duty_count` | Combined invigilation and paper-distribution burden across the visible population | Open workload duty analytics and rebalance concentrated duty load | admin / staff | internal | daily |
+| `workload_imbalance_score` | Fairness risk score from workload duty analytics | Review `/workload-duty-analytics` and redistribute overloaded duties | admin / staff | internal | daily |
+| `workload_time_slot_peak` | Highest duty concentration by schedule window | Shift or redistribute duties around the busiest time slot | admin / staff | internal | daily |
 
 #### Group 5 — Room / Capacity
 
@@ -164,6 +167,8 @@ Every metric must carry these fields:
 | `my_distribution_slots` | Print distribution tasks I am assigned to | Prepare packages; scan QR on handover | public | on-event |
 | `swap_requests_pending_my_action` | Swap requests awaiting my approval or rejection | Approve or reject within allowed window | internal | per-event |
 | `room_keeper_duties` | Room open/close duty slots assigned today | Unlock / lock rooms at scheduled times | public | real-time |
+| `my_combined_duty_count` | Combined invigilation and distribution duty load for my visible route | Open `/duty-workload` to confirm whether the current burden needs redistribution | internal | daily |
+| `my_time_slot_load` | Which time slot carries my heaviest duty concentration | Prepare materials early for the busiest operational block | internal | daily |
 
 **PDPA Rules:** no student names, no teacher names, no exam paper contents.
 
@@ -184,6 +189,8 @@ Every metric must carry these fields:
 | `submission_rejection_reason` | If rejected — why | Fix and resubmit before deadline | public | per-event |
 | `room_assignment` | Room for each upcoming exam | Confirm room and address is correct | public | daily |
 | `days_to_next_submission_deadline` | Days until submission lock | Submit early if deadline is imminent | public | daily |
+| `my_combined_duty_count` | Combined invigilation and paper-distribution burden for the current teacher | Review `/my-workload` and request redistribution if the burden becomes unreasonable | internal | daily |
+| `my_workload_imbalance_context` | Whether my duty load appears above or below the visible fairness baseline | Use workload analytics during staffing discussions with admin or supervisor | internal | daily |
 
 **PDPA Rules:** own courses / sections only. No other teacher names. No student PII.
 
@@ -240,6 +247,8 @@ Every metric must carry these fields:
 | `dept_overloaded_staff_count` | Staff in my dept over the load threshold | Talk to admin about redistribution | internal | weekly |
 | `dept_conflict_count` | Scheduling conflicts only within my dept | Fix room/time assignment for conflicting sections | internal | per run |
 | `dept_supervision_fill_rate` | % of my dept sections with a confirmed supervisor | Assign missing supervisors | internal | daily |
+| `dept_combined_duty_count` | Combined invigilation and distribution burden across the visible department workload view | Use `/duty-workload` to inspect and rebalance department duty pressure | internal | daily |
+| `dept_workload_imbalance_score` | Fairness score for the visible department-scoped duty distribution | Escalate high imbalance to admin for redistribution | internal | weekly |
 
 **PDPA Rules:** own department data only. No cross-dept student or teacher PII.
 
@@ -326,6 +335,8 @@ Every metric must carry these fields:
 | `optimization_quality_trend` | Quality trend vs. previous period | Investigate if trending down | public | weekly |
 | `top_risks_summary` | Text summary of the most impactful risks this period | Assign action owners; schedule follow-up review | public | weekly |
 | `next_milestone_date` | Next key deadline (e.g. print, signature, publish) | Confirm preparation is on track | public | weekly |
+| `workload_imbalance_score` | Aggregate duty fairness risk across invigilation and paper distribution | Review workload analytics before staffing stress becomes a publication blocker | internal | daily |
+| `combined_duty_load_trend` | Overall operational duty accumulation over the exam period | Ask admin to review peak periods and rebalance overloaded windows | internal | weekly |
 
 **PDPA Rules:** aggregate health scores only. No individual staff, teacher, or student identifiers.
 
@@ -356,7 +367,7 @@ Every metric must carry these fields:
 | examOperations | `dashboard_service.get_dashboard_stats()` | `schedule_query_service` |
 | optimizationQuality | `executive_dashboard_projection_service` + `optimization_quality_service` | `optimization_trace_service` (partial) |
 | governanceApproval | `governance_analytics_service.compute_governance_analytics()` | `workflow_reporting_service` |
-| staffWorkload | `workload_analytics_service` | `supervision` table counts |
+| staffWorkload | `GET /api/dashboard/workload-duty-analytics` via `workload_duty_analytics_service` | `workload_analytics_service` + `supervision` table counts |
 | roomCapacity | `room_utilization_analytics_service` | `schedule_query_service` + room queries |
 | teacherSubmission | `dashboard_service.get_analytics()` | `submission_service` |
 | printExport | `export_service` / `export_excel_service` | `ExamSchedule.print_duplex` flags |
