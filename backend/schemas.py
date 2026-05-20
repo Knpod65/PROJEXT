@@ -507,6 +507,68 @@ class RoleDashboardPayload(BaseModel):
     unauthorized: bool
 
 
+class WorkloadDutyAnalyticsFilters(BaseModel):
+    semester: Optional[str] = None
+    academic_year: Optional[str] = None
+    period_id: Optional[int] = None
+    exam_type: Optional[str] = None
+    role_group: str = "all"
+    person_id: Optional[str] = None
+    duty_type: str = "all"
+
+
+class WorkloadDutyAnalyticsPerson(BaseModel):
+    person_id: str
+    display_name: str
+    role_group: str
+    invigilation_count: int
+    distribution_count: int
+    combined_count: int
+
+
+class WorkloadDutyAnalyticsDailyPoint(BaseModel):
+    date: str
+    invigilation_count: int
+    distribution_count: int
+    combined_count: int
+    cumulative_invigilation: int
+    cumulative_distribution: int
+    cumulative_combined: int
+
+
+class WorkloadDutyAnalyticsTimeSlotPoint(BaseModel):
+    time_slot: str
+    invigilation_count: int
+    distribution_count: int
+    combined_count: int
+
+
+class WorkloadDutyAnalyticsSummary(BaseModel):
+    total_people: int
+    total_invigilation_duties: int
+    total_distribution_duties: int
+    total_combined_duties: int
+    average_duties_per_person: float
+    max_duties: int
+    imbalance_score: float
+
+
+class WorkloadDutyAnalyticsFairness(BaseModel):
+    imbalance_score: float
+    overloaded_people: list[WorkloadDutyAnalyticsPerson] = []
+    underloaded_people: list[WorkloadDutyAnalyticsPerson] = []
+    risk_band: str
+
+
+class WorkloadDutyAnalyticsPayload(BaseModel):
+    filters: WorkloadDutyAnalyticsFilters
+    summary: WorkloadDutyAnalyticsSummary
+    by_person: list[WorkloadDutyAnalyticsPerson]
+    daily_series: list[WorkloadDutyAnalyticsDailyPoint]
+    time_slot_series: list[WorkloadDutyAnalyticsTimeSlotPoint]
+    fairness: WorkloadDutyAnalyticsFairness
+
+
 
 # ─── Audit ────────────────────────────────────────────────────
 class AuditOut(BaseModel):

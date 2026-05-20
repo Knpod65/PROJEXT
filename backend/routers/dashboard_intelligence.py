@@ -10,7 +10,7 @@ Endpoints (all additive, no existing routes modified):
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 
@@ -18,9 +18,13 @@ from database import get_db
 import models, schemas
 from auth_utils import get_current_user, get_effective_role
 from policies.dashboard_metric_policy import DashboardMetricPolicy
+from policies.workload_duty_analytics_policy import can_view_workload_dashboard
 from services.dashboard_metric_service import DashboardMetricService
 from services.admin_dashboard_intelligence_service import AdminDashboardIntelligenceService
 from services.role_dashboard_service import RoleDashboardService
+from services.workload_duty_analytics_service import WorkloadDutyAnalyticsService
+from serializers.workload_duty_analytics_serializer import WorkloadDutyAnalyticsSerializer
+from validators.workload_duty_analytics_validator import WorkloadDutyAnalyticsValidator
 from services.health_service import get_system_health
 from services.pdpa_runtime_guard_service import PDPARuntimeGuardService
 
@@ -73,6 +77,52 @@ def get_my_role_summary(
     role = _eff(current_user)
     payload = RoleDashboardService.build_role_dashboard(role, {"db": db, "user": current_user})
     return payload
+
+
+# ── workload-duty-analytics ───────────────────────────────────────────────
+
+@router.get("/workload-duty-analytics", response_model=schemas.WorkloadDutyAnalyticsPayload)
+def get_workload_duty_analytics(
+    semester: str | None = None,
+    academic_year: str | None = None,
+    period_id: int | None = None,
+    exam_type: str | None = None,
+    role_group: str = "all",
+    person_id: str | None = None,
+    include_teachers: bool = True,
+    include_staff: bool = True,
+    duty_type: str = "all",
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    normalized = WorkloadDutyAnalyticsValidator.normalize_filters(
+        semester=semester,
+        academic_year=academic_year,
+        period_id=period_id,
+        exam_type=exam_type,
+        role_group=role_group,
+        person_id=person_id,
+        include_teachers=include_teachers,
+        include_staff=include_staff,
+        duty_type=duty_type,
+    )
+    if not can_view_workload_dashboard(current_user, normalized):
+        raise HTTPException(status_code=403, detail="ไม่ได้รับอนุญาตให้ดู workload dashboard")
+
+    payload = WorkloadDutyAnalyticsService.build_workload_duty_analytics(
+        db,
+        current_user,
+        semester=normalized["semester"],
+        academic_year=normalized["academic_year"],
+        period_id=normalized["period_id"],
+        exam_type=normalized["exam_type"],
+        role_group=normalized["role_group"],
+        person_id=normalized["person_id"],
+        include_teachers=normalized["include_teachers"],
+        include_staff=normalized["include_staff"],
+        duty_type=normalized["duty_type"],
+    )
+    return WorkloadDutyAnalyticsSerializer.serialize_payload(payload)
 
 
 # ── ops-health ─────────────────────────────────────────────────────────────
