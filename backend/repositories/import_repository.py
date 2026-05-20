@@ -6,7 +6,8 @@ Owns:
 - ImportRowLog queries
 - Session stats aggregation
 """
-from sqlalchemy.orm import Session, and_, func, joinedload
+from sqlalchemy import and_, case, func
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 import models
 from datetime import datetime, timezone

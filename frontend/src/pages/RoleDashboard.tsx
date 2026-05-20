@@ -3,7 +3,7 @@
 import type { RoleDashboardPayload } from "@/types/dashboardMetrics";
 import { useRoleDashboard } from "@/hooks/domain/useRoleDashboard";
 import { useAuth } from "@/store/auth.store";
-import { translate } from "@/i18n";
+import { translate, translateWithFallback } from "@/i18n";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
@@ -30,7 +30,7 @@ function MetricCardRow({ card }: { card: ReturnType<typeof presentMetricCard> })
       <div
         className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${card.severityColorClass}`}
       >
-        {card.severity}
+        {translateWithFallback(`severity.${card.severity}`, card.severity)}
       </div>
       {card.whyItMatters && (
         <p className="text-xs text-gray-500 line-clamp-2">{card.whyItMatters}</p>

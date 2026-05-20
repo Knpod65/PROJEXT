@@ -3,6 +3,7 @@ import { renderTabButton } from "@/utils/presenters/auditPresenter";
 import { translate } from "@/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { Fragment } from "react";
 
 export default function AuditExplorer() {
   const {
@@ -38,13 +39,15 @@ export default function AuditExplorer() {
 
       <div className="border-b mb-4">
         <div className="flex">
-          {tabKeys.map(({ key, labelKey }) =>
-            renderTabButton({
-              active: activeTab === key,
-              onClick: () => setActiveTab(key),
-              label: translate(labelKey),
-            }),
-          )}
+          {tabKeys.map(({ key, labelKey }) => (
+            <Fragment key={key}>
+              {renderTabButton({
+                active: activeTab === key,
+                onClick: () => setActiveTab(key),
+                label: translate(labelKey),
+              })}
+            </Fragment>
+          ))}
         </div>
       </div>
 

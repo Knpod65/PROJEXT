@@ -28,7 +28,7 @@ from validators.workload_duty_analytics_validator import WorkloadDutyAnalyticsVa
 from services.health_service import get_system_health
 from services.pdpa_runtime_guard_service import PDPARuntimeGuardService
 
-router = APIRouter(prefix="/dashboard", tags=["dashboard-intelligence"])
+router = APIRouter(tags=["dashboard-intelligence"])
 
 
 # ── helpers ────────────────────────────────────────────────────────────────

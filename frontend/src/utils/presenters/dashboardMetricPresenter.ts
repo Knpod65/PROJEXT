@@ -27,19 +27,20 @@ export function presentMetricCard(metric: DashboardMetric): MetricCardDisplay {
   const why = translateWithFallback(metric.why_it_matters_i18n_key, "");
   const action = translateWithFallback(metric.recommended_action_i18n_key, "");
   const trendLabel = translateWithFallback(metric.trend_label_i18n_key, metric.trend);
+  const severity = metric.severity || "info";
   const { colorClass } = getSeverityDisplay(metric.severity);
   return {
     title,
     description,
-    value: String(metric.value),
-    unit: metric.unit,
-    severity: metric.severity,
+    value: presentMetricValue(metric.value),
+    unit: safeString(metric.unit, ""),
+    severity,
     severityColorClass: colorClass,
     trendLabel,
-    whyItMatters: why,
-    recommendedAction: action,
-    updatedAt: metric.updated_at,
-    drilldownHref: metric.drilldown_route,
+    whyItMatters: safeString(why, ""),
+    recommendedAction: safeString(action, ""),
+    updatedAt: metric.updated_at || null,
+    drilldownHref: metric.drilldown_route || null,
     pdpaBadge: metric.pdpa_level !== "public" ? metric.pdpa_level : null,
   };
 }
@@ -48,12 +49,24 @@ export function presentMetricGroup(
   group: DashboardMetricGroup,
 ) {
   return {
-    title: translateWithFallback(group.group_code, group.group_code),
+    title: translateWithFallback(group.title_i18n_key, group.group_code),
     description: translateWithFallback(group.description_i18n_key, ""),
     metricCards: group.metrics.map(presentMetricCard),
     alerts: group.alerts,
-    actions: group.recommended_actions,
+    actions: group.recommended_actions.map((action) => translateWithFallback(action, action)),
   };
+}
+
+function safeString(value: any, fallback = ""): string {
+  return value != null ? String(value) : fallback;
+}
+
+function presentMetricValue(value: DashboardMetric["value"] | null | undefined): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value);
 }
 
 function getSeverityDisplay(

@@ -75,6 +75,53 @@ def _build_pdf_response(buf, filename: str) -> StreamingResponse:
     )
 
 
+@router.get("/audit-logs")
+def get_audit_logs(
+    limit: int = Query(50, ge=1, le=200),
+    page: int = Query(1, ge=1),
+    table_name: str | None = Query(None),
+    record_id: int | None = Query(None),
+    actor_id: int | None = Query(None),
+    action: str | None = Query(None),
+    request_id: str | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_view_all),
+):
+    payload = ExportService.get_audit_logs(
+        db,
+        {
+            "limit": limit,
+            "page": page,
+            "table_name": table_name,
+            "record_id": record_id,
+            "actor_id": actor_id,
+            "action": action,
+            "request_id": request_id,
+        },
+    )
+    logs = []
+    for row in payload.get("logs", []):
+        actor = row.actor.full_name or row.actor.username if row.actor else "-"
+        logs.append(
+            {
+                "id": row.id,
+                "actor": actor,
+                "action": row.action,
+                "table_name": row.table_name,
+                "record_id": row.record_id,
+                "timestamp": row.timestamp.isoformat() if row.timestamp else None,
+                "http_status": row.http_status,
+                "request_id": row.request_id,
+            }
+        )
+    return {
+        "total": payload.get("total", 0),
+        "page": payload.get("page", page),
+        "limit": payload.get("limit", limit),
+        "logs": logs,
+    }
+
+
 @router.get("/schedule")
 def export_schedule_pdf(
     semester: str = Query("2"),

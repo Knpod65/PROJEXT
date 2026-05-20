@@ -106,7 +106,7 @@ class ExportRepository:
     @staticmethod
     def get_audit_logs(db: Session, filters: dict) -> dict:
         """Get paginated audit logs."""
-        q = db.query(models.AuditLog)
+        q = db.query(models.AuditLog).options(joinedload(models.AuditLog.actor))
         if filters.get("table_name"):
             q = q.filter(models.AuditLog.table_name == filters["table_name"])
         if filters.get("record_id"):

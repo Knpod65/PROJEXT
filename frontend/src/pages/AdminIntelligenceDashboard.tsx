@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import type { AdminIntelligenceDashboard } from "@/types/dashboardMetrics";
 import { useAdminIntelligenceDashboard } from "@/hooks/domain/useAdminIntelligenceDashboard";
 import { usePermission } from "@/hooks/usePermission";
-import { translate } from "@/i18n";
+import { translate, translateWithFallback } from "@/i18n";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
@@ -168,7 +168,7 @@ export default function AdminIntelligenceDashboard() {
                   <div
                     className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${m.severityColorClass}`}
                   >
-                    {m.severity}
+                    {translateWithFallback(`severity.${m.severity}`, m.severity)}
                   </div>
                   {m.whyItMatters && (
                     <p className="text-xs text-gray-500 line-clamp-2">{m.whyItMatters}</p>

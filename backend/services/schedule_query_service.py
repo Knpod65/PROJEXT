@@ -39,45 +39,93 @@ def serialize_schedule(schedule: models.ExamSchedule) -> dict:
     teacher = sec.teacher if sec else None
     room = schedule.room
     supervisions = schedule.supervisions or []
+
+    def _enum_value(value):
+        return value.value if hasattr(value, "value") else value
+
+    def _user_payload(user):
+        if not user:
+            return None
+        return {
+            "id": user.id,
+            "username": getattr(user, "username", f"user-{user.id}"),
+            "email": getattr(user, "email", f"user-{user.id}@example.invalid"),
+            "full_name": getattr(user, "full_name", None),
+            "role": _enum_value(getattr(user, "role", models.UserRole.staff)),
+            "department": getattr(user, "department", None),
+            "dept_code": getattr(user, "dept_code", None),
+            "is_active": bool(getattr(user, "is_active", True)),
+            "created_at": getattr(user, "created_at", None),
+        }
+
+    def _room_payload(room_obj):
+        if not room_obj:
+            return None
+        return {
+            "id": room_obj.id,
+            "room_name": room_obj.room_name,
+            "building": getattr(room_obj, "building", None),
+            "capacity": getattr(room_obj, "capacity", 0),
+            "e_room_code": getattr(room_obj, "e_room_code", None),
+            "is_active": bool(getattr(room_obj, "is_active", True)),
+        }
+
+    def _course_payload(course_obj):
+        if not course_obj:
+            return None
+        return {
+            "id": getattr(course_obj, "id", 0),
+            "course_id": course_obj.course_id,
+            "course_name_th": getattr(course_obj, "course_name_th", None),
+            "course_name_en": getattr(course_obj, "course_name_en", None),
+            "credits": getattr(course_obj, "credits", 0) or 0,
+            "department": getattr(course_obj, "department", None),
+            "academic_group": getattr(course_obj, "academic_group", None),
+            "academic_group_label": getattr(course_obj, "academic_group_label", None),
+        }
+
     return {
         "id": schedule.id,
         "exam_date": schedule.exam_date,
         "exam_time": schedule.exam_time,
-        "status": schedule.status,
+        "exam_type": _enum_value(getattr(schedule, "exam_type", None)),
+        "status": _enum_value(schedule.status),
         "num_pages": schedule.num_pages,
         "total_sheets": schedule.total_sheets,
         "paper_distributor": schedule.paper_distributor,
         "notes": schedule.notes,
-        "room": {"id": room.id, "room_name": room.room_name, "capacity": room.capacity} if room else None,
+        "room": _room_payload(room),
         "section": {
             "id": sec.id,
             "section_no": sec.section_no,
             "num_students": sec.num_students,
             "is_co_exam": sec.is_co_exam,
+            "co_group_id": getattr(sec, "co_group_id", None),
+            "semester": getattr(sec, "semester", ""),
+            "academic_year": getattr(sec, "academic_year", ""),
+            "academic_group": getattr(sec, "academic_group", None),
+            "academic_group_label": getattr(sec, "academic_group_label", None),
+            "course": _course_payload(course),
+            "teacher": _user_payload(teacher),
             "teaching_room": (
-                {
-                    "id": sec.teaching_room.id,
-                    "room_name": sec.teaching_room.room_name,
-                    "capacity": sec.teaching_room.capacity,
-                    "building": sec.teaching_room.building,
-                }
+                _room_payload(sec.teaching_room)
                 if sec and sec.teaching_room
                 else None
             ),
         } if sec else None,
-        "course": {
-            "course_id": course.course_id,
-            "course_name_th": course.course_name_th,
-        } if course else None,
-        "teacher": {
-            "id": teacher.id,
-            "full_name": teacher.full_name,
-        } if teacher else None,
+        "course": _course_payload(course),
+        "teacher": _user_payload(teacher),
         "supervisions": [
             {
+                "id": getattr(supervision, "id", 0),
+                "role_in_exam": getattr(supervision, "role_in_exam", "supervisor"),
                 "slot_order": supervision.slot_order,
-                "user": {"id": supervision.user.id, "full_name": supervision.user.full_name} if supervision.user else None,
+                "compensation": float(getattr(supervision, "compensation", 0.0) or 0.0),
+                "user": _user_payload(supervision.user) if supervision.user else None,
                 "confirmed": supervision.confirmed,
+                "is_swapped": bool(getattr(supervision, "is_swapped", False)),
+                "is_emergency_sub": bool(getattr(supervision, "is_emergency_sub", False)),
+                "swap_requested": bool(getattr(supervision, "swap_requested", False)),
             }
             for supervision in supervisions
         ],

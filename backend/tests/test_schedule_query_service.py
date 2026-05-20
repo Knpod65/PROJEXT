@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from policies.schedule_policy import apply_schedule_scope
 from repositories.schedule_repository import load_unavailability_maps
 from services.schedule_query_service import build_schedule_query, group_schedules_by_date, serialize_schedule
+import schemas
 
 
 class FakeQuery:
@@ -61,25 +62,70 @@ def _user(role: str, dept_code: str | None = "GOV"):
 
 
 def _schedule(exam_date="2026-05-12", exam_time="09:00-12:00"):
-    teacher = SimpleNamespace(id=11, full_name="Teacher One")
-    room = SimpleNamespace(id=3, room_name="R101", capacity=30)
-    course = SimpleNamespace(course_id="C101", course_name_th="Course 101")
-    teaching_room = SimpleNamespace(id=9, room_name="TR1", capacity=50, building="B1")
+    teacher = SimpleNamespace(
+        id=11,
+        username="teacher.one",
+        email="teacher.one@example.com",
+        full_name="Teacher One",
+        role="teacher",
+        department="Political Science",
+        dept_code="POL",
+        is_active=True,
+        created_at=None,
+    )
+    room = SimpleNamespace(id=3, room_name="R101", capacity=30, building="B1", e_room_code="ER101", is_active=True)
+    course = SimpleNamespace(
+        id=5,
+        course_id="C101",
+        course_name_th="Course 101",
+        course_name_en="Course 101",
+        credits=3,
+        department="Political Science",
+        academic_group="POL",
+        academic_group_label="Political Science",
+    )
+    teaching_room = SimpleNamespace(id=9, room_name="TR1", capacity=50, building="B1", e_room_code="TR1", is_active=True)
     section = SimpleNamespace(
         id=2,
         section_no="1",
         num_students=25,
         is_co_exam=False,
+        co_group_id=None,
+        semester="2",
+        academic_year="2568",
+        academic_group="POL",
+        academic_group_label="Political Science",
         teaching_room=teaching_room,
         course=course,
         teacher=teacher,
     )
-    user = SimpleNamespace(id=55, full_name="Invigilator")
-    supervision = SimpleNamespace(slot_order=1, user=user, confirmed=True)
+    user = SimpleNamespace(
+        id=55,
+        username="invigilator.one",
+        email="invigilator.one@example.com",
+        full_name="Invigilator",
+        role="staff",
+        department="Operations",
+        dept_code=None,
+        is_active=True,
+        created_at=None,
+    )
+    supervision = SimpleNamespace(
+        id=77,
+        slot_order=1,
+        role_in_exam="supervisor",
+        compensation=300.0,
+        user=user,
+        confirmed=True,
+        is_swapped=False,
+        is_emergency_sub=False,
+        swap_requested=False,
+    )
     return SimpleNamespace(
         id=1,
         exam_date=exam_date,
         exam_time=exam_time,
+        exam_type="final",
         status="draft",
         num_pages=2,
         total_sheets=50,
@@ -93,10 +139,15 @@ def _schedule(exam_date="2026-05-12", exam_time="09:00-12:00"):
 
 def test_serialize_schedule_row():
     payload = serialize_schedule(_schedule())
-    assert payload["room"]["room_name"] == "R101"
-    assert payload["section"]["section_no"] == "1"
-    assert payload["course"]["course_id"] == "C101"
-    assert payload["supervisions"][0]["confirmed"] is True
+    parsed = schemas.ScheduleWithSection(**payload)
+    assert parsed.room.room_name == "R101"
+    assert parsed.room.building == "B1"
+    assert parsed.exam_type.value == "final"
+    assert parsed.section.section_no == "1"
+    assert parsed.section.course.course_id == "C101"
+    assert parsed.section.teacher.full_name == "Teacher One"
+    assert parsed.supervisions[0].confirmed is True
+    assert parsed.supervisions[0].role_in_exam == "supervisor"
 
 
 def test_group_schedules_by_date():
