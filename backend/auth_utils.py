@@ -17,15 +17,9 @@ from database import get_db
 import models, os, hashlib
 from academic_groups import can_access_academic_group, normalize_academic_group_code
 from config.policy import SIGN_ORDER_USERNAMES, TOKEN_EXPIRE_HOURS
+from config.settings import settings
 
-_raw_secret = os.getenv("SECRET_KEY", "")
-if not _raw_secret:
-    import sys
-    _dev_secret = "ems_dev_only_DO_NOT_USE_IN_PRODUCTION_2025_change_me"
-    print("⚠  WARNING: SECRET_KEY not set — using insecure dev default.", file=sys.stderr)
-    SECRET_KEY = _dev_secret
-else:
-    SECRET_KEY = _raw_secret
+SECRET_KEY = settings.secret_key
 
 ALGORITHM          = "HS256"
 

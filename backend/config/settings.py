@@ -108,6 +108,34 @@ class Settings:
         default_factory=lambda: os.getenv("RETENTION_CLEANUP_ENABLED", "false").lower() == "true"
     )
 
+    # --- Security ---
+    secret_key: str = field(default_factory=lambda: _get_secret_key())
+
+
+def _get_secret_key() -> str:
+    """Enforce strong SECRET_KEY in production, allow dev fallback with warning."""
+    key = os.getenv("SECRET_KEY", "").strip()
+    env = os.getenv("ENVIRONMENT", "development").lower()
+
+    if env == "production":
+        if not key:
+            raise RuntimeError("SECRET_KEY must be set in production environment")
+        if len(key) < 50:
+            raise RuntimeError("SECRET_KEY must be at least 50 characters in production")
+        return key
+
+    # Non-production
+    if not key:
+        import warnings
+        warnings.warn(
+            "SECRET_KEY not set — using insecure development fallback. "
+            "Never use this in production.",
+            stacklevel=2
+        )
+        return "ems_dev_only_DO_NOT_USE_IN_PRODUCTION_2025_change_me_very_insecure"
+
+    return key
+
 
 # Module-level singleton — instantiated once at import time.
 settings: Settings = Settings()
