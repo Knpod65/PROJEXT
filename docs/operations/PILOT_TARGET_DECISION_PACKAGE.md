@@ -1,23 +1,27 @@
 # PILOT_TARGET_DECISION_PACKAGE.md
 
-**Date**: 2026-05-22  
-**Purpose**: Decision-support package to help IT / faculty owner select a concrete pilot runtime environment for EMS controlled pilot.  
-**Status**: Ready for distribution to decision-makers.
+**Date**: 2026-05-22 (Updated — Faculty LAN selected)
+**Purpose**: Decision-support package for pilot environment selection and integration planning.
+**Status**: DECISION MADE — Faculty LAN Server selected in principle. Pending infrastructure confirmation and Laravel/CMU auth contract verification.
 
 ---
 
-## 1. Current Blocker Summary
+## 1. Current Status Summary
 
-As of HEAD `a522391`, the following is true:
+As of HEAD `8e75db3` (updated 2026-05-22):
 
-- **Pilot target environment**: NOT designated anywhere in the repository.
-- **4 original operational blockers** remain open (SECRET_KEY, DATABASE_URL, Backup/Restore, DPO sign-off).
-- **5th blocker** (new): Concrete pilot runtime target not designated.
-- No real production evidence can be collected until a target is chosen and configured.
-- No real UAT with pilot users can be executed until an environment exists.
-- All preparation documents (UAT guides, checklists, evidence templates, runbooks) are complete and committed.
+- **Pilot target environment**: **SELECTED — Faculty LAN Server (Option B)**
+- **Institutional stack**: PHP / Laravel / PostgreSQL + EMS FastAPI + React frontend
+- **Identity basis**: CMU email / faculty Laravel auth / CMU OAuth
+- **Integration status**: PENDING — Laravel/CMU auth contract not yet verified
 
-**Conclusion**: The project is technically ready. Operational execution is blocked on environment selection.
+**Original blockers** (4 remain open): SECRET_KEY, DATABASE_URL, Backup/Restore, DPO sign-off.
+
+**New blockers added** (Faculty LAN-specific): Laravel auth contract, CMU email field, session("USS") payload, PostgreSQL deployment target, EMS route/mount path, auth bridge option, cmu_sso.py path decision.
+
+See `PILOT_BLOCKER_DASHBOARD.md` for the full live blocker list.
+
+**Conclusion**: The pilot environment direction is decided. Progress is now blocked on the Laravel/CMU auth contract and IT infrastructure confirmation.
 
 ---
 
@@ -181,23 +185,50 @@ As of HEAD `a522391`, the following is true:
 
 ---
 
-## 5. Decision Required (To Be Filled by Owner)
+## 5. Decision Record (Updated 2026-05-22)
 
-| Field                        | Value (to be provided)                          |
-|------------------------------|-------------------------------------------------|
-| Selected Option              | (A / B / C / D / E)                             |
-| Selected Host / Machine      |                                                 |
-| Responsible IT Person        |                                                 |
-| Responsible System Owner     |                                                 |
-| Target Pilot URL             |                                                 |
-| Network Scope                | (LAN only / VPN / limited external)             |
-| Expected Pilot Users         | (10-20)                                         |
-| Decision Date                |                                                 |
-| Approval Status              | (Pending / Approved / Rejected)                 |
+| Field | Value |
+|---|---|
+| Selected Option | B — Faculty LAN Server |
+| Selected Host / Machine | TBD (IT to confirm) |
+| Responsible IT Person | TBD |
+| Responsible System Owner | TBD |
+| Institutional Stack | PHP / Laravel / PostgreSQL + EMS |
+| Identity Source | CMU email / Faculty Laravel auth |
+| Target Pilot URL | TBD |
+| Network Scope | Faculty LAN / controlled access |
+| Expected Pilot Users | 10–20 |
+| Decision Date | 2026-05-22 |
+| Approval Status | Selected in principle — pending IT confirmation |
 
-**Owner to complete this section and return to the EMS team.**
+**Rationale for Option B**:
+- Aligns with faculty web and existing Laravel/CMU auth infrastructure
+- Supports LAN-controlled pilot (data stays inside faculty)
+- Compatible with PHP/Laravel/PostgreSQL environment
+- Allows integration with existing CMU email identity
+- Matches the PDPA-controlled single-faculty scope defined in PILOT_ROLLOUT_FINAL_REPORT.md
 
 ---
 
-**End of PILOT_TARGET_DECISION_PACKAGE.md**  
-This package is ready to be sent to IT and faculty decision-makers. No values have been fabricated.
+## 6. Remaining Decisions (Added 2026-05-22)
+
+The following decisions must be made before integration can begin:
+
+| Decision | Options | Status |
+|---|---|---|
+| EMS mount route | /ems, /exam, separate subdomain | OPEN |
+| Auth bridge option | A (gateway), B (code exchange), C (proxy header), D (separate login) | OPEN |
+| PostgreSQL DB ownership | Shared with faculty web vs. separate EMS DB | OPEN |
+| Backup owner | IT vs. EMS team | OPEN |
+| DPO reviewer for CMU email data flow | TBD | OPEN |
+| Pilot account list | Admin, staff, teacher, supervisor, governance | OPEN |
+| cmu_sso.py path | Activate direct OAuth vs. use Laravel bridge vs. both | OPEN |
+
+See `EMS_LARAVEL_INTEGRATION_OPTIONS.md` for the auth bridge analysis.
+See `LARAVEL_AUTH_CONTRACT_QUESTIONS.md` for the IT/Laravel owner questions.
+See `FACULTY_LAN_PILOT_IMPLEMENTATION_PLAN.md` for the staged implementation plan.
+
+---
+
+**End of PILOT_TARGET_DECISION_PACKAGE.md (Updated 2026-05-22)**
+Faculty LAN Server selected. No values fabricated. All remaining items require IT and Laravel owner confirmation.
