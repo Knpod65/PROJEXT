@@ -3,6 +3,7 @@ import { renderTabButton } from "@/utils/presenters/auditPresenter";
 import { translate } from "@/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Fragment } from "react";
 
 export default function AuditExplorer() {
@@ -27,15 +28,24 @@ export default function AuditExplorer() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <p className="text-gray-500">{translate("common.loading")}</p>
+      <div className="page-stack page-stack--spacious">
+        <div className="stitch-metric-grid">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="dashboard-skeleton" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">{translate("navigation.pages.audit-explorer.title")}</h1>
+    <div className="page-stack page-stack--spacious">
+      <section className="page-hero page-hero--dashboard">
+        <div>
+          <span className="page-hero__eyebrow">{translate("audit.eyebrow")}</span>
+          <h2 className="page-hero__title">{translate("navigation.pages.audit-explorer.title")}</h2>
+        </div>
+      </section>
 
       <div className="border-b mb-4">
         <div className="flex">

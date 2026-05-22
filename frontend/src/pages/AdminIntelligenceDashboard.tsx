@@ -47,20 +47,20 @@ export default function AdminIntelligenceDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-48" />
+      <div className="page-stack page-stack--spacious">
+        <div className="stitch-metric-grid">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="dashboard-skeleton" />
           ))}
         </div>
+        <Skeleton className="dashboard-chart-skeleton" />
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="p-6">
+      <div className="page-stack page-stack--spacious">
         <EmptyState
           icon={<Icon name="warning" />}
           title={translate("dashboard.admin.loadErrorTitle")}
@@ -89,19 +89,17 @@ export default function AdminIntelligenceDashboard() {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">
-          {translate("dashboard.admin.title")}
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {translate("dashboard.admin.lastUpdated")}:{" "}
-          {data.last_computed_at
-            ? new Date(data.last_computed_at).toLocaleString()
-            : "—"}
-        </p>
-      </div>
+    <div className="page-stack page-stack--spacious">
+      <section className="page-hero page-hero--dashboard">
+        <div>
+          <span className="page-hero__eyebrow">{translate("dashboard.admin.eyebrow")}</span>
+          <h2 className="page-hero__title">{translate("dashboard.admin.title")}</h2>
+          <p className="page-hero__description">
+            {translate("dashboard.admin.lastUpdated")}:{" "}
+            {data.last_computed_at ? new Date(data.last_computed_at).toLocaleString() : "—"}
+          </p>
+        </div>
+      </section>
 
       {/* Health Banner */}
       <Card className="p-4 flex flex-wrap items-center gap-4">

@@ -2,6 +2,7 @@ import { usePlatformConfigurationPage } from "@/hooks/domain/usePlatformConfigur
 import { translate } from "@/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 function SectionCard({
   title,
@@ -67,15 +68,19 @@ export default function PlatformConfiguration() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <p className="text-gray-500">{translate("common.loading")}</p>
+      <div className="page-stack page-stack--spacious">
+        <div className="stitch-metric-grid">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="dashboard-skeleton" />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="page-stack page-stack--spacious">
         <EmptyState
           icon={<Icon name="warning" />}
           title={translate("errors.requestFailed")}
@@ -98,15 +103,18 @@ export default function PlatformConfiguration() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          {translate("navigation.pages.platform-configuration.title")}
-        </h1>
-        <span className="text-xs text-gray-400">
-          {translate("platformConfig.readOnlyNotice")}
-        </span>
-      </div>
+    <div className="page-stack page-stack--spacious">
+      <section className="page-hero page-hero--dashboard">
+        <div>
+          <span className="page-hero__eyebrow">{translate("platformConfig.eyebrow")}</span>
+          <h2 className="page-hero__title">
+            {translate("navigation.pages.platform-configuration.title")}
+          </h2>
+          <p className="page-hero__description">
+            {translate("platformConfig.readOnlyNotice")}
+          </p>
+        </div>
+      </section>
 
       {/* Faculty Config */}
       <SectionCard title={translate("platformConfig.facultyConfig")}>

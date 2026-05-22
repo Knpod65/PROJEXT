@@ -2,6 +2,7 @@ import { useGovernanceCockpit } from "@/hooks/domain/useGovernanceCockpit";
 import { translate } from "@/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 function RiskBadge({ severity }: { severity: string }) {
   const cls =
@@ -67,15 +68,19 @@ export const GovernanceCockpitPage = function GovernanceCockpit() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <p className="text-gray-500">{translate("common.loading")}</p>
+      <div className="page-stack page-stack--spacious">
+        <div className="stitch-metric-grid">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="dashboard-skeleton" />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error || !overview) {
     return (
-      <div className="p-6">
+      <div className="page-stack page-stack--spacious">
         <EmptyState
           icon={<Icon name={error ? "warning" : "info"} />}
           title={translate(error ? "errors.requestFailed" : "governance.noData")}
@@ -88,11 +93,16 @@ export const GovernanceCockpitPage = function GovernanceCockpit() {
   const { top_risks, recent_events, faculty_summary } = overview;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{translate("navigation.pages.governance-cockpit.title")}</h1>
-        <HealthBand band={healthBadgeBand} />
-      </div>
+    <div className="page-stack page-stack--spacious">
+      <section className="page-hero page-hero--dashboard">
+        <div>
+          <span className="page-hero__eyebrow">{translate("governance.eyebrow")}</span>
+          <h2 className="page-hero__title">{translate("navigation.pages.governance-cockpit.title")}</h2>
+        </div>
+        <div className="page-hero__actions">
+          <HealthBand band={healthBadgeBand} />
+        </div>
+      </section>
 
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-lg font-semibold mb-2">{translate("governance.healthScore")}</h2>

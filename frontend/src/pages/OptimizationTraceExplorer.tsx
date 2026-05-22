@@ -2,6 +2,7 @@ import { useOptimizationTraceExplorer } from "@/hooks/domain/useOptimizationTrac
 import { translate } from "@/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 function SeverityBadge({ severity }: { severity: string }) {
   const cls =
@@ -68,15 +69,19 @@ export default function OptimizationTraceExplorer() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <p className="text-gray-500">{translate("common.loading")}</p>
+      <div className="page-stack page-stack--spacious">
+        <div className="stitch-metric-grid">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="dashboard-skeleton" />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error || !trace) {
     return (
-      <div className="p-6">
+      <div className="page-stack page-stack--spacious">
         <EmptyState
           icon={<Icon name="search_off" />}
           title={translate("trace.noData")}
@@ -91,14 +96,18 @@ export default function OptimizationTraceExplorer() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="page-stack page-stack--spacious">
+      <section className="page-hero page-hero--dashboard">
         <div>
-          <h1 className="text-2xl font-bold">{translate("trace.pageTitle")}</h1>
-          <p className="text-sm text-gray-500">
+          <span className="page-hero__eyebrow">{translate("trace.eyebrow")}</span>
+          <h2 className="page-hero__title">{translate("trace.pageTitle")}</h2>
+          <p className="page-hero__description">
             {translate("trace.sessionLabel")}: {mockSessions.find((s) => s.id === selectedSessionId)?.label}
           </p>
         </div>
+      </section>
+
+      <div className="flex justify-end -mt-4 mb-4">
         <ScoreRing score={traceSummary.overallQualityScore} />
       </div>
 

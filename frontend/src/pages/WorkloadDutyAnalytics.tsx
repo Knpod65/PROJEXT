@@ -71,20 +71,24 @@ export default function WorkloadDutyAnalytics() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-72" />
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-32" />)}
+      <div className="page-stack page-stack--spacious">
+        <div className="stitch-metric-grid">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="dashboard-skeleton" />
+          ))}
         </div>
-        <Skeleton className="h-80" />
+        <Skeleton className="dashboard-chart-skeleton" />
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="p-6">
-        <EmptyState icon={<Icon name="warning" />} title={t("workloadDashboard.empty.noData")} />
+      <div className="page-stack page-stack--spacious">
+        <EmptyState
+          icon={<Icon name="warning" />}
+          title={t("workloadDashboard.empty.noData")}
+        />
       </div>
     );
   }
@@ -101,10 +105,13 @@ export default function WorkloadDutyAnalytics() {
   const hasTimeSlotData = data.time_slot_series.length > 0;
 
   return (
-    <div className="p-6 space-y-6">
-      <section className="space-y-2">
-        <h1 className="text-2xl font-bold">{t(getDefaultTitle(user?.role ?? null))}</h1>
-        <p className="text-sm text-gray-500">{t("workloadDashboard.description")}</p>
+    <div className="page-stack page-stack--spacious">
+      <section className="page-hero page-hero--dashboard">
+        <div>
+          <span className="page-hero__eyebrow">{t("workloadDashboard.eyebrow")}</span>
+          <h2 className="page-hero__title">{t(getDefaultTitle(user?.role ?? null))}</h2>
+          <p className="page-hero__description">{t("workloadDashboard.description")}</p>
+        </div>
       </section>
 
       <Card className="p-4">

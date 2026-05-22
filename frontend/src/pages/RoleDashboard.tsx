@@ -45,11 +45,10 @@ export default function RoleDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-48" />
+      <div className="page-stack page-stack--spacious">
+        <div className="stitch-metric-grid">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="dashboard-skeleton" />
           ))}
         </div>
       </div>
@@ -58,7 +57,7 @@ export default function RoleDashboard() {
 
   if (isError || !data) {
     return (
-      <div className="p-6">
+      <div className="page-stack page-stack--spacious">
         <EmptyState
           icon={<Icon name="warning" />}
           title={translate("dashboard.role.loadErrorTitle")}
@@ -69,7 +68,7 @@ export default function RoleDashboard() {
 
   if (data.unauthorized) {
     return (
-      <div className="p-6">
+      <div className="page-stack page-stack--spacious">
         <EmptyState
           icon={<Icon name="block" />}
           title={translate("dashboard.role.unauthorizedTitle")}

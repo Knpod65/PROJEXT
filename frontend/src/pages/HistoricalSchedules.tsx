@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import {
   buildHistoricalComparisonCsvUrl,
@@ -24,6 +25,7 @@ import {
 import { useUi } from "@/store/ui.store";
 import { Button } from "@/components/ui/Button";
 import { formatDate, formatNumber } from "@/utils/format";
+import { translateWithFallback } from "@/i18n";
 
 function openExport(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
@@ -106,27 +108,36 @@ export function HistoricalSchedulesPage() {
   }
 
   return (
-    <div className="page-stack">
-      <Card title="Historical Final Schedule 2/2568" subtitle="Compare optimized baseline vs final adjusted PDF imports without overwriting the live EMS exam schedule.">
-        <div className="summary-grid">
-          <div className="summary-box">
-            <span>Final adjusted</span>
-            <strong>{formatNumber(overviewState.data.final_adjusted_batch?.row_count ?? 0)}</strong>
-          </div>
-          <div className="summary-box">
-            <span>Optimized baseline</span>
-            <strong>{formatNumber(overviewState.data.optimized_baseline_batch?.row_count ?? 0)}</strong>
-          </div>
-          <div className="summary-box">
-            <span>Differences detected</span>
-            <strong>{formatNumber(overviewState.data.comparison_count)}</strong>
-          </div>
-          <div className="summary-box">
-            <span>Selected review flags</span>
-            <strong>{formatNumber(reviewCount)}</strong>
-          </div>
+    <div className="page-stack page-stack--spacious">
+      <section className="page-hero page-hero--dashboard">
+        <div>
+          <span className="page-hero__eyebrow">{translateWithFallback("historical.eyebrow", "History")}</span>
+          <h2 className="page-hero__title">Historical Schedules</h2>
+          <p className="page-hero__description">Compare optimized baseline vs final adjusted imports.</p>
         </div>
-      </Card>
+      </section>
+
+      <div className="space-y-6">
+        <Card title="Historical Final Schedule 2/2568" subtitle="Compare optimized baseline vs final adjusted PDF imports without overwriting the live EMS exam schedule.">
+          <div className="summary-grid">
+            <div className="summary-box">
+              <span>Final adjusted</span>
+              <strong>{formatNumber(overviewState.data.final_adjusted_batch?.row_count ?? 0)}</strong>
+            </div>
+            <div className="summary-box">
+              <span>Optimized baseline</span>
+              <strong>{formatNumber(overviewState.data.optimized_baseline_batch?.row_count ?? 0)}</strong>
+            </div>
+            <div className="summary-box">
+              <span>Differences detected</span>
+              <strong>{formatNumber(overviewState.data.comparison_count)}</strong>
+            </div>
+            <div className="summary-box">
+              <span>Selected review flags</span>
+              <strong>{formatNumber(reviewCount)}</strong>
+            </div>
+          </div>
+        </Card>
 
       <Card
         title="Snapshot Sources"
@@ -482,8 +493,9 @@ export function HistoricalSchedulesPage() {
           rows={comparisonState.data?.rows ?? []}
           scrollThreshold={5}
           tableLayout="fixed"
-        />
-      </Card>
-    </div>
-  );
-}
+         />
+       </Card>
+       </div>
+     </div>
+   );
+ }
