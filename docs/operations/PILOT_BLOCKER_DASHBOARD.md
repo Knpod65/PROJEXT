@@ -1,38 +1,27 @@
-# PILOT_BLOCKER_DASHBOARD.md
+# PILOT_BLOCKER_DASHBOARD.md (Updated)
 
-**Date**: 2026-05-22  
-**Purpose**: Simple, living tracker for all pilot launch blockers. Update this document as evidence is collected.
+**Date**: 2026-05-22 (Updated)
 
 ---
 
 ## Pilot Blocker Status
 
-| Blocker                          | Owner                  | Required Evidence                              | Current Status     | Blocking Level | Next Action                              | Due Date   |
-|----------------------------------|------------------------|------------------------------------------------|--------------------|----------------|------------------------------------------|------------|
-| Pilot target environment         | (To be assigned)       | Completed intake in `PILOT_ENVIRONMENT_SETUP_RECORD.md` | OPEN               | Critical       | IT/faculty decision + `IT_PILOT_ENVIRONMENT_REQUEST.md` | TBD        |
-| SECRET_KEY production value      | DevOps / Deployment Owner | Production-grade key configured + verification in handoff checklist | OPEN               | Critical       | Configure in target environment          | TBD        |
-| PostgreSQL DATABASE_URL          | DevOps / DBA           | Working PostgreSQL connection + health check   | OPEN               | High           | Provision database in target             | TBD        |
-| Backup scheduled + tested        | Ops / DevOps           | Completed `BACKUP_RESTORE_TEST_EVIDENCE.md`    | OPEN               | High           | First backup + restore test              | TBD        |
-| DPO retention sign-off           | Admin + DPO            | Signed `DPO_RETENTION_SIGNOFF_TEMPLATE.md`     | OPEN               | Medium         | DPO review                               | TBD        |
-| Pilot accounts ready             | EMS System Owner       | Account creation log + role verification       | OPEN               | Medium         | Create accounts after environment ready  | TBD        |
-| UAT execution                    | Pilot Coordinator      | Completed checklists + observation forms       | OPEN               | Medium         | Execute after accounts + environment     | TBD        |
-| Go/No-Go approval                | Faculty Leadership     | Updated `UAT_GO_NO_GO_REPORT.md` with evidence | OPEN               | High           | Review all evidence                      | TBD        |
+| Blocker                              | Owner (to be assigned) | Required Evidence                              | Current Status | Blocking Level | Next Action                              | Due Date | Linked Document |
+|--------------------------------------|------------------------|------------------------------------------------|----------------|----------------|------------------------------------------|----------|-----------------|
+| Pilot target environment             | Faculty Leadership     | Decision recorded in SETUP_RECORD              | OPEN           | Critical       | Complete Executive Decision Brief & Matrix | TBD      | PILOT_TARGET_DECISION_PACKAGE.md |
+| IT owner assigned                    | Faculty Leadership     | Name + contact in tracker                      | OPEN           | Critical       | Assign during decision meeting           | TBD      | PILOT_HUMAN_ACTION_TRACKER.md |
+| Production SECRET_KEY                | IT + Deployment Owner  | Confirmed in HANDOFF_CHECKLIST                 | OPEN           | Critical       | Configure after target provisioned       | TBD      | PRODUCTION_ENV_HANDOFF_CHECKLIST.md |
+| PostgreSQL DATABASE_URL              | IT + DBA               | Working connection + health check              | OPEN           | High           | Provision after target chosen            | TBD      | Same as above |
+| Backup scheduled + tested            | IT / Ops               | Completed BACKUP_RESTORE_TEST_EVIDENCE         | OPEN           | High           | Execute after deployment                 | TBD      | BACKUP_RESTORE_TEST_EVIDENCE.md |
+| DPO retention sign-off               | Admin + DPO            | Signed DPO template                            | OPEN           | Medium         | Send DPO Communication Package           | TBD      | DPO_RETENTION_SIGNOFF_TEMPLATE.md |
+| Pilot accounts                       | EMS Team               | Account list + verification                    | OPEN           | Medium         | Create after target ready                | TBD      | UAT_SESSION_EXECUTION_GUIDE.md |
+| UAT execution                        | Pilot Coordinator      | Checklists + observations                      | OPEN           | Medium         | Run after accounts + target              | TBD      | UAT_ROLE_WORKFLOW_CHECKLISTS.md |
+| Go/No-Go approval                    | Faculty Leadership     | Updated GO/NO-GO report with evidence          | OPEN           | High           | Review after UAT                         | TBD      | UAT_GO_NO_GO_REPORT.md |
+
+**Status Legend**: OPEN / IN PROGRESS / EVIDENCE ATTACHED / CLOSED
+
+All items remain OPEN until a pilot target is designated.
 
 ---
 
-## Status Legend
-
-- **OPEN** — No work started or no evidence yet
-- **IN PROGRESS** — Work underway
-- **EVIDENCE ATTACHED** — Proof collected but not yet verified
-- **CLOSED** — Verified and accepted (only after real proof)
-- **BLOCKED** — Waiting on another blocker
-
----
-
-**Important Rule**: Never change status to CLOSED without attaching or linking real evidence in the referenced documents.
-
----
-
-**End of PILOT_BLOCKER_DASHBOARD.md**  
-This dashboard should be updated after every significant piece of evidence is collected. It provides a single view of what is still blocking the pilot launch.
+**End of PILOT_BLOCKER_DASHBOARD.md (Updated)**

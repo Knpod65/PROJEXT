@@ -4,13 +4,24 @@
 
 ---
 
-## Decision
+## Current Decision
 
-**Current Status**: GO WITH CONDITIONS
+**Status**: GO WITH CONDITIONS
 
-**Additional Condition (2026-05-22)**: Designation of a concrete pilot runtime target environment is now a formal pre-UAT blocker.
+**Updated Conditions (2026-05-22)**:
 
-The full decision + launch package (`PILOT_TARGET_DECISION_PACKAGE.md`, `IT_PILOT_ENVIRONMENT_REQUEST.md`, `PILOT_LAUNCH_SEQUENCE.md`, `PILOT_BLOCKER_DASHBOARD.md`) has been prepared to enable rapid progress once IT/faculty selects the target.
+To move from GO WITH CONDITIONS to unconditional GO, the following must be completed with real evidence:
+
+1. Concrete pilot target environment selected and recorded
+2. Production environment fully configured (SECRET_KEY, DATABASE_URL, DEBUG=False, etc.)
+3. Backup process implemented and restore test successfully evidenced
+4. DPO retention sign-off received
+5. Pilot accounts created and verified
+6. At least one full round of real UAT sessions completed with observations
+
+**Local rehearsal**, if performed, provides useful preparation but **does not count** toward official pilot evidence.
+
+The complete decision and launch package has been prepared and is ready for immediate use once the target is chosen.
 
 ---
 
