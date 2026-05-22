@@ -6,12 +6,26 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from config.settings import settings
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 if not DATABASE_URL:
-    print("DATABASE_URL not set - using backend-local SQLite (dev only)", file=sys.stderr)
-    backend_db_path = Path(__file__).resolve().parent / "ems.db"
-    DATABASE_URL = f"sqlite:///{backend_db_path.as_posix()}"
+    _env = getattr(settings, "environment", "development")
+    if _env == "development":
+        # Dev-only fallback — safe for local schema creation and unit tests
+        backend_db_path = Path(__file__).resolve().parent / "ems.db"
+        DATABASE_URL = f"sqlite:///{backend_db_path.as_posix()}"
+        print(
+            "WARNING: DATABASE_URL not set — SQLite fallback enabled (development only). "
+            "Set DATABASE_URL to a PostgreSQL connection string for pilot or production.",
+            file=sys.stderr,
+        )
+    else:
+        raise RuntimeError(
+            "FATAL: DATABASE_URL is set to an empty value. "
+            "SQLite fallback is not permitted in environment '%s'. "
+            "Set DATABASE_URL to a PostgreSQL connection string and restart." % _env
+        )
 
 is_sqlite = DATABASE_URL.startswith("sqlite")
 

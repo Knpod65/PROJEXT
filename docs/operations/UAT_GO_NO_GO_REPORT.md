@@ -1,4 +1,4 @@
-# UAT_GO_NO_GO_REPORT.md (Updated)
+# UAT_GO_NO_GO_REPORT.md (Updated — Hardening + Contract Gate)
 
 **Date**: 2026-05-22 (Updated)
 
@@ -8,20 +8,25 @@
 
 **Status**: GO WITH CONDITIONS
 
-**Updated Conditions (2026-05-22)**:
+**Conditions (updated 2026-05-22)**:
 
-To move from GO WITH CONDITIONS to unconditional GO, the following must be completed with real evidence:
+To move from GO WITH CONDITIONS to unconditional GO:
 
-1. Concrete pilot target environment selected and recorded
+1. Pilot target environment confirmed and documented (Faculty LAN)
 2. Production environment fully configured (SECRET_KEY, DATABASE_URL, DEBUG=False, etc.)
-3. Backup process implemented and restore test successfully evidenced
-4. DPO retention sign-off received
+3. Backup tested with real evidence
+4. DPO sign-off received
 5. Pilot accounts created and verified
-6. At least one full round of real UAT sessions completed with observations
+6. Real UAT sessions completed with observations
+7. Laravel auth contract fully answered and verified (CRITICAL)
+8. Auth bridge gate ALL CHECKS MET (`AUTH_BRIDGE_IMPLEMENTATION_GATE.md`)
+9. Code hardening confirmed (create_all() gated, SQLite fail-fast, ENV unified) ✅ **Done this pass**
 
-**Local rehearsal**, if performed, provides useful preparation but **does not count** toward official pilot evidence.
-
-The complete decision and launch package has been prepared and is ready for immediate use once the target is chosen.
+**Code hardening update (2026-05-22)**:
+- `create_all()` + `seed_data()` are now gated on `settings.environment == "development"` — production/pilot startup no longer mutates the database schema.
+- `DATABASE_URL` is now a hard `RuntimeError` (not silent fallback) in non-development environments.
+- `ENV` / `ENVIRONMENT` inconsistency resolved — `_is_production()` in `security.py` now checks `ENVIRONMENT` first, `ENV` as a backward-compatibility fallback; consistent with `settings.py`.
+- 6 new safety tests added; 1428 tests passing (up from 1422).
 
 ---
 

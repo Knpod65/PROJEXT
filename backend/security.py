@@ -62,43 +62,49 @@ INSECURE_SECRET_VALUES = {
 }
 
 
+def _is_production() -> bool:
+    """
+    Return True when the current environment is production or equivalent.
+    Checks ENVIRONMENT first (canonical), then ENV for backward compatibility.
+    """
+    raw = os.getenv("ENVIRONMENT", os.getenv("ENV", "development"))
+    return raw.strip().lower() in ("production", "prod", "pilot")
+
+
 def validate_production_secrets() -> None:
     """
     Crash the process early if dangerous defaults are detected in production.
     Call this in the lifespan startup hook.
     """
-    env = os.getenv
-    is_prod = env("ENV", "development").lower() in ("production", "prod")
-
-    if not is_prod:
+    if not _is_production():
         return  # Dev mode: warn but don't crash
 
     errors = []
 
-    secret_key = env("SECRET_KEY", "")
+    secret_key = os.getenv("SECRET_KEY", "")
     if secret_key in INSECURE_SECRET_VALUES:
         errors.append("SECRET_KEY is unset or uses an insecure default")
     elif len(secret_key) < 32:
         errors.append("SECRET_KEY is too short (minimum 32 characters)")
 
-    cron_secret = env("CRON_SECRET", "")
+    cron_secret = os.getenv("CRON_SECRET", "")
     if cron_secret in INSECURE_SECRET_VALUES:
         errors.append("CRON_SECRET is unset or uses an insecure default")
 
-    pg_pass = env("POSTGRES_PASSWORD", "")
+    pg_pass = os.getenv("POSTGRES_PASSWORD", "")
     if pg_pass in INSECURE_SECRET_VALUES:
         errors.append("POSTGRES_PASSWORD is unset or uses an insecure default")
 
     if errors:
         for err in errors:
-            print(f"FATAL SECURITY: {err}", file=sys.stderr)
+            print("FATAL SECURITY: %s" % err, file=sys.stderr)
         sys.exit(1)
 
 
 # ── Cookie management ─────────────────────────────────────────────────────────
 
 COOKIE_NAME = "ems_session"
-_IS_PRODUCTION = os.getenv("ENV", "development").lower() in ("production", "prod")
+_IS_PRODUCTION = _is_production()
 _COOKIE_MAX_AGE_SECONDS = settings.token_expire_hours * 3600
 
 

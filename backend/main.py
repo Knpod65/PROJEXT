@@ -56,13 +56,28 @@ async def lifespan(app: FastAPI):
     # Required: bind RBAC dependency guards so role checks do not stay as stubs.
     permissions.build_dependencies()
 
-    # Create tables + seed dev data
-    Base.metadata.create_all(bind=engine)
-    from seed import seed_data
-    from sqlalchemy.orm import Session
-    db = Session(engine)
-    seed_data(db)
-    db.close()
+    # Create tables + seed dev data — only in deliberate development mode.
+    # Production and pilot environments must manage schema via migrations.
+    env = getattr(settings, "environment", "development")
+    if env == "development":
+        import logging as _startup_logging
+        _startup_logging.getLogger(__name__).warning(
+            "STARTUP MUTATION ENABLED: schema create_all() and seed_data() are running. "
+            "This is intended for local development only. "
+            "Do not run production or pilot startup with ENVIRONMENT=development."
+        )
+        Base.metadata.create_all(bind=engine)
+        from seed import seed_data
+        from sqlalchemy.orm import Session
+        db = Session(engine)
+        seed_data(db)
+        db.close()
+    else:
+        import logging as _startup_logging
+        _startup_logging.getLogger(__name__).info(
+            "ENVIRONMENT=%s: skipping create_all()/seed_data() — schema must be managed via migrations."
+            % env
+        )
     yield
 
 
