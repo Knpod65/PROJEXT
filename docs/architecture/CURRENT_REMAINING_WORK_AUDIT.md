@@ -139,5 +139,24 @@ This audit corrects the path-based misunderstanding.
 
 ---
 
+## 8. Operational Blocker Closure Templates Added (2026-05-22)
+
+As part of closing the remaining operational readiness blockers, the following documents were created in this session:
+
+- `docs/operations/PILOT_OPERATIONAL_BLOCKER_CLOSURE.md` — Master tracking checklist for the four pilot blockers (SECRET_KEY, DATABASE_URL, Backup, DPO sign-off). Includes untracked files decision.
+- `docs/deployment/PRODUCTION_ENV_HANDOFF_CHECKLIST.md` — Safe handoff list of required production environment variables with owners, evidence locations, and verification methods that do not expose secrets.
+- `docs/operations/BACKUP_RESTORE_TEST_EVIDENCE.md` — Template for recording the first successful backup + restore test with timestamps, commands, verification checklist, and sign-off.
+- `docs/operations/DPO_RETENTION_SIGNOFF_TEMPLATE.md` — Formal DPO review and approval form covering retention policy, backup retention, audit logs, and exports.
+
+**Impact**:
+- Operational blockers now have concrete, auditable templates and tracking.
+- **No code blockers remain**. All platform code, security enforcement, runbooks, and documentation for pilot are complete.
+- Pilot can proceed to unconditional Go once the four operational items have evidence attached and verified in the closure tracking document.
+
+**Untracked files decision recorded in PILOT_OPERATIONAL_BLOCKER_CLOSURE.md**:
+- `docs/architecture/ACTUAL_WORKSPACE_BASELINE_AUDIT.md` and `docs/architecture/prototypes/` remain untracked (historical / speculative).
+
+---
+
 **End of CURRENT_REMAINING_WORK_AUDIT.md**  
-This document is the single authoritative summary of remaining work based solely on files present in the real repository on 2026-05-22.
+This document is the single authoritative summary of remaining work based solely on files present in the real repository on 2026-05-22. Updated 2026-05-22 with operational closure package.
