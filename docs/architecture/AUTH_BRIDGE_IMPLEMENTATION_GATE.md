@@ -10,7 +10,7 @@
 - [ ] `session("USS")` payload has been confirmed against the real Laravel codebase
 - [ ] CMU email source field name has been confirmed (not assumed)
 - [ ] Token / `cmu_at` handling has been verified (lifetime, validation, scope)
-- [ ] EMS mount path on Faculty LAN is decided and documented
+- [ ] EMS mount path under Faculty Web Portal is decided and documented (e.g. /ems)
 - [ ] PostgreSQL target is confirmed and owned by EMS or clearly separated (not shared with Laravel app tables)
 - [ ] Security model agreed: EMS resolves role from EMS database only, never from client-side claims
 - [ ] Logout behavior agreed: both Laravel session and EMS session are cleared
