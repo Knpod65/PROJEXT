@@ -9,6 +9,7 @@
 - [ ] Confirmed API proxy prefix (e.g. /ems-api)
 - [ ] Faculty web reverse proxy rules documented and tested in staging
 - [ ] Frontend VITE_APP_BASE_PATH and VITE_API_BASE_URL configured for target
+- [x] Subpath build compatibility validated locally (root + /ems + /ems-api) — see FACULTY_WEB_SUBPATH_BUILD_VALIDATION_LOG.md
 
 ### 2. Auth / OAuth
 - [ ] Laravel / Faculty Web auth contract fully answered and verified

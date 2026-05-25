@@ -15,7 +15,7 @@ EMS is a **substantial, mature institutional web application**, not a prototype.
 The platform is **demo-viable today** (87/100 demo readiness).
 
 ## 2. Readiness by Level
-- **Demo 100%**: 98/100 — full interactive smoke passed on GUI machine. Complete stakeholder demo day package + Laravel/IT auth contract dispatch packet prepared and ready for immediate sending. **No external dependencies resolved yet.** Pilot 42/100, Production 28/100 unchanged.
+- **Demo 100%**: 98/100 — full interactive smoke passed. Subpath build (/ems + /ems-api) and route compatibility smoke completed and validated (root mode unchanged; subpath assets correctly prefixed). Complete stakeholder + web portal deployment package ready. **No external dependencies (auth contract, exact paths) resolved yet.** Pilot 42/100, Production 28/100 unchanged.
 - **Controlled Faculty LAN Pilot 100%**: 42/100 — **blocked**. Primary blocker is unanswered Laravel/POLSCI OAuth contract (25/100 in that area). Secondary: no real PostgreSQL target, no executed backup/restore evidence, no DPO sign-off.
 - **Production 100%**: 28/100 — far. Requires completed pilot + real environment evidence + hardening + external audits.
 
