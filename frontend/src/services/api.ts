@@ -24,7 +24,9 @@ interface RequestOptions {
   notifyOnUnauthorized?: boolean;
 }
 
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+// For Faculty Web Portal deployment, set VITE_API_BASE_URL=/ems-api (or full origin) at build time.
+// Local dev and root deployment continue to default to /api.
 
 function buildUrl(path: string, query?: Record<string, Primitive>) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;

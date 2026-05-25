@@ -20,7 +20,9 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter future={routerFuture}>
+    {/* For Faculty Web Portal deployment, set VITE_APP_BASE_PATH=/ems (or other) at build time.
+       Local dev and root deployment default to "/". */}
+    <BrowserRouter basename={import.meta.env.VITE_APP_BASE_PATH || "/"} future={routerFuture}>
       <I18nProvider>
         <UiProvider>
           <AuthProvider>
