@@ -244,6 +244,7 @@ export const appPages: AppPageConfig[] = [
     icon: "manage_accounts",
     roles: ["admin"],
     navGroup: "people",
+    hidden: true,
   },
 
   // ── System group ──────────────────────────────────────────────
@@ -265,6 +266,7 @@ export const appPages: AppPageConfig[] = [
     roles: ["admin"],
     navGroup: "system",
     allowBaseAdminPreview: true,
+    hidden: true,
   },
   {
     key: "platform-configuration",
