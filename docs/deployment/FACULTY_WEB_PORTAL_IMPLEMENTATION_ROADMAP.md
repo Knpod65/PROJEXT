@@ -16,8 +16,10 @@
 - Goal: Safe base path, API base URL, proxy header, and cookie configuration support.
 - Tasks: Implement VITE_APP_BASE_PATH + VITE_API_BASE_URL (if not already), update docs, add tests, verify local dev unchanged.
 - Owner: Frontend + Backend teams
-- Dependencies: Stage 1 (exact paths)
+- Dependencies: Stage 1 (exact paths) — safe config work can proceed in parallel
 - Acceptance: Build + dev work for both root and example sub-path (/ems); no regressions in standalone demo.
+
+**Status (2026-05-25)**: Frontend portion **COMPLETE**. All root assumptions and direct API strings centralized + validated (see hardening audits and updated subpath build log). Backend proxy/header work remains config-only (no code changes required). Ready for IT path confirmation.
 
 ### Stage 3 — PostgreSQL Target + Backup Setup
 - Goal: Live PostgreSQL instance under faculty web hosting with tested backup/restore.

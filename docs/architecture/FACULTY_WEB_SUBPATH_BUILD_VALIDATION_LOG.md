@@ -55,4 +55,71 @@ Vite preview server (`npm run preview`) has known limitations with custom base p
 **Overall Subpath Build Validation**: **PASS** (build produces correct output; runtime proxy is standard requirement for any subpath SPA deployment).
 
 ---
-*Root mode remains the default and fully validated for standalone demo. Subpath mode is now provably supported via environment variables.*
+
+## Root + Subpath Validation After Root Assumption + API Base Hardening Pass (2026-05-25)
+
+**Pre-conditions**:
+- All root path assumptions (window.location.href + raw <a href>) reduced from 5 to 0 for internal app navigation (see FACULTY_WEB_ROOT_PATH_HARDENING_AUDIT.md)
+- All direct `/api/...` literals in application code and export/download builders centralized through `buildApiUrl` + `getApiBaseUrl` from api.ts (see FACULTY_WEB_API_BASE_HARDENING_AUDIT.md and FACULTY_WEB_EXPORT_DOWNLOAD_PATH_REVIEW.md)
+- New `withAppBasePath` helper + re-exported `API_BASE_URL` in appPaths.ts for the remaining full-reload cases
+- No behavioral change when no env vars set
+
+### Root Mode (Default — No Env Vars)
+
+**Command** (PowerShell):
+```powershell
+Remove-Item Env:VITE_APP_BASE_PATH -ErrorAction SilentlyContinue
+Remove-Item Env:VITE_API_BASE_URL -ErrorAction SilentlyContinue
+cd frontend
+npm run build
+npm run check:i18n
+npm run check:i18n:raw
+```
+
+**Result**:
+- Build: ✓ success (1.36s)
+- Main chunk: 560.82 kB (gzip 137.98 kB) — identical size/behavior to pre-hardening validated builds
+- i18n: PASS (1688/1688 keys identical)
+- Raw scan: warning mode only (100 candidates — all pre-existing false positives from imports/JSX; no new user-facing raw strings)
+- TypeScript: clean (tsc -b passed)
+
+**Status**: PASS — root/default behavior **unchanged** and fully preserved for standalone demo (98/100).
+
+### Subpath Mode (/ems + /ems-api)
+
+**Command** (PowerShell):
+```powershell
+$env:VITE_APP_BASE_PATH="/ems"
+$env:VITE_API_BASE_URL="/ems-api"
+cd frontend
+npm run build
+Remove-Item Env:VITE_APP_BASE_PATH -ErrorAction SilentlyContinue
+Remove-Item Env:VITE_API_BASE_URL -ErrorAction SilentlyContinue
+```
+
+**Result**:
+- Build: ✓ success (1.37s)
+- Main chunk: 560.84 kB (gzip 137.97 kB) — identical to root mode within normal variance
+- TypeScript: clean
+- No i18n re-run needed (source strings unchanged)
+
+**Output Inspection Notes** (dist/index.html after subpath build):
+- All script/link href/src correctly prefixed with `/ems/` (e.g. `/ems/assets/index-....js`)
+- No leftover root-absolute asset paths
+- (The runtime JS now contains calls to `buildApiUrl` and `withAppBasePath`; when the same env vars are present at runtime the paths resolve to `/ems-api/...` and `/ems/...` respectively)
+
+**Status**: PASS — subpath build with hardened code produces correct asset prefixes and embeds configurable API/app base logic.
+
+### Remaining Known Direct Paths (Post-Hardening)
+- None for application API calls or internal navigation.
+- All export/download, SSO, and placeholder faculty config fetches now go through the central helpers.
+- The only remaining "direct" strings are in comments, documentation, and the new helper files themselves (intentional).
+
+**Conclusion After Hardening**:
+- Both root and /ems + /ems-api builds validated **after** the root assumption and API base centralization work.
+- All previously documented residual risks (5 root redirects + 9 direct /api strings) have been eliminated or safely centralized.
+- Local demo behavior is bit-for-bit identical when no env vars are supplied.
+- Faculty Web Portal subpath deployment is now limited only by the IT/auth contract and reverse proxy configuration (still the 38/100 gate).
+
+---
+*Root mode remains the default and fully validated for standalone demo. Subpath mode is now provably supported via environment variables after explicit hardening of the last root and API assumptions.*

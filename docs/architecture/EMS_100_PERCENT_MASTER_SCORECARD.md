@@ -28,6 +28,12 @@
 ## Overall Scores (This Pass)
 - **Current overall system readiness**: **64 / 100**
 - **Demo readiness**: **98 / 100** (full interactive smoke passed; stakeholder demo day package + Laravel contract dispatch packet prepared. Pilot 42/100, Production 28/100 unchanged)
+
+## Faculty Web Portal Hardening Pass Update (2026-05-25)
+- Dedicated Faculty Web Portal Integration score lifted modestly from 38/100 → **42/100** (see FACULTY_WEB_PORTAL_100_PERCENT_READINESS_SCORE.md)
+- Frontend Route/Base + API Proxy dimension: 85 → **95** after elimination of all 5 root navigation assumptions and all 9 direct /api bypasses (centralized via new helpers + validated builds).
+- No change to overall system 64/100 or Demo 98/100 (hardening was internal compatibility work only; auth contract remains the immovable 0% gate).
+- Laravel / Faculty LAN line above still reflects the pre-pivot framing; the dedicated web portal scorecard is now the authoritative view.
 - **Pilot readiness**: **42 / 100** (blocked by external contracts + evidence)
 - **Production readiness**: **28 / 100** (far; requires pilot first + real env)
 

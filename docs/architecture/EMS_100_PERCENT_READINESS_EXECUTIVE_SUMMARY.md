@@ -15,7 +15,7 @@ EMS is a **substantial, mature institutional web application**, not a prototype.
 The platform is **demo-viable today** (87/100 demo readiness).
 
 ## 2. Readiness by Level
-- **Demo 100%**: 98/100 — full interactive smoke passed. Subpath build (/ems + /ems-api) and route compatibility smoke completed and validated (root mode unchanged; subpath assets correctly prefixed). Complete stakeholder + web portal deployment package ready. **No external dependencies (auth contract, exact paths) resolved yet.** Pilot 42/100, Production 28/100 unchanged.
+- **Demo 100%**: 98/100 — full interactive smoke passed. Subpath build (/ems + /ems-api) and route compatibility smoke completed and validated (root mode unchanged; subpath assets correctly prefixed). **Root assumption + API base hardening pass (2026-05-25) completed** — all 5 internal root redirects and 9 direct /api strings centralized (builds + i18n re-validated post-changes). Complete stakeholder + web portal deployment package ready. **No external dependencies (auth contract, exact paths) resolved yet.** Pilot 42/100, Production 28/100 unchanged. Faculty Web Portal slice lifted 38→42/100 in dedicated scorecard (frontend now the strongest dimension).
 - **Controlled Faculty LAN Pilot 100%**: 42/100 — **blocked**. Primary blocker is unanswered Laravel/POLSCI OAuth contract (25/100 in that area). Secondary: no real PostgreSQL target, no executed backup/restore evidence, no DPO sign-off.
 - **Production 100%**: 28/100 — far. Requires completed pilot + real environment evidence + hardening + external audits.
 
@@ -82,6 +82,15 @@ The platform is **demo-viable today** (87/100 demo readiness).
 EMS is already a **serious institutional system** with real depth in governance, optimization, audit, and role-aware operations. The remaining distance to 100% is **not a coding problem** — it is a **contract + evidence + environment problem**. The team has done excellent work documenting exactly what is missing. The next breakthrough requires external stakeholders (IT, Laravel owner, DPO) to answer the open questions and provide the target environment.
 
 Do the safe demo polish now. Send the contract questions today. Everything else waits on those answers.
+
+## Faculty Web Portal Root + API Hardening (2026-05-25)
+This pass eliminated the last frontend root-path assumptions and direct /api bypasses:
+- 5 internal navigation cases (window.location + raw <a href>) now use withAppBasePath helper or React Router.
+- 9 direct API strings (exports, downloads, SSO, placeholder faculty config fetches) now use buildApiUrl / getApiBaseUrl.
+- Both root and /ems + /ems-api builds + i18n re-validated after changes.
+- Result: Faculty Web Portal "Frontend Base Path + API Proxy Readiness" 85 → 95; overall web portal integration 38 → **42/100** (still gated by auth contract at 0%).
+
+The frontend is now the most ready part of any future faculty web deployment. Auth contract remains the sole immovable blocker.
 
 ---
 *This summary is suitable for both technical and non-technical stakeholders. All claims are backed by the 20+ detailed 100% docs created in this pass.*

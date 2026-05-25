@@ -10,6 +10,7 @@
 - [ ] Faculty web reverse proxy rules documented and tested in staging
 - [ ] Frontend VITE_APP_BASE_PATH and VITE_API_BASE_URL configured for target
 - [x] Subpath build compatibility validated locally (root + /ems + /ems-api) — see FACULTY_WEB_SUBPATH_BUILD_VALIDATION_LOG.md
+- [x] Root assumption + direct API call hardening completed (2026-05-25) — all internal window.location/root href + /api bypasses centralized via helpers; post-fix builds + i18n validated. See FACULTY_WEB_ROOT_PATH_HARDENING_AUDIT.md + FACULTY_WEB_API_BASE_HARDENING_AUDIT.md + EXPORT_DOWNLOAD_PATH_REVIEW.md
 
 ### 2. Auth / OAuth
 - [ ] Laravel / Faculty Web auth contract fully answered and verified
