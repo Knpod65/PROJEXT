@@ -58,13 +58,14 @@ Send the existing LARAVEL_AUTH_CONTRACT_QUESTIONS.md + closure tracker to the re
 **Best if**:
 - Strong operational feedback during demo about data quality, import pain, or print shop friction.
 
-## Recommended Combined Path (Low Regret)
-1. **Today–48 hours**: Send formal Laravel Auth Contract request (Option B primary).
-2. **Parallel (2–4 weeks)**: Light design concept exploration using existing handoff package (Option A, low cost).
-3. **Do not start** any auth bridge code until contract answers are received and verified.
-4. Use the POST_DEMO_DECISION_MATRIX.md to reconvene leadership within 2 weeks of receiving contract answers or major feedback themes.
+## Recommended Combined Path After Successful Demo (25 May 2026)
+1. **Within 48 hours**: Send the full Laravel/IT contract dispatch packet (A1 in the 48-hour tracker) — highest leverage action.
+2. **Parallel (low risk)**: Begin light visual design concept work using the existing claude-design-handoff-package (do not implement until feedback is reviewed).
+3. **Do not** write any auth bridge code until the contract is fully verified and leadership has chosen the option.
+4. Use POST_DEMO_DECISION_CAPTURE.md + POST_DEMO_DECISION_MATRIX.md to record stakeholder feedback and lock the chosen next phase within 48–72 hours.
+5. Reconvene leadership as soon as contract answers begin arriving.
 
-**Golden Rule**: Never implement the auth bridge before the contract is closed. This has been the consistent recommendation across every audit since May 2026.
+**Golden Rule (unchanged)**: Never implement the auth bridge before the contract is closed. This remains the consistent recommendation across all audits.
 
 ---
 *Choose based on actual demo feedback, not assumptions.*

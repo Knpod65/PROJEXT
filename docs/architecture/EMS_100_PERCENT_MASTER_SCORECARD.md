@@ -27,7 +27,7 @@
 
 ## Overall Scores (This Pass)
 - **Current overall system readiness**: **64 / 100**
-- **Demo readiness**: **98 / 100** (full interactive smoke on GUI machine passed for core flows and accounts. Pilot 42/100, Production 28/100 unchanged)
+- **Demo readiness**: **98 / 100** (full interactive smoke passed; stakeholder demo day package + Laravel contract dispatch packet prepared. Pilot 42/100, Production 28/100 unchanged)
 - **Pilot readiness**: **42 / 100** (blocked by external contracts + evidence)
 - **Production readiness**: **28 / 100** (far; requires pilot first + real env)
 
