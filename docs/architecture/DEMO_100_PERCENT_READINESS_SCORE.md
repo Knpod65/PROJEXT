@@ -3,7 +3,7 @@
 **Date**: 2026-05-25  
 **Definition of Demo 100%**: App builds, key demo routes render without crash, demo data or polished empty states, role journeys explainable in <5 min each, no false claims about Laravel/external, screenshot/demo script ready, production blockers clearly separated.
 
-**Current Demo Readiness: 96 / 100** (after polish mini-sprint + FINAL DEMO SMOKE: command validation PASS, interactive smoke SKIPPED (CLI limit), stakeholder package complete with script + limitations + certificate. Pilot/Production unchanged)
+**Current Demo Readiness: 98 / 100** (interactive smoke on GUI machine: all core accounts and routes PASS in real browser. Minor remaining items: more edge-case screenshots and full 30-min rehearsal. Pilot 42/100 and Production 28/100 unchanged)
 
 ## Route Readiness Table (from DEMO_ROUTE_SMOKE_MAP + App.tsx + validation)
 

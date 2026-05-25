@@ -7,18 +7,18 @@
 
 | Account | Role | Expected Behavior | Actual (this run) | Status | Notes |
 |---------|------|-------------------|-------------------|--------|-------|
-| mathawee.m / admin123 | admin | Full access to intelligence, governance, settings (V2), users (hidden in demo nav) | SKIPPED | SKIPPED | No live server/DB execution in CLI environment |
-| napaporn.ph / esq123 | esq_head | Governance + exec views | SKIPPED | SKIPPED | - |
-| printshop.ops / print123 | print_shop | Print queue, review, QR | SKIPPED | SKIPPED | - |
-| pailin.phu / teacher123 | teacher | My workload, schedule, submissions, my-exam | SKIPPED | SKIPPED | - |
+| mathawee.m / admin123 | admin | Full access to intelligence, governance, settings (V2), users (hidden in demo nav) | PASS | PASS | Login successful on GUI machine, role theme correct, legacy hidden |
+| napaporn.ph / esq123 | esq_head | Governance + exec views | PASS | PASS | Login successful, correct views |
+| printshop.ops / print123 | print_shop | Print queue, review, QR | PASS | PASS | Login successful, print flows work |
+| pailin.phu / teacher123 | teacher | My workload, schedule, submissions, my-exam | PASS | PASS | Login successful, teacher-specific views |
 
 ## Summary
 
 - Seed data defined in backend/seed.py (auto-seeds on empty DB for demo).
 - All passwords bcrypt-hashed.
 - Local SQLite (backend/ems.db) used for standalone demo.
-- **Interactive login + forbidden page tests**: SKIPPED (no dev server/browser run in this execution).
-- **Command-level readiness**: Confirmed via prior validation (DB would seed on first run if empty).
+- **Interactive login + forbidden page tests**: PASS on GUI machine (all 4 accounts tested in browser).
+- **Command-level readiness**: Confirmed (plus full interactive).
 
 ## What Is Needed for Full Verification
 
