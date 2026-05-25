@@ -206,5 +206,58 @@ Audit records must be stored in the EMS `AuditLog` table. Log retention must com
 
 ---
 
+---
+
+## 11. Observed POLSCI OAuth Login Pattern (Added 2026-05-25)
+
+Observed login URL from the faculty environment:
+
+```text
+https://account.pol.cmu.ac.th/oauth/login?ServiceUrl=https%3A%2F%2Fportal.mis.pol.cmu.ac.th%2Foauth%2Fcallback
+```
+
+Decoded components:
+
+| Item | Observed value | Confidence |
+|---|---|---|
+| Login endpoint | `https://account.pol.cmu.ac.th/oauth/login` | Confirmed |
+| ServiceUrl callback | `https://portal.mis.pol.cmu.ac.th/oauth/callback` | Confirmed |
+| Login page wording | "POLSCI ACCOUNT" and "Sign in with CMU Account with MS Entra ID" | Confirmed |
+
+Decoded flow from the observed URL:
+
+1. User visits a faculty portal or EMS-protected route.
+2. Faculty-side auth redirects the browser to the POLSCI OAuth login endpoint.
+3. User authenticates with CMU Account / MS Entra ID.
+4. POLSCI OAuth redirects the browser back to the `ServiceUrl`.
+5. The faculty portal callback receives the auth result.
+6. Laravel or faculty-side server logic validates the result server-side.
+7. Faculty-side server creates its own authenticated session.
+8. EMS should receive only verified identity or a one-time server-side bridge artifact, never a raw OAuth token in the browser.
+
+What is confirmed:
+
+- A POLSCI OAuth gateway exists.
+- The observed login experience is CMU Account / MS Entra ID based.
+- The currently observed callback path belongs to the faculty portal, not to EMS.
+
+What remains unknown:
+
+- Exact callback parameter names
+- Whether the callback receives a `code`, token, ticket, or another artifact
+- Whether `cmu_at` exists in this implementation
+- Exact `session("USS")` structure
+- Exact CMU email field name and any user profile fields
+- Error callback behavior
+- Logout and expiry behavior
+
+Implementation prohibition:
+
+**Do not implement the EMS auth bridge until the callback contract is verified against the real Laravel/POLSCI code path.**
+
+This observed URL improves architectural confidence, but it does not replace the contract questions in `LARAVEL_AUTH_CONTRACT_QUESTIONS.md`.
+
+---
+
 **End of FACULTY_LARAVEL_AUTH_INTEGRATION_SPEC.md**
 This document is DRAFT. No values have been fabricated. All contract items require verification.

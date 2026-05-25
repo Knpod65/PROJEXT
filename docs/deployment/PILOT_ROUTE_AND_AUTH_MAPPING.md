@@ -186,5 +186,57 @@ For EMS JWT cookies to be sent automatically with `/api/...` requests, the follo
 
 ---
 
+---
+
+## 8. Additional Auth Route Design (Added 2026-05-25)
+
+### Observed faculty auth boundary
+
+- Observed login endpoint: `https://account.pol.cmu.ac.th/oauth/login`
+- Observed `ServiceUrl` callback: `https://portal.mis.pol.cmu.ac.th/oauth/callback`
+
+EMS interpretation:
+
+- Faculty-side callback remains the first verified boundary
+- EMS should not assume it owns the first OAuth callback until the contract is verified
+
+### Proposed print-shop route family
+
+These routes are design targets only. They are not yet implemented and must remain separate from student-facing or internal CMU route families.
+
+| Proposed Route | Purpose | Notes |
+|---|---|---|
+| `/ems/print-shop/login` | External print-shop login entry | Use only if EMS or Laravel owns a separate external lane |
+| `/ems/print-shop/queue` | External print queue workspace | Equivalent future route family for external partner use |
+| `/ems/print-shop/jobs/:id` | Assigned print job details | Must be scoped to assigned jobs only |
+| `/ems/print-shop/acknowledge` | Handoff / delivery acknowledgement | Audit required |
+
+Current code reality:
+
+- React currently exposes `/print-queue` for `print_shop`
+- Backend printing endpoints currently live under `/api/printing/queue/...`
+- `/printreview` is an internal review surface, not a print-shop-only route
+
+Route safety rules:
+
+- `/user/student/...` remains student-facing
+- Print-shop users must not be routed through student paths
+- Print-shop users must not be represented as fake CMU students or fake staff
+- Backend API must enforce `print_shop` scope regardless of frontend navigation
+
+### Permission matrix
+
+| Role | Login Source | Identity Key | Allowed Pages | Forbidden Pages |
+|---|---|---|---|---|
+| `admin` | EMS native or future verified CMU lane | EMS user / verified CMU email | Admin and operational pages | None within EMS admin scope |
+| `staff` | EMS native or future verified CMU lane | EMS user / verified CMU email | Operational staff pages | Governance-only and print-shop-only pages unless separately granted |
+| `dept_supervisor` | EMS native or future verified CMU lane | EMS user / verified CMU email | Department-scoped dashboards | Admin-only and print-shop-only pages |
+| `teacher` | EMS native or future verified CMU lane | EMS user / verified CMU email | Teacher pages and own submissions | Admin, governance, and print-shop-only pages |
+| `student` | Public/search or future verified CMU lane | Student identity | Student schedule surfaces only | Internal staff/admin/print-shop pages |
+| `esq_head` / `secretary` | EMS native or future verified CMU lane | EMS user / verified CMU email | Governance and read-mostly operational pages | Print-shop-only pages unless explicitly approved |
+| `print_shop` | Separate external lane or controlled internal lane | Partner identity or dedicated EMS print-shop account | Print queue and assigned print jobs only | Admin, staff, teacher, student, governance, user management, and broad exports |
+
+---
+
 **End of PILOT_ROUTE_AND_AUTH_MAPPING.md**
 All routes and configurations marked PRELIMINARY. No Nginx configuration should be deployed without IT review and verification.

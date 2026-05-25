@@ -90,5 +90,36 @@ No auth bridge code may be merged without passing all of the following:
 
 ---
 
+---
+
+## G. Lane-Specific Implementation Gates (Added 2026-05-25)
+
+### CMU / POLSCI lane may start only when all are MET
+
+- [ ] POLSCI callback payload verified against the real Laravel implementation
+- [ ] Exact callback parameter names verified
+- [ ] Verified CMU email field name confirmed
+- [ ] Token lifecycle verified, including whether `cmu_at` exists and how it is handled
+- [ ] `session("USS")` payload verified against live Laravel code
+- [ ] EMS mount path and callback ownership verified
+
+### External print-shop lane may start only when all are MET
+
+- [ ] External identity owner selected (EMS-owned, Laravel-owned, signed-link flow, or other approved design)
+- [ ] External account source selected and documented
+- [ ] Print-shop permission matrix approved
+- [ ] Audit logging requirements approved
+- [ ] PDPA-minimized visible field set approved
+- [ ] Route family for print-shop access approved as separate from student-facing routes
+
+### Additional prohibitions
+
+- [ ] No frontend token handling for POLSCI / CMU artifacts
+- [ ] No trust in query-string email
+- [ ] No trust in frontend role claims
+- [ ] No treatment of print-shop users as fake CMU students or fake staff
+
+---
+
 **End of AUTH_BRIDGE_IMPLEMENTATION_GATE.md**  
 This gate is the hard constraint. Do not bypass it for any timeline reason.

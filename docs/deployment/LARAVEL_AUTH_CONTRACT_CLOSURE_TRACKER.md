@@ -43,5 +43,27 @@ Do not begin bridge code, route changes, or deployment topology changes until th
 
 ---
 
+---
+
+## 2026-05-25 Additions: POLSCI OAuth + External Print Shop
+
+| Item | Owner | Answer Received? | Answer | Risk If Unknown | Blocks Code? | Status |
+|------|-------|-----------------|--------|-----------------|-------------|--------|
+| POLSCI callback payload verified | Laravel owner | [ ] Yes  [ ] No | TBD | Bridge endpoint may parse the wrong artifact | Yes | OPEN |
+| POLSCI callback parameter names verified | Laravel owner | [ ] Yes  [ ] No | TBD | EMS cannot safely consume callback output | Yes | OPEN |
+| ServiceUrl strategy verified | Laravel owner + IT | [ ] Yes  [ ] No | TBD | EMS may be mounted on an unsupported callback path | Yes | OPEN |
+| Existing portal callback ownership verified | Laravel owner | [ ] Yes  [ ] No | TBD | Bridge boundary may be implemented in the wrong layer | Yes | OPEN |
+| Error callback behavior verified | Laravel owner | [ ] Yes  [ ] No | TBD | EMS cannot handle failures safely | Yes | OPEN |
+| External print-shop identity owner selected | EMS + Laravel owner + IT | [ ] Yes  [ ] No | TBD | Print-shop lane cannot be implemented safely | Yes | OPEN |
+| External print-shop account source selected | EMS + Laravel owner + IT | [ ] Yes  [ ] No | TBD | Wrong auth lane may be built | Yes | OPEN |
+| Print-shop permission matrix approved | EMS owner | [ ] Yes  [ ] No | TBD | Over-privileged external access | Yes | OPEN |
+| PDPA-minimized print-shop field set approved | EMS owner + DPO | [ ] Yes  [ ] No | TBD | Excessive personal data disclosure | Yes | OPEN |
+
+Current expanded decision:
+
+**Bridge implementation remains BLOCKED. The observed POLSCI OAuth login pattern is useful evidence, but it does not satisfy the Laravel callback contract or the external print-shop account contract.**
+
+---
+
 **End of LARAVEL_AUTH_CONTRACT_CLOSURE_TRACKER.md**  
 This is the single live contract tracking document. Update as answers arrive.

@@ -185,5 +185,98 @@ Before writing any bridge code:
 
 ---
 
+---
+
+## 8A. Observed POLSCI OAuth Boundary (Added 2026-05-25)
+
+Observed evidence from the faculty environment:
+
+- Login endpoint: `https://account.pol.cmu.ac.th/oauth/login`
+- Observed callback target via `ServiceUrl`: `https://portal.mis.pol.cmu.ac.th/oauth/callback`
+- Login page wording indicates CMU Account / MS Entra ID through POLSCI infrastructure
+
+Updated architectural interpretation:
+
+1. The browser is redirected first to a faculty-owned POLSCI OAuth gateway.
+2. The gateway returns to a faculty portal callback.
+3. Faculty-side server logic is expected to validate the auth result and create a local session.
+4. EMS must integrate after that faculty-side verification boundary.
+
+What this does **not** prove:
+
+- It does not prove what callback parameters are used.
+- It does not prove that `cmu_at` exists in this implementation.
+- It does not prove that EMS can own its own callback path yet.
+
+Design rule:
+
+**EMS must receive only verified identity or a one-time bridge artifact after faculty-side server validation. EMS must never rely on raw POLSCI OAuth artifacts in the browser.**
+
+---
+
+## 8B. Hybrid Auth Model: CMU Users and External Print Shop Users
+
+### Lane A - CMU / POLSCI authenticated users
+
+Applies to:
+
+- admin
+- staff
+- secretary
+- esq_head / executive
+- dept_supervisor
+- teacher
+- student if student integration is later enabled
+
+Identity source:
+
+- Verified faculty-side session after POLSCI OAuth / CMU Account / MS Entra ID
+- Expected EMS mapping key: verified CMU email
+
+Authority rules:
+
+- EMS database remains authoritative for role mapping
+- Backend permissions remain authoritative for access decisions
+- Frontend role state is for navigation and display only
+- No client-provided email, role, or token claim is trusted
+
+### Lane B - external print shop / partner users
+
+Applies to:
+
+- print shop
+- external copy center
+- controlled document handling partner
+
+Current live-code context:
+
+- EMS already contains a `print_shop` role
+- EMS already contains a dedicated `/print-queue` route and backend printing endpoints guarded by `require_print_shop`
+- Current code does not yet decide who owns the external identity source
+
+Allowed identity model for this lane:
+
+- `partner_account_id`
+- `external_username`
+- `partner_org`
+- optional contact email
+- CMU email is not required
+
+Required restrictions for this lane:
+
+- Access limited to assigned print queue and assigned print jobs
+- Can update print status and acknowledge handoff / delivery
+- Cannot access admin, staff, teacher, student, or governance dashboards
+- Cannot receive broad export or general user-directory access
+- Must be auditable at every login, document view/download, and state transition
+
+PDPA design rule:
+
+- Show the minimum metadata needed for print operations
+- Prefer time-limited access for external partners
+- Never reuse student-facing or internal CMU routes as a shortcut for print-shop access
+
+---
+
 **End of EMS_AUTH_BRIDGE_DESIGN.md**
 No bridge code may be written until all prerequisites are checked. All contract items remain TBD.

@@ -79,6 +79,32 @@ The pilot target environment has been designated as the Faculty LAN Server. The 
 
 ## Current Blocker Status
 
+## 2026-05-25 Auth Design Addendum
+
+Observed new evidence:
+
+- Faculty login endpoint observed at `https://account.pol.cmu.ac.th/oauth/login`
+- Observed `ServiceUrl` callback points to `https://portal.mis.pol.cmu.ac.th/oauth/callback`
+- Print-shop users may need controlled access without CMU email
+
+Implication for the environment record:
+
+- Faculty LAN remains the correct target in principle
+- EMS must now plan for two auth lanes:
+  - verified CMU / POLSCI users
+  - external print-shop / partner users
+- Neither lane may be implemented until its contract gates are satisfied
+
+Additional information required to proceed:
+
+- [ ] POLSCI callback payload contract verified
+- [ ] `ServiceUrl` strategy verified
+- [ ] External print-shop identity owner selected
+- [ ] Print-shop access scope approved
+- [ ] PostgreSQL target confirmed for the chosen auth rollout
+
+---
+
 See `docs/operations/PILOT_BLOCKER_DASHBOARD.md` and `docs/operations/PILOT_HUMAN_ACTION_TRACKER.md` for the live status of all blockers.
 
 Environment target is now IN PROGRESS. All Laravel/CMU auth contract items remain OPEN.

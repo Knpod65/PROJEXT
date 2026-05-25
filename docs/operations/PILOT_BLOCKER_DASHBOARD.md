@@ -41,4 +41,21 @@
 
 ---
 
+---
+
+## Additional Auth Design Blockers (Added 2026-05-25)
+
+| Blocker | Owner | Current Status | Why It Matters | Next Action |
+|---|---|---|---|---|
+| POLSCI OAuth callback contract | Laravel owner | OPEN | EMS cannot safely parse or trust callback outcomes without the real contract | Answer new POLSCI callback questions |
+| EMS `ServiceUrl` strategy | Laravel owner + IT | OPEN | EMS cannot decide whether it owns a callback or consumes a faculty-side bridge | Confirm whether EMS can have its own callback path |
+| `session("USS")` payload | Laravel owner | OPEN | Identity mapping remains unsafe until exact fields are verified | Provide field structure |
+| `cmu_at` / token lifecycle | Laravel owner | OPEN | Token exposure and replay risk remain unknown | Explain token lifecycle and disposal |
+| CMU email field name | Laravel owner | OPEN | EMS cannot map identity safely until the authoritative field is known | Confirm exact field name |
+| External print-shop auth strategy | EMS + Laravel owner + IT | OPEN | Existing `print_shop` role has no approved external identity owner yet | Choose auth source option |
+| `print_shop` permission matrix | EMS owner | OPEN | External users must be least-privileged and route-scoped | Approve route and permission boundaries |
+| PostgreSQL target | IT / DBA | OPEN | Deployment ownership and auth rollout remain blocked without the DB target | Confirm separate DB or schema ownership |
+
+---
+
 **End of PILOT_BLOCKER_DASHBOARD.md (Updated 2026-05-22)**

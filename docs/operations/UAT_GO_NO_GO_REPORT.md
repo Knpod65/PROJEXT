@@ -30,4 +30,34 @@ To move from GO WITH CONDITIONS to unconditional GO:
 
 ---
 
+---
+
+## Additional 2026-05-25 Auth Conditions
+
+Go/No-Go remains:
+
+**GO WITH CONDITIONS**
+
+Reason:
+
+- Faculty LAN remains the selected target in principle
+- The POLSCI OAuth path is now partially identified
+- The callback contract, `ServiceUrl` ownership, and external print-shop auth model are still not implementation-ready
+
+Additional conditions before pilot auth work may proceed:
+
+1. POLSCI callback payload contract verified
+2. `session("USS")` payload verified
+3. CMU email field verified
+4. Token / `cmu_at` lifecycle verified
+5. External print-shop auth strategy selected
+6. `print_shop` permission matrix approved
+7. PostgreSQL target confirmed
+
+Interpretation:
+
+The program is design-ready for the auth bridge direction, but not implementation-ready for Faculty LAN pilot auth integration.
+
+---
+
 **End of UAT_GO_NO_GO_REPORT.md (Updated)**

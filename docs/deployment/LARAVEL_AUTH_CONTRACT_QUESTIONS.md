@@ -158,5 +158,46 @@ For secret configuration, confirm each item with "YES" (configured) or "NO" (not
 
 ---
 
+---
+
+## I. POLSCI OAuth Callback Contract (Added 2026-05-25)
+
+Observed context:
+
+- Login endpoint: `https://account.pol.cmu.ac.th/oauth/login`
+- Observed ServiceUrl: `https://portal.mis.pol.cmu.ac.th/oauth/callback`
+- Login page wording indicates CMU Account / MS Entra ID through a POLSCI gateway
+
+| # | Question | Answer | Notes |
+|---|---|---|---|
+| I1 | Does `/oauth/callback` receive a `code`, token, ticket, `cmu_at`, or another artifact? | TBD | Do not assume parameter names |
+| I2 | What exact query parameters or POST fields are received at the callback? | TBD | Provide names only, not secrets |
+| I3 | Is `ServiceUrl` allowlisted or validated by the POLSCI OAuth gateway? | TBD | |
+| I4 | Can EMS use its own `ServiceUrl` callback, or must the callback always terminate at the faculty portal first? | TBD | |
+| I5 | Can `ServiceUrl` point to `/ems/oauth/callback`, or must EMS integrate behind the existing portal callback? | TBD | |
+| I6 | What profile fields are available after successful callback validation? | TBD | Need exact field names |
+| I7 | Is CMU email always returned for internal users? | TBD | |
+| I8 | Is student ID or personnel ID returned as part of the verified profile? | TBD | |
+| I9 | What happens if a user authenticates successfully but is not authorized for the portal? | TBD | |
+| I10 | What is the error callback format for cancelled login, expired login, or denied login? | TBD | |
+| I11 | How is logout handled across POLSCI OAuth, Laravel session, and downstream apps? | TBD | |
+
+---
+
+## J. External Print Shop / Partner Account Contract (Added 2026-05-25)
+
+| # | Question | Answer | Notes |
+|---|---|---|---|
+| J1 | Will Laravel support non-CMU external partner accounts for print-shop access? | TBD | |
+| J2 | If yes, where are those accounts stored? | TBD | Laravel DB, separate table, SSO adapter, other |
+| J3 | What session field or account type identifies a non-CMU external user? | TBD | |
+| J4 | Can `session("USS")` represent non-CMU users safely and distinctly? | TBD | |
+| J5 | Is CMU email nullable or absent for external partner accounts? | TBD | |
+| J6 | If Laravel will not own partner accounts, should EMS own them directly? | TBD | |
+| J7 | Can external partner users be restricted to a separate route family from student/staff/admin routes? | TBD | |
+| J8 | Can external partner users use the same logout/session policy as CMU users, or do they need a separate flow? | TBD | |
+
+---
+
 **End of LARAVEL_AUTH_CONTRACT_QUESTIONS.md**
 All answers are TBD until verified by the Laravel owner and IT team.
