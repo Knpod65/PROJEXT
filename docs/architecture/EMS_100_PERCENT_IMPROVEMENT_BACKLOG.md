@@ -1,0 +1,35 @@
+# EMS_100_PERCENT_IMPROVEMENT_BACKLOG.md
+
+**Date**: 2026-05-25  
+**Derived from**: All 100% scorecards + MISSING_WORK_REGISTER + HARDENING_TRIAGE + source review
+
+## Prioritized Backlog (P0 = blocks demo, P1 = blocks pilot, P2 = blocks prod, P3 = post-pilot, P4 = nice-to-have)
+
+| Task ID | Area | Task | Current % Impact | Required For | Owner | Dependency | Effort | Risk | Acceptance Criteria |
+|---------|------|------|------------------|--------------|-------|------------|--------|------|---------------------|
+| T001 | Auth | Send LARAVEL_AUTH_CONTRACT_QUESTIONS.md + closure tracker to real Laravel/IT owner and obtain verified answers | 25 → 70 (pilot) | Pilot 100 | EMS + IT/Laravel owner | None | 1-3 days | Low | All 20+ questions answered + code-verified |
+| T002 | DB | Confirm + provision real Faculty LAN PostgreSQL target (separate EMS DB recommended) + credentials + backup owner | 62 → 80 | Pilot 100 | IT/DBA + EMS | T001 (mount path) | 1-2 days | Low | Working DATABASE_URL on target; no sqlite fallback |
+| T003 | Ops | Execute backup + restore on target DB; attach evidence to BACKUP_RESTORE_TEST_EVIDENCE.md + PILOT_BLOCKER_DASHBOARD | 35 → 75 | Pilot 100 | IT/Ops | T002 | 0.5-1 day | Low | Timings + logs + success proof signed |
+| T004 | PDPA | Obtain DPO sign-off on data processing (incl. CMU email via Laravel) using DPO_RETENTION_SIGNOFF_TEMPLATE | 70 → 85 | Pilot 100 | DPO + EMS owner | T001 | 1-3 days | Medium | Signed template attached |
+| T005 | Backend | Unify all remaining ENV vs ENVIRONMENT checks (pdpa_runtime_guard_service etc.); remove login body token | 78 → 88 (security) | Pilot 100 | Backend | None | 0.5 day | Low | grep clean; tests pass; security audit sign-off |
+| T006 | Frontend | Hide all legacy (non-V2) pages from demo navigation; fix real raw strings in AdminIntelligence/AuditExplorer/Checkins | 76 → 90 (demo) | Demo 100 | Frontend | None | 1 day | Low | Demo script + build + i18n raw scan clean for demo paths |
+| T007 | Frontend | Expand manualChunks or route splitting to bring main bundle <500 kB + add bundle analyzer to CI | 65 → 80 (perf) | Demo/Pilot | Frontend | None | 1-2 days | Low | Build warning gone; analyzer report in CI |
+| T008 | Testing | Add frontend unit/component tests for 5 critical role flows + basic E2E smoke for demo journeys | 71 → 82 | Pilot 100 | FE + QA | None | 3-5 days | Medium | Tests in CI; >80% of key paths covered |
+| T009 | Backend | Adopt Alembic (or equivalent) + formal migration ownership contract with Faculty DBA | 45 → 80 (DB) | Production 100 | Backend + DBA | T002 | 2-4 days | Medium | First migration via tool; DBA sign-off |
+| T010 | Security | Integrate secret manager (or Faculty vault) + prove rotation for pilot+ | 72 → 90 (security) | Production 100 | Security + IT | T001 | 3-5 days | High | No env secrets in prod; rotation runbook + evidence |
+| T011 | UX | Workload fairness humanization pass + mobile/responsive hardening on top 5 heavy pages + a11y audit | 74 → 88 (UX) | Pilot 100 | UX + Product | None | 5-8 days | Low | Usability test with 3 real users per role; a11y gate |
+| T012 | Demo | Full local rehearsal using LOCAL_REHEARSAL_PREFLIGHT + update screenshot atlas + DEMO_USER_JOURNEY_SCRIPT | 87 → 100 (demo) | Demo 100 | EMS team | T006 | 1-2 days | Low | Rehearsal report + updated assets + no crashes |
+| T013 | Pilot | Execute UAT with real faculty users on target env; update UAT_GO_NO_GO + PILOT_BLOCKER_DASHBOARD | 42 → 95 (pilot) | Pilot 100 | Pilot coordinator | T001-T004, T012 | 2-4 days | Medium | Signed Go/No-Go + all blockers closed |
+| T014 | Post-pilot | Usage-based cleanup of legacy pages + archive historical docs (after 4 weeks pilot traffic) | 55 → 85 (cleanup) | Post-pilot | All | Pilot data | 3-5 days | Low | Zero-traffic pages archived; docs consolidated |
+| T015 | Production | Full hardening, CI/CD on real infra, load test, monitoring, incident response drill, external security audit, rollback proven | 28 → 95 (prod) | Production 100 | All + auditors | All prior | 4-8 weeks | High | Production env live + all evidence + sign-offs |
+
+**P0 (Demo blockers)**: T006, T007 (partial), T012  
+**P1 (Pilot blockers)**: T001–T005, T008, T011, T013  
+**P2 (Production)**: T009, T010, T015 + all P1  
+**P3**: T014  
+**P4**: Nice-to-haves (bundle size further, extra a11y, etc.)
+
+**Total actionable tasks identified in this pass**: 15 (prioritized above). More will emerge after T001 answers arrive.
+
+---
+*This backlog is the single prioritized list. Do not start work outside it without updating this doc.*
