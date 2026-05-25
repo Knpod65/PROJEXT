@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { useI18n } from "@/i18n";
-import { ApiError } from "@/services/api";
+import { ApiError, buildApiUrl } from "@/services/api";
 import { useAuth } from "@/store/auth.store";
 import { getDefaultRoute, getPublicEntryRoute, getStoredPendingRole, hasRole, storePendingRole } from "@/utils/roles";
 
@@ -152,7 +152,7 @@ export function LoginPage() {
             variant="outline"
             onClick={() => {
               const query = pendingRole ? `?selected_role=${encodeURIComponent(pendingRole)}` : "";
-              window.location.href = `/api/auth/sso/login${query}`;
+              window.location.href = `${buildApiUrl("/auth/sso/login")}${query}`;
             }}
           >
             {t("auth.login.sso")}

@@ -4,6 +4,7 @@ import type {
   GovernanceFlowSummary,
   WorkloadPolicySummary,
 } from "@/services/platformConfig.service";
+import { buildApiUrl } from "@/services/api";
 
 export function useFacultyPolicy(facultyId: number | null): {
   policy: WorkloadPolicySummary | null;
@@ -26,8 +27,8 @@ export function useFacultyPolicy(facultyId: number | null): {
     setIsLoading(true);
     setError(null);
 
-    const policyUrl = `/api/platform/faculty-configs/${facultyId}/workload-policy`;
-    const flowUrl = `/api/platform/faculty-configs/${facultyId}/governance-flow`;
+    const policyUrl = buildApiUrl(`/platform/faculty-configs/${facultyId}/workload-policy`);
+    const flowUrl = buildApiUrl(`/platform/faculty-configs/${facultyId}/governance-flow`);
 
     Promise.all([
       fetch(policyUrl).then((r) => (r.ok ? (r.json() as Promise<WorkloadPolicySummary>) : null)),

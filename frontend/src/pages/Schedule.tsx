@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import { buildDocumentExportUrl } from "@/services/documents.service";
+import { buildApiUrl } from "@/services/api";
 import { getRooms, listSchedules } from "@/services/schedule.service";
 import { useAuth } from "@/store/auth.store";
 import type { ScheduleWithSection } from "@/types/api";
@@ -105,7 +106,7 @@ export function SchedulePage() {
             iconLeft={<Icon name="download" />}
             type="button"
             variant="outline"
-            onClick={() => window.open("/api/exports/schedule-excel", "_blank")}
+            onClick={() => window.open(buildApiUrl("/exports/schedule-excel"), "_blank")}
           >
             Export Excel
           </Button>
@@ -113,7 +114,7 @@ export function SchedulePage() {
             iconLeft={<Icon name="picture_as_pdf" />}
             type="button"
             variant="outline"
-            onClick={() => window.open("/api/exports/schedule", "_blank")}
+            onClick={() => window.open(buildApiUrl("/exports/schedule"), "_blank")}
           >
             Export PDF
           </Button>

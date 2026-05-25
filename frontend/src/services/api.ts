@@ -43,6 +43,24 @@ function buildUrl(path: string, query?: Record<string, Primitive>) {
   return `${url.pathname}${url.search}`;
 }
 
+/**
+ * Returns the resolved API base URL (respects VITE_API_BASE_URL, defaults to "/api").
+ * Use for constructing download/export URLs or any place that must bypass the request() helper.
+ */
+export function getApiBaseUrl(): string {
+  return API_BASE;
+}
+
+/**
+ * Builds a full API path (with query) using the configured base.
+ * Does NOT include origin — returns a path suitable for fetch, <a href>, window.open, etc.
+ * Example: buildApiUrl("/exports/schedule") → "/api/exports/schedule" (or "/ems-api/..." when env set)
+ */
+export function buildApiUrl(path: string, query?: Record<string, unknown>): string {
+  // Reuse the internal normalization + query logic (buildUrl accepts the broader shape at runtime)
+  return buildUrl(path, query as Record<string, Primitive> | undefined);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }

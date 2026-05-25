@@ -1,6 +1,7 @@
 import React from "react";
 
 import { translate } from "@/i18n";
+import { withAppBasePath } from "@/utils/appPaths";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -81,7 +82,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               >
                 {translate("common.tryAgain")}
               </button>
-              <a className="ui-button ui-button--ghost ui-button--md" href="/dashboard">
+              <a className="ui-button ui-button--ghost ui-button--md" href={withAppBasePath("/dashboard")}>
                 {translate("common.goToDashboard")}
               </a>
             </div>

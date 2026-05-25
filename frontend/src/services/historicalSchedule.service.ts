@@ -1,4 +1,4 @@
-import { get, put } from "@/services/api";
+import { buildApiUrl, get, put } from "@/services/api";
 
 export type HistoricalScheduleVersion = "final_adjusted" | "optimized_baseline";
 
@@ -154,9 +154,9 @@ export function updateHistoricalRoomOpeningStart(username: string) {
 }
 
 export function buildHistoricalComparisonCsvUrl() {
-  return "/api/historical-schedules/export/comparison-csv";
+  return buildApiUrl("/historical-schedules/export/comparison-csv");
 }
 
 export function buildHistoricalWorkloadCsvUrl(version_kind: HistoricalScheduleVersion) {
-  return `/api/historical-schedules/export/workload-csv?version_kind=${encodeURIComponent(version_kind)}`;
+  return buildApiUrl(`/historical-schedules/export/workload-csv?version_kind=${encodeURIComponent(version_kind)}`);
 }

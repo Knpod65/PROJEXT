@@ -11,6 +11,8 @@ import { useAuth } from "@/store/auth.store";
 import { getEffectiveRole } from "@/utils/roles";
 import { formatNumber } from "@/utils/format";
 import { buildDocumentExportUrl } from "@/services/documents.service";
+import { buildApiUrl } from "@/services/api";
+import { withAppBasePath } from "@/utils/appPaths";
 
 export interface ExportCardAction {
   label: string;
@@ -87,43 +89,43 @@ export function useExportCenterPage(): UseExportCenterPageReturn {
         title: translate("exportCenter.cards.optimizationResults.title"),
         description: translate("exportCenter.cards.optimizationResults.description"),
         actions: [
-          { label: translate("exportCenter.actions.schedulePdf"), onClick: () => openExport("/api/exports/schedule") },
-          { label: translate("exportCenter.actions.scheduleExcel"), onClick: () => openExport("/api/exports/schedule-excel") },
-          { label: translate("exportCenter.actions.paperDistributionPdf"), onClick: () => openExport("/api/exports/paper-distribution-pdf") },
-          { label: translate("exportCenter.actions.paperDistributionExcel"), onClick: () => openExport("/api/exports/paper-distribution-excel") },
+          { label: translate("exportCenter.actions.schedulePdf"), onClick: () => openExport(buildApiUrl("/exports/schedule")) },
+          { label: translate("exportCenter.actions.scheduleExcel"), onClick: () => openExport(buildApiUrl("/exports/schedule-excel")) },
+          { label: translate("exportCenter.actions.paperDistributionPdf"), onClick: () => openExport(buildApiUrl("/exports/paper-distribution-pdf")) },
+          { label: translate("exportCenter.actions.paperDistributionExcel"), onClick: () => openExport(buildApiUrl("/exports/paper-distribution-excel")) },
         ],
       },
       {
         title: translate("exportCenter.cards.staffWorkload.title"),
         description: translate("exportCenter.cards.staffWorkload.description"),
         actions: [
-          { label: translate("exportCenter.actions.summaryPdf"), onClick: () => openExport("/api/exports/workload-summary-pdf") },
-          { label: translate("exportCenter.actions.workloadSummary"), onClick: () => openExport("/api/exports/workload-summary-excel") },
-          { label: translate("exportCenter.actions.dutyDetail"), onClick: () => openExport("/api/exports/workload-detail-excel") },
-          { label: translate("exportCenter.actions.fairnessSheet"), onClick: () => openExport("/api/exports/workload-summary-excel") },
+          { label: translate("exportCenter.actions.summaryPdf"), onClick: () => openExport(buildApiUrl("/exports/workload-summary-pdf")) },
+          { label: translate("exportCenter.actions.workloadSummary"), onClick: () => openExport(buildApiUrl("/exports/workload-summary-excel")) },
+          { label: translate("exportCenter.actions.dutyDetail"), onClick: () => openExport(buildApiUrl("/exports/workload-detail-excel")) },
+          { label: translate("exportCenter.actions.fairnessSheet"), onClick: () => openExport(buildApiUrl("/exports/workload-summary-excel")) },
         ],
       },
       {
         title: translate("exportCenter.cards.copyReports.title"),
         description: translate("exportCenter.cards.copyReports.description"),
-        actions: [{ label: translate("exportCenter.actions.openCopyCount"), onClick: () => { window.location.href = "/copy"; } }],
+        actions: [{ label: translate("exportCenter.actions.openCopyCount"), onClick: () => { window.location.href = withAppBasePath("/copy"); } }],
       },
       ...(isAdmin
         ? [
             {
               title: translate("exportCenter.cards.workflowReports.title"),
               description: translate("exportCenter.cards.workflowReports.description"),
-              actions: [{ label: translate("exportCenter.actions.openWorkflow"), onClick: () => { window.location.href = "/workflow"; } }],
+              actions: [{ label: translate("exportCenter.actions.openWorkflow"), onClick: () => { window.location.href = withAppBasePath("/workflow"); } }],
             },
             {
               title: translate("exportCenter.cards.externalExams.title"),
               description: translate("exportCenter.cards.externalExams.description"),
-              actions: [{ label: translate("exportCenter.actions.openExternalExams"), onClick: () => { window.location.href = "/external"; } }],
+              actions: [{ label: translate("exportCenter.actions.openExternalExams"), onClick: () => { window.location.href = withAppBasePath("/external"); } }],
             },
             {
               title: translate("exportCenter.cards.historicalSchedule.title"),
               description: translate("exportCenter.cards.historicalSchedule.description"),
-              actions: [{ label: translate("exportCenter.actions.openHistoricalReview"), onClick: () => { window.location.href = "/historical-schedules"; } }],
+              actions: [{ label: translate("exportCenter.actions.openHistoricalReview"), onClick: () => { window.location.href = withAppBasePath("/historical-schedules"); } }],
             },
           ]
         : []),

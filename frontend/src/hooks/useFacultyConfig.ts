@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { FacultyConfig } from "@/services/platformConfig.service";
 import { getFacultyDisplayName } from "@/services/platformConfig.service";
+import { buildApiUrl } from "@/services/api";
 
 export function useFacultyConfig(facultyId: number | null): {
   config: FacultyConfig | null;
@@ -23,7 +24,7 @@ export function useFacultyConfig(facultyId: number | null): {
     setError(null);
 
     // Placeholder until /api/platform/faculty-configs/{id} endpoint is wired
-    fetch(`/api/platform/faculty-configs/${facultyId}`)
+    fetch(buildApiUrl(`/platform/faculty-configs/${facultyId}`))
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<FacultyConfig>;

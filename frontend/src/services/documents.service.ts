@@ -1,6 +1,6 @@
 import type { PickupQrMutationResponse, PickupQrStatusResponse } from "@/types/api";
 
-import { get, post } from "./api";
+import { buildApiUrl, get, post } from "./api";
 
 export type OperationalDocumentType =
   | "all"
@@ -34,11 +34,8 @@ export function confirmPickupQr(scheduleId: number, qrId?: number) {
 }
 
 export function buildDocumentExportUrl(query: DocumentExportQuery = {}) {
-  const url = new URL("/api/documents/export-pdf", window.location.origin);
-  Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, String(value));
-    }
-  });
-  return url.toString();
+  // Use centralized buildApiUrl so VITE_API_BASE_URL is respected under faculty web subpath
+  const path = buildApiUrl("/documents/export-pdf", { ...query });
+  // Return absolute URL for window.open / <a href> (some callers expect full URL)
+  return new URL(path, window.location.origin).toString();
 }
