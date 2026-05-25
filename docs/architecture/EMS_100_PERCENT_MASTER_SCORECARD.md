@@ -27,7 +27,7 @@
 
 ## Overall Scores (This Pass)
 - **Current overall system readiness**: **64 / 100**
-- **Demo readiness**: **87 / 100** (strong; polish only)
+- **Demo readiness**: **96 / 100** (after mini-sprint polish: legacy nav hidden, bundle chunk improved, clean tree, repeatable smoke process)
 - **Pilot readiness**: **42 / 100** (blocked by external contracts + evidence)
 - **Production readiness**: **28 / 100** (far; requires pilot first + real env)
 
