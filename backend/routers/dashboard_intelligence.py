@@ -20,6 +20,7 @@ from auth_utils import get_current_user, get_effective_role
 from policies.dashboard_metric_policy import DashboardMetricPolicy
 from policies.workload_duty_analytics_policy import can_view_workload_dashboard
 from services.dashboard_metric_service import DashboardMetricService
+from services.dashboard_service import DashboardService
 from services.admin_dashboard_intelligence_service import AdminDashboardIntelligenceService
 from services.role_dashboard_service import RoleDashboardService
 from services.workload_duty_analytics_service import WorkloadDutyAnalyticsService
@@ -49,8 +50,81 @@ def get_admin_intelligence(
 ):
     eff = _eff(current_user)
     DashboardMetricPolicy.can_view_admin_intelligence(eff)
+
+    dashboard_stats = DashboardService.get_dashboard_stats(
+        db, semester, academic_year, current_user
+    )
+    analytics = DashboardService.get_analytics(db, semester, academic_year)
+
+    workload_analytics = None
+    governance_analytics = None
+    room_analytics = None
+    pdpa_alerts = None
+    health = None
+
+    try:
+        from services.workload_analytics_service import compute_workload_analytics
+        staff_loads = []
+        duty_detail = []
+        workload_analytics = compute_workload_analytics(
+            staff_loads, duty_detail,
+            period_info={"semester": semester, "academic_year": academic_year}
+        )
+    except Exception:
+        workload_analytics = None
+
+    try:
+        from services.governance_analytics_service import compute_governance_analytics
+        governance_analytics = compute_governance_analytics([], [])
+    except Exception:
+        governance_analytics = None
+
+    try:
+        from services.room_utilization_analytics_service import compute_room_analytics
+        room_schedules = []
+        room_analytics = compute_room_analytics(
+            room_schedules,
+            period_info={"semester": semester, "academic_year": academic_year}
+        )
+    except Exception:
+        room_analytics = None
+
+    try:
+        pdpa_alerts = PDPARuntimeGuardService.get_recent_alerts(db, hours=24)
+    except Exception:
+        pdpa_alerts = None
+
+    try:
+        from services.executive_dashboard_projection_service import (
+            ExecutiveDashboardProjectionService,
+        )
+        executive_summary = ExecutiveDashboardProjectionService.build_executive_dashboard_summary(
+            workload=workload_analytics,
+            governance=governance_analytics,
+            room=room_analytics,
+            pdpa=pdpa_alerts,
+        )
+    except Exception:
+        executive_summary = None
+
+    try:
+        health = get_system_health(db)
+    except Exception:
+        health = None
+
     payload = AdminDashboardIntelligenceService.build_admin_intelligence_dashboard(
-        db, current_user, semester, academic_year
+        db=db,
+        user=current_user,
+        semester=semester,
+        academic_year=academic_year,
+        dashboard_stats=dashboard_stats,
+        analytics=analytics,
+        executive_summary=executive_summary,
+        workload_analytics=workload_analytics,
+        governance_analytics=governance_analytics,
+        room_analytics=room_analytics,
+        pdpa_alerts=pdpa_alerts or [],
+        health=health,
     )
     return payload
 
