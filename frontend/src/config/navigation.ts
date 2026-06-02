@@ -197,6 +197,15 @@ export const appPages: AppPageConfig[] = [
     navGroup: "operations",
   },
   {
+    key: "invigilation-rate-rules",
+    title: "Invigilation Rate Rules",
+    description: "Configure user-entered invigilation payment rates for preview setup only.",
+    path: "/invigilation-rate-rules",
+    icon: "payments",
+    roles: ["admin", "staff"],
+    navGroup: "operations",
+  },
+  {
     key: "historical-schedules",
     title: "Historical Schedule Review",
     description: "Compare optimized baseline and final adjusted schedule imports for the historical 2/2568 final exam period.",
