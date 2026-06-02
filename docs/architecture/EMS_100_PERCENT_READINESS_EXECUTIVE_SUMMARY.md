@@ -14,6 +14,14 @@ EMS is a **substantial, mature institutional web application**, not a prototype.
 
 The platform is **demo-viable today** (87/100 demo readiness).
 
+## Scope Reset Update (2026-06-02)
+
+EMS is now explicitly bounded to exam scheduling and invigilation payment. Payment in EMS means `ค่าคุมสอบ` / invigilation or exam-supervision payment only. Workload in EMS means exam duty workload only.
+
+Teaching workload compensation, excess teaching pay, course eligibility for teaching payment, base workload, co-teaching, thesis/advisor workload, and teaching compensation workbook materials are not EMS scope and must not be used as EMS payment sources.
+
+This docs-only reset does not change demo, pilot, production, or Faculty Web Portal readiness scores. Demo remains valid when workload analytics are described as exam duty workload for invigilation and paper distribution.
+
 ## 2. Readiness by Level
 - **Demo 100%**: 98/100 — full interactive smoke passed. Subpath build (/ems + /ems-api) and route compatibility smoke completed and validated (root mode unchanged; subpath assets correctly prefixed). **Root assumption + API base hardening pass (2026-05-25) completed** — all 5 internal root redirects and 9 direct /api strings centralized (builds + i18n re-validated post-changes). Complete stakeholder + web portal deployment package ready. **No external dependencies (auth contract, exact paths) resolved yet.** Pilot 42/100, Production 28/100 unchanged. Faculty Web Portal slice lifted 38→42/100 in dedicated scorecard (frontend now the strongest dimension).
 - **Controlled Faculty LAN Pilot 100%**: 42/100 — **blocked**. Primary blocker is unanswered Laravel/POLSCI OAuth contract (25/100 in that area). Secondary: no real PostgreSQL target, no executed backup/restore evidence, no DPO sign-off.

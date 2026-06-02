@@ -3,6 +3,12 @@
 **Date**: 2026-05-25  
 **Based on**: Master Scorecard + Improvement Backlog + all phase scores
 
+## Scope Reset Note (2026-06-02)
+
+The roadmap is constrained to exam scheduling, exam operations, exam duty workload, and invigilation payment only. Any payment stage must use confirmed invigilation duty evidence and approved invigilation payment rules. Teaching workload compensation and teaching payment workbooks are not EMS sources of truth.
+
+For the corrected payment sequence, use `EMS_CORRECTED_NEXT_PHASE_ROADMAP.md`.
+
 ## Stage 0 — Stabilize Repo & Validation (Done in this pass)
 - Pre-flight git checks, full source review, repo health audit, validation baseline re-run (all green).
 - Target: 100% of new 100% docs created.

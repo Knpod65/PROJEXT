@@ -4,6 +4,14 @@
 **Commit**: d8ec2c9 + this pass docs  
 **Scope**: Standalone EMS demo only
 
+## Scope Reset Addendum (2026-06-02)
+
+- EMS demo scope remains exam scheduling and exam operations only.
+- Workload routes are valid only as exam duty workload views for invigilation, paper distribution, and related exam-operation duties.
+- Payment or compensation language in EMS means invigilation or exam-supervision payment only.
+- Teaching workload compensation, excess teaching pay, course eligibility for teaching payment, base workload, co-teaching payment, and thesis/advisor workload payment are out of scope.
+- Demo readiness remains unchanged; final invigilation payment calculation still requires confirmed rate, evidence, exception, period, and approval rules.
+
 ## Validation Summary
 
 - Backend: compile PASS, import smoke PASS (None), 1428 tests PASS

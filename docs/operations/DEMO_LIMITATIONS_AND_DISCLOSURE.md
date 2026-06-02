@@ -11,6 +11,7 @@
 - Role-based access, Thai/English i18n (1688 keys), and modern React architecture are production-grade.
 - Recent polish (legacy hidden from demo nav, bundle improved to 560 kB, clean validation) makes it suitable for controlled stakeholder walkthroughs.
 - Demo readiness: **96/100** (standalone).
+- Workload screens, if shown, demonstrate exam duty workload only: invigilation, paper distribution, and related exam-operation duties.
 
 ## What This Demo Does NOT Prove
 
@@ -20,11 +21,14 @@
 - **Production readiness**: 28/100. No live environment, no load testing, no monitoring, no incident response proof.
 - **Pilot readiness**: 42/100. Blocked by the above external items.
 - **Full data volume / scale**: Seeded data only. Real semester + historical data not present.
+- **Final invigilation payment calculation**: Not proven in this demo. Payment requires confirmed rate, evidence, exception, approval, and export rules.
+- **Teaching workload compensation**: Explicitly out of scope. EMS does not calculate excess teaching pay, course eligibility for teaching payment, base workload, co-teaching payment, or thesis/advisor workload payment.
 
 ## Explicit Scope Statement (Must Be Said in Every Demo)
 
 "This is a **standalone EMS demo** using local seeded data and local authentication.  
 Faculty LAN deployment, POLSCI OAuth / Laravel integration, real PostgreSQL, backup evidence, and DPO sign-off are **out of scope** for today's session and remain open items requiring IT and owner responses.  
+Payment in EMS means invigilation payment only; teaching workload compensation is not part of this system.  
 We are not claiming pilot or production readiness."
 
 ## Why This Demo Is Still Valuable

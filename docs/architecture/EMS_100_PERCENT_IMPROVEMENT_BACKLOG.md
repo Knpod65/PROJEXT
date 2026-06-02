@@ -5,6 +5,15 @@
 
 ## Prioritized Backlog (P0 = blocks demo, P1 = blocks pilot, P2 = blocks prod, P3 = post-pilot, P4 = nice-to-have)
 
+## Scope Reset Note (2026-06-02)
+
+This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONLY.md`.
+
+- EMS payment means invigilation or exam-supervision payment only.
+- EMS workload means exam duty workload only.
+- Teaching workload compensation, excess teaching pay, co-teaching payment, thesis/advisor workload, base workload, and course eligibility for teaching pay are explicitly out of scope.
+- Payment implementation work must wait until invigilation rate, evidence, exception, period, and approval rules are confirmed in `docs/operations/INVIGILATION_PAYMENT_RULE_QUESTIONS.md`.
+
 | Task ID | Area | Task | Current % Impact | Required For | Owner | Dependency | Effort | Risk | Acceptance Criteria |
 |---------|------|------|------------------|--------------|-------|------------|--------|------|---------------------|
 | T001 | Auth | Send LARAVEL_AUTH_CONTRACT_QUESTIONS.md + closure tracker to real Laravel/IT owner and obtain verified answers | 25 → 70 (pilot) | Pilot 100 | EMS + IT/Laravel owner | None | 1-3 days | Low | All 20+ questions answered + code-verified |

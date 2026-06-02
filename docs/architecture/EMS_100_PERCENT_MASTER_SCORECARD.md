@@ -29,6 +29,13 @@
 - **Current overall system readiness**: **64 / 100**
 - **Demo readiness**: **98 / 100** (full interactive smoke passed; stakeholder demo day package + Laravel contract dispatch packet prepared. Pilot 42/100, Production 28/100 unchanged)
 
+## Scope Reset Update (2026-06-02)
+- EMS scope is explicitly reset to exam scheduling, exam operations, duty workload, and invigilation payment only.
+- In this scorecard, any "workload" reference means exam duty workload: invigilation, paper distribution, room/exam-operation duty, or external exam duty already modeled in EMS.
+- Any "payment" or "compensation" reference in EMS means invigilation or exam-supervision payment only. Teaching workload compensation, excess teaching pay, base workload, co-teaching, thesis/advisor workload, and course eligibility for teaching pay are out of scope.
+- Current demo readiness remains **98 / 100** if demo workload screens are presented only as exam duty workload. Pilot and production readiness are unchanged.
+- Invigilation payment cannot be treated as final finance calculation until rate, evidence, exception, payment-period, and approval rules are confirmed.
+
 ## Faculty Web Portal Hardening Pass Update (2026-05-25)
 - Dedicated Faculty Web Portal Integration score lifted modestly from 38/100 → **42/100** (see FACULTY_WEB_PORTAL_100_PERCENT_READINESS_SCORE.md)
 - Frontend Route/Base + API Proxy dimension: 85 → **95** after elimination of all 5 root navigation assumptions and all 9 direct /api bypasses (centralized via new helpers + validated builds).

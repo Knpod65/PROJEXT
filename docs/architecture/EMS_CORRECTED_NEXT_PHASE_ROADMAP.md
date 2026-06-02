@@ -1,0 +1,65 @@
+# EMS Corrected Next-Phase Roadmap
+
+**Date**: 2026-06-02  
+**Scope**: Exam scheduling plus invigilation payment only
+
+## Stage 1 - Scope Reset And Terminology Cleanup
+
+- Adopt `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONLY.md` as the mandatory payment/workload guardrail.
+- Keep historical docs but mark generic compensation language as invigilation-payment only.
+- Do not delete or move files until a later archive review.
+
+## Stage 2 - Confirm Invigilation Payment Rules
+
+- Answer `docs/operations/INVIGILATION_PAYMENT_RULE_QUESTIONS.md`.
+- Confirm payment unit, role rates, evidence, exception rules, approval owner, and export format.
+- Decide whether current `compensation` fields remain or need compatibility aliases.
+
+## Stage 3 - Audit Current Duty Assignment And Check-In Data
+
+- Verify exam schedule, room assignment, supervision assignment, role, confirmation, substitution, and cancellation data quality.
+- Confirm whether current check-in and attendance records are sufficient for payment evidence.
+
+## Stage 4 - Build Payment Calculation Preview
+
+- Build read-only preview first.
+- Use only confirmed invigilation duty and approved rate rules.
+- Include exception list and audit trace.
+- Do not write final payment batches in this stage.
+
+## Stage 5 - Validate With Sample Exam Period
+
+- Run the preview against a real or approved sample exam period.
+- Compare with finance/admin expected outputs.
+- Record mismatches and rule adjustments.
+
+## Stage 6 - Payment Approval Workflow
+
+- Add approval status and approval owner workflow.
+- Require clear evidence before approval.
+- Support reopen/correction rules only if approved by admin/finance.
+
+## Stage 7 - Export And Report Package
+
+- Produce approved Excel and/or PDF outputs.
+- Include person-level totals, payable units, amounts, exceptions, and audit references.
+- Keep export access role-scoped and audited.
+
+## Stage 8 - Faculty Web Portal Integration
+
+- Faculty web portal/auth can proceed later.
+- Invigilation payment rules can be prepared now without auth.
+- Do not block rule confirmation on Laravel/POLSCI integration.
+
+## Stage 9 - Production Readiness
+
+- Require pilot evidence, backup/restore evidence, DPO sign-off, monitoring, rollback, and external approvals.
+- Do not claim production readiness from a docs-only payment scope reset.
+
+## Guardrails
+
+- Do not continue any teaching workload workbook workflow inside EMS.
+- Do not use teaching compensation data as EMS payment input.
+- Do not implement payment calculation until rules and tests exist.
+- Do not change readiness scores unless backed by validation evidence.
+
