@@ -188,6 +188,15 @@ export const appPages: AppPageConfig[] = [
     navGroup: "operations",
   },
   {
+    key: "advance-batch-preview",
+    title: "Advance Batch Preview",
+    description: "Preview-only roster for advance invigilation payment batch review.",
+    path: "/invigilation-advance-batch-preview",
+    icon: "payments",
+    roles: ["admin", "staff"],
+    navGroup: "operations",
+  },
+  {
     key: "historical-schedules",
     title: "Historical Schedule Review",
     description: "Compare optimized baseline and final adjusted schedule imports for the historical 2/2568 final exam period.",

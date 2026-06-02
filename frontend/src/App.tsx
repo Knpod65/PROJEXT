@@ -55,6 +55,7 @@ const PlatformConfigurationPage = lazy(() => import("@/pages/PlatformConfigurati
 const OperationalHealthPage = lazy(() => import("@/pages/OperationalHealth"));
 const AuditExplorerPage = lazy(() => import("@/pages/AuditExplorer"));
 const WorkloadDutyAnalytics = lazy(() => import("@/pages/WorkloadDutyAnalytics"));
+const AdvanceInvigilationBatchPreview = lazy(() => import("@/pages/AdvanceInvigilationBatchPreview"));
 
 interface GuardedPageProps {
   roles?: UserRole[];
@@ -337,6 +338,14 @@ export function App() {
               element={
                 <GuardedPage roles={["admin", "staff"]}>
                   <ExportCenterPage />
+                </GuardedPage>
+              }
+            />
+            <Route
+              path="/invigilation-advance-batch-preview"
+              element={
+                <GuardedPage roles={["admin", "staff"]}>
+                  <AdvanceInvigilationBatchPreview />
                 </GuardedPage>
               }
             />
