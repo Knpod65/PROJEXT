@@ -1,11 +1,11 @@
 import { useAuditExplorer } from "@/hooks/domain/useAuditExplorer";
-import { renderTabButton } from "@/utils/presenters/auditPresenter";
 import { translate } from "@/i18n";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Tabs } from "@/components/ui/Tabs";
 
 export default function AuditExplorer() {
   const {
@@ -26,6 +26,23 @@ export default function AuditExplorer() {
 
   const anyError = !!error;
   const loading = isLoading;
+  const consoleEyebrow = translate("audit.consoleEyebrow");
+  const tabItems = tabKeys.map(({ key, labelKey }) => {
+    const badge =
+      key === "audit"
+        ? auditEvents.length
+        : key === "governance" && Array.isArray(governanceEvents)
+          ? governanceEvents.length
+          : key === "lifecycle" && Array.isArray(lifecycleEvents)
+            ? lifecycleEvents.length
+            : undefined;
+
+    return {
+      key,
+      label: translate(labelKey),
+      badge,
+    };
+  });
 
   if (loading) {
     return (
@@ -43,23 +60,13 @@ export default function AuditExplorer() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero page-hero--dashboard">
         <div>
-          <span className="page-hero__eyebrow">{translate("audit.eyebrow")}</span>
+          <span className="page-hero__eyebrow">{consoleEyebrow}</span>
           <h2 className="page-hero__title">{translate("navigation.pages.audit-explorer.title")}</h2>
         </div>
       </section>
 
-      <Card title={translate("auditEvents.tab")} subtitle={translate("audit.eyebrow")}>
-        <div className="flex flex-wrap gap-2">
-          {tabKeys.map(({ key, labelKey }) => (
-            <div key={key}>
-              {renderTabButton({
-                active: activeTab === key,
-                onClick: () => setActiveTab(key),
-                label: translate(labelKey),
-              })}
-            </div>
-          ))}
-        </div>
+      <Card title={translate("auditEvents.tab")} subtitle={consoleEyebrow}>
+        <Tabs activeKey={activeTab} items={tabItems} onChange={setActiveTab} />
       </Card>
 
       {activeTab === "audit" && (
@@ -100,7 +107,7 @@ export default function AuditExplorer() {
       {activeTab === "governance" && (
         <Card
           title={translate("governanceTimeline.tab")}
-          subtitle={translate("audit.eyebrow")}
+          subtitle={consoleEyebrow}
           actions={<Badge variant="blue">{Array.isArray(governanceEvents) ? governanceEvents.length : 0}</Badge>}
         >
           {Array.isArray(governanceEvents) && (governanceEvents as unknown[]).length > 0 ? (
@@ -128,7 +135,7 @@ export default function AuditExplorer() {
       )}
 
       {activeTab === "lifecycle" && (
-        <Card title={translate("lifecycleTimeline.tab")} subtitle={translate("audit.eyebrow")}>
+        <Card title={translate("lifecycleTimeline.tab")} subtitle={consoleEyebrow}>
           <EmptyState icon={<Icon name="info" />} title={translate("lifecycleTimeline.placeholder")} />
         </Card>
       )}

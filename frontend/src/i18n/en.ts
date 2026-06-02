@@ -1386,6 +1386,7 @@ export const en = {
 
   // Audit Explorer
   "audit.title": "Audit Explorer",
+  "audit.consoleEyebrow": "Audit Console",
   "audit.events": "Audit Events",
   "audit.governanceTimeline": "Governance Timeline",
   "audit.lifecycleTimeline": "Lifecycle Timeline",

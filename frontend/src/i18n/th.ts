@@ -1384,6 +1384,7 @@ export const th = {
 
   // Audit Explorer
   "audit.title": "ตัวสำรวจบันทึกการตรวจสอบ",
+  "audit.consoleEyebrow": "คอนโซลตรวจสอบ",
   "audit.events": "เหตุการณ์ตรวจสอบ",
   "audit.governanceTimeline": "ไทม์ไลน์ธรรมาภิบาล",
   "audit.lifecycleTimeline": "ไทม์ไลน์วงจรชีวิต",
