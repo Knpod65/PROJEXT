@@ -569,6 +569,66 @@ class WorkloadDutyAnalyticsPayload(BaseModel):
     fairness: WorkloadDutyAnalyticsFairness
 
 
+class AdvanceInvigilationBatchPreviewSummary(BaseModel):
+    preview_only: bool
+    amount_calculation: str
+    amount_status: str
+    total_rows: int
+    ready_for_batch_review: int
+    blocked_rows: int
+    warning_count: int
+
+
+class AdvanceInvigilationBatchRosterRow(BaseModel):
+    advance_batch_id: Optional[str] = None
+    batch_period: Optional[str] = None
+    academic_year: Optional[str] = None
+    semester: Optional[str] = None
+    exam_period: Optional[str] = None
+    batch_status: str
+    prepared_by: Optional[str] = None
+    prepared_at: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    duty_id: Optional[int] = None
+    exam_id: Optional[int] = None
+    schedule_id: Optional[int] = None
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+    section: Optional[str] = None
+    exam_date: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    room_id: Optional[int] = None
+    room_name: Optional[str] = None
+    person_id: Optional[str] = None
+    person_name: Optional[str] = None
+    person_type: Optional[str] = None
+    department: Optional[str] = None
+    duty_role: str
+    advance_inclusion_status: str
+    inclusion_reason: Optional[str] = None
+    blocked_reason: Optional[str] = None
+    rate_rule_status: str
+    amount_status: str
+    amount_preview: str
+    reconciliation_status: str
+    post_duty_evidence_status: str
+    absence_explanation_status: str
+    refund_offset_status: str
+    source_record_ref: str
+    audit_note: str
+    warnings: list[str] = Field(default_factory=list)
+
+
+class AdvanceInvigilationBatchPreviewResponse(BaseModel):
+    summary: AdvanceInvigilationBatchPreviewSummary
+    roster_rows: list[AdvanceInvigilationBatchRosterRow]
+    blockers: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    rule_gaps: list[str] = Field(default_factory=list)
+
+
 
 # ─── Audit ────────────────────────────────────────────────────
 class AuditOut(BaseModel):
