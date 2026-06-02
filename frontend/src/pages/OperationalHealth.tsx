@@ -1,5 +1,7 @@
 import { useOperationalHealthPage } from "@/hooks/domain/useOperationalHealthPage";
 import { translate } from "@/i18n";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -36,11 +38,9 @@ export default function OperationalHealth() {
     backendHealthy,
     analyticsScore,
     analyticsBand,
-    analyticsBandColor,
     integrationRatio,
     healthTimestamp,
     livenessLabel,
-    emptyStateKey,
   } = useOperationalHealthPage();
 
   if (isLoading) {
@@ -58,17 +58,10 @@ export default function OperationalHealth() {
   if (error) {
     return (
       <div className="page-stack page-stack--spacious">
-        <EmptyState icon={<Icon name="warning" />} title="Operational health data unavailable" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6">
         <EmptyState
           icon={<Icon name="warning" />}
           title={translate("errors.requestFailed")}
+          description={translate("operationalHealth.noData")}
         />
       </div>
     );
@@ -78,14 +71,19 @@ export default function OperationalHealth() {
 
   return (
     <div className="page-stack page-stack--spacious">
-      <h1 className="text-2xl font-bold">
-        {translate("navigation.pages.operational-health.title")}
-      </h1>
+      <section className="page-hero page-hero--dashboard">
+        <div>
+          <span className="page-hero__eyebrow">{translate("operationalHealth.backendHealth")}</span>
+          <h2 className="page-hero__title">{translate("navigation.pages.operational-health.title")}</h2>
+          <p className="page-hero__description">{translate("operationalHealth.autoRefreshNote")}</p>
+        </div>
+      </section>
 
-      <div className="bg-white rounded-lg shadow p-4 space-y-1">
-        <h2 className="text-base font-semibold mb-2">
-          {translate("operationalHealth.backendHealth")}
-        </h2>
+      <Card
+        title={translate("operationalHealth.backendHealth")}
+        subtitle={translate("operationalHealth.liveness")}
+        actions={<Badge variant={backendHealthy ? "green" : "crimson"}>{livenessLabel}</Badge>}
+      >
         <StatLine
           label={translate("operationalHealth.liveness")}
           value={livenessLabel}
@@ -99,12 +97,19 @@ export default function OperationalHealth() {
               : translate("common.notAvailable")
           }
         />
-      </div>
+        </Card>
 
-      <div className="bg-white rounded-lg shadow p-4 space-y-1">
-        <h2 className="text-base font-semibold mb-2">
-          {translate("operationalHealth.analyticsHealth")}
-        </h2>
+        <Card
+          title={translate("operationalHealth.analyticsHealth")}
+          subtitle={translate("operationalHealth.healthScore")}
+          actions={
+            analyticsBand ? (
+              <Badge variant={analyticsBand === "red" ? "crimson" : analyticsBand === "amber" ? "gold" : "green"}>
+                {analyticsBand}
+              </Badge>
+            ) : null
+          }
+        >
         <StatLine
           label={translate("operationalHealth.healthScore")}
           value={
@@ -114,17 +119,18 @@ export default function OperationalHealth() {
           }
           ok={analyticsOk}
         />
-      </div>
+      </Card>
 
-      <div className="bg-white rounded-lg shadow p-4 space-y-1">
-        <h2 className="text-base font-semibold mb-2">
-          {translate("operationalHealth.integrationReadiness")}
-        </h2>
+      <Card
+        title={translate("operationalHealth.integrationReadiness")}
+        subtitle={translate("operationalHealth.activeContracts")}
+        actions={<Badge variant="blue">{integrationRatio}</Badge>}
+      >
         <StatLine
           label={translate("operationalHealth.activeContracts")}
           value={integrationRatio}
         />
-      </div>
+      </Card>
 
       <div className="text-xs text-gray-400 text-center">
         {translate("operationalHealth.autoRefreshNote")}

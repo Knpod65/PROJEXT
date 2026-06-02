@@ -1,10 +1,11 @@
 import { useAuditExplorer } from "@/hooks/domain/useAuditExplorer";
 import { renderTabButton } from "@/utils/presenters/auditPresenter";
 import { translate } from "@/i18n";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Fragment } from "react";
 
 export default function AuditExplorer() {
   const {
@@ -47,53 +48,61 @@ export default function AuditExplorer() {
         </div>
       </section>
 
-      <div className="border-b mb-4">
-        <div className="flex">
+      <Card title={translate("auditEvents.tab")} subtitle={translate("audit.eyebrow")}>
+        <div className="flex flex-wrap gap-2">
           {tabKeys.map(({ key, labelKey }) => (
-            <Fragment key={key}>
+            <div key={key}>
               {renderTabButton({
                 active: activeTab === key,
                 onClick: () => setActiveTab(key),
                 label: translate(labelKey),
               })}
-            </Fragment>
+            </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {activeTab === "audit" && (
-        <div className="overflow-x-auto">
+        <Card
+          title={translate("auditEvents.tab")}
+          subtitle={translate("navigation.pages.audit-explorer.title")}
+          actions={<Badge variant="navy">{auditEvents.length}</Badge>}
+        >
           {auditEvents.length > 0 ? (
-            <table className="min-w-full bg-white border">
-              <thead className="bg-gray-50">
-                <tr>
-                  {columnHeaders.map(({ key: hk, labelKey }) => (
-                    <th key={hk} className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                      {translate(labelKey)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {auditEvents.map((e) => (
-                  <tr key={e._id} className="border-t">
-                    <td className="px-4 py-2 text-sm">{String(e.id ?? "-")}</td>
-                    <td className="px-4 py-2 text-sm">{e.actor}</td>
-                    <td className="px-4 py-2 text-sm">{e.action}</td>
-                    <td className="px-4 py-2 text-sm">{e.table_name || "-"}</td>
-                    <td className="px-4 py-2 text-sm">{new Date(e.timestamp).toLocaleString()}</td>
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    {columnHeaders.map(({ key: hk, labelKey }) => (
+                      <th key={hk}>{translate(labelKey)}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {auditEvents.map((e) => (
+                    <tr key={e._id}>
+                      <td>{String(e.id ?? "-")}</td>
+                      <td>{e.actor}</td>
+                      <td>{e.action}</td>
+                      <td>{e.table_name || "-"}</td>
+                      <td>{new Date(e.timestamp).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <EmptyState icon={<Icon name="info" />} title={translate(emptyStateKey)} />
           )}
-        </div>
+        </Card>
       )}
 
       {activeTab === "governance" && (
-        <div>
+        <Card
+          title={translate("governanceTimeline.tab")}
+          subtitle={translate("audit.eyebrow")}
+          actions={<Badge variant="blue">{Array.isArray(governanceEvents) ? governanceEvents.length : 0}</Badge>}
+        >
           {Array.isArray(governanceEvents) && (governanceEvents as unknown[]).length > 0 ? (
             <ul className="space-y-2">
               {(governanceEvents as unknown[]).map((evt: unknown, index) => {
@@ -115,13 +124,13 @@ export default function AuditExplorer() {
           ) : (
             <EmptyState icon={<Icon name="info" />} title={translate("governanceTimeline.noData")} />
           )}
-        </div>
+        </Card>
       )}
 
       {activeTab === "lifecycle" && (
-        <div>
+        <Card title={translate("lifecycleTimeline.tab")} subtitle={translate("audit.eyebrow")}>
           <EmptyState icon={<Icon name="info" />} title={translate("lifecycleTimeline.placeholder")} />
-        </div>
+        </Card>
       )}
     </div>
   );

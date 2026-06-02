@@ -1,5 +1,8 @@
+import type { ReactNode } from "react";
+
 import { usePlatformConfigurationPage } from "@/hooks/domain/usePlatformConfigurationPage";
 import { translate } from "@/i18n";
+import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -9,13 +12,12 @@ function SectionCard({
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-4">
-      <h2 className="text-lg font-semibold mb-3">{title}</h2>
+    <Card className="mb-4" title={title}>
       {children}
-    </div>
+    </Card>
   );
 }
 
@@ -34,12 +36,12 @@ function ConfigTable({
     );
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
+    <div className="table-wrap">
+      <table className="data-table">
         <thead>
           <tr className="border-b">
             {headers.map((h) => (
-              <th key={h} className="text-left py-2 px-3">{h}</th>
+              <th key={h}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -122,13 +124,13 @@ export default function PlatformConfiguration() {
           headers={facultyHeaders}
           rows={facultyConfigs}
           render={(row: any, i) => (
-            <tr key={i} className="border-b last:border-0">
-              <td className="py-2 px-3">{row.faculty_id}</td>
-              <td className="py-2 px-3">{row.code}</td>
-              <td className="py-2 px-3">{row.name}</td>
-              <td className="py-2 px-3">{row.name_th}</td>
-              <td className="py-2 px-3">{row.name_en}</td>
-              <td className="py-2 px-3">
+            <tr key={i}>
+              <td>{row.faculty_id}</td>
+              <td>{row.code}</td>
+              <td>{row.name}</td>
+              <td>{row.name_th}</td>
+              <td>{row.name_en}</td>
+              <td>
                 {row.is_active ? "✓" : translate("common.no")}
               </td>
             </tr>
@@ -147,11 +149,11 @@ export default function PlatformConfiguration() {
           headers={workloadHeaders}
           rows={workloadPolicies}
           render={(row: any, i) => (
-            <tr key={i} className="border-b last:border-0">
-              <td className="py-2 px-3">{row.faculty_id ?? "—"}</td>
-              <td className="py-2 px-3">{row.paper_distribution_division}</td>
-              <td className="py-2 px-3">{row.max_supervision_sessions}</td>
-              <td className="py-2 px-3">
+            <tr key={i}>
+              <td>{row.faculty_id ?? "—"}</td>
+              <td>{row.paper_distribution_division}</td>
+              <td>{row.max_supervision_sessions}</td>
+              <td>
                 {row.allow_cross_department ? translate("common.yes") : translate("common.no")}
               </td>
             </tr>
@@ -165,13 +167,13 @@ export default function PlatformConfiguration() {
           headers={governanceHeaders}
           rows={governanceFlows}
           render={(row: any, i) => (
-            <tr key={i} className="border-b last:border-0">
-              <td className="py-2 px-3">{row.faculty_id ?? "—"}</td>
-              <td className="py-2 px-3">{row.flow_name}</td>
-              <td className="py-2 px-3">
+            <tr key={i}>
+              <td>{row.faculty_id ?? "—"}</td>
+              <td>{row.flow_name}</td>
+              <td>
                 {row.requires_governance_review ? translate("common.yes") : translate("common.no")}
               </td>
-              <td className="py-2 px-3">{row.approval_quorum}</td>
+              <td>{row.approval_quorum}</td>
             </tr>
           )}
         />
@@ -183,12 +185,12 @@ export default function PlatformConfiguration() {
           headers={integrationHeaders}
           rows={integrationContracts}
           render={(row: any, i) => (
-            <tr key={i} className="border-b last:border-0">
-              <td className="py-2 px-3">{row.system_code}</td>
-              <td className="py-2 px-3">{row.integration_direction}</td>
-              <td className="py-2 px-3">{row.data_domain}</td>
-              <td className="py-2 px-3">{row.sync_mode}</td>
-              <td className="py-2 px-3">{row.owner_unit}</td>
+            <tr key={i}>
+              <td>{row.system_code}</td>
+              <td>{row.integration_direction}</td>
+              <td>{row.data_domain}</td>
+              <td>{row.sync_mode}</td>
+              <td>{row.owner_unit}</td>
             </tr>
           )}
         />
@@ -200,12 +202,12 @@ export default function PlatformConfiguration() {
           headers={analyticsHeaders}
           rows={analyticsMetrics}
           render={(row: any, i) => (
-            <tr key={i} className="border-b last:border-0">
-              <td className="py-2 px-3 font-mono text-xs">{row.metric_code}</td>
-              <td className="py-2 px-3">{row.name}</td>
-              <td className="py-2 px-3">{row.category}</td>
-              <td className="py-2 px-3">{row.unit}</td>
-              <td className="py-2 px-3">{row.pdpa_level}</td>
+            <tr key={i}>
+              <td className="font-mono text-xs">{row.metric_code}</td>
+              <td>{row.name}</td>
+              <td>{row.category}</td>
+              <td>{row.unit}</td>
+              <td>{row.pdpa_level}</td>
             </tr>
           )}
         />

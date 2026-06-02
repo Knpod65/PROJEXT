@@ -1,29 +1,36 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/i18n";
 import { useAdvanceBatchPreview } from "@/hooks/domain/useAdvanceBatchPreview";
+import type { AdvanceBatchRosterRow } from "@/types/invigilationAdvanceBatch";
 
 function SummaryCard({ label, value, hint }: { label: string; value: string | number; hint: string }) {
   return (
-    <Card className="p-4">
-      <div className="text-xs uppercase text-gray-500">{label}</div>
-      <div className="mt-2 text-3xl font-bold">{value}</div>
-      <div className="mt-1 text-sm text-gray-500">{hint}</div>
+    <Card title={label} subtitle={hint}>
+      <div className="text-3xl font-bold">{value}</div>
     </Card>
   );
 }
 
-function StatusPill({ value }: { value: string }) {
-  const isBlocked = value.includes("BLOCKED");
-  const className = isBlocked
-    ? "inline-flex rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
-    : "inline-flex rounded bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700";
-  return <span className={className}>{value}</span>;
+function inclusionVariant(value: string) {
+  if (value.includes("BLOCKED")) return "crimson";
+  if (value.includes("READY")) return "green";
+  if (value.includes("PENDING")) return "gold";
+  return "gray";
+}
+
+function amountVariant(value: string) {
+  if (value.includes("PENDING")) return "gold";
+  if (value.includes("READY") || value.includes("OK")) return "green";
+  if (value.includes("BLOCKED") || value.includes("ERR")) return "crimson";
+  return "gray";
 }
 
 export default function AdvanceInvigilationBatchPreview() {
@@ -67,6 +74,78 @@ export default function AdvanceInvigilationBatchPreview() {
     ];
   }, [data, t]);
 
+  const rosterColumns = useMemo<Array<DataTableColumn<AdvanceBatchRosterRow>>>(() => [
+    {
+      key: "person",
+      label: t("advanceBatch.table.person"),
+      minWidth: "220px",
+      render: (row) => (
+        <div className="data-table__content">
+          <strong>{row.person_name || t("advanceBatch.table.unknownPerson")}</strong>
+          <p>{row.department || row.person_type || "-"}</p>
+        </div>
+      ),
+    },
+    {
+      key: "role",
+      label: t("advanceBatch.table.role"),
+      width: "150px",
+      render: (row) => row.duty_role,
+    },
+    {
+      key: "exam",
+      label: t("advanceBatch.table.exam"),
+      minWidth: "220px",
+      render: (row) => (
+        <div className="data-table__content">
+          <strong>{`${row.course_code || "-"} ${row.section ? `(${row.section})` : ""}`.trim()}</strong>
+          <p>{`${row.exam_date || "-"} ${row.start_time || ""}${row.start_time || row.end_time ? "-" : ""}${row.end_time || ""}`.trim()}</p>
+        </div>
+      ),
+    },
+    {
+      key: "room",
+      label: t("advanceBatch.table.room"),
+      width: "140px",
+      render: (row) => row.room_name || "-",
+    },
+    {
+      key: "inclusion",
+      label: t("advanceBatch.table.inclusion"),
+      width: "180px",
+      render: (row) => (
+        <Badge variant={inclusionVariant(row.advance_inclusion_status)} size="sm">
+          {row.advance_inclusion_status}
+        </Badge>
+      ),
+    },
+    {
+      key: "amount",
+      label: t("advanceBatch.table.amount"),
+      minWidth: "180px",
+      render: (row) => (
+        <div className="data-table__content">
+          <Badge variant={amountVariant(row.amount_status)} size="sm">
+            {row.amount_status}
+          </Badge>
+          <p>{row.amount_preview}</p>
+        </div>
+      ),
+    },
+    {
+      key: "reconciliation",
+      label: t("advanceBatch.table.reconciliation"),
+      width: "160px",
+      render: (row) => row.reconciliation_status,
+    },
+    {
+      key: "warning",
+      label: t("advanceBatch.table.warning"),
+      minWidth: "220px",
+      render: (row) => row.warnings.join("; ") || row.blocked_reason || "-",
+    },
+  ], [t]);
+
   if (isLoading) {
     return (
       <div className="page-stack page-stack--spacious">
@@ -98,12 +177,13 @@ export default function AdvanceInvigilationBatchPreview() {
         </div>
       </section>
 
-      <div className="rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        <strong>{t("advanceBatch.warning.title")}</strong>
-        <div className="mt-1">{t("advanceBatch.warning.body")}</div>
-      </div>
+      <Card
+        title={t("advanceBatch.warning.title")}
+        subtitle={t("advanceBatch.warning.body")}
+        actions={<Badge variant="gold">{t("advanceBatch.eyebrow")}</Badge>}
+      />
 
-      <Card className="p-4">
+      <Card title={t("advanceBatch.eyebrow")} subtitle={t("advanceBatch.description")}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <label className="space-y-1 text-sm">
             <span className="block text-gray-500">{t("advanceBatch.filters.period")}</span>
@@ -150,7 +230,7 @@ export default function AdvanceInvigilationBatchPreview() {
       </section>
 
       {data.roster_rows.length === 0 ? (
-        <Card className="p-4">
+        <Card>
           <EmptyState
             icon={<Icon name="info" />}
             title={t("advanceBatch.empty.noRowsTitle")}
@@ -159,45 +239,13 @@ export default function AdvanceInvigilationBatchPreview() {
         </Card>
       ) : (
         <Card title={t("advanceBatch.roster.title")} subtitle={t("advanceBatch.roster.subtitle")}>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b text-left">
-                  <th className="py-2 pr-4">{t("advanceBatch.table.person")}</th>
-                  <th className="py-2 pr-4">{t("advanceBatch.table.role")}</th>
-                  <th className="py-2 pr-4">{t("advanceBatch.table.exam")}</th>
-                  <th className="py-2 pr-4">{t("advanceBatch.table.room")}</th>
-                  <th className="py-2 pr-4">{t("advanceBatch.table.inclusion")}</th>
-                  <th className="py-2 pr-4">{t("advanceBatch.table.amount")}</th>
-                  <th className="py-2 pr-4">{t("advanceBatch.table.reconciliation")}</th>
-                  <th className="py-2 pr-4">{t("advanceBatch.table.warning")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.roster_rows.map((row) => (
-                  <tr key={row.source_record_ref} className="border-b align-top">
-                    <td className="py-2 pr-4">
-                      <div className="font-medium">{row.person_name || t("advanceBatch.table.unknownPerson")}</div>
-                      <div className="text-xs text-gray-500">{row.department || row.person_type || "-"}</div>
-                    </td>
-                    <td className="py-2 pr-4">{row.duty_role}</td>
-                    <td className="py-2 pr-4">
-                      <div>{row.course_code || "-"} {row.section ? `(${row.section})` : ""}</div>
-                      <div className="text-xs text-gray-500">{row.exam_date || "-"} {row.start_time || ""}-{row.end_time || ""}</div>
-                    </td>
-                    <td className="py-2 pr-4">{row.room_name || "-"}</td>
-                    <td className="py-2 pr-4"><StatusPill value={row.advance_inclusion_status} /></td>
-                    <td className="py-2 pr-4">
-                      <div className="font-medium">{row.amount_status}</div>
-                      <div className="text-xs text-gray-500">{row.amount_preview}</div>
-                    </td>
-                    <td className="py-2 pr-4">{row.reconciliation_status}</td>
-                    <td className="py-2 pr-4">{row.warnings.join("; ") || row.blocked_reason || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={rosterColumns}
+            rows={data.roster_rows}
+            rowKey={(row) => row.source_record_ref}
+            compact
+            tableLayout="fixed"
+          />
         </Card>
       )}
 
