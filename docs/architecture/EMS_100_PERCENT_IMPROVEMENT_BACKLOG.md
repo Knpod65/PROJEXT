@@ -82,3 +82,9 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Teacher and print shop were blocked from the direct route as intended.
 - Screenshot evidence exists in `docs/operations/demo-smoke-screenshots/`.
 - No backlog reprioritization is needed; policy closure remains the next step.
+## Invigilation Rate Rule Setup Backlog Note (2026-06-02)
+
+- Completed: configuration-only setup for invigilation payment rate rules.
+- Remaining: connect active `PER_SESSION` rate to preview-only advance batch amounts in a later integration pass.
+- Remaining: final payment approval, official export, reconciliation/refund/offset closure, and production deployment evidence.
+- Excluded: teaching workload compensation, Work H, real teaching hours, opencourse/coinstruc import, and extra-teaching payment rules.

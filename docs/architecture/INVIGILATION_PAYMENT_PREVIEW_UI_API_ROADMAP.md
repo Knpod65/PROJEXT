@@ -8,7 +8,8 @@
 
 All pages are proposed only:
 
-- `PROPOSED` Payment Rules Setup
+- `IMPLEMENTED_CONFIGURATION_ONLY` Invigilation Rate Rules Setup
+- `PROPOSED` Payment Rules Setup beyond rate configuration
 - `PROPOSED` Payment Preview Dashboard
 - `PROPOSED` Person Payment Summary
 - `PROPOSED` Duty Detail Ledger
@@ -26,6 +27,11 @@ All pages are proposed only:
 
 All endpoints are proposed only:
 
+- `IMPLEMENTED GET /api/invigilation-payment/rate-rules`
+- `IMPLEMENTED POST /api/invigilation-payment/rate-rules`
+- `IMPLEMENTED PUT /api/invigilation-payment/rate-rules/{rate_rule_id}`
+- `IMPLEMENTED POST /api/invigilation-payment/rate-rules/{rate_rule_id}/activate`
+- `IMPLEMENTED POST /api/invigilation-payment/rate-rules/{rate_rule_id}/archive`
 - `PROPOSED GET /api/invigilation-payment/rules`
 - `PROPOSED POST /api/invigilation-payment/preview`
 - `PROPOSED GET /api/invigilation-payment/person-summary`
@@ -78,6 +84,13 @@ Clarifications:
 - Missing check-in must route to reconciliation and must not automatically remove a person from an advance batch.
 - Exception lists must be visible before approval.
 - Payment export must remain disabled until approval and export-lock rules exist.
+
+## Rate Rule Setup Update
+
+- Rate-rule configuration is implemented as setup only.
+- Rate amounts are user-entered and are not hardcoded.
+- Active rates do not authorize payment.
+- Advance Batch Preview amount integration is deferred until the rate UI/API has been validated.
 - Teaching workload compensation must not appear in navigation, labels, filters, or export wording.
 
 ## API Guardrails

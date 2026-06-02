@@ -88,3 +88,9 @@
 - A preview-only frontend page is now available at `/invigilation-advance-batch-preview`.
 - The page does not authorize payment, calculate amounts, or export official reports.
 - Next phase remains finance/admin rule confirmation for rates, approval owner, export format, and reconciliation policy.
+## Rate Rule Setup Roadmap Update (2026-06-02)
+
+- Current pass: implement configurable invigilation rate-rule setup.
+- Decision: do not integrate amount preview into Advance Batch Preview in this pass.
+- Next payment phase: validate rate-rule UI/API, then connect active `PER_SESSION` rates to preview-only advance roster amounts.
+- Final payment authorization/export remains blocked until approval and reconciliation rules are confirmed.

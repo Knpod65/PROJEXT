@@ -86,3 +86,10 @@
 - Teacher and print shop were blocked from the direct route.
 - Screenshot evidence was captured under `docs/operations/demo-smoke-screenshots/`.
 - No readiness score changes are applied by this verification pass.
+
+## Invigilation Rate Rule Setup Update (2026-06-02)
+- Configurable invigilation rate-rule setup is added as configuration only.
+- Rate amount remains user-entered; no rate value is hardcoded.
+- No teaching workload logic, final payment calculation, official export, or payment approval is added.
+- Advance Batch Preview remains pending for amount integration until a later validated pass.
+- Production/payment readiness scores remain unchanged.

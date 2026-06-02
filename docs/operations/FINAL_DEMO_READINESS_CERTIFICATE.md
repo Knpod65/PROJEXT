@@ -76,3 +76,9 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Teacher and print shop were blocked by the route guard.
 - Screenshots were captured under `docs/operations/demo-smoke-screenshots/`.
 - No payment-calculation, approval, or export readiness claim is added by this pass.
+## Invigilation Rate Rule Certificate Note (2026-06-02)
+
+- Invigilation rate-rule setup is a safe configuration feature for demo context.
+- It does not change production/payment readiness.
+- It does not implement final payment calculation, official export, or payment approval.
+- Teaching workload compensation remains excluded from EMS payment scope.

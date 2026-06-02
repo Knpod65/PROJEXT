@@ -140,3 +140,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Teacher and print shop were blocked on direct access.
 - Screenshot evidence was captured in the demo smoke screenshots folder.
 - No readiness scores change from this pass.
+## Invigilation Rate Rule Setup Note (2026-06-02)
+
+- EMS invigilation rate-rule setup is added as configuration only.
+- Rate amounts are user-entered; no rate is hardcoded.
+- No teaching workload logic, final payment calculation, official export, or payment approval is added.
+- Advance Batch Preview remains `PENDING_RATE_RULE` until a later amount-preview integration pass.
+- Demo, pilot, production, and payment readiness scores are not increased by this setup step.

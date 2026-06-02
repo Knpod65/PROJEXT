@@ -69,3 +69,9 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Teacher and print shop were blocked from the direct route as intended.
 - Screenshot evidence was captured in `docs/operations/demo-smoke-screenshots/`.
 - This pass does not implement payment calculation, approval, or official export.
+## Invigilation Rate Rule Demo Limitation (2026-06-02)
+
+- Rate-rule setup may be shown as configuration only.
+- A saved or active rate does not authorize real payment.
+- Advance Batch Preview may still show `PENDING_RATE_RULE` until a later integration pass.
+- No final payment report, approval, or export should be demonstrated as complete.
