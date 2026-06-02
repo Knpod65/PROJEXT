@@ -86,3 +86,12 @@ Clarifications:
 - Approval/export endpoints must not be implemented until owner decisions are closed.
 - All payment preview outputs must include advance batch status, evidence status, reconciliation status, and exception status.
 - Existing `export_compensation` must not be treated as final payment export without compatibility and approval tests.
+
+## Advance Batch Roster Preview Validation - 2026-06-02
+
+- `IMPLEMENTED GET /api/invigilation-advance-batch/preview` with validated demo response.
+- `IMPLEMENTED /invigilation-advance-batch-preview` as a preview-only frontend page for `admin` and `staff`.
+- The page displays roster rows, blockers, warnings, and rule gaps.
+- The page does not include approval, official export, or final payment actions.
+- Amounts remain `PENDING_RATE_RULE`; rate rules are still required before any monetary calculation.
+- Post-duty reconciliation remains a separate future workflow.

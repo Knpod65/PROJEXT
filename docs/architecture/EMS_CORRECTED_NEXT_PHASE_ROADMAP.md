@@ -77,7 +77,14 @@
 
 ## 2026-06-02 Advance Roster Preview Scaffold
 
-- Add a backend-only advance roster preview endpoint before any frontend page.
+- Add and validate a backend advance roster preview endpoint before any frontend page.
 - Keep all amount fields `PENDING_RATE_RULE`.
 - Keep post-duty reconciliation separate from advance inclusion.
 - Do not proceed to official export or approval workflow until rules are approved.
+
+## 2026-06-02 Advance Batch Preview Validation
+
+- Backend endpoint validation passed with 23 local demo roster rows.
+- A preview-only frontend page is now available at `/invigilation-advance-batch-preview`.
+- The page does not authorize payment, calculate amounts, or export official reports.
+- Next phase remains finance/admin rule confirmation for rates, approval owner, export format, and reconciliation policy.

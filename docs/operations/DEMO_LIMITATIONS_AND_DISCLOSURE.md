@@ -54,4 +54,11 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Payment model documentation has been corrected to advance disbursement plus post-duty reconciliation.
 - Missing check-in is a reconciliation trigger, not an automatic pre-payment block.
 - No real amount, official payment report, refund, or offset decision is implemented for demo.
-- Advance roster preview, if shown, is backend preview scaffolding only and must be described as no-amount, not payment authorization.
+- Advance roster preview, if shown, must be described as no-amount roster review, not payment authorization.
+
+## Advance Batch Preview Demo Disclosure (2026-06-02)
+
+- The advance batch roster page is now available as a preview-only operational view.
+- It may be shown to demonstrate roster review, blockers, warnings, and unresolved rule gaps.
+- `PENDING_RATE_RULE` is intentional and means no payment amount has been calculated.
+- The page must not be presented as payment authorization, final export, or production-ready finance output.

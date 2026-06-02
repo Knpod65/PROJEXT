@@ -16,3 +16,10 @@
 | ADV-009 payment period missing | Schedule term not mapped to `ExamPeriod` | `READY_FOR_BATCH_REVIEW` | `PENDING_RATE_RULE` | `PENDING_POST_DUTY_RECONCILIATION` | Missing payment period warning |
 | ADV-010 batch already approved and locked | Future persisted batch status | `BLOCKED_RULE_GAP` | `PENDING_RATE_RULE` | `PENDING_POST_DUTY_RECONCILIATION` | Not implemented; future case |
 
+## Endpoint Validation Update - 2026-06-02
+
+- Backend endpoint validation passed for the local demo data set.
+- Default preview response returned 23 roster rows, 23 `READY_FOR_BATCH_REVIEW`, 0 blockers, and 0 warnings.
+- All amount fields remained `PENDING_RATE_RULE`.
+- Frontend preview page is implemented as read-only; no approve/export/final payment action is present.
+- Full payment calculation remains blocked by rate, approval, and reconciliation policy answers.

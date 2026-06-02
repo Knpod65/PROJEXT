@@ -67,4 +67,11 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 
 - Backend preview scaffold may show roster inclusion only.
 - No amount, approval, export, refund, or offset task should be added until finance/admin rules are closed.
-- Future frontend page remains deferred until the endpoint is validated.
+- Frontend page was deferred during the scaffold pass until endpoint validation could be completed.
+
+## Advance Batch Preview Validation Backlog Note (2026-06-02)
+
+- Endpoint validation is complete and the frontend preview page is implemented.
+- Keep the page read-only and preview-only until rate, approval, export, and reconciliation rules are approved.
+- Next backlog item is policy closure, not amount calculation.
+- Do not add official export, approve, refund, or offset actions from this page without a new rule-confirmation pass.

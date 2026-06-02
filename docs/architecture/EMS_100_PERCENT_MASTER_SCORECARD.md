@@ -74,3 +74,9 @@
 - All amount fields remain `PENDING_RATE_RULE`.
 - Check-in remains post-duty reconciliation evidence, not an advance inclusion gate.
 - Readiness scores remain unchanged.
+
+## Advance Batch Preview Validation Update (2026-06-02)
+- The preview endpoint was validated against local demo data and returned 23 roster rows.
+- A read-only frontend page was added for advance batch roster review.
+- No payment amount calculation, approval, final export, or production payment readiness was added.
+- Readiness score is unchanged.

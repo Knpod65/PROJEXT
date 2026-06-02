@@ -61,3 +61,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Check-in/evidence supports reconciliation and refund/offset review; it is not a default pre-disbursement gate.
 - No payment calculation, official payment report, refund decision, or offset decision is implemented for demo.
 - Advance roster preview scaffold does not change demo, pilot, or production readiness scores.
+
+## Advance Batch Preview Note (2026-06-02)
+
+- Advance invigilation batch roster preview is available for demo as a read-only page.
+- Demo remains valid only when framed as roster review and operational readiness, not final payment authorization.
+- Payment calculation remains blocked by unconfirmed finance/admin rules.
+- Production readiness is unchanged.

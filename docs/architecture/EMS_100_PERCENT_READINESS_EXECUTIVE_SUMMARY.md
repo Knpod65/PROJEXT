@@ -127,3 +127,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The scaffold is read-only and amount-free; monetary fields remain `PENDING_RATE_RULE`.
 - It does not authorize payment, export an official report, or close reconciliation.
 - Production/payment readiness remains unchanged.
+
+## Advance Batch Preview Validation Update (2026-06-02)
+- The advance invigilation batch preview endpoint was validated with 23 local demo roster rows.
+- A read-only frontend page now shows the roster preview, blockers, warnings, and rule gaps.
+- The page is not payment authorization and does not calculate amounts.
+- Check-in remains post-duty reconciliation evidence, not a pre-payment gate.
+- Production/payment readiness remains unchanged until finance/admin rules are approved.
