@@ -14,11 +14,13 @@
 - Answer `docs/operations/INVIGILATION_PAYMENT_RULE_QUESTIONS.md`.
 - Confirm payment unit, role rates, evidence, exception rules, approval owner, and export format.
 - Decide whether current `compensation` fields remain or need compatibility aliases.
+- Use `docs/operations/INVIGILATION_PAYMENT_RULE_ANSWER_INTAKE.md` and `docs/operations/INVIGILATION_PAYMENT_RULE_DECISION_REGISTER.md` as the working intake package.
 
 ## Stage 3 - Audit Current Duty Assignment And Check-In Data
 
 - Verify exam schedule, room assignment, supervision assignment, role, confirmation, substitution, and cancellation data quality.
 - Confirm whether current check-in and attendance records are sufficient for payment evidence.
+- Use `docs/architecture/INVIGILATION_PAYMENT_CURRENT_DATA_AUDIT.md` and `docs/architecture/INVIGILATION_PAYMENT_DATA_READINESS_CHECKLIST.md` as the baseline data-readiness package.
 
 ## Stage 4 - Build Payment Calculation Preview
 
@@ -26,6 +28,7 @@
 - Use only confirmed invigilation duty and approved rate rules.
 - Include exception list and audit trace.
 - Do not write final payment batches in this stage.
+- Follow `docs/architecture/INVIGILATION_PAYMENT_PREVIEW_MODEL_SPEC.md`; it is preview-only and not payment authorization.
 
 ## Stage 5 - Validate With Sample Exam Period
 
@@ -62,4 +65,3 @@
 - Do not use teaching compensation data as EMS payment input.
 - Do not implement payment calculation until rules and tests exist.
 - Do not change readiness scores unless backed by validation evidence.
-

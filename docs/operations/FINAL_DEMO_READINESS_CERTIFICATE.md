@@ -11,6 +11,7 @@
 - Payment or compensation language in EMS means invigilation or exam-supervision payment only.
 - Teaching workload compensation, excess teaching pay, course eligibility for teaching payment, base workload, co-teaching payment, and thesis/advisor workload payment are out of scope.
 - Demo readiness remains unchanged; final invigilation payment calculation still requires confirmed rate, evidence, exception, period, and approval rules.
+- Rule-intake and preview-model scaffold docs may be referenced as future preparation only; they do not implement calculation, authorize payment, or create an official payment report.
 
 ## Validation Summary
 

@@ -22,6 +22,12 @@ Teaching workload compensation, excess teaching pay, course eligibility for teac
 
 This docs-only reset does not change demo, pilot, production, or Faculty Web Portal readiness scores. Demo remains valid when workload analytics are described as exam duty workload for invigilation and paper distribution.
 
+## Invigilation Payment Rule Intake Update (2026-06-02)
+
+EMS now has a documentation foundation for invigilation payment rule intake and preview modeling. The package captures current duty data, open finance/admin decisions, required data fields, test scenarios, and proposed future UI/API surfaces.
+
+No final calculation is implemented. No payable amounts are authorized. The next blocker is human confirmation of payment unit, rates, evidence, exception handling, approval owner, payment period, and export format.
+
 ## 2. Readiness by Level
 - **Demo 100%**: 98/100 — full interactive smoke passed. Subpath build (/ems + /ems-api) and route compatibility smoke completed and validated (root mode unchanged; subpath assets correctly prefixed). **Root assumption + API base hardening pass (2026-05-25) completed** — all 5 internal root redirects and 9 direct /api strings centralized (builds + i18n re-validated post-changes). Complete stakeholder + web portal deployment package ready. **No external dependencies (auth contract, exact paths) resolved yet.** Pilot 42/100, Production 28/100 unchanged. Faculty Web Portal slice lifted 38→42/100 in dedicated scorecard (frontend now the strongest dimension).
 - **Controlled Faculty LAN Pilot 100%**: 42/100 — **blocked**. Primary blocker is unanswered Laravel/POLSCI OAuth contract (25/100 in that area). Secondary: no real PostgreSQL target, no executed backup/restore evidence, no DPO sign-off.

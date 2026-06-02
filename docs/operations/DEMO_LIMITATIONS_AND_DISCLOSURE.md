@@ -23,12 +23,14 @@
 - **Full data volume / scale**: Seeded data only. Real semester + historical data not present.
 - **Final invigilation payment calculation**: Not proven in this demo. Payment requires confirmed rate, evidence, exception, approval, and export rules.
 - **Teaching workload compensation**: Explicitly out of scope. EMS does not calculate excess teaching pay, course eligibility for teaching payment, base workload, co-teaching payment, or thesis/advisor workload payment.
+- **Payment rule intake**: Documentation scaffolding exists for rule collection and preview design only. It does not authorize payment or produce real payable amounts.
 
 ## Explicit Scope Statement (Must Be Said in Every Demo)
 
 "This is a **standalone EMS demo** using local seeded data and local authentication.  
 Faculty LAN deployment, POLSCI OAuth / Laravel integration, real PostgreSQL, backup evidence, and DPO sign-off are **out of scope** for today's session and remain open items requiring IT and owner responses.  
 Payment in EMS means invigilation payment only; teaching workload compensation is not part of this system.  
+Any payment discussion today is preview/intake only until finance/admin confirms the rules.  
 We are not claiming pilot or production readiness."
 
 ## Why This Demo Is Still Valuable

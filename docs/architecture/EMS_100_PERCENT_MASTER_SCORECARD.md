@@ -36,6 +36,12 @@
 - Current demo readiness remains **98 / 100** if demo workload screens are presented only as exam duty workload. Pilot and production readiness are unchanged.
 - Invigilation payment cannot be treated as final finance calculation until rate, evidence, exception, payment-period, and approval rules are confirmed.
 
+## Invigilation Payment Rule Intake Update (2026-06-02)
+- Rule-intake, decision-register, data-readiness, and preview-model scaffold docs are now prepared for finance/admin review.
+- No payment calculation, real payable amount, official payment report, or approval workflow was implemented.
+- Payment readiness is unchanged until finance/admin confirms unit, rates, evidence, exceptions, approval owner, payment period, and export format.
+- Demo remains valid only when payment is described as future preview/operational workflow preparation, not payment authorization.
+
 ## Faculty Web Portal Hardening Pass Update (2026-05-25)
 - Dedicated Faculty Web Portal Integration score lifted modestly from 38/100 → **42/100** (see FACULTY_WEB_PORTAL_100_PERCENT_READINESS_SCORE.md)
 - Frontend Route/Base + API Proxy dimension: 85 → **95** after elimination of all 5 root navigation assumptions and all 9 direct /api bypasses (centralized via new helpers + validated builds).
