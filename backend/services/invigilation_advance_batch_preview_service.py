@@ -232,17 +232,25 @@ def build_preview_from_schedules(
             blockers.append(warning)
             row.setdefault("warnings", []).append("Duplicate same person/date/time duty.")
 
-    ready_count = sum(1 for row in rows if row["advance_inclusion_status"] == ADVANCE_READY)
+    status_counts = Counter(row["advance_inclusion_status"] for row in rows)
+    ready_count = status_counts.get(ADVANCE_READY, 0)
     blocked_count = len(rows) - ready_count
 
     return {
         "summary": {
             "preview_only": True,
             "amount_calculation": "NOT_IMPLEMENTED",
+            "amount_calculation_enabled": False,
             "amount_status": PENDING_RATE_RULE,
             "total_rows": len(rows),
+            "total_assignments": len(rows),
             "ready_for_batch_review": ready_count,
+            "included_in_advance_batch": 0,
+            "blocked_missing_assignment_data": status_counts.get(BLOCKED_MISSING_DATA, 0),
+            "blocked_duplicate_duty": status_counts.get(BLOCKED_DUPLICATE, 0),
+            "blocked_rule_gap": status_counts.get(BLOCKED_RULE_GAP, 0),
             "blocked_rows": blocked_count,
+            "pending_rate_rule_count": len(rows),
             "warning_count": len(warnings),
         },
         "roster_rows": rows,
@@ -274,4 +282,3 @@ def build_advance_batch_preview(
         semester=semester,
         exam_type=exam_type,
     )
-

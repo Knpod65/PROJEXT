@@ -70,11 +70,15 @@ def _period():
 def test_normal_assigned_duty_is_included_with_pending_amount():
     payload = build_preview_from_schedules([_schedule()], [_period()])
     row = payload["roster_rows"][0]
+    summary = payload["summary"]
     assert row["advance_inclusion_status"] == "READY_FOR_BATCH_REVIEW"
     assert row["amount_status"] == "PENDING_RATE_RULE"
     assert row["amount_preview"] == "PENDING_RATE_RULE"
     assert row["reconciliation_status"] == "PENDING_POST_DUTY_RECONCILIATION"
     assert "9999" not in str(row)
+    assert summary["amount_calculation_enabled"] is False
+    assert summary["total_assignments"] == 1
+    assert summary["pending_rate_rule_count"] == 1
 
 
 def test_missing_assigned_person_is_blocked():
@@ -82,8 +86,10 @@ def test_missing_assigned_person_is_blocked():
     schedule.supervisions[0].user = None
     payload = build_preview_from_schedules([schedule], [_period()])
     row = payload["roster_rows"][0]
+    summary = payload["summary"]
     assert row["advance_inclusion_status"] == "BLOCKED_MISSING_ASSIGNMENT_DATA"
     assert "Missing assigned person" in row["blocked_reason"]
+    assert summary["blocked_missing_assignment_data"] == 1
 
 
 def test_duplicate_same_person_and_slot_is_flagged():
@@ -93,8 +99,10 @@ def test_duplicate_same_person_and_slot_is_flagged():
         _schedule(schedule_id=2, supervision_id=102, user=user),
     ]
     payload = build_preview_from_schedules(schedules, [_period()])
+    summary = payload["summary"]
     assert {row["advance_inclusion_status"] for row in payload["roster_rows"]} == {"BLOCKED_DUPLICATE_DUTY"}
     assert any("Duplicate same person/date/time" in blocker for blocker in payload["blockers"])
+    assert summary["blocked_duplicate_duty"] == 2
 
 
 def test_missing_rate_does_not_block_roster_inclusion():
@@ -124,4 +132,3 @@ def test_missing_payment_period_appears_in_rule_gaps():
     row = payload["roster_rows"][0]
     assert row["advance_inclusion_status"] == "READY_FOR_BATCH_REVIEW"
     assert any("PAY-010" in gap for gap in payload["rule_gaps"])
-

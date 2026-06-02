@@ -572,10 +572,17 @@ class WorkloadDutyAnalyticsPayload(BaseModel):
 class AdvanceInvigilationBatchPreviewSummary(BaseModel):
     preview_only: bool
     amount_calculation: str
+    amount_calculation_enabled: bool = False
     amount_status: str
     total_rows: int
+    total_assignments: int
     ready_for_batch_review: int
+    included_in_advance_batch: int = 0
+    blocked_missing_assignment_data: int = 0
+    blocked_duplicate_duty: int = 0
+    blocked_rule_gap: int = 0
     blocked_rows: int
+    pending_rate_rule_count: int
     warning_count: int
 
 
