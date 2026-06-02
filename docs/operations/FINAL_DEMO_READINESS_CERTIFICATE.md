@@ -60,3 +60,4 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Payment model documentation has been corrected to advance disbursement plus post-duty reconciliation.
 - Check-in/evidence supports reconciliation and refund/offset review; it is not a default pre-disbursement gate.
 - No payment calculation, official payment report, refund decision, or offset decision is implemented for demo.
+- Advance roster preview scaffold does not change demo, pilot, or production readiness scores.

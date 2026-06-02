@@ -74,3 +74,10 @@
 - Check-in/evidence is not a mandatory pre-payment gate by default.
 - Evidence is used after duty for reconciliation, absence explanation, refund/offset, and audit closure.
 - Payment calculation remains blocked until rate, unit, approval, refund/offset, period, and export rules are answered.
+
+## 2026-06-02 Advance Roster Preview Scaffold
+
+- Add a backend-only advance roster preview endpoint before any frontend page.
+- Keep all amount fields `PENDING_RATE_RULE`.
+- Keep post-duty reconciliation separate from advance inclusion.
+- Do not proceed to official export or approval workflow until rules are approved.

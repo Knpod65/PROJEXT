@@ -71,3 +71,11 @@ Current blocked questions:
 - Advance preview may use approved roster records before attendance evidence is complete, only after roster/rate/period/approval rules are confirmed.
 - Reconciliation preview must handle missing check-in, no-show, substitution, explanation, force majeure, refund, waiver, and offset states.
 - Current decision remains `BLOCKED` because core rules are still unanswered.
+
+## 7. Advance Roster Preview Scaffold (2026-06-02)
+
+- A backend-only advance roster preview scaffold is allowed because it is read-only and uses existing `ExamSchedule`/`Supervision` assignment data.
+- It is not a payment calculation and must always return `PENDING_RATE_RULE` for amount fields.
+- It does not require check-in before inclusion.
+- It does not implement final approval, official export, refund amount, or offset logic.
+- Payment readiness remains blocked until finance/admin rules are answered.

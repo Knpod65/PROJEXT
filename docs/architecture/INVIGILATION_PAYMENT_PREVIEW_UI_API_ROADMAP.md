@@ -39,6 +39,26 @@ All endpoints are proposed only:
 - `PROPOSED POST /api/invigilation-reconciliation/record-decision`
 - `PROPOSED GET /api/invigilation-reconciliation/refund-offsets`
 
+## Advance Batch Roster Preview
+
+Status: `IMPLEMENTED_BACKEND_PREVIEW_ONLY` after the backend scaffold pass; no frontend page is created in this pass.
+
+Possible page:
+
+- `PROPOSED` Advance Batch Roster Preview
+
+Endpoint:
+
+- `IMPLEMENTED GET /api/invigilation-advance-batch/preview`
+
+Clarifications:
+
+- This is not final payment.
+- It calculates no amount.
+- Every amount field must remain `PENDING_RATE_RULE`.
+- Check-in is not required before advance roster inclusion.
+- Post-duty reconciliation remains a separate later workflow.
+
 ## Dependencies
 
 - Payment rules answered.

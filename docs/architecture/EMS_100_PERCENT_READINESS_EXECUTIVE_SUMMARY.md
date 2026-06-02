@@ -121,3 +121,9 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - No-show/absence routes to explanation, reviewer decision, and refund/offset tracking where policy requires it.
 - Final calculation and official reporting remain blocked until finance/admin rules are approved.
 - Demo, pilot, and production readiness scores are not inflated by this documentation pass.
+
+## Advance Roster Preview Scaffold (2026-06-02)
+- EMS now has a safe plan and backend scaffold for previewing who would be included in an advance invigilation batch roster.
+- The scaffold is read-only and amount-free; monetary fields remain `PENDING_RATE_RULE`.
+- It does not authorize payment, export an official report, or close reconciliation.
+- Production/payment readiness remains unchanged.

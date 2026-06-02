@@ -62,3 +62,9 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Do not use check-in as an automatic pre-payment gate unless finance/admin explicitly approves that policy.
 - Add future work for absence explanation, force majeure review, refund/offset tracking, and reconciliation reporting.
 - Keep final calculation blocked until rate, unit, refund/offset, approval, period, and export rules are answered.
+
+## Advance Roster Preview Scaffold Backlog Note (2026-06-02)
+
+- Backend preview scaffold may show roster inclusion only.
+- No amount, approval, export, refund, or offset task should be added until finance/admin rules are closed.
+- Future frontend page remains deferred until the endpoint is validated.

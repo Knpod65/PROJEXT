@@ -54,3 +54,4 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Payment model documentation has been corrected to advance disbursement plus post-duty reconciliation.
 - Missing check-in is a reconciliation trigger, not an automatic pre-payment block.
 - No real amount, official payment report, refund, or offset decision is implemented for demo.
+- Advance roster preview, if shown, is backend preview scaffolding only and must be described as no-amount, not payment authorization.

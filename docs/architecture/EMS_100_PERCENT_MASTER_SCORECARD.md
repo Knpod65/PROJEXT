@@ -67,3 +67,10 @@
 - Attendance/check-in/no-show evidence is used after duty to reconcile, request explanation, and track refund/offset if required.
 - Payment calculation remains blocked by missing rate, unit, period, approval, refund/offset, and export rules.
 - No production or payment-readiness score increase is applied.
+
+## Advance Invigilation Batch Roster Preview Scaffold (2026-06-02)
+- A preview-only backend scaffold was added for advance roster inclusion from assigned invigilation duties.
+- No amount calculation, final authorization, official payment report, refund, or offset logic is included.
+- All amount fields remain `PENDING_RATE_RULE`.
+- Check-in remains post-duty reconciliation evidence, not an advance inclusion gate.
+- Readiness scores remain unchanged.
