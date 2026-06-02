@@ -80,3 +80,9 @@
 - A read-only frontend page was added for advance batch roster review.
 - No payment amount calculation, approval, final export, or production payment readiness was added.
 - Readiness score is unchanged.
+
+## Advance Batch Live Smoke Update (2026-06-02)
+- Live browser smoke confirmed the 23-row preview roster on admin and staff sessions.
+- Teacher and print shop were blocked from the direct route.
+- Screenshot evidence was captured under `docs/operations/demo-smoke-screenshots/`.
+- No readiness score changes are applied by this verification pass.

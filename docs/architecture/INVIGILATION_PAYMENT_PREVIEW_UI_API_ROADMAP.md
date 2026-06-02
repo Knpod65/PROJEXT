@@ -95,3 +95,9 @@ Clarifications:
 - The page does not include approval, official export, or final payment actions.
 - Amounts remain `PENDING_RATE_RULE`; rate rules are still required before any monetary calculation.
 - Post-duty reconciliation remains a separate future workflow.
+
+## Live Smoke Update - 2026-06-02
+
+- The advance batch roster preview frontend page is now live and verified in the browser.
+- The page remains preview-only and does not change the future payment preview/approval/export roadmap status.
+- Post-duty reconciliation is still a separate workflow and is not implemented here.

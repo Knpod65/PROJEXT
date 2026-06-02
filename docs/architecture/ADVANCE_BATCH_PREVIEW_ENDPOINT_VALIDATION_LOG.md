@@ -62,3 +62,13 @@ GET /api/invigilation-advance-batch/preview
 - The endpoint is stable enough for a preview-only frontend page.
 - The frontend route `/invigilation-advance-batch-preview` responded with HTTP 200 from the local Vite dev server.
 - The in-app browser backend was unavailable in this session, so visual browser automation could not be completed.
+
+## Live Smoke Update
+
+- Backend restarted from the current repo on `127.0.0.1:8000`.
+- Authenticated browser fetch to `GET /api/invigilation-advance-batch/preview` returned HTTP `200`.
+- Live summary values matched the preview contract: `total_rows = 23`, `total_assignments = 23`, `ready_for_batch_review = 23`, `amount_calculation_enabled = false`, `pending_rate_rule_count = 23`, `blocked_rows = 0`, `warning_count = 0`, `rule_gaps = 3`.
+- The live browser page loaded for admin and staff.
+- Teacher and print shop were blocked by route guard / access-denied state.
+- Screenshot evidence was captured at the paths listed in `docs/architecture/ADVANCE_BATCH_FRONTEND_LIVE_SMOKE_RESULTS.md`.
+- The earlier browser limitation only applies to the prior pass and is superseded by this live smoke pass.

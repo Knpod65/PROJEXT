@@ -46,3 +46,10 @@ The page must not show:
 ## Readiness Impact
 
 Frontend implementation is safe as a preview-only operational page. Production/payment readiness remains unchanged until rate, approval, and reconciliation rules are approved.
+
+## Live Smoke Confirmation
+
+- The page rendered successfully in the live browser for admin and staff.
+- The 23-row preview contract displayed with `PENDING_RATE_RULE` amounts only.
+- Teacher and print shop were blocked from the direct route.
+- No approve, final payment, or official export controls were present.

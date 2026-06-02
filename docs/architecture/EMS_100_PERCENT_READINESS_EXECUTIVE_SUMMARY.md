@@ -134,3 +134,9 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The page is not payment authorization and does not calculate amounts.
 - Check-in remains post-duty reconciliation evidence, not a pre-payment gate.
 - Production/payment readiness remains unchanged until finance/admin rules are approved.
+
+## Advance Batch Live Smoke Update (2026-06-02)
+- Live browser smoke verified the same preview contract for admin and staff.
+- Teacher and print shop were blocked on direct access.
+- Screenshot evidence was captured in the demo smoke screenshots folder.
+- No readiness scores change from this pass.

@@ -75,3 +75,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Keep the page read-only and preview-only until rate, approval, export, and reconciliation rules are approved.
 - Next backlog item is policy closure, not amount calculation.
 - Do not add official export, approve, refund, or offset actions from this page without a new rule-confirmation pass.
+
+## Advance Batch Live Smoke Backlog Note (2026-06-02)
+
+- The preview page is now live-smoke verified in the browser for admin and staff.
+- Teacher and print shop were blocked from the direct route as intended.
+- Screenshot evidence exists in `docs/operations/demo-smoke-screenshots/`.
+- No backlog reprioritization is needed; policy closure remains the next step.

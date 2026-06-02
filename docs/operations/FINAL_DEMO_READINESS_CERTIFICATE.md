@@ -68,3 +68,11 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Demo remains valid only when framed as roster review and operational readiness, not final payment authorization.
 - Payment calculation remains blocked by unconfirmed finance/admin rules.
 - Production readiness is unchanged.
+
+## Advance Batch Live Smoke Note (2026-06-02)
+
+- The advance batch preview page was live-smoke verified in the browser.
+- Admin and staff could access the page and see the 23-row preview roster.
+- Teacher and print shop were blocked by the route guard.
+- Screenshots were captured under `docs/operations/demo-smoke-screenshots/`.
+- No payment-calculation, approval, or export readiness claim is added by this pass.

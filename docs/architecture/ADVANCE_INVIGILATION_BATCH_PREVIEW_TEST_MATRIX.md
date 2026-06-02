@@ -23,3 +23,10 @@
 - All amount fields remained `PENDING_RATE_RULE`.
 - Frontend preview page is implemented as read-only; no approve/export/final payment action is present.
 - Full payment calculation remains blocked by rate, approval, and reconciliation policy answers.
+
+## Live Smoke Results - 2026-06-02
+
+- `ADV-001`, `ADV-003`, `ADV-006`, `ADV-007`, and `ADV-009` matched the live browser response pattern: 23 rows, `READY_FOR_BATCH_REVIEW`, and `PENDING_RATE_RULE` amounts.
+- Admin and staff access passed.
+- Teacher and print shop direct access were blocked.
+- No final payment or official export controls appeared in the live page.

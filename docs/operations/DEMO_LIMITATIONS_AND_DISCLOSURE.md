@@ -62,3 +62,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - It may be shown to demonstrate roster review, blockers, warnings, and unresolved rule gaps.
 - `PENDING_RATE_RULE` is intentional and means no payment amount has been calculated.
 - The page must not be presented as payment authorization, final export, or production-ready finance output.
+
+## Advance Batch Live Smoke Disclosure (2026-06-02)
+
+- The preview page was live-smoke verified in the browser for admin and staff.
+- Teacher and print shop were blocked from the direct route as intended.
+- Screenshot evidence was captured in `docs/operations/demo-smoke-screenshots/`.
+- This pass does not implement payment calculation, approval, or official export.
