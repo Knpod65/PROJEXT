@@ -15,6 +15,7 @@
 - Confirm payment unit, role rates, evidence, exception rules, approval owner, and export format.
 - Decide whether current `compensation` fields remain or need compatibility aliases.
 - Use `docs/operations/INVIGILATION_PAYMENT_RULE_ANSWER_INTAKE.md` and `docs/operations/INVIGILATION_PAYMENT_RULE_DECISION_REGISTER.md` as the working intake package.
+- Current validation gate result: still blocked because all required answers remain pending. Use `docs/operations/INVIGILATION_PAYMENT_RULE_FOLLOWUP_QUESTIONS.md` for the next owner request.
 
 ## Stage 3 - Audit Current Duty Assignment And Check-In Data
 
@@ -29,6 +30,7 @@
 - Include exception list and audit trace.
 - Do not write final payment batches in this stage.
 - Follow `docs/architecture/INVIGILATION_PAYMENT_PREVIEW_MODEL_SPEC.md`; it is preview-only and not payment authorization.
+- Do not begin implementation until `docs/architecture/INVIGILATION_PAYMENT_MODEL_SELECTION_GATE.md` changes from `READY_FOR_PREVIEW_IMPLEMENTATION = NO`.
 
 ## Stage 5 - Validate With Sample Exam Period
 

@@ -42,6 +42,12 @@
 - Payment readiness is unchanged until finance/admin confirms unit, rates, evidence, exceptions, approval owner, payment period, and export format.
 - Demo remains valid only when payment is described as future preview/operational workflow preparation, not payment authorization.
 
+## Invigilation Payment Rule Validation Gate (2026-06-02)
+- Rule-answer validation completed against the current answer intake; all required rule categories remain missing/pending.
+- `READY_FOR_PREVIEW_IMPLEMENTATION = NO`; no preview model is selected.
+- Final payment readiness remains **NO** because rates, evidence, exceptions, approval owner, payment period, export format, print/external handling, and audit evidence are unanswered.
+- No readiness score is increased by this validation gate.
+
 ## Faculty Web Portal Hardening Pass Update (2026-05-25)
 - Dedicated Faculty Web Portal Integration score lifted modestly from 38/100 → **42/100** (see FACULTY_WEB_PORTAL_100_PERCENT_READINESS_SCORE.md)
 - Frontend Route/Base + API Proxy dimension: 85 → **95** after elimination of all 5 root navigation assumptions and all 9 direct /api bypasses (centralized via new helpers + validated builds).

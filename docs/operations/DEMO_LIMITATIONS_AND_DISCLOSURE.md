@@ -24,6 +24,7 @@
 - **Final invigilation payment calculation**: Not proven in this demo. Payment requires confirmed rate, evidence, exception, approval, and export rules.
 - **Teaching workload compensation**: Explicitly out of scope. EMS does not calculate excess teaching pay, course eligibility for teaching payment, base workload, co-teaching payment, or thesis/advisor workload payment.
 - **Payment rule intake**: Documentation scaffolding exists for rule collection and preview design only. It does not authorize payment or produce real payable amounts.
+- **Payment preview readiness**: Current validation says payment preview implementation is not ready because all required rule answers remain pending.
 
 ## Explicit Scope Statement (Must Be Said in Every Demo)
 
@@ -31,6 +32,7 @@
 Faculty LAN deployment, POLSCI OAuth / Laravel integration, real PostgreSQL, backup evidence, and DPO sign-off are **out of scope** for today's session and remain open items requiring IT and owner responses.  
 Payment in EMS means invigilation payment only; teaching workload compensation is not part of this system.  
 Any payment discussion today is preview/intake only until finance/admin confirms the rules.  
+Current rule validation found no approved payment answers, so no payment preview or final payment claim should be made.  
 We are not claiming pilot or production readiness."
 
 ## Why This Demo Is Still Valuable

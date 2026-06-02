@@ -28,6 +28,12 @@ EMS now has a documentation foundation for invigilation payment rule intake and 
 
 No final calculation is implemented. No payable amounts are authorized. The next blocker is human confirmation of payment unit, rates, evidence, exception handling, approval owner, payment period, and export format.
 
+## Invigilation Payment Rule Validation Gate (2026-06-02)
+
+The current answer intake was validated and contains no completed finance/admin answers. EMS is not ready for payment preview implementation or final payment calculation. The recommended preview model remains unselected; Model A per session is only a future discussion fallback, not an approved model.
+
+The exact next step is to answer the follow-up questions and close the decision register. Readiness scores remain unchanged.
+
 ## 2. Readiness by Level
 - **Demo 100%**: 98/100 — full interactive smoke passed. Subpath build (/ems + /ems-api) and route compatibility smoke completed and validated (root mode unchanged; subpath assets correctly prefixed). **Root assumption + API base hardening pass (2026-05-25) completed** — all 5 internal root redirects and 9 direct /api strings centralized (builds + i18n re-validated post-changes). Complete stakeholder + web portal deployment package ready. **No external dependencies (auth contract, exact paths) resolved yet.** Pilot 42/100, Production 28/100 unchanged. Faculty Web Portal slice lifted 38→42/100 in dedicated scorecard (frontend now the strongest dimension).
 - **Controlled Faculty LAN Pilot 100%**: 42/100 — **blocked**. Primary blocker is unanswered Laravel/POLSCI OAuth contract (25/100 in that area). Secondary: no real PostgreSQL target, no executed backup/restore evidence, no DPO sign-off.
