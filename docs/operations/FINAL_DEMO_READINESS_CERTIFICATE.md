@@ -82,3 +82,11 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - It does not change production/payment readiness.
 - It does not implement final payment calculation, official export, or payment approval.
 - Teaching workload compensation remains excluded from EMS payment scope.
+
+## Invigilation Rate Rule Live Smoke Certificate Note (2026-06-02)
+
+- Authenticated local smoke passed for admin rate lifecycle and staff read-only access.
+- Teacher and print shop roles were blocked from rate-rule API access.
+- Invalid input was rejected.
+- Browser screenshots were not captured because authenticated browser tooling was unavailable in this session.
+- The certificate remains unchanged for pilot/production readiness.

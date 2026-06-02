@@ -93,6 +93,15 @@ Clarifications:
 - Advance Batch Preview amount integration is deferred until the rate UI/API has been validated.
 - Teaching workload compensation must not appear in navigation, labels, filters, or export wording.
 
+## Rate Rule Live Smoke Update
+
+- Authenticated live smoke passed for the rate-rule API/page route on local EMS servers.
+- Admin can create, activate, and archive a demo `PER_SESSION` rate rule.
+- Staff can read rate rules but mutation is blocked by backend policy.
+- Teacher and print shop access is blocked.
+- Invalid amount/name/unit submissions are rejected.
+- This validates configuration behavior only; Advance Batch amount integration remains deferred and official approval/export remains unimplemented.
+
 ## API Guardrails
 
 - Preview endpoints must be read-only until approval workflow is implemented.

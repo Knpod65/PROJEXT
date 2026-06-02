@@ -75,3 +75,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - A saved or active rate does not authorize real payment.
 - Advance Batch Preview may still show `PENDING_RATE_RULE` until a later integration pass.
 - No final payment report, approval, or export should be demonstrated as complete.
+
+## Invigilation Rate Rule Live Smoke Disclosure (2026-06-02)
+
+- Local authenticated smoke verified admin can create, activate, and archive a demo rate rule.
+- Staff can view but not mutate; teacher and print shop are blocked.
+- The demo rate is configuration evidence only and is not payment authorization.
+- No official export, final approval, or final payment calculation is available.

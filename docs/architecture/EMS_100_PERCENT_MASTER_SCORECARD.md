@@ -93,3 +93,9 @@
 - No teaching workload logic, final payment calculation, official export, or payment approval is added.
 - Advance Batch Preview remains pending for amount integration until a later validated pass.
 - Production/payment readiness scores remain unchanged.
+
+## Invigilation Rate Rule Live Smoke Update (2026-06-02)
+- Authenticated live smoke verified admin create/activate/archive, staff read-only access, and teacher/print-shop blocking for invigilation rate rules.
+- Invalid rate inputs were rejected and no invalid active rule was created.
+- The smoke confirms configuration readiness only; it does not add payment calculation, final approval, official export, or production readiness.
+- Readiness scores remain unchanged.

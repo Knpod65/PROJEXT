@@ -94,3 +94,9 @@
 - Decision: do not integrate amount preview into Advance Batch Preview in this pass.
 - Next payment phase: validate rate-rule UI/API, then connect active `PER_SESSION` rates to preview-only advance roster amounts.
 - Final payment authorization/export remains blocked until approval and reconciliation rules are confirmed.
+
+## Rate Rule Live Smoke Roadmap Update (2026-06-02)
+
+- Rate-rule UI/API validation has now passed authenticated local smoke for the backend contract.
+- The next safe implementation phase is a preview-only Advance Batch amount integration using an active `PER_SESSION` rate.
+- That next phase must still avoid final payment approval, official export, refund/offset amount logic, and production-readiness claims.

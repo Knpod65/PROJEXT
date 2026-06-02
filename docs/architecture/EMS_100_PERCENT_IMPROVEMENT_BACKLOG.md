@@ -88,3 +88,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Remaining: connect active `PER_SESSION` rate to preview-only advance batch amounts in a later integration pass.
 - Remaining: final payment approval, official export, reconciliation/refund/offset closure, and production deployment evidence.
 - Excluded: teaching workload compensation, Work H, real teaching hours, opencourse/coinstruc import, and extra-teaching payment rules.
+
+## Invigilation Rate Rule Live Smoke Backlog Note (2026-06-02)
+
+- Completed: local authenticated smoke for rate-rule setup.
+- Verified: admin lifecycle, staff read-only, teacher/print-shop blocking, invalid-input rejection.
+- Remaining: browser screenshot capture when authenticated browser tooling is available.
+- Remaining: later integration pass to connect an active `PER_SESSION` rate to preview-only Advance Batch amounts.

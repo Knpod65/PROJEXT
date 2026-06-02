@@ -147,3 +147,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - No teaching workload logic, final payment calculation, official export, or payment approval is added.
 - Advance Batch Preview remains `PENDING_RATE_RULE` until a later amount-preview integration pass.
 - Demo, pilot, production, and payment readiness scores are not increased by this setup step.
+
+## Invigilation Rate Rule Live Smoke Note (2026-06-02)
+
+- Live authenticated smoke confirmed the rate-rule configuration lifecycle for admin and read-only staff access.
+- Teacher and print shop roles were blocked from rate-rule API access.
+- Invalid inputs were rejected.
+- This evidence supports demo configuration behavior only; production/payment readiness remains unchanged.

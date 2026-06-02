@@ -60,3 +60,13 @@ No valid screenshot was captured in this run. The rate-rule page is behind authe
 - Advance Batch Preview amount integration: **DEFERRED**
 - Rate values hardcoded: **NO**
 
+## Live Smoke Evidence Update
+
+- Authenticated live smoke completed on 2026-06-02.
+- Backend was restarted from the current EMS repo after a stale Python uvicorn process on port `8000` exposed only `/api/health`.
+- Admin `mathawee.m / admin123` created a local demo DRAFT rate, activated it, then archived it.
+- Staff `araya.fa / staff123` could list rate rules and was blocked from create with `403`.
+- Teacher `kiancheng.lee / teacher123` and print shop `printshop.ops / print123` were blocked from rate-rule API access with `403`.
+- Invalid amount/name/unit cases were rejected; no invalid ACTIVE rate was created.
+- Browser screenshots were not captured because authenticated browser tooling was unavailable in this session.
+- Payment calculation, final approval/export, and Advance Batch amount integration remain **NO / DEFERRED**.
