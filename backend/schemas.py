@@ -4,6 +4,7 @@ Schemas — Pydantic v2 request/response models
 from pydantic import BaseModel, EmailStr, Field, model_validator
 from typing import Optional, List, Any, Dict, Literal
 from datetime import datetime, date
+from decimal import Decimal
 from models import UserRole, ExamType, QuestionType, ScheduleStatus
 
 
@@ -634,6 +635,69 @@ class AdvanceInvigilationBatchPreviewResponse(BaseModel):
     blockers: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     rule_gaps: list[str] = Field(default_factory=list)
+
+
+class InvigilationRateRuleCreate(BaseModel):
+    rate_name: str
+    payment_unit: str = "PER_SESSION"
+    rate_amount: Optional[Decimal] = None
+    currency: str = "THB"
+    role_scope: str = "ALL"
+    person_type_scope: str = "ALL"
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    note: Optional[str] = None
+
+
+class InvigilationRateRuleUpdate(BaseModel):
+    rate_name: Optional[str] = None
+    payment_unit: Optional[str] = None
+    rate_amount: Optional[Decimal] = None
+    currency: Optional[str] = None
+    role_scope: Optional[str] = None
+    person_type_scope: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    note: Optional[str] = None
+
+
+class InvigilationRateRuleOut(BaseModel):
+    rate_rule_id: int
+    rate_name: str
+    payment_unit: str
+    rate_amount: Decimal
+    currency: str
+    role_scope: str
+    person_type_scope: str
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    status: str
+    created_by: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_by: Optional[int] = None
+    updated_at: Optional[datetime] = None
+    activated_by: Optional[int] = None
+    activated_at: Optional[datetime] = None
+    archived_by: Optional[int] = None
+    archived_at: Optional[datetime] = None
+    note: Optional[str] = None
+    preview_only: bool = True
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
+class InvigilationRateRuleListResponse(BaseModel):
+    rate_rules: list[InvigilationRateRuleOut]
+    preview_only: bool = True
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
+class InvigilationRateRuleMutationResponse(BaseModel):
+    rate_rule: InvigilationRateRuleOut
+    preview_only: bool = True
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
 
 
 

@@ -46,6 +46,16 @@ class SupervisionRole(str, enum.Enum):
     room_keeper = "room_keeper"  # เปิด/ปิดห้อง — ไม่คุมสอบ ไม่กระจาย
 
 
+class InvigilationPaymentUnit(str, enum.Enum):
+    per_session = "PER_SESSION"
+
+
+class InvigilationRateRuleStatus(str, enum.Enum):
+    draft = "DRAFT"
+    active = "ACTIVE"
+    archived = "ARCHIVED"
+
+
 # ─── Users ───────────────────────────────────────────────────
 class User(Base):
     __tablename__ = "users"
@@ -1245,6 +1255,36 @@ class ExternalSupervision(Base):
         UniqueConstraint("external_exam_id", "user_id", name="uq_ext_supervision"),
         Index("ix_ext_sup_user", "user_id"),
     )
+
+
+class InvigilationPaymentRateRule(Base):
+    """Configuration-only rate rule for invigilation payment preview."""
+    __tablename__ = "invigilation_payment_rate_rules"
+
+    id                = Column(Integer, primary_key=True, index=True)
+    rate_name         = Column(String(200), nullable=False)
+    payment_unit      = Column(Enum(InvigilationPaymentUnit), nullable=False, default=InvigilationPaymentUnit.per_session)
+    rate_amount       = Column(Numeric(12, 2), nullable=False)
+    currency          = Column(String(10), nullable=False, default="THB")
+    role_scope        = Column(String(80), nullable=False, default="ALL")
+    person_type_scope = Column(String(80), nullable=False, default="ALL")
+    effective_from    = Column(Date, nullable=True)
+    effective_to      = Column(Date, nullable=True)
+    status            = Column(Enum(InvigilationRateRuleStatus), nullable=False, default=InvigilationRateRuleStatus.draft)
+    created_by        = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at        = Column(DateTime(timezone=True), server_default=func.now())
+    updated_by        = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_at        = Column(DateTime(timezone=True), onupdate=func.now())
+    activated_by      = Column(Integer, ForeignKey("users.id"), nullable=True)
+    activated_at      = Column(DateTime(timezone=True), nullable=True)
+    archived_by       = Column(Integer, ForeignKey("users.id"), nullable=True)
+    archived_at       = Column(DateTime(timezone=True), nullable=True)
+    note              = Column(Text, nullable=True)
+
+    __table_args__ = (
+        Index("ix_invigilation_rate_status_scope", "status", "payment_unit", "role_scope", "person_type_scope"),
+    )
+
 
 # ─── Exam Period (รอบสอบ) ────────────────────────────────────
 class ExamPeriod(Base):
