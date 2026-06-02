@@ -15,6 +15,8 @@ No preview model is selected.
 
 The answer source does not confirm payment unit, rate source, role mapping, evidence requirement, approval owner, exception handling, payment period, or export format. Selecting Model A, B, C, or D would require assumptions, which are not allowed.
 
+2026-06-02 correction: the future model must be two-stage: advance disbursement from approved roster, then post-duty reconciliation. Missing check-in should not be treated as an automatic pre-payment block unless finance/admin policy explicitly says so.
+
 ## Model Fit Review
 
 | Model | Current fit | Why |
@@ -33,7 +35,7 @@ Model A - Per Session may remain the simplest future fallback candidate for plan
 - Payment unit
 - Rate source and rate code
 - Payable duty roles
-- Evidence requirement
+- Advance roster approval and post-duty evidence requirement
 - Assignment, check-in, substitution, cancellation, and no-show statuses
 - Payment period
 - Approval owner and approval status
@@ -48,9 +50,11 @@ All model-selecting policy inputs are missing. Current data can inventory assign
 - Payment unit: missing
 - Rate source: missing
 - Duty roles: missing
-- Evidence requirement: missing
+- Advance roster approval: missing
+- Post-duty evidence/reconciliation requirement: missing
 - Approval owner: missing
 - Exception rules: missing
+- Refund/offset rules: missing
 - Payment period: missing
 - Export format: missing
 - Audit evidence requirement: missing
@@ -58,7 +62,7 @@ All model-selecting policy inputs are missing. Current data can inventory assign
 ## Risks
 
 - Existing `compensation` values may be mistaken as approved rates.
-- `Supervision.confirmed` may be mistaken as attendance evidence without policy confirmation.
+- `Supervision.confirmed` may be mistaken as attendance evidence or batch approval without policy confirmation.
 - QR pickup check-ins may be mistaken as invigilation attendance.
 - Swap assignment mutation may obscure payment ownership without a confirmed substitution rule.
 - Building any calculation now would encode unapproved assumptions.
@@ -70,7 +74,8 @@ All model-selecting policy inputs are missing. Current data can inventory assign
 | Payment unit answered | Yes | No |
 | Rate source answered | Yes | No |
 | Duty roles answered | Yes | No |
-| Evidence requirement answered | Yes | No |
+| Advance roster approval answered | Yes | No |
+| Post-duty evidence/reconciliation requirement answered | Yes | No |
 | Approval owner answered | Yes | No |
 | Exception rules minimally answered | Yes | No |
 | Payment period answered | Yes | No |
@@ -79,4 +84,3 @@ All model-selecting policy inputs are missing. Current data can inventory assign
 ## Decision
 
 Preview implementation is blocked. Continue with rule collection and data-readiness clarification only.
-

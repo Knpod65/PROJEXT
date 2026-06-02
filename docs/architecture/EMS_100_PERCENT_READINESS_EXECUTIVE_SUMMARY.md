@@ -114,3 +114,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 
 ---
 *This summary is suitable for both technical and non-technical stakeholders. All claims are backed by the 20+ detailed 100% docs created in this pass.*
+
+## Invigilation Advance/Reconciliation Correction (2026-06-02)
+- EMS payment is now documented as a two-stage flow: advance disbursement from an approved roster, followed by post-duty reconciliation.
+- Check-in/evidence is reconciliation evidence, not an automatic pre-disbursement block.
+- No-show/absence routes to explanation, reviewer decision, and refund/offset tracking where policy requires it.
+- Final calculation and official reporting remain blocked until finance/admin rules are approved.
+- Demo, pilot, and production readiness scores are not inflated by this documentation pass.

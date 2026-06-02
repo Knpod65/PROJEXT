@@ -8,6 +8,29 @@
 
 This document describes possible preview models only. It does not choose a final payment model, does not set rates, does not calculate official payable amounts, and does not authorize payment.
 
+## 2026-06-02 Model Correction
+
+Preview must now produce two separate outputs:
+
+### A. Advance Payment Batch Preview
+
+- Shows who is included in the initial payment or claim batch.
+- Uses the approved assignment roster as the starting point.
+- Does not require completed attendance/check-in evidence before batch inclusion by default.
+- Shows symbolic amount/rate placeholders only until rate rules are approved.
+- Marks included rows as pending post-duty reconciliation.
+
+### B. Post-Duty Reconciliation Preview
+
+- Shows who attended.
+- Shows who did not attend or lacks evidence.
+- Shows who substituted or was replaced.
+- Shows who needs explanation.
+- Shows who may require refund, waiver, or offset.
+- Does not become final payment truth without finance/admin decision.
+
+These outputs must not be merged into one final payment report.
+
 ## Required Inputs
 
 - `person_id`
@@ -26,43 +49,51 @@ This document describes possible preview models only. It does not choose a final
 - `approved_for_payment`
 - `rate_code`
 - `payment_period`
+- `advance_payment_batch_id`
+- `advance_disbursement_status`
+- `reconciliation_status`
+- `explanation_required`
+- `refund_status`
+- `offset_next_payment_flag`
 
 ## Conceptual Model Options
 
 ### Model A - Per Session
 
 ```text
-payable_amount = confirmed_session_count x session_rate
+advance_amount_preview = approved_roster_session_count x session_rate
 ```
 
 Preview interpretation:
 
-- Count confirmed sessions.
+- Count approved roster sessions for advance batch preview.
 - Show rate as a symbolic `session_rate` or `rate_code` only until finance confirms values.
-- Produce exceptions for missing confirmation/evidence.
+- Missing post-duty evidence creates reconciliation work, not automatic exclusion from advance disbursement.
 
 ### Model B - Per Hour
 
 ```text
-payable_amount = confirmed_duration_hours x hourly_rate
+advance_amount_preview = roster_duration_hours x hourly_rate
 ```
 
 Preview interpretation:
 
 - Derive duration from start/end time only when both are reliable.
 - Show rate as symbolic `hourly_rate` or `rate_code`.
-- Require rounding rule before final calculation.
+- Require rounding rule before any amount preview or final calculation.
+- Post-duty attended duration can be reconciled later if policy requires it.
 
 ### Model C - Role-Based
 
 ```text
-payable_amount = confirmed_unit x role_rate
+advance_amount_preview = approved_roster_unit x role_rate
 ```
 
 Preview interpretation:
 
 - Use duty role to choose symbolic `role_rate`.
 - Chief, assistant, runner, staff, external, and paper-handling roles remain open decisions.
+- Post-duty role changes or substitutions are reconciliation cases.
 
 ### Model D - Hybrid
 
@@ -83,13 +114,17 @@ Preview interpretation:
 - Exception list
 - Audit evidence list
 - Approval pending list
+- Advance batch inclusion list
+- Post-duty reconciliation queue
+- Absence explanation list
+- Refund/offset candidate list
 
 ## Exception Categories
 
 - Missing assignment
-- Missing check-in/evidence
+- Missing check-in/evidence after duty
 - Substitution pending rule
-- No-show pending rule
+- No-show or absence pending explanation
 - Late-arrival pending rule
 - Cancelled exam pending rule
 - Room change pending rule
@@ -97,6 +132,7 @@ Preview interpretation:
 - Missing rate code
 - Missing payment period
 - Missing approval owner
+- Refund/offset rule missing
 
 ## Existing Data Sources
 
@@ -119,4 +155,5 @@ Before code implementation:
 - `INVIGILATION_PAYMENT_RULE_DECISION_REGISTER.md` must have required decisions closed.
 - Data readiness gaps must be resolved or explicitly accepted.
 - Tests must cover normal, exception, approval, and export-lock scenarios.
-
+- Advance disbursement and post-duty reconciliation must remain separate views.
+- Check-in must not be used as a mandatory pre-payment gate unless finance/admin policy explicitly approves that rule.

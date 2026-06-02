@@ -54,3 +54,9 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 
 ---
 *This certificate is the single authoritative summary for demo day.*
+
+## Invigilation Payment Model Note (2026-06-02)
+
+- Payment model documentation has been corrected to advance disbursement plus post-duty reconciliation.
+- Check-in/evidence supports reconciliation and refund/offset review; it is not a default pre-disbursement gate.
+- No payment calculation, official payment report, refund decision, or offset decision is implemented for demo.

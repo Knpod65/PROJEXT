@@ -41,8 +41,8 @@ Please confirm only the policy/rule items below:
 2. What is the official rate source, and who approves rates?
 3. Do rates differ by role or person type?
 4. Which roles are payable in EMS: invigilator, assistant, runner, print/paper handling, external person, or others?
-5. What evidence is required before duty can be payment-eligible: assignment, check-in, QR, signature, supervisor approval, or another combination?
-6. What are the rules for no-show, late arrival, substitution, cancelled exam, room change, merged room, and split section?
+5. What roster approval is required before advance batch, and what evidence is reviewed after duty: assignment approval, check-in, QR, signature, supervisor approval, or another combination?
+6. What are the reconciliation rules for no-show, late arrival, substitution, cancelled exam, room change, merged room, and split section?
 7. Who verifies, approves, exports, and signs the final payment report?
 8. What is the payment period and cutoff?
 9. What output is required: Excel, PDF, finance import file, person summary, session detail, or audit trail?
@@ -54,3 +54,17 @@ EMS will not calculate real payable amounts and will not issue an official payme
 
 Thank you.
 
+## 2026-06-02 Correction Addendum
+
+Please also confirm the corrected operational model:
+
+- Is invigilation payment normally advanced from an approved roster before post-duty attendance confirmation?
+- What roster approval is required before advance disbursement?
+- What evidence is reviewed after the exam for reconciliation?
+- Who reviews absence/no-show explanations?
+- What counts as force majeure or unavoidable absence?
+- When is refund required, and can it be offset against a future payment?
+- Who signs refund/offset decisions?
+- How should substitute invigilation be handled if the original assigned person was already paid?
+
+This clarification does not request secrets, personal data, payment execution, or final payment approval. It only asks for policy rules.

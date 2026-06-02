@@ -49,3 +49,21 @@ No chosen model exists yet, so no field is marked `NOT_NEEDED_FOR_CHOSEN_MODEL`.
 
 Current EMS data can support candidate duty inventory. It cannot support payment preview implementation because rule decisions are missing. It also cannot support final payment because approval, evidence, rate, exception, and export-lock data are missing or incomplete.
 
+## Advance Disbursement And Reconciliation Additions
+
+| Field | Source | Currently Exists? | Required For Advance Batch? | Required For Reconciliation? | Gap | Action |
+|---|---|---:|---:|---:|---|---|
+| approved_roster_status | Assignment approval workflow | Missing or implicit | Yes | Yes | Need explicit approval semantics | Confirm roster approval owner and status labels. |
+| advance_payment_batch_id | New batch model | No | Yes | Yes | No batch identifier exists | Add in future implementation after rules. |
+| advance_disbursement_status | New batch model | No | Yes | Yes | No disbursement lifecycle exists | Use statuses from `INVIGILATION_ADVANCE_DISBURSEMENT_MODEL.md`. |
+| disbursed_before_reconciliation | New ledger field | No | No | Yes | Needed to distinguish advance from evidence closure | Add in future evidence ledger. |
+| reconciliation_status | New reconciliation model | No | No | Yes | No post-duty case status exists | Use statuses from `INVIGILATION_POST_DUTY_RECONCILIATION_MODEL.md`. |
+| explanation_required | New reconciliation model | No | No | Yes | No explanation workflow exists | Add after policy confirmation. |
+| explanation_received_at | New reconciliation model | No | No | Yes | No timestamp exists | Add after policy confirmation. |
+| explanation_document_ref | New reconciliation model | No | No | Yes | No document reference exists | Define storage/reference policy. |
+| force_majeure_flag | New reconciliation model | No | No | Yes | No accepted/unaccepted force majeure field | Define reviewer and labels. |
+| refund_required | New refund/offset model | No | No | Yes | No refund decision field | Confirm finance rule. |
+| refund_status | New refund/offset model | No | No | Yes | No refund lifecycle exists | Use refund statuses from tracking model. |
+| refund_amount_pending_rule | New refund/offset model | No | No | Yes | Amount cannot be known until rates are approved | Keep as `PENDING_RATE_RULE`. |
+| offset_next_payment_flag | New refund/offset model | No | No | Yes | Offset workflow not modeled | Confirm whether offset is allowed. |
+| finance_review_status | New refund/offset model | No | Yes for approval | Yes | Finance owner/status unknown | Confirm owner and status lifecycle. |

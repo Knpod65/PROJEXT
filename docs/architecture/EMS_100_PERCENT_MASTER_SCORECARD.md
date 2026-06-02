@@ -60,3 +60,10 @@
 
 ---
 *This scorecard is the single source of truth for the 100% improvement backlog and roadmap.*
+
+## Invigilation Payment Model Correction (2026-06-02)
+- Payment model corrected to advance disbursement from approved invigilation roster plus post-duty reconciliation.
+- Check-in/evidence is no longer documented as a mandatory pre-payment gate by default.
+- Attendance/check-in/no-show evidence is used after duty to reconcile, request explanation, and track refund/offset if required.
+- Payment calculation remains blocked by missing rate, unit, period, approval, refund/offset, and export rules.
+- No production or payment-readiness score increase is applied.

@@ -190,3 +190,27 @@ Please confirm whether each source field is required for payment calculation, ev
 | Output format | TBD | TBD | OPEN | |
 | Payment period | TBD | TBD | OPEN | |
 
+## 11. Advance Disbursement And Post-Duty Reconciliation
+
+Please answer:
+
+- Is payment normally disbursed before post-duty attendance confirmation?
+- What roster approval is required before advance disbursement?
+- What evidence is reviewed after the exam?
+- How long after duty should absence explanation be submitted?
+- Who reviews explanation?
+- What counts as force majeure or unavoidable absence?
+- When is refund required?
+- Can refund be offset against next payment?
+- Who signs refund/offset decision?
+- How should substitute invigilation affect the original payee?
+- If substitute is not recorded before exam, how is it handled?
+- What report is needed for reconciliation?
+
+Owner answer:
+
+```text
+Pending.
+```
+
+Important: check-in/attendance is not assumed to be a pre-disbursement gate. It is treated as post-duty reconciliation evidence unless finance/admin policy states otherwise.

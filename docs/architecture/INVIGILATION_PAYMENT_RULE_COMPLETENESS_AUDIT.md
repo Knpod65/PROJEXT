@@ -41,3 +41,11 @@ Allowed classifications:
 
 There are no conflicting answers because there are no answers. The system remains blocked before preview implementation and final payment.
 
+## 2026-06-02 Operational Correction
+
+The evidence requirement category must now be interpreted as two separate decisions:
+
+- What roster approval is required before advance disbursement?
+- What evidence is reviewed after duty for reconciliation, explanation, refund, offset, or waiver?
+
+Missing check-in must not be treated as automatic non-payment. It should create a reconciliation case unless finance/admin policy explicitly defines a different rule.

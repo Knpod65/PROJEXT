@@ -55,3 +55,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 
 ---
 *This backlog is the single prioritized list. Do not start work outside it without updating this doc.*
+
+## Invigilation Advance/Reconciliation Model Reset (2026-06-02)
+
+- Future payment backlog work must separate advance batch preview from post-duty reconciliation.
+- Do not use check-in as an automatic pre-payment gate unless finance/admin explicitly approves that policy.
+- Add future work for absence explanation, force majeure review, refund/offset tracking, and reconciliation reporting.
+- Keep final calculation blocked until rate, unit, refund/offset, approval, period, and export rules are answered.

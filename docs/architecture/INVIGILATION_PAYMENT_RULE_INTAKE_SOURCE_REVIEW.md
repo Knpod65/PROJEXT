@@ -48,7 +48,7 @@ Teaching workload compensation remains explicitly out of scope. EMS must not use
 
 - Official payment unit and rate rules.
 - Which duty roles are payable.
-- Required evidence before payment is allowed.
+- Required roster approval before advance batch and required evidence after duty for reconciliation.
 - Exception outcomes and deduction/transfer rules.
 - Payment period, cutoff, approval owner, and final sign-off.
 - Official export/report format.
@@ -72,4 +72,3 @@ Teaching workload compensation remains explicitly out of scope. EMS must not use
 - Production/payment readiness claims.
 
 No blocker should be resolved by assumption. The rule intake and decision register must be completed by the responsible human owners first.
-

@@ -24,3 +24,14 @@
 
 The current EMS data is enough to identify many candidate duty records. It is not enough to implement payment preview behavior because each candidate data source depends on missing rule decisions.
 
+## New Advance/Reconciliation Rule Gaps
+
+| Rule Decision | Required Data | Current Availability | Gap | Needed Before Preview | Needed Before Final Payment |
+|---|---|---|---|---|---|
+| Advance disbursement normal timing | Approved roster, batch status | Assignment data exists; advance batch does not | Need confirmation that payment normally precedes post-duty evidence | Needed to design batch preview correctly | Required |
+| Roster approval before advance batch | Roster approval owner/status | Not explicit | Need who approves roster and when | Required | Required |
+| Post-duty evidence review | Check-in, supervisor confirmation, substitution, notes | Partial | Need evidence hierarchy and reviewer | Needed for reconciliation preview | Required |
+| Explanation deadline | Explanation request/submission timestamps | Missing | Need deadline rule | Can be placeholder only | Required |
+| Force majeure decision | Explanation type, reviewer, decision | Missing | Need accepted reasons and reviewer | Needed for status labels | Required |
+| Refund/offset rule | Refund status, offset flag, finance owner | Missing | Need when refund/offset applies | Needed for queue labels | Required |
+| Substitute after original paid | Original payee, substitute, batch link | Partial swap data only | Need finance treatment | Required for reconciliation cases | Required |

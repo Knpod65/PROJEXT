@@ -48,3 +48,9 @@ Any external system integration issues (con-1) are explicitly excluded from this
 
 ---
 *Use this note as a handout or slide. Honesty builds trust.*
+
+## Invigilation Payment Model Correction (2026-06-02)
+
+- Payment model documentation has been corrected to advance disbursement plus post-duty reconciliation.
+- Missing check-in is a reconciliation trigger, not an automatic pre-payment block.
+- No real amount, official payment report, refund, or offset decision is implemented for demo.

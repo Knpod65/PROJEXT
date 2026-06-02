@@ -67,3 +67,10 @@
 - Do not use teaching compensation data as EMS payment input.
 - Do not implement payment calculation until rules and tests exist.
 - Do not change readiness scores unless backed by validation evidence.
+
+## 2026-06-02 Advance/Reconciliation Correction
+
+- Stage 4 must split future work into advance payment batch preview and post-duty reconciliation preview.
+- Check-in/evidence is not a mandatory pre-payment gate by default.
+- Evidence is used after duty for reconciliation, absence explanation, refund/offset, and audit closure.
+- Payment calculation remains blocked until rate, unit, approval, refund/offset, period, and export rules are answered.
