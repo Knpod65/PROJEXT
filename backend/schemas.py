@@ -575,6 +575,10 @@ class AdvanceInvigilationBatchPreviewSummary(BaseModel):
     amount_calculation: str
     amount_calculation_enabled: bool = False
     amount_status: str
+    preview_amount_enabled: bool = False
+    preview_total_amount: Decimal = Decimal("0")
+    preview_weekday_count: int = 0
+    preview_weekend_count: int = 0
     total_rows: int
     total_assignments: int
     ready_for_batch_review: int
@@ -584,7 +588,12 @@ class AdvanceInvigilationBatchPreviewSummary(BaseModel):
     blocked_rule_gap: int = 0
     blocked_rows: int
     pending_rate_rule_count: int
+    missing_exam_date_count: int = 0
+    invalid_exam_date_count: int = 0
+    blocked_roster_amount_count: int = 0
     warning_count: int
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
 
 
 class AdvanceInvigilationBatchRosterRow(BaseModel):
@@ -605,6 +614,8 @@ class AdvanceInvigilationBatchRosterRow(BaseModel):
     course_title: Optional[str] = None
     section: Optional[str] = None
     exam_date: Optional[str] = None
+    exam_date_calendar: Optional[str] = None
+    normalized_exam_date: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     room_id: Optional[int] = None
@@ -619,7 +630,10 @@ class AdvanceInvigilationBatchRosterRow(BaseModel):
     blocked_reason: Optional[str] = None
     rate_rule_status: str
     amount_status: str
-    amount_preview: str
+    amount_preview: Optional[Decimal] = None
+    rate_day_type: str = "UNKNOWN"
+    rate_source: Optional[str] = None
+    payment_authorization_status: str = "NOT_AUTHORIZED_PREVIEW_ONLY"
     reconciliation_status: str
     post_duty_evidence_status: str
     absence_explanation_status: str

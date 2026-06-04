@@ -7,11 +7,13 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from sqlalchemy.orm import Session, joinedload
 
 import models
+from services.invigilation_rate_rule_service import get_simple_rates
 from time_ranges import parse_time_range
 
 
@@ -20,7 +22,14 @@ BLOCKED_MISSING_DATA = "BLOCKED_MISSING_ASSIGNMENT_DATA"
 BLOCKED_DUPLICATE = "BLOCKED_DUPLICATE_DUTY"
 BLOCKED_RULE_GAP = "BLOCKED_RULE_GAP"
 PENDING_RATE_RULE = "PENDING_RATE_RULE"
+RATE_RULE_AVAILABLE = "RATE_RULE_AVAILABLE"
+PREVIEW_CALCULATED = "PREVIEW_CALCULATED"
+BLOCKED_MISSING_EXAM_DATE = "BLOCKED_MISSING_EXAM_DATE"
+BLOCKED_INVALID_EXAM_DATE = "BLOCKED_INVALID_EXAM_DATE"
+BLOCKED_ROSTER_INELIGIBLE = "BLOCKED_ROSTER_INELIGIBLE"
 PENDING_RECONCILIATION = "PENDING_POST_DUTY_RECONCILIATION"
+RATE_SOURCE = "SIMPLE_WEEKDAY_WEEKEND_RATE"
+NOT_AUTHORIZED = "NOT_AUTHORIZED_PREVIEW_ONLY"
 
 
 def _value(value: Any) -> Any:
@@ -34,6 +43,61 @@ def _string(value: Any) -> str | None:
         return value.isoformat()
     text = str(_value(value)).strip()
     return text or None
+
+
+def _normalized_exam_date(value: Any) -> dict[str, str | None]:
+    original = _string(value)
+    if not original:
+        return {
+            "exam_date": None,
+            "exam_date_calendar": None,
+            "normalized_exam_date": None,
+            "rate_day_type": "UNKNOWN",
+            "date_amount_status": BLOCKED_MISSING_EXAM_DATE,
+        }
+
+    try:
+        parsed = value.date() if isinstance(value, datetime) else value
+        if not isinstance(parsed, date):
+            parsed = date.fromisoformat(original[:10])
+        calendar = "BE_NORMALIZED" if parsed.year >= 2400 else "CE"
+        normalized = date(parsed.year - 543, parsed.month, parsed.day) if parsed.year >= 2400 else parsed
+    except (TypeError, ValueError, OverflowError):
+        return {
+            "exam_date": original,
+            "exam_date_calendar": "UNKNOWN",
+            "normalized_exam_date": None,
+            "rate_day_type": "UNKNOWN",
+            "date_amount_status": BLOCKED_INVALID_EXAM_DATE,
+        }
+
+    return {
+        "exam_date": original,
+        "exam_date_calendar": calendar,
+        "normalized_exam_date": normalized.isoformat(),
+        "rate_day_type": "WEEKEND" if normalized.weekday() >= 5 else "WEEKDAY",
+        "date_amount_status": None,
+    }
+
+
+def _decimal_amount(value: Any) -> Decimal | None:
+    if value is None:
+        return None
+    try:
+        amount = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return None
+    return amount if amount > 0 else None
+
+
+def _configured_simple_rates(simple_rates: dict[str, Any] | None) -> dict[str, Decimal] | None:
+    if not simple_rates or simple_rates.get("configuration_status") != "CONFIGURED":
+        return None
+    weekday = _decimal_amount((simple_rates.get("weekday_rate") or {}).get("amount"))
+    weekend = _decimal_amount((simple_rates.get("weekend_rate") or {}).get("amount"))
+    if weekday is None or weekend is None:
+        return None
+    return {"WEEKDAY": weekday, "WEEKEND": weekend}
 
 
 def _time_bounds(schedule: Any) -> tuple[str | None, str | None]:
@@ -106,6 +170,7 @@ def _duplicate_key(row: dict[str, Any]) -> tuple[str, str, str | None, str | Non
 def build_preview_from_schedules(
     schedules: list[Any],
     periods: list[Any] | None = None,
+    simple_rates: dict[str, Any] | None = None,
     *,
     period_id: int | None = None,
     academic_year: str | None = None,
@@ -140,7 +205,8 @@ def build_preview_from_schedules(
         room = getattr(schedule, "room", None)
         start_time, end_time = _time_bounds(schedule)
         schedule_id = getattr(schedule, "id", None)
-        exam_date = _string(getattr(schedule, "exam_date", None))
+        date_info = _normalized_exam_date(getattr(schedule, "exam_date", None))
+        exam_date = date_info["exam_date"]
         schedule_status = str(_value(getattr(schedule, "status", "")) or "").lower()
         is_cancelled = schedule_status in {"cancelled", "canceled"}
 
@@ -154,9 +220,12 @@ def build_preview_from_schedules(
             if user is None or getattr(user, "id", None) is None:
                 inclusion_status = BLOCKED_MISSING_DATA
                 blocked_reason = "Missing assigned person."
-            elif not exam_date or not (start_time or getattr(schedule, "exam_time", None)):
+            elif date_info["date_amount_status"] == BLOCKED_MISSING_EXAM_DATE or not (start_time or getattr(schedule, "exam_time", None)):
                 inclusion_status = BLOCKED_MISSING_DATA
                 blocked_reason = "Missing exam date or time."
+            elif date_info["date_amount_status"] == BLOCKED_INVALID_EXAM_DATE:
+                inclusion_status = BLOCKED_MISSING_DATA
+                blocked_reason = "Invalid exam date."
             elif is_cancelled:
                 inclusion_status = BLOCKED_RULE_GAP
                 blocked_reason = "Cancelled-before-batch handling requires admin/finance rule."
@@ -190,6 +259,8 @@ def build_preview_from_schedules(
                 "course_title": getattr(course, "course_name_en", None) or getattr(course, "course_name_th", None),
                 "section": getattr(section, "section_no", None),
                 "exam_date": exam_date,
+                "exam_date_calendar": date_info["exam_date_calendar"],
+                "normalized_exam_date": date_info["normalized_exam_date"],
                 "start_time": start_time,
                 "end_time": end_time,
                 "room_id": getattr(room, "id", None) if room is not None else None,
@@ -208,7 +279,11 @@ def build_preview_from_schedules(
                 "blocked_reason": blocked_reason,
                 "rate_rule_status": PENDING_RATE_RULE,
                 "amount_status": PENDING_RATE_RULE,
-                "amount_preview": PENDING_RATE_RULE,
+                "amount_preview": None,
+                "rate_day_type": date_info["rate_day_type"],
+                "rate_source": None,
+                "payment_authorization_status": NOT_AUTHORIZED,
+                "_date_amount_status": date_info["date_amount_status"],
                 "reconciliation_status": PENDING_RECONCILIATION,
                 "post_duty_evidence_status": "NOT_REVIEWED",
                 "absence_explanation_status": "NOT_REQUIRED_YET",
@@ -232,16 +307,61 @@ def build_preview_from_schedules(
             blockers.append(warning)
             row.setdefault("warnings", []).append("Duplicate same person/date/time duty.")
 
+    configured_rates = _configured_simple_rates(simple_rates)
+    preview_total = Decimal("0")
+    preview_weekday_count = 0
+    preview_weekend_count = 0
+    pending_rate_rule_count = 0
+    missing_exam_date_count = 0
+    invalid_exam_date_count = 0
+    blocked_roster_amount_count = 0
+
+    for row in rows:
+        date_amount_status = row.pop("_date_amount_status", None)
+        row["rate_rule_status"] = RATE_RULE_AVAILABLE if configured_rates else PENDING_RATE_RULE
+
+        if date_amount_status == BLOCKED_MISSING_EXAM_DATE:
+            row["amount_status"] = BLOCKED_MISSING_EXAM_DATE
+            missing_exam_date_count += 1
+        elif date_amount_status == BLOCKED_INVALID_EXAM_DATE:
+            row["amount_status"] = BLOCKED_INVALID_EXAM_DATE
+            invalid_exam_date_count += 1
+        elif row["advance_inclusion_status"] != ADVANCE_READY:
+            row["amount_status"] = BLOCKED_ROSTER_INELIGIBLE
+            blocked_roster_amount_count += 1
+        elif not configured_rates:
+            row["amount_status"] = PENDING_RATE_RULE
+            pending_rate_rule_count += 1
+        else:
+            day_type = row["rate_day_type"]
+            amount = configured_rates[day_type]
+            row["amount_status"] = PREVIEW_CALCULATED
+            row["amount_preview"] = amount
+            row["rate_source"] = RATE_SOURCE
+            preview_total += amount
+            if day_type == "WEEKDAY":
+                preview_weekday_count += 1
+            else:
+                preview_weekend_count += 1
+
     status_counts = Counter(row["advance_inclusion_status"] for row in rows)
     ready_count = status_counts.get(ADVANCE_READY, 0)
     blocked_count = len(rows) - ready_count
 
+    if configured_rates:
+        rule_gaps.discard("PAY-001 payment unit is pending.")
+        rule_gaps.discard("PAY-002/PAY-003 rate rule is pending; all amount fields are PENDING_RATE_RULE.")
+
     return {
         "summary": {
             "preview_only": True,
-            "amount_calculation": "NOT_IMPLEMENTED",
+            "amount_calculation": "PREVIEW_ONLY" if configured_rates else "NOT_IMPLEMENTED",
             "amount_calculation_enabled": False,
-            "amount_status": PENDING_RATE_RULE,
+            "amount_status": PREVIEW_CALCULATED if configured_rates else PENDING_RATE_RULE,
+            "preview_amount_enabled": configured_rates is not None,
+            "preview_total_amount": preview_total,
+            "preview_weekday_count": preview_weekday_count,
+            "preview_weekend_count": preview_weekend_count,
             "total_rows": len(rows),
             "total_assignments": len(rows),
             "ready_for_batch_review": ready_count,
@@ -250,8 +370,13 @@ def build_preview_from_schedules(
             "blocked_duplicate_duty": status_counts.get(BLOCKED_DUPLICATE, 0),
             "blocked_rule_gap": status_counts.get(BLOCKED_RULE_GAP, 0),
             "blocked_rows": blocked_count,
-            "pending_rate_rule_count": len(rows),
+            "pending_rate_rule_count": pending_rate_rule_count,
+            "missing_exam_date_count": missing_exam_date_count,
+            "invalid_exam_date_count": invalid_exam_date_count,
+            "blocked_roster_amount_count": blocked_roster_amount_count,
             "warning_count": len(warnings),
+            "payment_authorization_enabled": False,
+            "final_export_enabled": False,
         },
         "roster_rows": rows,
         "blockers": sorted(set(blockers)),
@@ -274,9 +399,11 @@ def build_advance_batch_preview(
         joinedload(models.ExamSchedule.supervisions).joinedload(models.Supervision.user),
     ).all()
     periods = db.query(models.ExamPeriod).all()
+    simple_rates = get_simple_rates(db)
     return build_preview_from_schedules(
         schedules,
         periods,
+        simple_rates,
         period_id=period_id,
         academic_year=academic_year,
         semester=semester,
