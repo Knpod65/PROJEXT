@@ -189,3 +189,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The gate does not transition without a genuine signed response and supporting comparison evidence.
 - Current status remains `PENDING_FINANCE_ADMIN_REVIEW`; approval/export design is still blocked.
 - No readiness score changes apply.
+
+## Official 2/2568 Sample Alignment Note (2026-06-04)
+
+- The historical official-style sample is recorded as a user-provided transcription pending provenance verification.
+- Future document-output requirements must separate invigilation and paper-distribution committee counts and amounts.
+- The applicable rate set and authoritative paper-distribution source remain unresolved.
+- No active rate, preview calculation, approval/export behavior, or readiness score changes from this alignment pass.

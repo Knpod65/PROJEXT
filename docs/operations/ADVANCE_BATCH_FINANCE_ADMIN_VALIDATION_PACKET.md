@@ -101,3 +101,46 @@
 5. หากเลือก `HOLD_PENDING_RULE_CLARIFICATION` ให้ตอบหรือเพิ่มคำถามใน `docs/operations/ADVANCE_BATCH_FINANCE_FOLLOWUP_QUESTIONS.md`
 
 ผลการตรวจสอบนี้ยืนยันเฉพาะตรรกะ preview เท่านั้น แม้เลือก `APPROVE_PREVIEW_LOGIC` ก็อนุญาตเพียงให้เริ่มออกแบบ approval workflow ใน pass แยกต่างหาก ไม่ใช่การอนุมัติจ่ายเงินจริง และไม่อนุญาต official export
+
+## 8. ตัวอย่างสรุปทางการรูปแบบเดิม 2/2568 / Historical 2/2568 Official-Style Summary Sample
+
+ได้รับข้อมูลที่ผู้ใช้ถอดความจากภาพตัวอย่างสรุปเดิม โดยยังไม่มีไฟล์ภาพต้นฉบับใน attachment directory สำหรับตรวจสอบ provenance:
+
+- ชื่อเอกสาร: `สรุปจำนวนกรรมการและค่าตอบแทน รายวัน/ช่วงเวลา`
+- ภาคการศึกษา: `2/2568`
+- อัตราตามตัวอย่าง: วันจันทร์-ศุกร์ `120 บาท/คน/ครั้ง`; วันเสาร์-อาทิตย์ `200 บาท/คน/ครั้ง`
+- กรรมการคุมสอบ: 145 ครั้ง รวม `20,280 THB`
+- กรรมการจ่ายข้อสอบ: 29 ครั้ง รวม `3,960 THB`
+- รวมทั้งหมด: `24,240 THB`
+
+ตัวอย่างมีสองหมวด:
+
+- `INVIGILATION_COMMITTEE` / กรรมการคุมสอบ
+- `PAPER_DISTRIBUTION_COMMITTEE` / กรรมการจ่ายข้อสอบ
+
+### Rate Conflict Requiring Confirmation
+
+| แหล่งอัตรา | วันธรรมดา | วันเสาร์-อาทิตย์ | สถานะ |
+|---|---:|---:|---|
+| ตัวอย่างเดิม 2/2568 ที่ผู้ใช้ถอดความ | 120 | 200 | รอตรวจสอบต้นฉบับ/provenance |
+| draft เดิมที่ผู้ใช้ระบุ | 150 | 200 | ไม่พบหลักฐานใน repository |
+| active local EMS ปัจจุบัน | 300 | 500 | demo/preview configuration เท่านั้น |
+
+โปรดเลือกหรือระบุคำตอบ:
+
+- [ ] ใช้ `120/200` จากตัวอย่างเดิม 2/2568
+- [ ] ใช้ `150/200` จาก draft เดิม
+- [ ] ใช้ `300/500` จาก active local EMS ปัจจุบัน
+- [ ] ใช้อัตราแยกตามภาคการศึกษา
+- [ ] อัตราอื่น พร้อมแนบหลักฐานอนุมัติ
+
+โปรดยืนยันด้วยว่า EMS ควรใช้แหล่งใดในการนับ `PAPER_DISTRIBUTION_COMMITTEE` เนื่องจากระบบมีข้อมูลปฏิบัติการหลายแหล่ง แต่ยังไม่มีแหล่งใดได้รับการยืนยันเป็น payable source
+
+ข้อมูลอ้างอิง:
+
+- `docs/operations/OFFICIAL_2_2568_PAYMENT_SUMMARY_SAMPLE_REFERENCE.md`
+- `docs/architecture/INVIGILATION_RATE_DECISION_AFTER_2_2568_SAMPLE.md`
+- `docs/architecture/INVIGILATION_PAYMENT_DUTY_CATEGORY_MODEL.md`
+- `docs/architecture/OFFICIAL_PAYMENT_DOCUMENT_DATA_GAP_AUDIT.md`
+
+ส่วนนี้ยังคงใช้ตรวจสอบ preview/document-output logic เท่านั้น ไม่เปลี่ยนอัตรา active ไม่อนุมัติจ่ายเงินจริง และไม่สร้าง official export

@@ -111,3 +111,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Any future acceptance validates preview logic only and does not authorize payment.
 - Approval-workflow design and official export remain blocked while the gate is `PENDING_FINANCE_ADMIN_REVIEW`.
 - Demo, pilot, production, and payment readiness remain unchanged.
+
+## Official 2/2568 Payment Sample Alignment Disclosure (2026-06-04)
+
+- A historical official-style summary was supplied as a user transcription; the original source image is not available for provenance verification.
+- The sample uses `120/200`, while a user-stated prior draft uses `150/200` and the active local demo uses `300/500`.
+- Paper-distribution operational data exists, but it is not validated as an official payable source.
+- No rate was changed, no official document was generated, and payment approval/export remain unavailable.

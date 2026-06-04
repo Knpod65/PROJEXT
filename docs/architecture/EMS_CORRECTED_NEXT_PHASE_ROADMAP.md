@@ -114,3 +114,10 @@
 - The next step is human completion of the comparison, discrepancy register, and signed response intake.
 - Gate outcomes route to approval-workflow design, correction and revalidation, clarification, or redesign.
 - Current status remains `PENDING_FINANCE_ADMIN_REVIEW`; no approval/export implementation may begin yet.
+
+## Official 2/2568 Sample Alignment Roadmap Update (2026-06-04)
+
+- The future official-style document shape is now modeled with invigilation and paper-distribution committee categories.
+- Next human decisions: confirm the applicable rate set, payable paper-distribution source, category unit, and exact grouping rule.
+- Current and historical EMS data must be reconciled with an approved row-level source before output implementation.
+- Current gate remains `PENDING_FINANCE_ADMIN_REVIEW`; no active rate change, approval workflow, or official export proceeds.

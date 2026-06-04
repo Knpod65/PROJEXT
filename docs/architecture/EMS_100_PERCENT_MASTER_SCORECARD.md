@@ -137,3 +137,10 @@
 - No response, signature, or decision is prefilled; current status remains `PENDING_FINANCE_ADMIN_REVIEW`.
 - Approval-workflow design remains blocked until an authorized reviewer returns complete signed evidence.
 - Payment authorization, official export, and all readiness scores remain unchanged.
+
+## Official 2/2568 Payment Sample Alignment (2026-06-04)
+
+- A user-transcribed historical official-style reference defines separate invigilation and paper-distribution committee totals.
+- Rate evidence now has a three-way conflict: historical `120/200`, user-stated draft `150/200`, and active local demo `300/500`.
+- EMS has paper-distribution operational data, but its payable source and completeness are not validated for official output.
+- Gate remains `PENDING_FINANCE_ADMIN_REVIEW`; approval/export and readiness scores remain unchanged.

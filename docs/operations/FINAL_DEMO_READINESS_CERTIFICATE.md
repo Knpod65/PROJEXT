@@ -119,3 +119,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - No actual response or decision is recorded; the gate remains `PENDING_FINANCE_ADMIN_REVIEW`.
 - Acceptance of preview logic would permit a separate approval-workflow design pass only.
 - Payment authorization, final approval, official export, and readiness scores remain unchanged.
+
+## Official 2/2568 Payment Sample Alignment Certificate Note (2026-06-04)
+
+- The historical official-style summary is documented as a user-provided transcription pending provenance verification.
+- Separate invigilation and paper-distribution committee output categories are modeled for future validation.
+- Rate selection and the authoritative paper-distribution payable source remain open finance/admin decisions.
+- No code, active rate, payment authorization, approval/export capability, or readiness score changed.

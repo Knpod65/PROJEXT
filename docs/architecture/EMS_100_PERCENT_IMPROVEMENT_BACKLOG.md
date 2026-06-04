@@ -109,3 +109,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Current blocking item: obtain a completed signed response with independent comparison evidence.
 - Any corrections must be validated before approval-workflow design can proceed.
 - Official export and payment authorization remain outside the backlog until the gate genuinely advances.
+
+## Official 2/2568 Sample Alignment Backlog Note (2026-06-04)
+
+- Completed: historical sample reference, three-way rate conflict record, duty-category model, document-output requirements, and data-gap audit.
+- Obtain the original sample image or approved row-level source for provenance and comparison.
+- Finance/admin must select the applicable rate rule and authoritative paper-distribution payable source.
+- Do not implement official output, approval, or payment authorization until the validation gate advances.

@@ -150,3 +150,12 @@ Clarifications:
 - Buddhist Era dates are normalized for day classification while the original date remains visible.
 - `amount_calculation_enabled`, payment authorization, final approval, and official export remain disabled.
 - Post-duty reconciliation remains separate.
+
+## Official 2/2568 Sample Alignment - 2026-06-04
+
+- A user-transcribed historical official-style sample introduces a future summary grouped by exam date and time slot.
+- The future document model requires separate invigilation-committee and paper-distribution-committee counts and subtotals.
+- No official output endpoint or page is implemented.
+- Existing paper-distribution operational sources require authority and completeness validation before payment use.
+- Historical `120/200`, user-stated draft `150/200`, and active local `300/500` rates remain unresolved.
+- Approval workflow and official export remain blocked while the gate is `PENDING_FINANCE_ADMIN_REVIEW`.
