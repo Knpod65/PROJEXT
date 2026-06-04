@@ -168,3 +168,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The invigilation-rate page now asks only for weekday and weekend per-session amounts.
 - Browser smoke verified admin save/persistence, staff read-only mode, role blocking, and inline invalid-value rejection.
 - This remains configuration only; Advance Batch amounts, payment approval, official export, and final calculation remain unimplemented.
+
+## Advance Batch Preview Amount Note (2026-06-04)
+
+- Advance Batch now displays preview-only amounts from the configured weekday/weekend pair.
+- The local demo result is 23 preview rows totaling `7,300 THB`; this is not a final payable amount.
+- Check-in remains a post-duty reconciliation input and does not gate the preview.
+- Payment authorization, final approval, official export, and production readiness remain unchanged.

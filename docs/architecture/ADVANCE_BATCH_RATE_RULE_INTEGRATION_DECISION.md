@@ -1,6 +1,6 @@
 # Advance Batch Rate Rule Integration Decision
 
-**Date**: 2026-06-04  
+**Date**: 2026-06-04
 **Status**: PREVIEW ONLY - NOT PAYMENT AUTHORIZATION
 
 ## Decision

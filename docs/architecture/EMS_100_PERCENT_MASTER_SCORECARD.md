@@ -91,6 +91,14 @@
 - No payment calculation, approval, official export, or Advance Batch integration is added.
 - Readiness scores remain unchanged.
 
+## Advance Batch Preview Amount Validation (2026-06-04)
+
+- Preview-only weekday/weekend arithmetic is implemented for ready advance roster rows.
+- Genuine browser smoke verified 23 calculated rows, 21 weekday duties, 2 weekend duties, and a `7,300 THB` preview total for the local demo configuration.
+- Missing/incomplete rates, invalid dates, and blocked roster rows remain excluded from preview totals.
+- Final payment calculation, authorization, approval, official export, and production-readiness claims remain absent.
+- Readiness scores remain unchanged.
+
 ## Advance Batch Preview Validation Update (2026-06-02)
 - The preview endpoint was validated against local demo data and returned 23 roster rows.
 - A read-only frontend page was added for advance batch roster review.

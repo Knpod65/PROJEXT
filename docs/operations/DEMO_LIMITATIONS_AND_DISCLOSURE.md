@@ -89,3 +89,11 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Genuine browser smoke verified admin save/persistence, staff read-only mode, and teacher/print-shop blocking.
 - The configured `300/500` local demo pair is configuration evidence only.
 - No Advance Batch amount calculation, payment authorization, final approval, or official export is available.
+
+## Advance Batch Preview Amount Disclosure (2026-06-04)
+
+- The Advance Batch page may now show preview-only amounts from the configured weekday/weekend pair.
+- The current local demo total is `7,300 THB` across 23 ready roster rows; it is not payment authorization or a final payable amount.
+- Buddhist Era dates are normalized only for weekday/weekend classification.
+- Missing/incomplete rates and blocked roster rows do not receive preview amounts.
+- No final approval, official export, refund/offset amount, or production payment workflow is available.

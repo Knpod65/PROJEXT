@@ -141,3 +141,12 @@ Clarifications:
 - Invalid zero input was rejected inline; saved `300/500` values persisted after refresh.
 - Generic rate-rule lifecycle APIs remain available for compatibility but are no longer the main operator workflow.
 - Advance Batch amount integration remains a separate deferred decision.
+
+## Advance Batch Preview Amount Integration - 2026-06-04
+
+- `IMPLEMENTED` preview-only weekday/weekend amounts in `GET /api/invigilation-advance-batch/preview`.
+- Both simple rates must be configured before any eligible row is calculated.
+- The page shows preview total, weekday/weekend counts, and pending/blocked counts.
+- Buddhist Era dates are normalized for day classification while the original date remains visible.
+- `amount_calculation_enabled`, payment authorization, final approval, and official export remain disabled.
+- Post-duty reconciliation remains separate.

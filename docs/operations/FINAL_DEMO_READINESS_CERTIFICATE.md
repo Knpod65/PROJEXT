@@ -97,3 +97,11 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Admin save/persistence, staff read-only mode, invalid-value rejection, and teacher/print-shop blocking were verified.
 - Screenshot evidence is stored under `docs/operations/demo-smoke-screenshots/`.
 - No payment calculation, approval, export, or production-readiness claim is added.
+
+## Advance Batch Preview Amount Certificate Note (2026-06-04)
+
+- Genuine browser smoke passed for preview-only weekday/weekend amounts on the Advance Batch page.
+- The local demo displayed 23 calculated preview rows totaling `7,300 THB`.
+- The result is explicitly not payment authorization, final payment, or official export.
+- Post-duty reconciliation, approval, export, and production payment readiness remain incomplete.
+- No readiness score increase is applied.
