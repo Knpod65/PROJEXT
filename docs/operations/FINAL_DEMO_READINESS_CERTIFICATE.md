@@ -112,3 +112,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - No approved reference sample or signed finance/admin decision is present.
 - The validation gate remains `PENDING_FINANCE_ADMIN_REVIEW`.
 - This evidence preparation does not authorize payment, add official export, or increase demo, pilot, production, or payment readiness.
+
+## Advance Batch Finance Response Intake Certificate Note (2026-06-04)
+
+- Finance/admin response intake, decision-gate mapping, correction backlog, and follow-up question templates are prepared.
+- No actual response or decision is recorded; the gate remains `PENDING_FINANCE_ADMIN_REVIEW`.
+- Acceptance of preview logic would permit a separate approval-workflow design pass only.
+- Payment authorization, final approval, official export, and readiness scores remain unchanged.

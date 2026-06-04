@@ -130,3 +130,10 @@
 - Current system evidence remains 23 preview rows, 21 weekday duties, 2 weekend duties, and `7,300 THB`.
 - No approved finance/manual comparison sample or signed decision is available; gate status is `PENDING_FINANCE_ADMIN_REVIEW`.
 - Final payment authorization, approval, official export, and production/payment readiness remain unchanged.
+
+## Advance Batch Finance Response Intake Gate (2026-06-04)
+
+- Response intake, decision-gate mapping, correction backlog, and finance follow-up question templates are ready.
+- No response, signature, or decision is prefilled; current status remains `PENDING_FINANCE_ADMIN_REVIEW`.
+- Approval-workflow design remains blocked until an authorized reviewer returns complete signed evidence.
+- Payment authorization, official export, and all readiness scores remain unchanged.

@@ -102,3 +102,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Next required human action: finance/admin independently compares an approved sample, records discrepancies, and signs one decision option.
 - Do not design final approval or official export while the gate remains `PENDING_FINANCE_ADMIN_REVIEW`.
 - No readiness score increase applies to preparation of review evidence.
+
+## Advance Batch Finance Response Intake Backlog Note (2026-06-04)
+
+- Completed: response intake, decision gate, correction backlog template, and follow-up question register.
+- Current blocking item: obtain a completed signed response with independent comparison evidence.
+- Any corrections must be validated before approval-workflow design can proceed.
+- Official export and payment authorization remain outside the backlog until the gate genuinely advances.

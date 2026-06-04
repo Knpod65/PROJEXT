@@ -89,3 +89,15 @@
 - Official export: **NOT IMPLEMENTED**
 - Check-in as pre-payment gate: **NO**
 - Overall gate: `PENDING_FINANCE_ADMIN_REVIEW`
+
+## 7. หลังการตรวจสอบ: วิธีส่งผล / After Review: How to Submit Result
+
+เมื่อการตรวจสอบเสร็จแล้ว ให้ส่งหลักฐานต่อไปนี้:
+
+1. กรอกและลงชื่อใน `docs/operations/ADVANCE_BATCH_FINANCE_VALIDATION_RESPONSE_INTAKE.md`
+2. กรอกผลเปรียบเทียบอิสระใน `docs/operations/ADVANCE_BATCH_PREVIEW_MANUAL_COMPARISON_TEMPLATE.md`
+3. บันทึกข้อแตกต่างทั้งหมดใน `docs/operations/ADVANCE_BATCH_PREVIEW_DISCREPANCY_REGISTER.md`
+4. หากเลือก `APPROVE_WITH_CORRECTIONS` ให้สร้างรายการใน `docs/operations/ADVANCE_BATCH_PREVIEW_CORRECTION_BACKLOG.md`
+5. หากเลือก `HOLD_PENDING_RULE_CLARIFICATION` ให้ตอบหรือเพิ่มคำถามใน `docs/operations/ADVANCE_BATCH_FINANCE_FOLLOWUP_QUESTIONS.md`
+
+ผลการตรวจสอบนี้ยืนยันเฉพาะตรรกะ preview เท่านั้น แม้เลือก `APPROVE_PREVIEW_LOGIC` ก็อนุญาตเพียงให้เริ่มออกแบบ approval workflow ใน pass แยกต่างหาก ไม่ใช่การอนุมัติจ่ายเงินจริง และไม่อนุญาต official export

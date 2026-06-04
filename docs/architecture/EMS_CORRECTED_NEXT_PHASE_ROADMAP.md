@@ -107,3 +107,10 @@
 - The validation packet is ready for independent finance/admin comparison against an approved sample.
 - Current gate: `PENDING_FINANCE_ADMIN_REVIEW`; no decision option is preselected.
 - Do not begin final approval or official export design until discrepancies are resolved and an authorized reviewer signs the packet.
+
+## Advance Batch Finance Response Intake Roadmap Update (2026-06-04)
+
+- The response-intake and decision-gate path is ready for an authorized finance/admin reviewer.
+- The next step is human completion of the comparison, discrepancy register, and signed response intake.
+- Gate outcomes route to approval-workflow design, correction and revalidation, clarification, or redesign.
+- Current status remains `PENDING_FINANCE_ADMIN_REVIEW`; no approval/export implementation may begin yet.

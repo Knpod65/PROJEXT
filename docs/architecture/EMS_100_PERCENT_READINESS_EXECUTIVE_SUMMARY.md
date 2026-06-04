@@ -182,3 +182,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The comparison template is intentionally blank and the snapshot is summary-only; neither is an official payment list.
 - No finance/admin sign-off or approved reference total exists yet, so the next gate is `PENDING_FINANCE_ADMIN_REVIEW`.
 - Demo, pilot, production, and payment readiness scores remain unchanged.
+
+## Advance Batch Finance Response Intake Note (2026-06-04)
+
+- EMS now has a controlled document path for receiving a finance/admin decision and routing corrections, clarifications, or redesign.
+- The gate does not transition without a genuine signed response and supporting comparison evidence.
+- Current status remains `PENDING_FINANCE_ADMIN_REVIEW`; approval/export design is still blocked.
+- No readiness score changes apply.

@@ -104,3 +104,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - The `7,300 THB` result is a system-side demo snapshot only and must not be presented as an official payment list.
 - The validation gate remains `PENDING_FINANCE_ADMIN_REVIEW`.
 - Final payment approval, authorization, official export, and production readiness remain unavailable.
+
+## Advance Batch Finance Response Intake Disclosure (2026-06-04)
+
+- Response intake and gate-routing templates are ready, but they contain no submitted finance/admin response or signature.
+- Any future acceptance validates preview logic only and does not authorize payment.
+- Approval-workflow design and official export remain blocked while the gate is `PENDING_FINANCE_ADMIN_REVIEW`.
+- Demo, pilot, production, and payment readiness remain unchanged.
