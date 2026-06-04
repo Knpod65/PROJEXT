@@ -161,4 +161,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Admin can save the pair; staff can read it; teacher and print-shop roles are blocked.
 - This is configuration only. It does not calculate or authorize payment and does not enable official export.
 - Advance Batch Preview remains amount-free and `PENDING_RATE_RULE`.
-- The next bounded step is frontend simplification followed by genuine browser validation; readiness scores do not increase from this backend step.
+- The frontend simplification and genuine browser validation are complete; readiness scores do not increase from this configuration step.
+
+## Simple Rate Frontend Browser Note (2026-06-04)
+
+- The invigilation-rate page now asks only for weekday and weekend per-session amounts.
+- Browser smoke verified admin save/persistence, staff read-only mode, role blocking, and inline invalid-value rejection.
+- This remains configuration only; Advance Batch amounts, payment approval, official export, and final calculation remain unimplemented.

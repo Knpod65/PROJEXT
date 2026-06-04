@@ -82,3 +82,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Staff can view but not mutate; teacher and print shop are blocked.
 - The demo rate is configuration evidence only and is not payment authorization.
 - No official export, final approval, or final payment calculation is available.
+
+## Simple Weekday/Weekend Rate UI Disclosure (2026-06-04)
+
+- The main rate page now accepts only one weekday and one weekend amount per invigilation session.
+- Genuine browser smoke verified admin save/persistence, staff read-only mode, and teacher/print-shop blocking.
+- The configured `300/500` local demo pair is configuration evidence only.
+- No Advance Batch amount calculation, payment authorization, final approval, or official export is available.

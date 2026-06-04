@@ -90,3 +90,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Invalid input was rejected.
 - Browser screenshots were not captured because authenticated browser tooling was unavailable in this session.
 - The certificate remains unchanged for pilot/production readiness.
+
+## Simple Weekday/Weekend Rate UI Certificate Note (2026-06-04)
+
+- Genuine browser smoke passed for the simplified two-amount rate page.
+- Admin save/persistence, staff read-only mode, invalid-value rejection, and teacher/print-shop blocking were verified.
+- Screenshot evidence is stored under `docs/operations/demo-smoke-screenshots/`.
+- No payment calculation, approval, export, or production-readiness claim is added.

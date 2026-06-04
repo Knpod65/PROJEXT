@@ -80,8 +80,16 @@
 - A backend-only facade now stores one user-entered weekday rate and one user-entered weekend rate per invigilation session.
 - Admin save and staff read-only behavior are enforced by backend authorization; teacher and print-shop access is blocked.
 - No new table, payment calculation, approval, official export, or Advance Batch amount integration was added.
-- The frontend still uses the prior generic configuration page and requires a separate simplification pass.
+- The frontend now uses a two-amount weekday/weekend configuration page.
 - Demo, pilot, production, and payment readiness scores remain unchanged.
+
+## Simple Rate Frontend Browser Validation (2026-06-04)
+
+- Genuine browser smoke confirmed admin save and refresh persistence, staff read-only behavior, and teacher/print-shop blocking.
+- The page exposes exactly two amounts and removes generic lifecycle complexity from the operator workflow.
+- Invalid zero input is rejected inline.
+- No payment calculation, approval, official export, or Advance Batch integration is added.
+- Readiness scores remain unchanged.
 
 ## Advance Batch Preview Validation Update (2026-06-02)
 - The preview endpoint was validated against local demo data and returned 23 roster rows.

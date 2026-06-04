@@ -130,5 +130,14 @@ Clarifications:
 - `IMPLEMENTED PUT /api/invigilation-payment/simple-rates` for admin-only save access.
 - The backend accepts one weekday and one weekend amount per session, fixed to `THB`.
 - The generic rate-rule API remains available for compatibility, while reserved simple-rate records are internally protected.
-- Frontend simplification to two amount inputs is still pending.
+- The main frontend page is now simplified to two amount inputs and uses the simple-rate facade exclusively.
 - Advance Batch Preview remains `PENDING_RATE_RULE`; no payment calculation, authorization, or official export was added.
+
+## Simple Weekday/Weekend Rate Frontend Validation - 2026-06-04
+
+- `/invigilation-rate-rules` now presents only weekday and weekend per-session amounts.
+- Admin save and staff read-only behavior passed genuine browser smoke.
+- Teacher and print-shop navigation/direct-route blocking passed.
+- Invalid zero input was rejected inline; saved `300/500` values persisted after refresh.
+- Generic rate-rule lifecycle APIs remain available for compatibility but are no longer the main operator workflow.
+- Advance Batch amount integration remains a separate deferred decision.
