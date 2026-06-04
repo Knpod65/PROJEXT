@@ -1,93 +1,44 @@
-# Invigilation Rate Rule Manual Browser Smoke Checklist
+# Invigilation Simple Rate Manual Browser Smoke Checklist
 
 **Date**: 2026-06-04  
 **Target**: `http://127.0.0.1:3000/invigilation-rate-rules`  
-**Scope**: Configuration/preview-only invigilation rate rules.
+**Scope**: Weekday/weekend configuration only
+
+The prior generic draft/activate/archive lifecycle checklist is superseded by this checklist.
 
 ## Preconditions
 
-- [ ] Work from `C:\Users\DELL\Desktop\PROJEXT\opt\ems_system`.
-- [ ] Confirm `main` is current and the worktree is clean.
-- [ ] Start backend from `backend`:
-  - `.\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000`
-- [ ] Start frontend from `frontend`:
-  - `npm run dev`
-- [ ] Confirm `http://127.0.0.1:8000/api/health` returns `200`.
-- [ ] Confirm the browser is using local demo accounts only.
+- [ ] Current EMS `main` is clean and current.
+- [ ] Backend and frontend are running from the EMS repository.
+- [ ] Use local demo accounts only.
 
-## Admin Smoke
+## Admin
 
-Use `mathawee.m / admin123`, selected role `admin`.
+- [ ] Page loads with the preview/configuration-only warning.
+- [ ] Exactly two amount inputs are visible.
+- [ ] Inputs are Monday-Friday and Saturday-Sunday.
+- [ ] Fixed labels show `THB`, `PER_SESSION`, and baht per session.
+- [ ] Old generic name/scope/date/lifecycle controls are absent.
+- [ ] Missing, zero, negative, and nonnumeric values are visibly rejected.
+- [ ] Save valid weekday/weekend values.
+- [ ] Refresh and confirm both values persist.
+- [ ] No payment calculation, approval, final payment, or official export action appears.
 
-- [ ] Log in through the normal app flow.
-- [ ] Open `/invigilation-rate-rules`.
-- [ ] Page title shows `Invigilation Rate Rules` or `ตั้งค่าอัตราค่าคุมสอบ`.
-- [ ] Configuration/preview-only warning is visible.
-- [ ] Warning clearly states rate setup does not authorize payment.
-- [ ] Page uses EMS-styled hero, cards, controls, badges, and table.
-- [ ] No raw/scaffold browser controls are visible.
-- [ ] No final payment, approval, official export, finalize, or payment-report action exists.
-
-Create a local demo DRAFT:
-
-- [ ] `rate_name = ค่าคุมสอบปกติ - ทดสอบ`
-- [ ] `payment_unit = PER_SESSION`
-- [ ] `rate_amount = 300`
-- [ ] `currency = THB`
-- [ ] `role_scope = ALL`
-- [ ] `person_type_scope = ALL`
-- [ ] `note = Demo/local smoke only. Not final payment authorization.`
-- [ ] Save and confirm the row appears with status `DRAFT`.
-- [ ] Activate and confirm status becomes `ACTIVE`.
-- [ ] Archive and confirm status becomes `ARCHIVED`.
-- [ ] Confirm no payment report/export is generated during the lifecycle.
-
-## Invalid Input Smoke
-
-- [ ] Missing amount is rejected with a visible safe error.
-- [ ] Zero amount is rejected with a visible safe error.
-- [ ] Negative amount is rejected with a visible safe error.
-- [ ] Page remains usable after each rejection.
-- [ ] No invalid `ACTIVE` rate is created.
-
-## Role Access Smoke
-
-### Staff
-
-Use `araya.fa / staff123`, selected role `staff`.
+## Staff
 
 - [ ] Staff can access the page.
-- [ ] Staff can view configured rate rules.
-- [ ] Create/edit/activate/archive actions are unavailable or safely rejected.
+- [ ] Both values are visible in selectable read-only inputs.
+- [ ] Read-only mode is clearly labelled.
+- [ ] Save controls are absent.
 
-### Teacher
+## Teacher And Print Shop
 
-Use `kiancheng.lee / teacher123`, selected role `teacher`.
+- [ ] Navigation item is absent.
+- [ ] Direct route access shows access denied.
 
-- [ ] Rate-rule navigation item is absent.
-- [ ] Direct access to `/invigilation-rate-rules` is blocked or redirected.
+## Safety
 
-### Print Shop
-
-Use `printshop.ops / print123`, selected role `print_shop`.
-
-- [ ] Rate-rule navigation item is absent.
-- [ ] Direct access to `/invigilation-rate-rules` is blocked or redirected.
-
-## Screenshot Evidence
-
-Capture if possible:
-
-- [ ] `docs/operations/demo-smoke-screenshots/invigilation-rate-rules-admin.png`
-- [ ] `docs/operations/demo-smoke-screenshots/invigilation-rate-rules-active-rate.png`
-- [ ] `docs/operations/demo-smoke-screenshots/invigilation-rate-rules-invalid-input.png`
-
-## Final Safety Check
-
-- [ ] Payment calculation remains unimplemented.
-- [ ] Advance Batch Preview remains disconnected from rate amounts.
-- [ ] No final payment approval exists.
-- [ ] No official payment export exists.
-- [ ] No teaching workload / Work H / opencourse / coinstruc logic was used.
-- [ ] Record browser smoke as PASS only when every required browser check above passes.
+- [ ] Advance Batch remains disconnected and `PENDING_RATE_RULE`.
+- [ ] No teaching workload, Work H, `opencourse`, or `coinstruc` logic is present.
+- [ ] Do not claim payment or production readiness from this configuration smoke.
 
