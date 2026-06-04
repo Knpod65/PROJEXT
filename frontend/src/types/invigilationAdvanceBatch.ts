@@ -10,6 +10,10 @@ export interface AdvanceBatchPreviewSummary {
   amount_calculation: string;
   amount_calculation_enabled: boolean;
   amount_status: string;
+  preview_amount_enabled: boolean;
+  preview_total_amount: number;
+  preview_weekday_count: number;
+  preview_weekend_count: number;
   total_rows: number;
   total_assignments: number;
   ready_for_batch_review: number;
@@ -19,7 +23,12 @@ export interface AdvanceBatchPreviewSummary {
   blocked_rule_gap: number;
   blocked_rows: number;
   pending_rate_rule_count: number;
+  missing_exam_date_count: number;
+  invalid_exam_date_count: number;
+  blocked_roster_amount_count: number;
   warning_count: number;
+  payment_authorization_enabled: boolean;
+  final_export_enabled: boolean;
 }
 
 export interface AdvanceBatchRosterRow {
@@ -36,6 +45,8 @@ export interface AdvanceBatchRosterRow {
   course_title: string | null;
   section: string | null;
   exam_date: string | null;
+  exam_date_calendar: string | null;
+  normalized_exam_date: string | null;
   start_time: string | null;
   end_time: string | null;
   room_name: string | null;
@@ -49,7 +60,10 @@ export interface AdvanceBatchRosterRow {
   blocked_reason: string | null;
   rate_rule_status: string;
   amount_status: string;
-  amount_preview: string;
+  amount_preview: number | null;
+  rate_day_type: "WEEKDAY" | "WEEKEND" | "UNKNOWN";
+  rate_source: string | null;
+  payment_authorization_status: "NOT_AUTHORIZED_PREVIEW_ONLY";
   reconciliation_status: string;
   post_duty_evidence_status: string;
   absence_explanation_status: string;

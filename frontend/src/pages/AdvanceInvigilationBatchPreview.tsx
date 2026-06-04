@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/i18n";
 import { useAdvanceBatchPreview } from "@/hooks/domain/useAdvanceBatchPreview";
 import type { AdvanceBatchRosterRow } from "@/types/invigilationAdvanceBatch";
+import { formatCurrency } from "@/utils/format";
 
 function SummaryCard({ label, value, hint }: { label: string; value: string | number; hint: string }) {
   return (
@@ -28,7 +29,7 @@ function inclusionVariant(value: string) {
 
 function amountVariant(value: string) {
   if (value.includes("PENDING")) return "gold";
-  if (value.includes("READY") || value.includes("OK")) return "green";
+  if (value.includes("READY") || value.includes("OK") || value.includes("PREVIEW")) return "green";
   if (value.includes("BLOCKED") || value.includes("ERR")) return "crimson";
   return "gray";
 }
@@ -52,24 +53,27 @@ export default function AdvanceInvigilationBatchPreview() {
     if (!data) return [];
     return [
       {
-        label: t("advanceBatch.summary.totalAssignments"),
-        value: data.summary.total_assignments,
-        hint: t("advanceBatch.summary.previewOnly"),
+        label: t("advanceBatch.summary.previewTotal"),
+        value: formatCurrency(data.summary.preview_total_amount),
+        hint: t("advanceBatch.summary.previewTotalHint"),
       },
       {
-        label: t("advanceBatch.summary.ready"),
-        value: data.summary.ready_for_batch_review,
-        hint: t("advanceBatch.summary.reviewRequired"),
+        label: t("advanceBatch.summary.weekday"),
+        value: data.summary.preview_weekday_count,
+        hint: t("advanceBatch.summary.calculatedRows"),
       },
       {
-        label: t("advanceBatch.summary.blocked"),
-        value: data.summary.blocked_rows,
-        hint: t("advanceBatch.summary.blockerHint"),
+        label: t("advanceBatch.summary.weekend"),
+        value: data.summary.preview_weekend_count,
+        hint: t("advanceBatch.summary.calculatedRows"),
       },
       {
-        label: t("advanceBatch.summary.pendingRate"),
-        value: data.summary.pending_rate_rule_count,
-        hint: t("advanceBatch.summary.noAmount"),
+        label: t("advanceBatch.summary.pendingBlocked"),
+        value: data.summary.pending_rate_rule_count
+          + data.summary.missing_exam_date_count
+          + data.summary.invalid_exam_date_count
+          + data.summary.blocked_roster_amount_count,
+        hint: t("advanceBatch.summary.pendingBlockedHint"),
       },
     ];
   }, [data, t]);
@@ -128,7 +132,8 @@ export default function AdvanceInvigilationBatchPreview() {
           <Badge variant={amountVariant(row.amount_status)} size="sm">
             {row.amount_status}
           </Badge>
-          <p>{row.amount_preview}</p>
+          <p>{row.amount_preview === null ? t("advanceBatch.table.noPreviewAmount") : formatCurrency(row.amount_preview)}</p>
+          <p>{t(`advanceBatch.dayType.${row.rate_day_type}`)}</p>
         </div>
       ),
     },
