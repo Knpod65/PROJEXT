@@ -105,3 +105,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - The result is explicitly not payment authorization, final payment, or official export.
 - Post-duty reconciliation, approval, export, and production payment readiness remain incomplete.
 - No readiness score increase is applied.
+
+## Advance Batch Finance/Admin Validation Certificate Note (2026-06-04)
+
+- Finance/admin review evidence is prepared as a Thai-first packet, blank independent comparison template, discrepancy register, and summary-only snapshot.
+- No approved reference sample or signed finance/admin decision is present.
+- The validation gate remains `PENDING_FINANCE_ADMIN_REVIEW`.
+- This evidence preparation does not authorize payment, add official export, or increase demo, pilot, production, or payment readiness.

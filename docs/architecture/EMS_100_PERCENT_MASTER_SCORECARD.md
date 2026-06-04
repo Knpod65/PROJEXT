@@ -123,3 +123,10 @@
 - Invalid rate inputs were rejected and no invalid active rule was created.
 - The smoke confirms configuration readiness only; it does not add payment calculation, final approval, official export, or production readiness.
 - Readiness scores remain unchanged.
+
+## Advance Batch Finance/Admin Validation Gate (2026-06-04)
+
+- A Thai-first finance/admin validation packet, blank independent comparison template, discrepancy register, and summary-only system snapshot are ready.
+- Current system evidence remains 23 preview rows, 21 weekday duties, 2 weekend duties, and `7,300 THB`.
+- No approved finance/manual comparison sample or signed decision is available; gate status is `PENDING_FINANCE_ADMIN_REVIEW`.
+- Final payment authorization, approval, official export, and production/payment readiness remain unchanged.

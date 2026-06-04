@@ -100,3 +100,10 @@
 - Rate-rule UI/API validation has now passed authenticated local smoke for the backend contract.
 - The next safe implementation phase is a preview-only Advance Batch amount integration using an active `PER_SESSION` rate.
 - That next phase must still avoid final payment approval, official export, refund/offset amount logic, and production-readiness claims.
+
+## Advance Batch Finance/Admin Validation Roadmap Update (2026-06-04)
+
+- Preview-only amount integration and its system-side demo evidence are complete.
+- The validation packet is ready for independent finance/admin comparison against an approved sample.
+- Current gate: `PENDING_FINANCE_ADMIN_REVIEW`; no decision option is preselected.
+- Do not begin final approval or official export design until discrepancies are resolved and an authorized reviewer signs the packet.

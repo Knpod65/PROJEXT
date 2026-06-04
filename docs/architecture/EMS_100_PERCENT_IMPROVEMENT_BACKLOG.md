@@ -95,3 +95,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Verified: admin lifecycle, staff read-only, teacher/print-shop blocking, invalid-input rejection.
 - Remaining: browser screenshot capture when authenticated browser tooling is available.
 - Remaining: later integration pass to connect an active `PER_SESSION` rate to preview-only Advance Batch amounts.
+
+## Advance Batch Finance/Admin Validation Backlog Note (2026-06-04)
+
+- Completed: finance/admin validation packet, blank comparison template, discrepancy register, and summary-only preview snapshot.
+- Next required human action: finance/admin independently compares an approved sample, records discrepancies, and signs one decision option.
+- Do not design final approval or official export while the gate remains `PENDING_FINANCE_ADMIN_REVIEW`.
+- No readiness score increase applies to preparation of review evidence.

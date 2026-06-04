@@ -97,3 +97,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Buddhist Era dates are normalized only for weekday/weekend classification.
 - Missing/incomplete rates and blocked roster rows do not receive preview amounts.
 - No final approval, official export, refund/offset amount, or production payment workflow is available.
+
+## Advance Batch Finance/Admin Validation Disclosure (2026-06-04)
+
+- A finance/admin validation packet and independent comparison template are prepared, but no finance/admin reviewer has approved the preview logic or total.
+- The `7,300 THB` result is a system-side demo snapshot only and must not be presented as an official payment list.
+- The validation gate remains `PENDING_FINANCE_ADMIN_REVIEW`.
+- Final payment approval, authorization, official export, and production readiness remain unavailable.

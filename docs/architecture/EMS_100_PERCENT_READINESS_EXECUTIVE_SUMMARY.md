@@ -175,3 +175,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The local demo result is 23 preview rows totaling `7,300 THB`; this is not a final payable amount.
 - Check-in remains a post-duty reconciliation input and does not gate the preview.
 - Payment authorization, final approval, official export, and production readiness remain unchanged.
+
+## Advance Batch Finance/Admin Validation Note (2026-06-04)
+
+- Finance/admin review materials now separate the system preview summary from an independent approved/manual comparison.
+- The comparison template is intentionally blank and the snapshot is summary-only; neither is an official payment list.
+- No finance/admin sign-off or approved reference total exists yet, so the next gate is `PENDING_FINANCE_ADMIN_REVIEW`.
+- Demo, pilot, production, and payment readiness scores remain unchanged.
