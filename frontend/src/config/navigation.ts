@@ -198,8 +198,8 @@ export const appPages: AppPageConfig[] = [
   },
   {
     key: "invigilation-rate-rules",
-    title: "Invigilation Rate Rules",
-    description: "Configure user-entered invigilation payment rates for preview setup only.",
+    title: "Invigilation Rate Settings",
+    description: "Set weekday and weekend invigilation rates for preview configuration only.",
     path: "/invigilation-rate-rules",
     icon: "payments",
     roles: ["admin", "staff"],
