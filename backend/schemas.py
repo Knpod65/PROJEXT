@@ -700,6 +700,30 @@ class InvigilationRateRuleMutationResponse(BaseModel):
     final_export_enabled: bool = False
 
 
+class InvigilationSimpleRateUpdate(BaseModel):
+    weekday_amount: Decimal
+    weekend_amount: Decimal
+
+
+class InvigilationSimpleRateOut(BaseModel):
+    day_scope: str
+    amount: Optional[Decimal] = None
+    amount_status: str
+    rate_rule_id: Optional[int] = None
+    saved_at: Optional[datetime] = None
+
+
+class InvigilationSimpleRatesResponse(BaseModel):
+    currency: str = "THB"
+    payment_unit: str = "PER_SESSION"
+    configuration_status: str
+    weekday_rate: InvigilationSimpleRateOut
+    weekend_rate: InvigilationSimpleRateOut
+    preview_only: bool = True
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
 
 # ─── Audit ────────────────────────────────────────────────────
 class AuditOut(BaseModel):

@@ -11,11 +11,30 @@ from services.invigilation_rate_rule_service import (
     activate_rate_rule,
     archive_rate_rule,
     create_rate_rule,
+    get_simple_rates,
     list_rate_rules,
+    save_simple_rates,
     update_rate_rule,
 )
 
 router = APIRouter()
+
+
+@router.get("/simple-rates", response_model=schemas.InvigilationSimpleRatesResponse)
+def get_invigilation_simple_rates(
+    db: Session = Depends(get_db),
+    _current_user=Depends(require_staff_or_admin),
+):
+    return get_simple_rates(db)
+
+
+@router.put("/simple-rates", response_model=schemas.InvigilationSimpleRatesResponse)
+def put_invigilation_simple_rates(
+    payload: schemas.InvigilationSimpleRateUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    return save_simple_rates(db, payload, actor_id=getattr(current_user, "id", None))
 
 
 @router.get("/rate-rules", response_model=schemas.InvigilationRateRuleListResponse)
@@ -61,4 +80,3 @@ def archive_invigilation_rate_rule(
     current_user=Depends(require_admin),
 ):
     return archive_rate_rule(db, rate_rule_id, actor_id=getattr(current_user, "id", None))
-

@@ -13,10 +13,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import models
 from database import Base
 from services.invigilation_rate_rule_service import (
+    SIMPLE_WEEKDAY_SCOPE,
     activate_rate_rule,
     archive_rate_rule,
     create_rate_rule,
+    get_simple_rates,
     list_rate_rules,
+    save_simple_rates,
     update_rate_rule,
 )
 
@@ -161,3 +164,124 @@ def test_update_active_rule_preserves_conflict_guard(db):
         )
     assert exc.value.status_code == 409
 
+
+def test_get_simple_rates_when_not_configured(db):
+    payload = get_simple_rates(db)
+    _assert_safe(payload)
+    assert payload["configuration_status"] == "NOT_CONFIGURED"
+    assert payload["currency"] == "THB"
+    assert payload["payment_unit"] == "PER_SESSION"
+    assert payload["weekday_rate"]["amount"] is None
+    assert payload["weekday_rate"]["amount_status"] == "PENDING_CONFIGURATION"
+    assert payload["weekend_rate"]["amount"] is None
+
+
+def test_save_and_get_simple_rates(db):
+    payload = save_simple_rates(
+        db,
+        SimpleNamespace(weekday_amount="300", weekend_amount="500"),
+        actor_id=1,
+    )
+    _assert_safe(payload)
+    assert payload["configuration_status"] == "CONFIGURED"
+    assert str(payload["weekday_rate"]["amount"]) == "300.00"
+    assert str(payload["weekend_rate"]["amount"]) == "500.00"
+    assert payload["weekday_rate"]["amount_status"] == "CONFIGURED"
+    assert payload["weekend_rate"]["amount_status"] == "CONFIGURED"
+    assert "payment_amount" not in payload
+    assert "final_payment" not in payload
+
+
+def test_get_simple_rates_reports_incomplete_configuration(db):
+    db.add(models.InvigilationPaymentRateRule(
+        rate_name="Internal weekday",
+        payment_unit=models.InvigilationPaymentUnit.per_session,
+        rate_amount="300",
+        currency="THB",
+        role_scope=SIMPLE_WEEKDAY_SCOPE,
+        person_type_scope="ALL",
+        status=models.InvigilationRateRuleStatus.active,
+    ))
+    db.commit()
+
+    payload = get_simple_rates(db)
+    assert payload["configuration_status"] == "INCOMPLETE"
+    assert payload["weekday_rate"]["amount_status"] == "CONFIGURED"
+    assert payload["weekend_rate"]["amount_status"] == "PENDING_CONFIGURATION"
+
+
+@pytest.mark.parametrize(
+    "weekday_amount,weekend_amount",
+    [
+        (None, "500"),
+        ("300", None),
+        ("0", "500"),
+        ("300", "0"),
+        ("-1", "500"),
+        ("300", "-1"),
+        ("bad", "500"),
+    ],
+)
+def test_reject_invalid_simple_rate_amounts(db, weekday_amount, weekend_amount):
+    with pytest.raises(HTTPException) as exc:
+        save_simple_rates(
+            db,
+            SimpleNamespace(weekday_amount=weekday_amount, weekend_amount=weekend_amount),
+            actor_id=1,
+        )
+    assert exc.value.status_code == 400
+    assert get_simple_rates(db)["configuration_status"] == "NOT_CONFIGURED"
+
+
+def test_simple_rate_replacement_archives_history_and_preserves_legacy_rules(db):
+    legacy = create_rate_rule(db, _payload(role_scope="CHIEF"), actor_id=1)
+    save_simple_rates(db, SimpleNamespace(weekday_amount="300", weekend_amount="500"), actor_id=1)
+    first = get_simple_rates(db)
+    first_pair_ids = {
+        first["weekday_rate"]["rate_rule_id"],
+        first["weekend_rate"]["rate_rule_id"],
+    }
+
+    save_simple_rates(db, SimpleNamespace(weekday_amount="350", weekend_amount="550"), actor_id=2)
+
+    archived = db.query(models.InvigilationPaymentRateRule).filter(
+        models.InvigilationPaymentRateRule.id.in_(first_pair_ids)
+    ).all()
+    assert all(rule.status == models.InvigilationRateRuleStatus.archived for rule in archived)
+    assert all(rule.archived_by == 2 for rule in archived)
+    generic = list_rate_rules(db)
+    assert [rule["rate_rule_id"] for rule in generic["rate_rules"]] == [legacy["rate_rule"]["rate_rule_id"]]
+    assert str(get_simple_rates(db)["weekday_rate"]["amount"]) == "350.00"
+
+
+def test_invalid_second_simple_amount_does_not_archive_existing_pair(db):
+    save_simple_rates(db, SimpleNamespace(weekday_amount="300", weekend_amount="500"), actor_id=1)
+    before = get_simple_rates(db)
+
+    with pytest.raises(HTTPException):
+        save_simple_rates(db, SimpleNamespace(weekday_amount="350", weekend_amount="0"), actor_id=2)
+
+    after = get_simple_rates(db)
+    assert after["weekday_rate"]["rate_rule_id"] == before["weekday_rate"]["rate_rule_id"]
+    assert after["weekend_rate"]["rate_rule_id"] == before["weekend_rate"]["rate_rule_id"]
+
+
+def test_generic_create_rejects_reserved_simple_scope(db):
+    with pytest.raises(HTTPException) as exc:
+        create_rate_rule(db, _payload(role_scope=SIMPLE_WEEKDAY_SCOPE), actor_id=1)
+    assert exc.value.status_code == 400
+
+
+@pytest.mark.parametrize("operation", ["update", "activate", "archive"])
+def test_generic_mutations_reject_reserved_simple_records(db, operation):
+    save_simple_rates(db, SimpleNamespace(weekday_amount="300", weekend_amount="500"), actor_id=1)
+    rate_rule_id = get_simple_rates(db)["weekday_rate"]["rate_rule_id"]
+
+    with pytest.raises(HTTPException) as exc:
+        if operation == "update":
+            update_rate_rule(db, rate_rule_id, _payload(rate_amount="400"), actor_id=1)
+        elif operation == "activate":
+            activate_rate_rule(db, rate_rule_id, actor_id=1)
+        else:
+            archive_rate_rule(db, rate_rule_id, actor_id=1)
+    assert exc.value.status_code == 400
