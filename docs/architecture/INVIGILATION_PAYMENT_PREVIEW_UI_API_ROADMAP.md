@@ -123,3 +123,12 @@ Clarifications:
 - The advance batch roster preview frontend page is now live and verified in the browser.
 - The page remains preview-only and does not change the future payment preview/approval/export roadmap status.
 - Post-duty reconciliation is still a separate workflow and is not implemented here.
+
+## Simple Weekday/Weekend Rate Backend Update - 2026-06-04
+
+- `IMPLEMENTED GET /api/invigilation-payment/simple-rates` for admin/staff read access.
+- `IMPLEMENTED PUT /api/invigilation-payment/simple-rates` for admin-only save access.
+- The backend accepts one weekday and one weekend amount per session, fixed to `THB`.
+- The generic rate-rule API remains available for compatibility, while reserved simple-rate records are internally protected.
+- Frontend simplification to two amount inputs is still pending.
+- Advance Batch Preview remains `PENDING_RATE_RULE`; no payment calculation, authorization, or official export was added.

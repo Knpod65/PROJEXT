@@ -65,3 +65,13 @@ Default scope values:
 - Only an active rate may be eligible for a later preview-calculation integration.
 - Advance Batch Preview remains `PENDING_RATE_RULE` until a separate integration pass.
 
+## Simple Weekday/Weekend Backend Facade (2026-06-04)
+
+- `GET /api/invigilation-payment/simple-rates` is available to admin and staff.
+- `PUT /api/invigilation-payment/simple-rates` is admin-only.
+- Both weekday and weekend amounts are required, user-entered, positive, `THB`, and `PER_SESSION`.
+- The facade stores its current pair in the existing table using reserved scopes `EMS_SIMPLE_WEEKDAY` and `EMS_SIMPLE_WEEKEND`.
+- Reserved records are hidden from and protected against generic rate-rule mutation.
+- A successful save atomically archives the previous simple pair and creates the new active pair.
+- Internal active status means configured only. It does not authorize or calculate payment.
+- The existing generic API remains available for compatibility and generic-rule history.

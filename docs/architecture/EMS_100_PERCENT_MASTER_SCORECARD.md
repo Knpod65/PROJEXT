@@ -75,6 +75,14 @@
 - Check-in remains post-duty reconciliation evidence, not an advance inclusion gate.
 - Readiness scores remain unchanged.
 
+## Simple Weekday/Weekend Rate Backend Facade (2026-06-04)
+
+- A backend-only facade now stores one user-entered weekday rate and one user-entered weekend rate per invigilation session.
+- Admin save and staff read-only behavior are enforced by backend authorization; teacher and print-shop access is blocked.
+- No new table, payment calculation, approval, official export, or Advance Batch amount integration was added.
+- The frontend still uses the prior generic configuration page and requires a separate simplification pass.
+- Demo, pilot, production, and payment readiness scores remain unchanged.
+
 ## Advance Batch Preview Validation Update (2026-06-02)
 - The preview endpoint was validated against local demo data and returned 23 roster rows.
 - A read-only frontend page was added for advance batch roster review.

@@ -154,3 +154,11 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Teacher and print shop roles were blocked from rate-rule API access.
 - Invalid inputs were rejected.
 - This evidence supports demo configuration behavior only; production/payment readiness remains unchanged.
+
+## Simple Rate Backend Note (2026-06-04)
+
+- EMS now has a validated backend facade for user-entered weekday and weekend invigilation rates.
+- Admin can save the pair; staff can read it; teacher and print-shop roles are blocked.
+- This is configuration only. It does not calculate or authorize payment and does not enable official export.
+- Advance Batch Preview remains amount-free and `PENDING_RATE_RULE`.
+- The next bounded step is frontend simplification followed by genuine browser validation; readiness scores do not increase from this backend step.
