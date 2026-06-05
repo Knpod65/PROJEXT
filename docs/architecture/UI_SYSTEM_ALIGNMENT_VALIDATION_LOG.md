@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-05  
 **Scope**: system-wide frontend UI/template alignment pass  
-**Status**: frontend validation passed; visual screenshot evidence not captured
+**Status**: frontend validation passed; automated screenshot evidence captured
 
 ## Pages Fixed
 
@@ -33,6 +33,7 @@
 | `npm run check:i18n:coverage` | BLOCKED by known CommonJS/ESM script issue |
 | Local backend health | PASS, `http://127.0.0.1:8000/api/health` returned HTTP `200` |
 | Local frontend route smoke | PASS, all ten target routes returned HTTP `200` |
+| Automated screenshot capture | PASS, 10 of 10 target routes captured through the Chrome extension browser client |
 
 Build retained the existing large main chunk warning. This pass did not introduce a backend change.
 
@@ -40,16 +41,18 @@ Build retained the existing large main chunk warning. This pass did not introduc
 
 - Manual browser smoke: not completed in this pass.
 - Automated browser attachment: BLOCKED, in-app browser target `iab` was not available.
-- Local browser fallback packages: unavailable, no local `playwright`, `@playwright/test`, or `puppeteer` package was present.
-- Screenshots captured: NO.
-- Reason: no working automated browser attachment, no local browser fallback package, and no human screenshot was placed during this UI alignment pass.
-- Existing official payment draft screenshot wait-state remains separate.
+- Chrome extension browser client: PASS, all 10 target routes captured while authenticated with the documented local demo admin account.
+- Local Playwright fallback: BLOCKED, no importable `playwright` or `@playwright/test`; CLI existed but browser executable was not installed.
+- Installed Chrome/Edge direct headless fallback: DIAGNOSTIC_ONLY, not used as final evidence because authenticated Chrome extension capture succeeded.
+- Screenshots captured: YES, 10 route screenshots under `docs/operations/demo-smoke-screenshots/`.
+- Human visual approval: still pending; automated screenshots do not mark human QA as passed.
 
 ## Known Residual Issues
 
 - Some large legacy/custom pages still contain manual tables or raw-string candidates and should be cleaned in smaller follow-up passes.
 - `check:i18n:coverage` still needs a separate tooling repair.
 - Platform configuration remains read-only and partially wired by design; this pass does not claim new backend readiness.
+- Human visual review is still recommended for subjective polish, Thai wrapping, and subtle overflow checks.
 
 ## Safety Confirmation
 
