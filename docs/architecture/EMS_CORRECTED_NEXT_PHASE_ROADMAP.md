@@ -129,3 +129,19 @@
 - Active rates are not changed; current `300/500` remains unconfirmed for official use.
 - Official document output is still blocked until the rate set and paper-distribution payable source are confirmed.
 - Payment approval/export is not implemented, and production readiness is unchanged.
+
+## Official Payment Document Draft Preview Roadmap Update (2026-06-05)
+
+- Next implementation is now the in-app 2/2568 official-style draft preview.
+- Use term-specific `120/200` and treat active `300/500` as demo/test only.
+- Include both invigilation and paper-distribution categories; paper-distribution counts are manual/staff-confirmed and non-persistent.
+- Keep the route draft-only with no final payment approval, payment authorization, official export, PDF, or Excel.
+- Supervisor/finance review remains the next human gate before final-truth or export work.
+
+## Official Payment Document Draft Validation Roadmap Update (2026-06-05)
+
+- Validation confirms the draft preview is ready to commit with required backend and frontend checks passing.
+- `httpx` is declared for reproducible FastAPI `TestClient` coverage.
+- Optional i18n coverage script repair is deferred as tooling debt.
+- Screenshot evidence is absent because browser tooling was unavailable; route serving was confirmed by HTTP fallback.
+- The next roadmap gate remains supervisor/finance review, not payment approval or export.

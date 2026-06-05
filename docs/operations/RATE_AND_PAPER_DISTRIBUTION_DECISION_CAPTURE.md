@@ -3,7 +3,7 @@
 **English title**: Rate And Paper Distribution Decision Capture
 **วันที่จัดทำ**: 2026-06-05
 **Current gate**: `PENDING_FINANCE_ADMIN_REVIEW`
-**Current decision status**: `DECISION_PENDING`
+**Current decision status**: `RATE_AND_SOURCE_CONFIRMED` for draft-output purposes only
 
 เอกสารนี้ใช้บันทึกการตัดสินใจก่อนออกแบบหรือสร้างเอกสารทางการเท่านั้น ไม่ใช่การอนุมัติการจ่ายเงินจริง ไม่ใช่การอนุมัติ export และไม่เปลี่ยนอัตรา active ในระบบ
 
@@ -21,15 +21,15 @@
 
 | Field | Value |
 |---|---|
-| selected_rate_option |  |
-| weekday_rate |  |
-| weekend_rate |  |
-| applies_to_term |  |
-| effective_from |  |
-| effective_to |  |
-| confirmed_by |  |
-| confirmed_at |  |
-| notes |  |
+| selected_rate_option | `USE_SAMPLE_RATE_120_200_FOR_2_2568` |
+| weekday_rate | `120 THB per person/session` |
+| weekend_rate | `200 THB per person/session` |
+| applies_to_term | `2/2568` |
+| effective_from | `TERM_2_2568_ONLY` |
+| effective_to | `TERM_2_2568_ONLY` |
+| confirmed_by | User decision for draft-output pass |
+| confirmed_at | 2026-06-05 |
+| notes | Rates are term-specific for 2/2568. Current active `300/500` must be treated as demo/test data only and not used as the official reference. |
 
 ## 2. การจัดการอัตรา active ในระบบ / Active System Rate Handling
 
@@ -39,6 +39,13 @@
 - Should `300/500` remain demo/test only?
 - Should rates be term-specific?
 - Should system support historical rates per term?
+
+Draft-output answers captured 2026-06-05:
+
+- Do not replace active `300/500` in this pass; treat it as demo/test data only.
+- Rates are term-specific.
+- The 2/2568 draft preview must hardcode the confirmed sample rate `120/200` for this draft path and must not read active `300/500`.
+- Historical/term-specific rates should remain separated by term for future official processing.
 
 ## 3. แหล่งข้อมูลกรรมการจ่ายข้อสอบ / Paper Distribution Committee Source
 
@@ -54,11 +61,11 @@
 
 | Field | Value |
 |---|---|
-| selected_source_option |  |
-| source_owner |  |
-| source_file_or_system |  |
-| validation_required |  |
-| notes |  |
+| selected_source_option | `MANUAL_INPUT_BY_STAFF` |
+| source_owner | Staff-confirmed/manual-confirmed draft input |
+| source_file_or_system | In-app draft preview request body; non-persistent |
+| validation_required | Supervisor/finance review still required before final truth, approval, or export |
+| notes | Paper-distribution committee data is usable for document draft purposes only until an authoritative EMS source is fully validated. |
 
 ## 4. ขอบเขตเอกสารที่จะออกในอนาคต / Document Output Scope
 
@@ -69,6 +76,13 @@
 - Should document be Excel-first, PDF-first, or both later?
 - Should it remain draft until supervisor/finance review?
 
+Draft-output answers captured 2026-06-05:
+
+- Include both `INVIGILATION_COMMITTEE` / กรรมการคุมสอบ and `PAPER_DISTRIBUTION_COMMITTEE` / กรรมการจ่ายข้อสอบ.
+- Match the 2/2568 sample-style grouping by exam date and time slot.
+- Implement in-app draft preview first; do not add Excel/PDF/export in this pass.
+- Keep the document status as draft/not authorized until supervisor/finance review.
+
 ## 5. สถานะการตัดสินใจปัจจุบัน / Current Decision Status
 
 Allowed values:
@@ -78,12 +92,18 @@ Allowed values:
 - `RATE_AND_SOURCE_CONFIRMED`
 - `HOLD_FOR_FINANCE_CONFIRMATION`
 
-Default:
+Default before the 2026-06-05 human decision:
 
 `DECISION_PENDING`
+
+Current captured status for draft-output implementation:
+
+`RATE_AND_SOURCE_CONFIRMED`
+
+This status is limited to in-app draft preview generation. It is not `ANSWERED_APPROVED`, does not close the finance gate, and does not authorize payment.
 
 ## หมายเหตุสำคัญ / Important Note
 
 This decision capture does not authorize payment.
 
-Until an authorized finance/admin owner confirms the rate, effective scope, paper-distribution source, document grouping, and reviewer chain, EMS must not implement official document output/export or payment approval from this decision capture.
+The 2026-06-05 decision permits only an in-app official-style draft preview using term-specific `120/200` and manual staff paper-distribution input. EMS must still not implement final payment approval, official payment authorization, or official export from this decision capture.

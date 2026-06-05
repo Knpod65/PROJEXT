@@ -124,3 +124,18 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Active rates are unchanged, including the current local `300/500` demo/system rate.
 - Official document output remains blocked until finance/admin confirms both rate and paper-distribution payable source.
 - Payment approval/export remains outside the backlog until the gate advances; readiness scores remain unchanged.
+
+## Official Payment Document Draft Preview Backlog Note (2026-06-05)
+
+- Completed: draft-only in-app preview path for the 2/2568 official-style payment table.
+- The preview uses fixed term-specific `120/200`; active `300/500` remains demo/test data and is not read for this draft.
+- Paper-distribution counts are manual/staff-confirmed request input and non-persistent.
+- Remaining: supervisor/finance review, authoritative paper-source validation, final approval workflow, official export, and production payment evidence.
+- Do not touch teaching workload, Work H, opencourse, or coinstruc logic from this backlog item.
+
+## Official Payment Document Draft Validation Backlog Note (2026-06-05)
+
+- Completed: dirty-tree review, validation log, dependency declaration for `httpx`, focused tests, full backend suite, frontend build, and required i18n checks.
+- Remaining: optional i18n coverage tooling repair as a separate non-feature debt item.
+- Browser screenshot capture remains unavailable in this session; route serving was checked by HTTP fallback.
+- No final approval, authorization, export, or readiness uplift is created by validation.

@@ -134,3 +134,18 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Active rates remain unchanged; `300/500` is not confirmed for official 2/2568 payment use.
 - Official document output remains blocked until finance/admin confirms rate and paper-distribution source.
 - Payment approval/export remains unimplemented, and demo, pilot, production, and payment readiness are unchanged.
+
+## Official Payment Document Draft Preview Certificate Note (2026-06-05)
+
+- EMS now has an in-app draft preview path for the 2/2568 official-style payment table.
+- The draft preview uses fixed term-specific `120/200` and treats active `300/500` as demo/test only.
+- Paper-distribution counts are staff-entered/manual-confirmed request input and are not persisted.
+- The preview remains `DRAFT_NOT_AUTHORIZED`; supervisor/finance review is still required.
+- No payment approval, payment authorization, official export, PDF, Excel, or readiness score increase is added.
+
+## Official Payment Document Draft Validation Certificate Note (2026-06-05)
+
+- Commit-readiness validation passed for backend compile/import/tests, full backend tests, frontend build, and required i18n checks.
+- `httpx` is declared for router-test reproducibility.
+- Browser screenshot evidence is not attached because the in-app browser was unavailable; HTTP route fallback returned `200`.
+- The certificate remains unchanged for pilot/production/payment readiness.

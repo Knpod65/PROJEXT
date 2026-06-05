@@ -126,3 +126,18 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Active rates are unchanged; the current `300/500` demo/system rate is not confirmed as official.
 - Official document output remains blocked until both rate and paper-distribution source are confirmed.
 - Payment approval/export is still not implemented, and production readiness is unchanged.
+
+## Official Payment Document Draft Preview Disclosure (2026-06-05)
+
+- The new in-app preview may show a 2/2568 official-style draft table using fixed term-specific `120/200`.
+- Active `300/500` remains demo/test data and is not the official reference for this draft.
+- Paper-distribution counts are manual/staff-confirmed draft inputs and are not saved.
+- The preview status is `DRAFT_NOT_AUTHORIZED`; it must not be demonstrated as final payment, official truth, or export readiness.
+- No final approval, payment authorization, official export, PDF, Excel, or production payment workflow is available.
+
+## Official Payment Document Draft Validation Disclosure (2026-06-05)
+
+- The draft preview passed backend and frontend validation for commit readiness.
+- Demo presentation may cite test/build readiness, but must also disclose that screenshot evidence was not captured because browser tooling was unavailable.
+- The optional i18n coverage script remains tooling debt and is not evidence of payment feature failure.
+- The feature is still a draft preview only and must not be presented as approved payment output.

@@ -204,3 +204,19 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Active rates are unchanged; `300/500` is not promoted to an official 2/2568 payment rate.
 - Official document output is still blocked until rate and paper-distribution source are confirmed.
 - Payment approval/export remains unimplemented, and demo, pilot, production, and payment readiness scores are unchanged.
+
+## Official Payment Document Draft Preview Note (2026-06-05)
+
+- The 2/2568 draft preview decision selects term-specific `120/200` and keeps active `300/500` as demo/test only.
+- EMS may now provide an in-app draft table with both invigilation and staff-entered/manual paper-distribution counts.
+- Manual paper-distribution rows are request-only and not persisted.
+- Supervisor/finance review, final payment approval, payment authorization, and official export remain unavailable.
+- Readiness scores are unchanged.
+
+## Official Payment Document Draft Validation Note (2026-06-05)
+
+- Dirty-tree validation is documented and commit-ready.
+- Backend and frontend required checks passed, including full backend tests and production frontend build.
+- Optional i18n coverage remains blocked by pre-existing CommonJS/ESM script debt.
+- Browser screenshot evidence was not captured because the in-app browser target was unavailable; HTTP route fallback passed.
+- No readiness score increase applies.

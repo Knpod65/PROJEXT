@@ -152,3 +152,19 @@
 - Active system rates are not changed; current `300/500` remains unconfirmed for official 2/2568 payment use.
 - Official document output remains blocked until both the rate and paper-distribution payable source are confirmed.
 - Payment approval/export is still not implemented, and readiness scores remain unchanged.
+
+## Official Payment Document Draft Preview Decision (2026-06-05)
+
+- The user decision confirms term-specific `120/200` for 2/2568 draft preview and treats active `300/500` as demo/test only.
+- The implemented path may show an in-app draft table with invigilation and staff-entered paper-distribution counts.
+- Paper-distribution input is non-persistent and manual/staff-confirmed for draft purposes only.
+- Finance/supervisor review remains required; no final payment approval, payment authorization, Excel/PDF export, or official final truth is added.
+- Readiness scores remain unchanged.
+
+## Official Payment Document Draft Validation Note (2026-06-05)
+
+- Dirty-tree review and validation log are now recorded for the in-app draft preview.
+- Backend compile, router import smoke, focused draft tests, full backend tests, frontend build, and required i18n checks passed.
+- Browser screenshot capture was blocked because the in-app browser target was unavailable; Vite route fallback returned HTTP `200`.
+- The optional i18n coverage script remains pre-existing tooling debt and is not counted as feature failure.
+- Readiness scores remain unchanged.

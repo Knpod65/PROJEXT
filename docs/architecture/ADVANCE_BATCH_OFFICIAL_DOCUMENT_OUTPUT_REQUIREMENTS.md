@@ -60,3 +60,13 @@ This specification aligns EMS terminology and data requirements with a user-tran
 - Official finance export: blocked
 
 No Excel, PDF, payment report, approval action, or official export is implemented by this document.
+
+## 2026-06-05 Draft Preview Decision
+
+- The next implementation is an in-app official-style draft preview for term `2/2568`.
+- Use fixed term-specific rates: weekday `120 THB`, weekend `200 THB`.
+- Treat active local `300/500` as demo/test data only; the draft preview must not read it.
+- Include both `INVIGILATION_COMMITTEE` and `PAPER_DISTRIBUTION_COMMITTEE`.
+- Paper-distribution committee counts may be staff-entered/manual-confirmed for draft purposes only and must not be persisted by this pass.
+- Keep `draft_only`, no final payment approval, no payment authorization, no official export, and supervisor/finance review required.
+- Do not touch teaching workload, Work H, opencourse, or coinstruc logic.

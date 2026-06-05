@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-05
 **Current gate**: `PENDING_FINANCE_ADMIN_REVIEW`
-**Decision status**: `DECISION_PENDING`
+**Decision status**: `RATE_AND_SOURCE_CONFIRMED` for draft-output purposes only
 
 ## Option A - Rate Correction Only
 
@@ -39,6 +39,8 @@
 
 ## Current Recommendation
 
-`D_HOLD`
+`C_OFFICIAL_DOCUMENT_DRAFT_OUTPUT`
 
-The current repo state does not contain authorized finance/admin confirmation for the rate set or paper-distribution payable source.
+2026-06-05 human decision confirms `120/200` for term 2/2568, treats active `300/500` as demo/test only, and allows staff-confirmed/manual paper-distribution counts for draft purposes. Proceed only with in-app official-style draft preview matching the 2/2568 sample table.
+
+This recommendation does not authorize final payment approval, official payment authorization, Excel/PDF export, or final-truth treatment before supervisor/finance review.
