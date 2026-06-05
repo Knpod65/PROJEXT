@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 
+import { AlertBanner } from "@/components/ui/AlertBanner";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useOfficialPaymentDraftPreview } from "@/hooks/domain/useOfficialPaymentDraftPreview";
 import { useI18n } from "@/i18n";
 import type { OfficialPaymentDraftManualPaperRow, OfficialPaymentDraftRow } from "@/types/officialPaymentDraft";
@@ -46,15 +49,16 @@ export default function OfficialPaymentDocumentDraft() {
 
   const draftColumns = useMemo<Array<DataTableColumn<OfficialPaymentDraftRow>>>(() => [
     {
-      key: "slot",
-      label: t("paymentDraft.table.slot"),
-      minWidth: "190px",
-      render: (row) => (
-        <div className="data-table__content">
-          <strong>{row.exam_date}</strong>
-          <p>{row.time_slot}</p>
-        </div>
-      ),
+      key: "examDate",
+      label: t("paymentDraft.table.examDate"),
+      minWidth: "150px",
+      render: (row) => <strong>{row.exam_date}</strong>,
+    },
+    {
+      key: "timeSlot",
+      label: t("paymentDraft.table.timeSlot"),
+      minWidth: "150px",
+      render: (row) => row.time_slot,
     },
     {
       key: "dayType",
@@ -63,37 +67,38 @@ export default function OfficialPaymentDocumentDraft() {
       render: (row) => <Badge variant={row.day_type === "WEEKEND" ? "gold" : "gray"}>{t(`advanceBatch.dayType.${row.day_type}`)}</Badge>,
     },
     {
-      key: "rate",
-      label: t("paymentDraft.table.rate"),
-      width: "130px",
-      render: (row) => formatCurrency(row.rate_amount),
+      key: "invigilationCount",
+      label: t("paymentDraft.table.invigilationCount"),
+      width: "140px",
+      align: "center",
+      render: (row) => row.invigilation_committee_count,
     },
     {
-      key: "invigilation",
-      label: t("paymentDraft.table.invigilation"),
-      minWidth: "190px",
-      render: (row) => (
-        <div className="data-table__content">
-          <strong>{row.invigilation_committee_count}</strong>
-          <p>{formatCurrency(row.invigilation_compensation_amount)}</p>
-        </div>
-      ),
+      key: "invigilationAmount",
+      label: t("paymentDraft.table.invigilationAmount"),
+      width: "160px",
+      align: "right",
+      render: (row) => formatCurrency(row.invigilation_compensation_amount),
     },
     {
-      key: "paper",
-      label: t("paymentDraft.table.paper"),
-      minWidth: "190px",
-      render: (row) => (
-        <div className="data-table__content">
-          <strong>{row.paper_distribution_committee_count}</strong>
-          <p>{formatCurrency(row.paper_distribution_compensation_amount)}</p>
-        </div>
-      ),
+      key: "paperCount",
+      label: t("paymentDraft.table.paperCount"),
+      width: "150px",
+      align: "center",
+      render: (row) => row.paper_distribution_committee_count,
+    },
+    {
+      key: "paperAmount",
+      label: t("paymentDraft.table.paperAmount"),
+      width: "170px",
+      align: "right",
+      render: (row) => formatCurrency(row.paper_distribution_compensation_amount),
     },
     {
       key: "total",
       label: t("paymentDraft.table.total"),
       width: "150px",
+      align: "right",
       render: (row) => <strong>{formatCurrency(row.total_compensation_amount)}</strong>,
     },
     {
@@ -121,38 +126,36 @@ export default function OfficialPaymentDocumentDraft() {
 
   return (
     <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{t("paymentDraft.eyebrow")}</span>
-          <h2 className="page-hero__title">{t("paymentDraft.title")}</h2>
-          <p className="page-hero__description">{t("paymentDraft.description")}</p>
-        </div>
-      </section>
-
-      <Card
-        title={t("paymentDraft.warning.title")}
-        subtitle={t("paymentDraft.warning.body")}
-        actions={<Badge variant="gold">DRAFT_NOT_AUTHORIZED</Badge>}
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={t("paymentDraft.eyebrow")}
+        title={t("paymentDraft.title")}
+        description={t("paymentDraft.description")}
+        status={<Badge variant="gold">DRAFT_NOT_AUTHORIZED</Badge>}
       />
 
+      <AlertBanner
+        variant="warning"
+        title={t("paymentDraft.warning.title")}
+        action={<Badge variant="gold">DRAFT_NOT_AUTHORIZED</Badge>}
+      >
+        {t("paymentDraft.warning.body")}
+      </AlertBanner>
+
       <Card title={t("paymentDraft.filters.title")} subtitle={t("paymentDraft.filters.subtitle")}>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("advanceBatch.filters.period")}</span>
-            <input className="w-full rounded border px-3 py-2" value={periodId} onChange={(event) => setPeriodId(event.target.value)} placeholder={t("advanceBatch.filters.periodPlaceholder")} />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("advanceBatch.filters.academicYear")}</span>
-            <input className="w-full rounded border px-3 py-2" value={academicYear} onChange={(event) => setAcademicYear(event.target.value)} />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("advanceBatch.filters.semester")}</span>
-            <input className="w-full rounded border px-3 py-2" value={semester} onChange={(event) => setSemester(event.target.value)} />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("advanceBatch.filters.examType")}</span>
-            <input className="w-full rounded border px-3 py-2" value={examType} onChange={(event) => setExamType(event.target.value)} />
-          </label>
+        <div className="form-grid">
+          <FormField label={t("advanceBatch.filters.period")}>
+            <input value={periodId} onChange={(event) => setPeriodId(event.target.value)} placeholder={t("advanceBatch.filters.periodPlaceholder")} />
+          </FormField>
+          <FormField label={t("advanceBatch.filters.academicYear")}>
+            <input value={academicYear} onChange={(event) => setAcademicYear(event.target.value)} />
+          </FormField>
+          <FormField label={t("advanceBatch.filters.semester")}>
+            <input value={semester} onChange={(event) => setSemester(event.target.value)} />
+          </FormField>
+          <FormField label={t("advanceBatch.filters.examType")}>
+            <input value={examType} onChange={(event) => setExamType(event.target.value)} />
+          </FormField>
         </div>
       </Card>
 
@@ -165,13 +168,21 @@ export default function OfficialPaymentDocumentDraft() {
           </Button>
         }
       >
-        <div className="space-y-3">
+        <div className="page-stack">
           {paperRows.map((row) => (
-            <div key={row.local_id} className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_120px_1fr_auto]">
-              <input className="rounded border px-3 py-2" value={row.exam_date} onChange={(event) => updatePaperRow(row.local_id, { exam_date: event.target.value })} placeholder={t("paymentDraft.paper.examDate")} />
-              <input className="rounded border px-3 py-2" value={row.exam_time || ""} onChange={(event) => updatePaperRow(row.local_id, { exam_time: event.target.value })} placeholder={t("paymentDraft.paper.examTime")} />
-              <input className="rounded border px-3 py-2" min={0} type="number" value={row.committee_count} onChange={(event) => updatePaperRow(row.local_id, { committee_count: Number(event.target.value) })} />
-              <input className="rounded border px-3 py-2" value={row.notes || ""} onChange={(event) => updatePaperRow(row.local_id, { notes: event.target.value })} placeholder={t("paymentDraft.paper.notes")} />
+            <div key={row.local_id} className="form-grid form-grid--paper">
+              <FormField label={t("paymentDraft.table.examDate")}>
+                <input value={row.exam_date} onChange={(event) => updatePaperRow(row.local_id, { exam_date: event.target.value })} placeholder={t("paymentDraft.paper.examDate")} />
+              </FormField>
+              <FormField label={t("paymentDraft.table.timeSlot")}>
+                <input value={row.exam_time || ""} onChange={(event) => updatePaperRow(row.local_id, { exam_time: event.target.value })} placeholder={t("paymentDraft.paper.examTime")} />
+              </FormField>
+              <FormField label={t("paymentDraft.paper.count")}>
+                <input min={0} type="number" value={row.committee_count} onChange={(event) => updatePaperRow(row.local_id, { committee_count: Number(event.target.value) })} />
+              </FormField>
+              <FormField label={t("paymentDraft.paper.notes")}>
+                <input value={row.notes || ""} onChange={(event) => updatePaperRow(row.local_id, { notes: event.target.value })} placeholder={t("paymentDraft.paper.notes")} />
+              </FormField>
               <Button type="button" variant="ghost" iconLeft={<Icon name="delete" />} onClick={() => setPaperRows((rows) => rows.filter((item) => item.local_id !== row.local_id))}>
                 {t("common.delete")}
               </Button>
@@ -198,13 +209,13 @@ export default function OfficialPaymentDocumentDraft() {
         <>
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <Card title={t("paymentDraft.summary.invigilation")} subtitle={String(data.totals.invigilation_committee_count)}>
-              <div className="text-3xl font-bold">{formatCurrency(data.totals.invigilation_compensation_amount)}</div>
+              <p className="metric-value">{formatCurrency(data.totals.invigilation_compensation_amount)}</p>
             </Card>
             <Card title={t("paymentDraft.summary.paper")} subtitle={String(data.totals.paper_distribution_committee_count)}>
-              <div className="text-3xl font-bold">{formatCurrency(data.totals.paper_distribution_compensation_amount)}</div>
+              <p className="metric-value">{formatCurrency(data.totals.paper_distribution_compensation_amount)}</p>
             </Card>
             <Card title={t("paymentDraft.summary.grandTotal")} subtitle={t("paymentDraft.summary.notAuthorized")}>
-              <div className="text-3xl font-bold">{formatCurrency(data.totals.grand_total_amount)}</div>
+              <p className="metric-value">{formatCurrency(data.totals.grand_total_amount)}</p>
             </Card>
             <Card title={t("paymentDraft.summary.review")} subtitle={data.metadata.term_label}>
               <Badge variant="gold">DRAFT_NOT_AUTHORIZED</Badge>
@@ -222,7 +233,7 @@ export default function OfficialPaymentDocumentDraft() {
           )}
 
           <Card title={t("paymentDraft.warnings.title")} subtitle={t("paymentDraft.warnings.subtitle")}>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <ul className="ui-list">
               {(data.warnings.length ? data.warnings : [t("paymentDraft.warnings.none")]).map((item) => (
                 <li key={item}>{item}</li>
               ))}

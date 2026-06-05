@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 
+import { AlertBanner } from "@/components/ui/AlertBanner";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/i18n";
 import { useAdvanceBatchPreview } from "@/hooks/domain/useAdvanceBatchPreview";
@@ -15,7 +18,7 @@ import { formatCurrency } from "@/utils/format";
 function SummaryCard({ label, value, hint }: { label: string; value: string | number; hint: string }) {
   return (
     <Card title={label} subtitle={hint}>
-      <div className="text-3xl font-bold">{value}</div>
+      <p className="metric-value">{value}</p>
     </Card>
   );
 }
@@ -174,43 +177,40 @@ export default function AdvanceInvigilationBatchPreview() {
 
   return (
     <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{t("advanceBatch.eyebrow")}</span>
-          <h2 className="page-hero__title">{t("advanceBatch.title")}</h2>
-          <p className="page-hero__description">{t("advanceBatch.description")}</p>
-        </div>
-      </section>
-
-      <Card
-        title={t("advanceBatch.warning.title")}
-        subtitle={t("advanceBatch.warning.body")}
-        actions={<Badge variant="gold">{t("advanceBatch.eyebrow")}</Badge>}
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={t("advanceBatch.eyebrow")}
+        title={t("advanceBatch.title")}
+        description={t("advanceBatch.description")}
+        status={<Badge variant="gold">{t("advanceBatch.eyebrow")}</Badge>}
       />
 
+      <AlertBanner
+        variant="warning"
+        title={t("advanceBatch.warning.title")}
+        action={<Badge variant="gold">PREVIEW_ONLY</Badge>}
+      >
+        {t("advanceBatch.warning.body")}
+      </AlertBanner>
+
       <Card title={t("advanceBatch.eyebrow")} subtitle={t("advanceBatch.description")}>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("advanceBatch.filters.period")}</span>
+        <div className="form-grid">
+          <FormField label={t("advanceBatch.filters.period")}>
             <input
-              className="w-full rounded border px-3 py-2"
               value={periodId}
               onChange={(event) => setPeriodId(event.target.value)}
               placeholder={t("advanceBatch.filters.periodPlaceholder")}
             />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("advanceBatch.filters.academicYear")}</span>
-            <input className="w-full rounded border px-3 py-2" value={academicYear} onChange={(event) => setAcademicYear(event.target.value)} />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("advanceBatch.filters.semester")}</span>
-            <input className="w-full rounded border px-3 py-2" value={semester} onChange={(event) => setSemester(event.target.value)} />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("advanceBatch.filters.examType")}</span>
-            <input className="w-full rounded border px-3 py-2" value={examType} onChange={(event) => setExamType(event.target.value)} />
-          </label>
+          </FormField>
+          <FormField label={t("advanceBatch.filters.academicYear")}>
+            <input value={academicYear} onChange={(event) => setAcademicYear(event.target.value)} />
+          </FormField>
+          <FormField label={t("advanceBatch.filters.semester")}>
+            <input value={semester} onChange={(event) => setSemester(event.target.value)} />
+          </FormField>
+          <FormField label={t("advanceBatch.filters.examType")}>
+            <input value={examType} onChange={(event) => setExamType(event.target.value)} />
+          </FormField>
         </div>
         <div className="mt-4">
           <Button
@@ -256,21 +256,21 @@ export default function AdvanceInvigilationBatchPreview() {
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card title={t("advanceBatch.blockers.title")} subtitle={t("advanceBatch.blockers.subtitle")}>
-          <ul className="space-y-2 text-sm text-gray-600">
+          <ul className="ui-list">
             {(data.blockers.length ? data.blockers : [t("advanceBatch.blockers.none")]).map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
         </Card>
         <Card title={t("advanceBatch.warnings.title")} subtitle={t("advanceBatch.warnings.subtitle")}>
-          <ul className="space-y-2 text-sm text-gray-600">
+          <ul className="ui-list">
             {(data.warnings.length ? data.warnings : [t("advanceBatch.warnings.none")]).map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
         </Card>
         <Card title={t("advanceBatch.ruleGaps.title")} subtitle={t("advanceBatch.ruleGaps.subtitle")}>
-          <ul className="space-y-2 text-sm text-gray-600">
+          <ul className="ui-list">
             {data.rule_gaps.map((item) => (
               <li key={item}>{item}</li>
             ))}

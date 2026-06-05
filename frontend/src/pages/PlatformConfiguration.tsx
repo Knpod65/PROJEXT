@@ -5,6 +5,7 @@ import { translate } from "@/i18n";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 function SectionCard({
@@ -15,7 +16,7 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <Card className="mb-4" title={title}>
+    <Card title={title}>
       {children}
     </Card>
   );
@@ -94,7 +95,7 @@ export default function PlatformConfiguration() {
 
   if (!data) {
     return (
-      <div className="p-6">
+      <div className="page-stack page-stack--spacious">
         <EmptyState
           icon={<Icon name="info" />}
           title={translate("platformConfig.noData")}
@@ -106,17 +107,12 @@ export default function PlatformConfiguration() {
 
   return (
     <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{translate("platformConfig.eyebrow")}</span>
-          <h2 className="page-hero__title">
-            {translate("navigation.pages.platform-configuration.title")}
-          </h2>
-          <p className="page-hero__description">
-            {translate("platformConfig.readOnlyNotice")}
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={translate("platformConfig.eyebrow")}
+        title={translate("navigation.pages.platform-configuration.title")}
+        description={translate("platformConfig.readOnlyNotice")}
+      />
 
       {/* Faculty Config */}
       <SectionCard title={translate("platformConfig.facultyConfig")}>

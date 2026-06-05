@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import { useI18n } from "@/i18n";
@@ -91,26 +92,27 @@ export function DashboardPage() {
 
   return (
     <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{t("dashboard.eyebrow")}</span>
-          <h2 className="page-hero__title">{t("dashboard.title")}</h2>
-          <p className="page-hero__description">{t("dashboard.description")}</p>
-        </div>
-        <div className="page-hero__actions">
-          <Button iconLeft={<Icon name="event_note" />} type="button" onClick={() => navigate("/schedule")}>
-            {t("dashboard.openMasterSchedule")}
-          </Button>
-          <Button
-            iconLeft={<Icon name="assignment_ind" />}
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/attendance")}
-          >
-            {t("dashboard.roomAttendance")}
-          </Button>
-        </div>
-      </section>
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={t("dashboard.eyebrow")}
+        title={t("dashboard.title")}
+        description={t("dashboard.description")}
+        actions={
+          <>
+            <Button iconLeft={<Icon name="event_note" />} type="button" onClick={() => navigate("/schedule")}>
+              {t("dashboard.openMasterSchedule")}
+            </Button>
+            <Button
+              iconLeft={<Icon name="assignment_ind" />}
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/attendance")}
+            >
+              {t("dashboard.roomAttendance")}
+            </Button>
+          </>
+        }
+      />
 
       <section className="stitch-metric-grid">
         <DashboardMetricCard

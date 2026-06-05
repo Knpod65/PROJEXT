@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 function StatusDot({ ok }: { ok: boolean | null }) {
-  const color = ok === true ? "bg-green-500" : ok === false ? "bg-red-500" : "bg-gray-400";
-  return <span className={`inline-block w-3 h-3 rounded-full ${color}`} />;
+  const className = ok === true ? "status-dot status-dot--ok" : ok === false ? "status-dot status-dot--error" : "status-dot";
+  return <span className={className} />;
 }
 
 function StatLine({
@@ -21,9 +22,9 @@ function StatLine({
   ok?: boolean | null;
 }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b last:border-0">
-      <span className="text-sm text-gray-600">{label}</span>
-      <span className="flex items-center gap-2 text-sm font-medium">
+    <div className="status-line">
+      <span>{label}</span>
+      <span className="status-line__value">
         {ok !== undefined && <StatusDot ok={ok} />}
         {value}
       </span>
@@ -71,13 +72,12 @@ export default function OperationalHealth() {
 
   return (
     <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{translate("operationalHealth.backendHealth")}</span>
-          <h2 className="page-hero__title">{translate("navigation.pages.operational-health.title")}</h2>
-          <p className="page-hero__description">{translate("operationalHealth.autoRefreshNote")}</p>
-        </div>
-      </section>
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={translate("operationalHealth.backendHealth")}
+        title={translate("navigation.pages.operational-health.title")}
+        description={translate("operationalHealth.autoRefreshNote")}
+      />
 
       <Card
         title={translate("operationalHealth.backendHealth")}
@@ -132,7 +132,7 @@ export default function OperationalHealth() {
         />
       </Card>
 
-      <div className="text-xs text-gray-400 text-center">
+      <div className="text-muted">
         {translate("operationalHealth.autoRefreshNote")}
       </div>
     </div>

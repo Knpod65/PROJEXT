@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useExportCenterPage } from "@/hooks/domain/useExportCenterPage";
 import { useI18n } from "@/i18n";
 import { type PaperDistributionAssignmentRow, type WorkloadSummaryRow } from "@/services/optimizer.service";
@@ -45,7 +46,14 @@ export function ExportCenterPage() {
   } = useExportCenterPage();
 
   return (
-    <div className="page-stack">
+    <div className="page-stack page-stack--spacious">
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={t("navigation.pages.exports-center.title")}
+        title={t("exportCenter.title")}
+        description={t("exportCenter.subtitle")}
+      />
+
       <Card title={t("exportCenter.title")} subtitle={t("exportCenter.subtitle")}>
         <div className="summary-grid">
           {stats.map((stat) => (

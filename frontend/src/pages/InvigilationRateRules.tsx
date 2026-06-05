@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { AlertBanner } from "@/components/ui/AlertBanner";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
   invigilationSimpleRatesQueryKey,
@@ -142,23 +145,26 @@ export default function InvigilationRateRules() {
 
   return (
     <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{t("rateRules.simple.eyebrow")}</span>
-          <h2 className="page-hero__title">{t("rateRules.simple.title")}</h2>
-          <p className="page-hero__description">{t("rateRules.simple.description")}</p>
-        </div>
-        <div className="page-hero__actions">
-          <Badge variant="gold">{t("rateRules.simple.previewOnly")}</Badge>
-          {!isAdmin ? <Badge variant="blue">{t("rateRules.simple.readOnly")}</Badge> : null}
-        </div>
-      </section>
-
-      <Card
-        title={t("rateRules.simple.warningTitle")}
-        subtitle={t("rateRules.simple.warningBody")}
-        actions={<Badge variant="blue">{t("rateRules.simple.noAuthorization")}</Badge>}
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={t("rateRules.simple.eyebrow")}
+        title={t("rateRules.simple.title")}
+        description={t("rateRules.simple.description")}
+        status={
+          <>
+            <Badge variant="gold">{t("rateRules.simple.previewOnly")}</Badge>
+            {!isAdmin ? <Badge variant="blue">{t("rateRules.simple.readOnly")}</Badge> : null}
+          </>
+        }
       />
+
+      <AlertBanner
+        variant="warning"
+        title={t("rateRules.simple.warningTitle")}
+        action={<Badge variant="blue">{t("rateRules.simple.noAuthorization")}</Badge>}
+      >
+        {t("rateRules.simple.warningBody")}
+      </AlertBanner>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card
@@ -170,8 +176,7 @@ export default function InvigilationRateRules() {
             </Badge>
           }
         >
-          <label className="form-field">
-            <span>{t("rateRules.simple.amountLabel")}</span>
+          <FormField label={t("rateRules.simple.amountLabel")}>
             <input
               aria-describedby={errors.weekdayAmount ? "weekday-rate-error" : "weekday-rate-helper"}
               aria-invalid={Boolean(errors.weekdayAmount)}
@@ -190,7 +195,7 @@ export default function InvigilationRateRules() {
               {t("rateRules.simple.bahtPerSession")} · THB · PER_SESSION
             </small>
             {errors.weekdayAmount ? <p className="form-error" id="weekday-rate-error">{errors.weekdayAmount}</p> : null}
-          </label>
+          </FormField>
         </Card>
 
         <Card
@@ -202,8 +207,7 @@ export default function InvigilationRateRules() {
             </Badge>
           }
         >
-          <label className="form-field">
-            <span>{t("rateRules.simple.amountLabel")}</span>
+          <FormField label={t("rateRules.simple.amountLabel")}>
             <input
               aria-describedby={errors.weekendAmount ? "weekend-rate-error" : "weekend-rate-helper"}
               aria-invalid={Boolean(errors.weekendAmount)}
@@ -222,7 +226,7 @@ export default function InvigilationRateRules() {
               {t("rateRules.simple.bahtPerSession")} · THB · PER_SESSION
             </small>
             {errors.weekendAmount ? <p className="form-error" id="weekend-rate-error">{errors.weekendAmount}</p> : null}
-          </label>
+          </FormField>
         </Card>
       </div>
 

@@ -2,10 +2,21 @@ import { useAuditExplorer } from "@/hooks/domain/useAuditExplorer";
 import { translate } from "@/i18n";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
+
+type AuditEventRow = {
+  _id: string | number;
+  action: string;
+  actor: string;
+  id?: string | number | null;
+  table_name?: string | null;
+  timestamp: string;
+};
 
 export default function AuditExplorer() {
   const {
@@ -43,6 +54,15 @@ export default function AuditExplorer() {
       badge,
     };
   });
+  const auditColumns: Array<DataTableColumn<AuditEventRow>> = columnHeaders.map(({ key, labelKey }) => {
+    if (key === "id") {
+      return { key, label: translate(labelKey), width: "110px", render: (row) => String(row.id ?? "-") };
+    }
+    if (key === "timestamp") {
+      return { key, label: translate(labelKey), minWidth: "180px", render: (row) => new Date(row.timestamp).toLocaleString() };
+    }
+    return { key, label: translate(labelKey), minWidth: key === "action" ? "180px" : "140px" };
+  });
 
   if (loading) {
     return (
@@ -58,12 +78,11 @@ export default function AuditExplorer() {
 
   return (
     <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{consoleEyebrow}</span>
-          <h2 className="page-hero__title">{translate("navigation.pages.audit-explorer.title")}</h2>
-        </div>
-      </section>
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={consoleEyebrow}
+        title={translate("navigation.pages.audit-explorer.title")}
+      />
 
       <Card title={translate("auditEvents.tab")} subtitle={consoleEyebrow}>
         <Tabs activeKey={activeTab} items={tabItems} onChange={setActiveTab} />
@@ -76,28 +95,13 @@ export default function AuditExplorer() {
           actions={<Badge variant="navy">{auditEvents.length}</Badge>}
         >
           {auditEvents.length > 0 ? (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    {columnHeaders.map(({ key: hk, labelKey }) => (
-                      <th key={hk}>{translate(labelKey)}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditEvents.map((e) => (
-                    <tr key={e._id}>
-                      <td>{String(e.id ?? "-")}</td>
-                      <td>{e.actor}</td>
-                      <td>{e.action}</td>
-                      <td>{e.table_name || "-"}</td>
-                      <td>{new Date(e.timestamp).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={auditColumns}
+              rows={auditEvents as AuditEventRow[]}
+              rowKey={(row) => row._id}
+              tableLayout="fixed"
+              compact
+            />
           ) : (
             <EmptyState icon={<Icon name="info" />} title={translate(emptyStateKey)} />
           )}
@@ -111,17 +115,19 @@ export default function AuditExplorer() {
           actions={<Badge variant="blue">{Array.isArray(governanceEvents) ? governanceEvents.length : 0}</Badge>}
         >
           {Array.isArray(governanceEvents) && (governanceEvents as unknown[]).length > 0 ? (
-            <ul className="space-y-2">
+            <ul className="timeline-list">
               {(governanceEvents as unknown[]).map((evt: unknown, index) => {
                 const row = evt as Record<string, unknown>;
                 return (
                   <li
                     key={String(row.id ?? index)}
-                    className="border-l-4 border-blue-500 pl-4 py-2"
+                    className="timeline-list__item"
                   >
-                    <div className="font-medium">{String(row.actor ?? "-")}</div>
-                    <div className="text-sm text-gray-600">{String(row.action ?? "-")}</div>
-                    <div className="text-xs text-gray-400">
+                    <div>
+                      <strong>{String(row.actor ?? "-")}</strong>
+                      <p>{String(row.action ?? "-")}</p>
+                    </div>
+                    <div className="timeline-list__meta">
                       {new Date(String(row.timestamp ?? "")).toLocaleString()}
                     </div>
                   </li>

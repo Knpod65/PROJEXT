@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useI18n } from "@/i18n";
 import {
@@ -116,9 +119,9 @@ function AvailabilityStatusBadge({ blocked }: { blocked: boolean }) {
   const { t } = useI18n();
 
   return (
-    <span className={`room-badge ${blocked ? "room-badge--inactive" : "room-badge--active"}`}>
+    <Badge variant={blocked ? "gold" : "green"} size="sm">
       {blocked ? t("staffAvailability.status.hasBlocks") : t("common.available")}
-    </span>
+    </Badge>
   );
 }
 
@@ -270,19 +273,24 @@ export function StaffAvailabilityPage() {
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack page-stack--spacious">
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={t("staffAvailability.title")}
+        title={t("staffAvailability.title")}
+        description={t("staffAvailability.subtitle")}
+      />
+
       <Card title={t("staffAvailability.title")} subtitle={t("staffAvailability.subtitle")}>
         <div className="filter-row">
-          <label className="filter-field">
-            <span>{t("staffAvailability.filters.search")}</span>
+          <FormField label={t("staffAvailability.filters.search")}>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("staffAvailability.filters.searchPlaceholder")}
             />
-          </label>
-          <label className="filter-field">
-            <span>{t("common.unit")}</span>
+          </FormField>
+          <FormField label={t("common.unit")}>
             <select value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}>
               <option value="">{t("staffAvailability.filters.allUnits")}</option>
               {unitOptions.map((option) => (
@@ -291,9 +299,8 @@ export function StaffAvailabilityPage() {
                 </option>
               ))}
             </select>
-          </label>
-          <label className="filter-field">
-            <span>{t("staffAvailability.filters.availability")}</span>
+          </FormField>
+          <FormField label={t("staffAvailability.filters.availability")}>
             <select
               value={availabilityFilter}
               onChange={(event) => setAvailabilityFilter(event.target.value as "all" | "available" | "blocked")}
@@ -302,7 +309,7 @@ export function StaffAvailabilityPage() {
               <option value="available">{t("common.available")}</option>
               <option value="blocked">{t("staffAvailability.status.hasBlocks")}</option>
             </select>
-          </label>
+          </FormField>
         </div>
 
         {staffLoading ? (
@@ -404,10 +411,9 @@ export function StaffAvailabilityPage() {
           <div className="room-availability-layout">
             <div className="room-availability-editor">
               <div className="filter-row">
-                <label className="filter-field">
-                  <span>{t("common.date")}</span>
+                <FormField label={t("common.date")}>
                   <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
-                </label>
+                </FormField>
                 <div className="inline-actions">
                   <Button
                     type="button"
