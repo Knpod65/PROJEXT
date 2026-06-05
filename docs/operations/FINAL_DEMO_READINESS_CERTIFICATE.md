@@ -126,3 +126,11 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Separate invigilation and paper-distribution committee output categories are modeled for future validation.
 - Rate selection and the authoritative paper-distribution payable source remain open finance/admin decisions.
 - No code, active rate, payment authorization, approval/export capability, or readiness score changed.
+
+## Rate And Paper-Distribution Decision Capture Certificate Note (2026-06-05)
+
+- EMS now has docs for capturing the required rate and paper-distribution source decision before official output design.
+- Current gate remains `PENDING_FINANCE_ADMIN_REVIEW`, with decision status `DECISION_PENDING`.
+- Active rates remain unchanged; `300/500` is not confirmed for official 2/2568 payment use.
+- Official document output remains blocked until finance/admin confirms rate and paper-distribution source.
+- Payment approval/export remains unimplemented, and demo, pilot, production, and payment readiness are unchanged.

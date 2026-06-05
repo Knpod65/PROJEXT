@@ -116,3 +116,11 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Obtain the original sample image or approved row-level source for provenance and comparison.
 - Finance/admin must select the applicable rate rule and authoritative paper-distribution payable source.
 - Do not implement official output, approval, or payment authorization until the validation gate advances.
+
+## Rate And Paper-Distribution Decision Capture Backlog Note (2026-06-05)
+
+- Completed: rate/source decision source review, Thai-first decision capture form, and next implementation options note.
+- Current gate remains `PENDING_FINANCE_ADMIN_REVIEW`; the decision capture defaults to `DECISION_PENDING`.
+- Active rates are unchanged, including the current local `300/500` demo/system rate.
+- Official document output remains blocked until finance/admin confirms both rate and paper-distribution payable source.
+- Payment approval/export remains outside the backlog until the gate advances; readiness scores remain unchanged.

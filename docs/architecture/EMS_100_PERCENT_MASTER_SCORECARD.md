@@ -144,3 +144,11 @@
 - Rate evidence now has a three-way conflict: historical `120/200`, user-stated draft `150/200`, and active local demo `300/500`.
 - EMS has paper-distribution operational data, but its payable source and completeness are not validated for official output.
 - Gate remains `PENDING_FINANCE_ADMIN_REVIEW`; approval/export and readiness scores remain unchanged.
+
+## Rate And Paper-Distribution Decision Capture (2026-06-05)
+
+- Rate/source decision capture docs are now prepared for finance/admin completion.
+- Current gate remains `PENDING_FINANCE_ADMIN_REVIEW`; default decision status is `DECISION_PENDING`.
+- Active system rates are not changed; current `300/500` remains unconfirmed for official 2/2568 payment use.
+- Official document output remains blocked until both the rate and paper-distribution payable source are confirmed.
+- Payment approval/export is still not implemented, and readiness scores remain unchanged.

@@ -196,3 +196,11 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Future document-output requirements must separate invigilation and paper-distribution committee counts and amounts.
 - The applicable rate set and authoritative paper-distribution source remain unresolved.
 - No active rate, preview calculation, approval/export behavior, or readiness score changes from this alignment pass.
+
+## Rate And Paper-Distribution Decision Capture Note (2026-06-05)
+
+- EMS now has a dedicated rate/source decision capture form and implementation-options note for the 2/2568 official-style sample path.
+- The gate remains `PENDING_FINANCE_ADMIN_REVIEW`, with decision status `DECISION_PENDING`.
+- Active rates are unchanged; `300/500` is not promoted to an official 2/2568 payment rate.
+- Official document output is still blocked until rate and paper-distribution source are confirmed.
+- Payment approval/export remains unimplemented, and demo, pilot, production, and payment readiness scores are unchanged.

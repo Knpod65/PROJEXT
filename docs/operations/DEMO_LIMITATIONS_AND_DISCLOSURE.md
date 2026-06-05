@@ -118,3 +118,11 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - The sample uses `120/200`, while a user-stated prior draft uses `150/200` and the active local demo uses `300/500`.
 - Paper-distribution operational data exists, but it is not validated as an official payable source.
 - No rate was changed, no official document was generated, and payment approval/export remain unavailable.
+
+## Rate And Paper-Distribution Decision Capture Disclosure (2026-06-05)
+
+- A decision capture form now exists for selecting the rate and paper-distribution source before any official output work.
+- The gate remains `PENDING_FINANCE_ADMIN_REVIEW`, and the decision status is still `DECISION_PENDING`.
+- Active rates are unchanged; the current `300/500` demo/system rate is not confirmed as official.
+- Official document output remains blocked until both rate and paper-distribution source are confirmed.
+- Payment approval/export is still not implemented, and production readiness is unchanged.

@@ -121,3 +121,11 @@
 - Next human decisions: confirm the applicable rate set, payable paper-distribution source, category unit, and exact grouping rule.
 - Current and historical EMS data must be reconciled with an approved row-level source before output implementation.
 - Current gate remains `PENDING_FINANCE_ADMIN_REVIEW`; no active rate change, approval workflow, or official export proceeds.
+
+## Rate And Paper-Distribution Decision Capture Roadmap Update (2026-06-05)
+
+- Decision-source review, Thai-first decision capture, and next implementation options are now prepared.
+- Current gate remains `PENDING_FINANCE_ADMIN_REVIEW`; decision status remains `DECISION_PENDING`.
+- Active rates are not changed; current `300/500` remains unconfirmed for official use.
+- Official document output is still blocked until the rate set and paper-distribution payable source are confirmed.
+- Payment approval/export is not implemented, and production readiness is unchanged.
