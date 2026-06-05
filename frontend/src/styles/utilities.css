@@ -165,6 +165,13 @@
 }
 
 @media (max-width: 767px) {
+  .alert-banner,
+  .alert-banner__action,
+  .form-grid--paper {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
   .filter-bar,
   .filter-bar__fields,
   .filter-bar__actions,
