@@ -8,6 +8,7 @@ import schemas
 from auth_utils import require_staff_or_admin
 from database import get_db
 from services.invigilation_advance_batch_preview_service import build_advance_batch_preview
+from services.official_payment_document_draft_service import build_official_payment_document_draft_preview
 
 router = APIRouter()
 
@@ -29,3 +30,14 @@ def preview_advance_invigilation_batch(
         exam_type=exam_type,
     )
 
+
+@router.post("/official-document-draft-preview", response_model=schemas.OfficialPaymentDocumentDraftResponse)
+def preview_official_payment_document_draft(
+    payload: schemas.OfficialPaymentDocumentDraftRequest,
+    db: Session = Depends(get_db),
+    _current_user=Depends(require_staff_or_admin),
+):
+    return build_official_payment_document_draft_preview(
+        db,
+        payload.model_dump(),
+    )

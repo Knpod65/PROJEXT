@@ -651,6 +651,73 @@ class AdvanceInvigilationBatchPreviewResponse(BaseModel):
     rule_gaps: list[str] = Field(default_factory=list)
 
 
+class OfficialPaymentDocumentDraftManualPaperRow(BaseModel):
+    exam_date: str
+    exam_time: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    committee_count: int = Field(ge=0)
+    notes: Optional[str] = None
+
+
+class OfficialPaymentDocumentDraftRequest(BaseModel):
+    period_id: Optional[int] = None
+    academic_year: Optional[str] = "2568"
+    semester: Optional[str] = "2"
+    exam_type: Optional[str] = "final"
+    paper_distribution_rows: list[OfficialPaymentDocumentDraftManualPaperRow] = Field(default_factory=list)
+
+
+class OfficialPaymentDocumentDraftMetadata(BaseModel):
+    academic_year: Optional[str] = None
+    semester: Optional[str] = None
+    exam_type: Optional[str] = None
+    term_label: str
+    document_status: str = "DRAFT_NOT_AUTHORIZED"
+    rate_source: str
+    weekday_rate: Decimal
+    weekend_rate: Decimal
+    rate_scope: str
+    paper_distribution_source_status: str
+
+
+class OfficialPaymentDocumentDraftRow(BaseModel):
+    exam_date: str
+    normalized_exam_date: Optional[str] = None
+    time_slot: str
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    day_type: str
+    rate_amount: Decimal
+    invigilation_committee_count: int = 0
+    invigilation_compensation_amount: Decimal = Decimal("0")
+    paper_distribution_committee_count: int = 0
+    paper_distribution_compensation_amount: Decimal = Decimal("0")
+    total_compensation_amount: Decimal = Decimal("0")
+    source_notes: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class OfficialPaymentDocumentDraftTotals(BaseModel):
+    invigilation_committee_count: int = 0
+    invigilation_compensation_amount: Decimal = Decimal("0")
+    paper_distribution_committee_count: int = 0
+    paper_distribution_compensation_amount: Decimal = Decimal("0")
+    grand_total_amount: Decimal = Decimal("0")
+    row_count: int = 0
+
+
+class OfficialPaymentDocumentDraftResponse(BaseModel):
+    metadata: OfficialPaymentDocumentDraftMetadata
+    rows: list[OfficialPaymentDocumentDraftRow]
+    totals: OfficialPaymentDocumentDraftTotals
+    warnings: list[str] = Field(default_factory=list)
+    draft_only: bool = True
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+    supervisor_finance_review_required: bool = True
+
+
 class InvigilationRateRuleCreate(BaseModel):
     rate_name: str
     payment_unit: str = "PER_SESSION"
