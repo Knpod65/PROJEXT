@@ -63,3 +63,10 @@
 
 ---
 *Frontend is demo-viable with known polish and chunk debt. Pilot requires usage-driven cleanup and a11y/responsive hardening.*
+
+## UI System Alignment Note (2026-06-05)
+
+- EMS now has a documented page template standard and a small shared UI wrapper layer for page headers, alert banners, and form fields.
+- High-priority payment/document, audit, governance, operational, configuration, staff availability, export center, and dashboard surfaces were aligned to existing UI primitives.
+- Validation: `npm run build`, `npm run check:i18n`, and `npm run check:i18n:raw` passed; `check:i18n:coverage` remains blocked by the known CommonJS/ESM script mismatch.
+- Frontend score remains **76 / 100**; this polish pass does not prove accessibility, mobile, pilot, or production readiness.

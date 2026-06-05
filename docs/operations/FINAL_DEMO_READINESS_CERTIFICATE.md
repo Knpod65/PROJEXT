@@ -156,3 +156,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Backend health and frontend route checks returned HTTP `200`; authenticated visual browser smoke and screenshot capture remain blocked because Chrome automation was unavailable.
 - The page remains a draft-only preview with status `DRAFT_NOT_AUTHORIZED` and gate `PENDING_SUPERVISOR_FINANCE_REVIEW`.
 - No approval, final authorization, official export, PDF, Excel, or readiness score increase is certified.
+
+## UI System Alignment Certificate Note (2026-06-05)
+
+- A shared EMS page template and visual alignment documentation are now available.
+- Frontend build, i18n parity, and raw-string warning-mode checks passed after aligning key payment/document and operational pages.
+- No screenshots are certified from this pass.
+- This does not certify payment approval, final authorization, official export, or increased pilot/production/payment readiness.

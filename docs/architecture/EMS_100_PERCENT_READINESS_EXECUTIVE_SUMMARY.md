@@ -227,3 +227,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - HTTP smoke passed for backend health and the draft page route, but authenticated visual browser smoke and screenshot evidence remain blocked by unavailable Chrome automation.
 - The route remains `DRAFT_NOT_AUTHORIZED`; current gate is `PENDING_SUPERVISOR_FINANCE_REVIEW`.
 - No approval, payment authorization, official export, PDF, Excel, or readiness score increase is added.
+
+## UI System Alignment Note (2026-06-05)
+
+- A unified EMS page-template standard and UI validation log are now documented.
+- Critical payment/document pages and selected dashboard, audit, governance, operational, configuration, export, and staff availability surfaces were aligned to shared UI primitives.
+- Build and required i18n validation passed; manual screenshot evidence remains absent.
+- Demo polish improves, but pilot/production/payment readiness scores are unchanged.

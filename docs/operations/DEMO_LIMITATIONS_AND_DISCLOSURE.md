@@ -148,3 +148,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Backend health and draft route HTTP checks passed, but authenticated visual smoke and screenshot capture remain unavailable because Chrome automation could not attach.
 - The preview must still be disclosed as `DRAFT_NOT_AUTHORIZED` and `PENDING_SUPERVISOR_FINANCE_REVIEW`.
 - No payment approval, payment authorization, official export, PDF, Excel, or production payment readiness is available.
+
+## UI System Alignment Disclosure (2026-06-05)
+
+- EMS pages have been visually aligned around a shared minimal institutional template.
+- This is a presentation consistency pass only; it does not add payment approval, final authorization, PDF/Excel/export, rate changes, or production readiness.
+- Build and required i18n checks passed, but screenshot evidence was not captured in this pass.
+- Demo operators should still disclose draft/preview status on payment and document pages.

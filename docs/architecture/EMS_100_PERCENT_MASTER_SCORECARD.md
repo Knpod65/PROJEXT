@@ -175,3 +175,10 @@
 - Backend health and the Vite route returned HTTP `200`; authenticated visual browser smoke and screenshot capture remain blocked because Chrome automation could not attach.
 - Current gate is `PENDING_SUPERVISOR_FINANCE_REVIEW`; the preview remains `DRAFT_NOT_AUTHORIZED`.
 - Approval, final authorization, official export/PDF/Excel, active-rate changes, and readiness score increases remain unavailable.
+
+## UI System Alignment Note (2026-06-05)
+
+- EMS page-template docs and a validation log now record the system-wide visual consistency pass.
+- Shared page header, alert banner, and form-field wrappers were added; key payment/document and operational pages were aligned to existing cards, tables, badges, and buttons.
+- Frontend build and required i18n checks passed; screenshot evidence was not captured.
+- No payment approval, final authorization, official export, payment calculation, rate logic, or readiness score increase is added.

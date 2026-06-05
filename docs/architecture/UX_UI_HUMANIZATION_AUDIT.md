@@ -124,3 +124,10 @@ UX/UI humanization readiness is **good enough for rehearsal and controlled pilot
 - canonical route/page cleanup
 - raw-string cleanup
 - focused cognitive-load reduction on the largest operational pages
+
+## UI System Alignment Note (2026-06-05)
+
+- A system-wide UI alignment pass introduced a shared page header, alert banner, form-field wrapper, and supporting CSS conventions.
+- Payment/document, audit, governance, operational health, platform configuration, export center, staff availability, and dashboard surfaces were aligned toward one EMS page template.
+- Frontend build and required i18n checks passed; optional i18n coverage remains blocked by pre-existing CommonJS/ESM tooling debt.
+- Screenshot evidence was not captured in this pass, and production/pilot readiness scores are not increased.
