@@ -141,3 +141,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Demo presentation may cite test/build readiness, but must also disclose that screenshot evidence was not captured because browser tooling was unavailable.
 - The optional i18n coverage script remains tooling debt and is not evidence of payment feature failure.
 - The feature is still a draft preview only and must not be presented as approved payment output.
+
+## Official Payment Document Draft Manual Smoke Disclosure (2026-06-05)
+
+- A supervisor/finance review checklist and decision gate are now available for the draft preview.
+- Backend health and draft route HTTP checks passed, but authenticated visual smoke and screenshot capture remain unavailable because Chrome automation could not attach.
+- The preview must still be disclosed as `DRAFT_NOT_AUTHORIZED` and `PENDING_SUPERVISOR_FINANCE_REVIEW`.
+- No payment approval, payment authorization, official export, PDF, Excel, or production payment readiness is available.

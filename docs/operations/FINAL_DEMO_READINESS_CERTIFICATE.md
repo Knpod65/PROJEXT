@@ -149,3 +149,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - `httpx` is declared for router-test reproducibility.
 - Browser screenshot evidence is not attached because the in-app browser was unavailable; HTTP route fallback returned `200`.
 - The certificate remains unchanged for pilot/production/payment readiness.
+
+## Official Payment Document Draft Manual Smoke Certificate Note (2026-06-05)
+
+- Manual smoke results, a Thai-first review checklist, and a decision gate are prepared for supervisor/finance review.
+- Backend health and frontend route checks returned HTTP `200`; authenticated visual browser smoke and screenshot capture remain blocked because Chrome automation was unavailable.
+- The page remains a draft-only preview with status `DRAFT_NOT_AUTHORIZED` and gate `PENDING_SUPERVISOR_FINANCE_REVIEW`.
+- No approval, final authorization, official export, PDF, Excel, or readiness score increase is certified.

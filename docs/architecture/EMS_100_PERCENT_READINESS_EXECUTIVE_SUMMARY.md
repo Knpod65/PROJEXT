@@ -220,3 +220,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Optional i18n coverage remains blocked by pre-existing CommonJS/ESM script debt.
 - Browser screenshot evidence was not captured because the in-app browser target was unavailable; HTTP route fallback passed.
 - No readiness score increase applies.
+
+## Official Payment Document Draft Manual Smoke Package Note (2026-06-05)
+
+- The supervisor/finance review checklist and decision gate are now ready for the draft preview.
+- HTTP smoke passed for backend health and the draft page route, but authenticated visual browser smoke and screenshot evidence remain blocked by unavailable Chrome automation.
+- The route remains `DRAFT_NOT_AUTHORIZED`; current gate is `PENDING_SUPERVISOR_FINANCE_REVIEW`.
+- No approval, payment authorization, official export, PDF, Excel, or readiness score increase is added.

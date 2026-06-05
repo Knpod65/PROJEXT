@@ -139,3 +139,11 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Remaining: optional i18n coverage tooling repair as a separate non-feature debt item.
 - Browser screenshot capture remains unavailable in this session; route serving was checked by HTTP fallback.
 - No final approval, authorization, export, or readiness uplift is created by validation.
+
+## Official Payment Document Draft Manual Smoke Package Backlog Note (2026-06-05)
+
+- Completed: manual smoke results doc, Thai-first supervisor/finance review checklist, and decision gate.
+- Verified by HTTP fallback: backend health and the draft route are reachable.
+- Remaining: authenticated visual browser smoke and screenshot capture after Chrome/browser automation is available.
+- Next required human action: supervisor/finance review selects one allowed decision and validates the authoritative paper-distribution source.
+- No approval, authorization, official export, active-rate change, teaching workload, Work H, opencourse, or coinstruc work is added.

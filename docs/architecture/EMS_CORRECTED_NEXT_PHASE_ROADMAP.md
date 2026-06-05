@@ -145,3 +145,10 @@
 - Optional i18n coverage script repair is deferred as tooling debt.
 - Screenshot evidence is absent because browser tooling was unavailable; route serving was confirmed by HTTP fallback.
 - The next roadmap gate remains supervisor/finance review, not payment approval or export.
+
+## Official Payment Document Draft Manual Smoke Roadmap Update (2026-06-05)
+
+- The manual smoke package and supervisor/finance review checklist are ready.
+- HTTP fallback confirms the backend and draft route are reachable; authenticated visual smoke and screenshot capture remain blocked by unavailable Chrome automation.
+- Current status moves through `PENDING_SUPERVISOR_FINANCE_REVIEW`, with allowed outcomes documented in the decision gate.
+- The next phase is human review and authoritative paper-source validation, not final approval, payment authorization, or official export.

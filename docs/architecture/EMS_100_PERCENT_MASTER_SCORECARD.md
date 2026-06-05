@@ -168,3 +168,10 @@
 - Browser screenshot capture was blocked because the in-app browser target was unavailable; Vite route fallback returned HTTP `200`.
 - The optional i18n coverage script remains pre-existing tooling debt and is not counted as feature failure.
 - Readiness scores remain unchanged.
+
+## Official Payment Document Draft Manual Smoke Package Note (2026-06-05)
+
+- Manual smoke results, a Thai-first supervisor/finance checklist, and a decision gate are now documented for the draft preview.
+- Backend health and the Vite route returned HTTP `200`; authenticated visual browser smoke and screenshot capture remain blocked because Chrome automation could not attach.
+- Current gate is `PENDING_SUPERVISOR_FINANCE_REVIEW`; the preview remains `DRAFT_NOT_AUTHORIZED`.
+- Approval, final authorization, official export/PDF/Excel, active-rate changes, and readiness score increases remain unavailable.
