@@ -206,6 +206,15 @@ export const appPages: AppPageConfig[] = [
     navGroup: "operations",
   },
   {
+    key: "official-payment-draft",
+    title: "Official Payment Draft",
+    description: "Preview the 2/2568 official-style payment table without payment authorization.",
+    path: "/invigilation-payment-document-draft",
+    icon: "request_quote",
+    roles: ["admin", "staff"],
+    navGroup: "operations",
+  },
+  {
     key: "historical-schedules",
     title: "Historical Schedule Review",
     description: "Compare optimized baseline and final adjusted schedule imports for the historical 2/2568 final exam period.",

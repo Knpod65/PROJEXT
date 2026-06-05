@@ -57,6 +57,7 @@ const AuditExplorerPage = lazy(() => import("@/pages/AuditExplorer"));
 const WorkloadDutyAnalytics = lazy(() => import("@/pages/WorkloadDutyAnalytics"));
 const AdvanceInvigilationBatchPreview = lazy(() => import("@/pages/AdvanceInvigilationBatchPreview"));
 const InvigilationRateRules = lazy(() => import("@/pages/InvigilationRateRules"));
+const OfficialPaymentDocumentDraft = lazy(() => import("@/pages/OfficialPaymentDocumentDraft"));
 
 interface GuardedPageProps {
   roles?: UserRole[];
@@ -355,6 +356,14 @@ export function App() {
               element={
                 <GuardedPage roles={["admin", "staff"]}>
                   <InvigilationRateRules />
+                </GuardedPage>
+              }
+            />
+            <Route
+              path="/invigilation-payment-document-draft"
+              element={
+                <GuardedPage roles={["admin", "staff"]}>
+                  <OfficialPaymentDocumentDraft />
                 </GuardedPage>
               }
             />
