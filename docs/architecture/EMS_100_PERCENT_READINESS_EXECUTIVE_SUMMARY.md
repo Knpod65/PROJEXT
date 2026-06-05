@@ -234,3 +234,11 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Critical payment/document pages and selected dashboard, audit, governance, operational, configuration, export, and staff availability surfaces were aligned to shared UI primitives.
 - Build and required i18n validation passed; manual screenshot evidence remains absent.
 - Demo polish improves, but pilot/production/payment readiness scores are unchanged.
+
+## UI Screenshot Review And Residual Defect Triage (2026-06-05)
+
+- All 10 automated UI alignment screenshots were reviewed against the EMS page template.
+- Result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; P0 `0`, P1 `0`, P2 `3`.
+- Remaining P2 issues are limited to non-blocking raw-looking labels/status text on three operational pages.
+- Payment/document screenshots remain safe: `PREVIEW_ONLY` and `DRAFT_NOT_AUTHORIZED` are visible where required.
+- No code, payment logic, approval/export/final authorization, or readiness score changed.

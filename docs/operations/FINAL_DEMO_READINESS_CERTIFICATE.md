@@ -163,3 +163,11 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Frontend build, i18n parity, and raw-string warning-mode checks passed after aligning key payment/document and operational pages.
 - No screenshots are certified from this pass.
 - This does not certify payment approval, final authorization, official export, or increased pilot/production/payment readiness.
+
+## UI Screenshot Review Certificate Note (2026-06-05)
+
+- Ten UI alignment screenshots were reviewed and triaged.
+- Result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; P0 `0`, P1 `0`, P2 `3`.
+- All reviewed pages are accepted/no-fix-now for demo review; three polish-only label defects remain open.
+- Payment/document evidence remains draft/preview only and does not authorize payment.
+- No code, payment logic, approval/export/final authorization, or readiness score changed.

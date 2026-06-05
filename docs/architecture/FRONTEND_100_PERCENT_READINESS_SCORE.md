@@ -70,3 +70,11 @@
 - High-priority payment/document, audit, governance, operational, configuration, staff availability, export center, and dashboard surfaces were aligned to existing UI primitives.
 - Validation: `npm run build`, `npm run check:i18n`, and `npm run check:i18n:raw` passed; `check:i18n:coverage` remains blocked by the known CommonJS/ESM script mismatch.
 - Frontend score remains **76 / 100**; this polish pass does not prove accessibility, mobile, pilot, or production readiness.
+
+## UI Screenshot Review And Residual Defect Triage (2026-06-05)
+
+- Automated screenshots for all 10 aligned routes were reviewed from captured evidence.
+- Result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; P0 `0`, P1 `0`, P2 `3`.
+- Residual P2 items are limited to raw-looking hero/status labels on platform config, governance, and operational health.
+- Code changed: NO. Payment logic changed: NO. Approval/export/final authorization added: NO.
+- Frontend score remains **76 / 100**; production readiness is not increased by this docs-only triage.

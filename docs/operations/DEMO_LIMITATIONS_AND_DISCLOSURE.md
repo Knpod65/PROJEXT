@@ -155,3 +155,11 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - This is a presentation consistency pass only; it does not add payment approval, final authorization, PDF/Excel/export, rate changes, or production readiness.
 - Build and required i18n checks passed, but screenshot evidence was not captured in this pass.
 - Demo operators should still disclose draft/preview status on payment and document pages.
+
+## UI Screenshot Review Disclosure (2026-06-05)
+
+- Automated screenshot evidence for 10 aligned routes was reviewed after capture.
+- Result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; P0 `0`, P1 `0`, P2 `3`.
+- Remaining P2 items do not block demo review but should be polished later.
+- Payment/document pages must still be presented as preview/draft only; no final payment approval, payment authorization, official export, PDF, or Excel output is available.
+- No code, payment logic, rate logic, approval/export, or production readiness changed.

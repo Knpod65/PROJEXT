@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-05  
 **Scope**: system-wide frontend UI/template alignment pass  
-**Status**: frontend validation passed; automated screenshot evidence captured
+**Status**: frontend validation passed; automated screenshot evidence captured; screenshot review passed with minor issues
 
 ## Pages Fixed
 
@@ -34,6 +34,7 @@
 | Local backend health | PASS, `http://127.0.0.1:8000/api/health` returned HTTP `200` |
 | Local frontend route smoke | PASS, all ten target routes returned HTTP `200` |
 | Automated screenshot capture | PASS, 10 of 10 target routes captured through the Chrome extension browser client |
+| Screenshot review and residual defect triage | PASS_WITH_MINOR_ISSUES, P0 `0`, P1 `0`, P2 `3` |
 
 Build retained the existing large main chunk warning. This pass did not introduce a backend change.
 
@@ -45,14 +46,14 @@ Build retained the existing large main chunk warning. This pass did not introduc
 - Local Playwright fallback: BLOCKED, no importable `playwright` or `@playwright/test`; CLI existed but browser executable was not installed.
 - Installed Chrome/Edge direct headless fallback: DIAGNOSTIC_ONLY, not used as final evidence because authenticated Chrome extension capture succeeded.
 - Screenshots captured: YES, 10 route screenshots under `docs/operations/demo-smoke-screenshots/`.
-- Human visual approval: still pending; automated screenshots do not mark human QA as passed.
+- Screenshot review result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; no P0/P1 defects were found.
 
 ## Known Residual Issues
 
 - Some large legacy/custom pages still contain manual tables or raw-string candidates and should be cleaned in smaller follow-up passes.
 - `check:i18n:coverage` still needs a separate tooling repair.
 - Platform configuration remains read-only and partially wired by design; this pass does not claim new backend readiness.
-- Human visual review is still recommended for subjective polish, Thai wrapping, and subtle overflow checks.
+- Residual P2 items: raw key-like platform-config eyebrow, raw key-like governance eyebrow, and raw technical operational-health status chip text.
 
 ## Safety Confirmation
 
