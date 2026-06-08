@@ -203,3 +203,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - `Education_Student_Quality` is a configurable default suggestion, not a permanent hardcoded sole source.
 - Settings support draft preparation and traceability only; they do not authorize payment, final truth, official PDF/Excel/export, or review bypass.
 - Active simple demo/test rates remain unchanged, and production/payment readiness is not increased.
+
+## Payment Document Settings Live Smoke Disclosure (2026-06-08)
+
+- Live API and browser smoke verified settings persistence, role access, and three real screenshot evidence files.
+- Admin can edit draft settings; staff can review saved settings without a save action; unrelated roles remain blocked.
+- The official draft displays settings as context only and remains `DRAFT_NOT_AUTHORIZED`.
+- No payment calculation, approval, final authorization, official export/PDF/Excel, active simple-rate, or production-readiness change is introduced.

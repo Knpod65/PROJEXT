@@ -236,3 +236,10 @@
 - Settings do not authorize payment, create final truth, enable official export/PDF/Excel, or bypass document review.
 - Active simple demo/test rates are unchanged.
 - Demo, pilot, production, and payment readiness scores remain unchanged.
+
+## Payment Document Settings Live Smoke Note (2026-06-08)
+
+- Live API and Chrome-browser smoke passed for configurable payment-document settings.
+- Screenshots confirm the admin settings page, staff read-only view, and official-draft settings-source context.
+- Admin persistence and role boundaries passed; authorization/export flags remained false.
+- Payment calculations, active simple rates, approval, final authorization, official export/PDF/Excel, and readiness scores remain unchanged.

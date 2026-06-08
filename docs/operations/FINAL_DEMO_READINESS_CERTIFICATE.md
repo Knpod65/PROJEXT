@@ -210,3 +210,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Configurable payment-document settings are now implemented for term-specific draft rates and paper-distribution responsible group/person.
 - The settings foundation is certified only as draft-preparation configuration, not final payment truth.
 - No payment approval, final authorization, official PDF/Excel/export, active-rate change, or readiness score increase is certified.
+
+## Payment Document Settings Live Smoke Certificate Note (2026-06-08)
+
+- Live API and Chrome-browser smoke passed for payment-document settings and the draft-page settings-source context.
+- Screenshot evidence confirms admin edit capability and staff read-only behavior.
+- Settings responses retained false payment-authorization and final-export flags.
+- No payment calculation, payment approval, final authorization, official export/PDF/Excel, active simple-rate, or readiness score change is certified.

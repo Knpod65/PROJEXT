@@ -284,3 +284,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The settings page supports reviewer-level edits and staff read-only review.
 - Settings are preparation context only; they do not authorize payment, final truth, official export/PDF/Excel, or review bypass.
 - Active simple rates and readiness scores remain unchanged.
+
+## Payment Document Settings Live Smoke Note (2026-06-08)
+
+- Live API smoke confirmed term settings persistence and intended admin/staff/blocked-role permissions.
+- Real browser evidence confirms the settings page and draft settings-source context render correctly.
+- `DRAFT_NOT_AUTHORIZED` remains visible, and settings do not alter the draft calculation yet.
+- No payment approval, final authorization, official export/PDF/Excel, active-rate change, or readiness score increase is added.

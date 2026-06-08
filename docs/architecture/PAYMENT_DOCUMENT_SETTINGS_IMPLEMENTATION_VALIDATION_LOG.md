@@ -37,7 +37,7 @@ Raw-string scan still reports warning-mode candidates from existing page/import 
 
 ## Browser Smoke
 
-Not captured in this implementation pass. The new page and draft-page context card passed frontend build and i18n validation. Screenshot capture can be handled in a later visual-evidence pass if required.
+Live Chrome-browser smoke was completed in the later evidence pass. Real screenshots confirm the admin settings page, staff read-only page, and draft-page settings-source context. The draft remains `DRAFT_NOT_AUTHORIZED`, and no page-scoped approval/export/PDF/Excel control was found.
 
 ## Safety Confirmation
 
@@ -58,3 +58,11 @@ Not captured in this implementation pass. The new page and draft-page context ca
 ## Next Action
 
 Connect approved settings as the source for the official payment draft preview calculation and source display, if supervisor/finance approves that integration.
+
+## Live Smoke Evidence Update (2026-06-08)
+
+- Live API smoke passed for admin persistence, staff read-only access, and teacher/print-shop blocking.
+- Every relevant settings API response kept `payment_authorization_enabled=false` and `final_export_enabled=false`.
+- Real Chrome screenshots confirm the admin settings page, staff read-only page, and draft-page settings-source context.
+- The draft page remains `DRAFT_NOT_AUTHORIZED`, and its calculation behavior is unchanged.
+- Code changed: NO. Readiness scores changed: NO.

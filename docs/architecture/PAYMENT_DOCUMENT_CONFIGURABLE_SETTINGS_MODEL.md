@@ -1,8 +1,8 @@
 # Payment Document Configurable Settings Model
 
 **Date**: 2026-06-08  
-**Status**: model scaffold only  
-**Current implementation decision**: `DOCS_ONLY_MODEL_NOW`
+**Status**: persistent draft-preparation settings implemented
+**Current implementation decision**: runtime settings implemented; draft calculation integration remains pending approval
 
 ## Purpose
 
@@ -60,3 +60,10 @@ Default conceptual group:
 - Settings support weekday/weekend rates, configurable paper-distribution responsible group/person, updater traceability, and status.
 - `Education_Student_Quality` is the default suggested group, not a permanent hardcoded sole source.
 - Settings remain draft-preparation context only and do not authorize payment, final truth, official PDF/Excel/export, or review bypass.
+
+## Live Smoke Evidence Update (2026-06-08)
+
+- Term `2/2568` settings persisted as `120/200`, `Education_Student_Quality`, and `ACTIVE_FOR_DRAFT_PREVIEW`.
+- Admin write, staff read-only, and blocked unrelated-role behavior matched the model.
+- The draft-page context card displays settings without changing draft calculations.
+- Settings remain non-authorizing and non-exporting; readiness scores remain unchanged.
