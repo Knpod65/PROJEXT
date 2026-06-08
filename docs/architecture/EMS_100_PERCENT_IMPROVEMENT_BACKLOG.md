@@ -169,3 +169,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Review records support comments, reviewer identity, review history, and non-authorizing statuses.
 - Remaining: supervisor/finance validates the workflow in use, then separately decides whether draft-export design should proceed.
 - Still blocked: final payment approval, final authorization, official PDF/Excel/export, authoritative paper-distribution source truth, and readiness uplift.
+
+## Payment Document Settings Implementation Backlog Note (2026-06-08)
+
+- Completed: persistent configurable settings for term-specific draft rates and paper-distribution responsible group/person.
+- Staff can read settings; reviewer-level roles can save draft-preparation settings.
+- Remaining: approved connection of settings into the official payment draft preview calculation/source selection.
+- Still blocked: final payment approval, final authorization, official PDF/Excel/export, final payment truth, and readiness uplift.

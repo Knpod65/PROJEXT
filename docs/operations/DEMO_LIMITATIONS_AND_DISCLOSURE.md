@@ -196,3 +196,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Admin can record reviewer status; staff can record preparer/comment review notes but cannot accept the draft for export design.
 - `ACCEPTED_FOR_DRAFT_EXPORT` must be explained as draft-export-design readiness only, not payment authorization.
 - No final payment approval, official export, PDF, Excel, final authorization, final truth, rate change, or production readiness is added.
+
+## Payment Document Settings Disclosure (2026-06-08)
+
+- EMS now has configurable term-specific settings for draft payment-document rates and paper-distribution responsible group/person.
+- `Education_Student_Quality` is a configurable default suggestion, not a permanent hardcoded sole source.
+- Settings support draft preparation and traceability only; they do not authorize payment, final truth, official PDF/Excel/export, or review bypass.
+- Active simple demo/test rates remain unchanged, and production/payment readiness is not increased.

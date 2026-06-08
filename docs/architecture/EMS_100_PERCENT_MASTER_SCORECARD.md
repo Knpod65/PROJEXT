@@ -228,3 +228,11 @@
 - Screenshot evidence now exists for the panel, history, and `ACCEPTED_FOR_DRAFT_EXPORT` state.
 - Role smoke confirmed admin reviewer behavior, staff comment-only behavior, and teacher/print-shop blocking.
 - `ACCEPTED_FOR_DRAFT_EXPORT` remains non-authorizing; no payment approval, final authorization, official export/PDF/Excel, rate change, or readiness score increase is added.
+
+## Payment Document Settings Implementation Note (2026-06-08)
+
+- Configurable term-specific payment-document settings now support weekday/weekend draft rates and paper-distribution responsible group/person.
+- `Education_Student_Quality` is a configurable default suggestion, not a permanent sole source.
+- Settings do not authorize payment, create final truth, enable official export/PDF/Excel, or bypass document review.
+- Active simple demo/test rates are unchanged.
+- Demo, pilot, production, and payment readiness scores remain unchanged.

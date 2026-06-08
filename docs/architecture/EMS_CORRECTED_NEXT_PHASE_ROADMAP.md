@@ -174,3 +174,10 @@
 - The next safe roadmap branch is supervisor/finance use of the review workflow and a later decision on draft-export design.
 - `ACCEPTED_FOR_DRAFT_EXPORT` can route to draft-export design only; it is not final authorization.
 - Official payment approval, final authorization, PDF/Excel/export, active-rate changes, and production/payment readiness remain unchanged.
+
+## Payment Document Settings Roadmap Update (2026-06-08)
+
+- Configurable payment-document settings are now implemented for term-specific draft rates and paper-distribution responsible group/person.
+- The settings layer is separate from active simple demo/test rates, review records, payment truth, and export logic.
+- The next safe branch is connecting approved settings as the source for the official draft preview, if supervisor/finance approves.
+- Official payment approval, final authorization, PDF/Excel/export, active-rate changes, and production/payment readiness remain unchanged.

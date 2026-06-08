@@ -277,3 +277,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The evidence pass captured three real browser screenshots under `docs/operations/demo-smoke-screenshots/`.
 - Admin/staff/teacher/print-shop behavior matched the implemented review permissions.
 - Payment approval, final authorization, official export/PDF/Excel, and readiness scores remain unchanged.
+
+## Payment Document Settings Implementation Note (2026-06-08)
+
+- Persistent payment-document settings are now available for term-specific draft rates and paper-distribution responsibility.
+- The settings page supports reviewer-level edits and staff read-only review.
+- Settings are preparation context only; they do not authorize payment, final truth, official export/PDF/Excel, or review bypass.
+- Active simple rates and readiness scores remain unchanged.
