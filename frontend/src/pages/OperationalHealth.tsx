@@ -105,7 +105,7 @@ export default function OperationalHealth() {
           actions={
             analyticsBand ? (
               <Badge variant={analyticsBand === "red" ? "crimson" : analyticsBand === "amber" ? "gold" : "green"}>
-                {analyticsBand}
+                {translate(`dashboard.band.${analyticsBand}`)}
               </Badge>
             ) : null
           }
