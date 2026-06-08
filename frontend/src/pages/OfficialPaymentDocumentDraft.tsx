@@ -10,6 +10,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useOfficialPaymentDraftPreview } from "@/hooks/domain/useOfficialPaymentDraftPreview";
+import { usePaymentDocumentSettings } from "@/hooks/domain/usePaymentDocumentSettings";
 import { usePaymentDocumentReviews } from "@/hooks/domain/usePaymentDocumentReviews";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/store/auth.store";
@@ -58,6 +59,12 @@ function formatReviewDate(value: string | null) {
   return parsed.toLocaleString();
 }
 
+function amountToCurrency(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === "") return "-";
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? formatCurrency(parsed) : String(value);
+}
+
 function reviewStatusVariant(status: PaymentDocumentReviewStatus) {
   if (status === "ACCEPTED_FOR_DRAFT_EXPORT") return "green";
   if (status === "REVISIONS_REQUESTED" || status === "REJECTED_REDESIGN_REQUIRED") return "orange";
@@ -84,8 +91,10 @@ export default function OfficialPaymentDocumentDraft() {
     () => `ADVANCE_PAYMENT_DRAFT_SUMMARY:${academicYear || "unknown"}:${semester || "unknown"}:${examType || "unknown"}:${periodId || "all"}`,
     [academicYear, examType, periodId, semester],
   );
+  const settingsTerm = useMemo(() => `${semester || "2"}/${academicYear || "2568"}`, [academicYear, semester]);
   const reviewTerm = useMemo(() => `${semester || "-"} / ${academicYear || "-"}`, [academicYear, semester]);
   const reviewRecords = usePaymentDocumentReviews(documentId);
+  const paymentSettings = usePaymentDocumentSettings(settingsTerm);
 
   const draftColumns = useMemo<Array<DataTableColumn<OfficialPaymentDraftRow>>>(() => [
     {
@@ -236,6 +245,36 @@ export default function OfficialPaymentDocumentDraft() {
       >
         {t("paymentDraft.warning.body")}
       </AlertBanner>
+
+      <Card
+        title={t("paymentDraft.settings.title")}
+        subtitle={t("paymentDraft.settings.subtitle")}
+        actions={
+          <Badge variant={paymentSettings.data?.configuration_status === "CONFIGURED" ? "green" : "gold"}>
+            {paymentSettings.data?.configuration_status ?? "PENDING_CONFIGURATION"}
+          </Badge>
+        }
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="summary-box">
+            <span>{t("paymentDraft.settings.term")}</span>
+            <strong>{settingsTerm}</strong>
+          </div>
+          <div className="summary-box">
+            <span>{t("paymentDraft.settings.weekdayRate")}</span>
+            <strong>{amountToCurrency(paymentSettings.data?.weekday_rate)}</strong>
+          </div>
+          <div className="summary-box">
+            <span>{t("paymentDraft.settings.weekendRate")}</span>
+            <strong>{amountToCurrency(paymentSettings.data?.weekend_rate)}</strong>
+          </div>
+          <div className="summary-box">
+            <span>{t("paymentDraft.settings.group")}</span>
+            <strong>{paymentSettings.data?.paper_distribution_responsible_group ?? "Education_Student_Quality"}</strong>
+          </div>
+        </div>
+        <p className="mt-4 text-sm text-gray-500">{t("paymentDraft.settings.nonCalculationNote")}</p>
+      </Card>
 
       <Card
         title={t("paymentDraft.review.title")}

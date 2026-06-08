@@ -126,6 +126,16 @@ export function canManagePaymentDocumentReview(user: UserMe | null | undefined):
   return hasAnyRole(user, "admin", "esq_head", "secretary");
 }
 
+/** Read term-specific payment document preparation settings. */
+export function canViewPaymentDocumentSettings(user: UserMe | null | undefined): boolean {
+  return hasAnyRole(user, "admin", "esq_head", "secretary", "staff");
+}
+
+/** Modify term-specific payment document preparation settings. */
+export function canManagePaymentDocumentSettings(user: UserMe | null | undefined): boolean {
+  return hasAnyRole(user, "admin", "esq_head", "secretary");
+}
+
 /** Manage or view external (non-standard) exam entries. */
 export function canAccessExternalExams(
   user: UserMe | null | undefined,
