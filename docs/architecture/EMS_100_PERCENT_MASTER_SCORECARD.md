@@ -258,3 +258,13 @@
 - Export is not implemented. Payment approval is not added. Final authorization is not added.
 - Production, pilot, demo, and payment readiness scores remain unchanged.
 - Next human action: authorized supervisor/finance reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate.
+
+## Draft Export Gate Re-Evaluation Note (2026-06-08)
+
+- Review acceptance captured: YES — review_id 4, `ACCEPTED_FOR_DRAFT_EXPORT`, reviewer `นางสาว มาธวี เมืองศรี` (admin), with Thai acceptance comment.
+- All 10 gate preconditions passed. Gate advanced to `ALLOW_DRAFT_EXPORT_DESIGN`.
+- Re-evaluation documented in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_GATE_REEVALUATION.md`.
+- Export is NOT implemented. Payment approval is NOT added. Final authorization is NOT added.
+- `payment_authorization_enabled=false` and `final_export_enabled=false` remain confirmed.
+- Production, pilot, demo, and payment readiness scores remain unchanged.
+- Next action: implement draft export per test matrix and gate requirements.

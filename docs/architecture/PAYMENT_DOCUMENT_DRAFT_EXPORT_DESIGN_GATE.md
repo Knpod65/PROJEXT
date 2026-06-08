@@ -1,8 +1,8 @@
 # Payment Document Draft Export Design Gate
 
 **Date**: 2026-06-08
-**Status**: `DRAFT_EXPORT_DESIGN_PENDING`
-**Recommended gate decision**: `HOLD_PENDING_REVIEW_ACCEPTANCE`
+**Status**: `ALLOW_DRAFT_EXPORT_DESIGN` (updated 2026-06-08 after re-evaluation)
+**Recommended gate decision**: `ALLOW_DRAFT_EXPORT_DESIGN`
 
 ## Purpose
 
@@ -17,8 +17,8 @@ This document does NOT implement export. It defines the gate.
 | Export implemented | NO |
 | Payment approval added | NO |
 | Final authorization added | NO |
-| Draft export design gate status | `DRAFT_EXPORT_DESIGN_PENDING` |
-| Recommended decision | `HOLD_PENDING_REVIEW_ACCEPTANCE` |
+| Draft export design gate status | `ALLOW_DRAFT_EXPORT_DESIGN` |
+| Recommended decision | `ALLOW_DRAFT_EXPORT_DESIGN` |
 
 ## Allowed Future Export Concept
 
@@ -141,20 +141,20 @@ The following items remain blocked and must NOT be implemented as part of any dr
 
 ## Current Recommended Decision
 
-**`HOLD_PENDING_REVIEW_ACCEPTANCE`**
+**`ALLOW_DRAFT_EXPORT_DESIGN`** (updated 2026-06-08 after re-evaluation pass)
 
-Reason: All settings, calculation, and safety conditions are met. However, no human reviewer has yet set the review status to `ACCEPTED_FOR_DRAFT_EXPORT`, the paper-distribution responsible source documentation is incomplete, and the export format decision is pending.
+All 10 preconditions passed. Review acceptance captured as review_id 4 with Thai comment and `ACCEPT_FOR_DRAFT_EXPORT_DESIGN` decision by admin reviewer `นางสาว มาธวี เมืองศรี`. Full re-evaluation recorded in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_GATE_REEVALUATION.md`.
 
 ## Next Human Action Required
 
-The next action is for the authorized supervisor or finance reviewer to:
+Gate is now open for draft export design. The next action is for the development team to:
 
-1. Review the draft payment document at `/invigilation-payment-document-draft`.
-2. Add a review comment with observations.
-3. Set the review status to `ACCEPTED_FOR_DRAFT_EXPORT` if the draft format is acceptable for designing a later export workflow.
-4. Confirm the paper-distribution responsible group/person in payment-document settings.
+1. Implement a backend draft export endpoint per test matrix requirements.
+2. Implement a frontend export button/trigger on the draft page.
+3. Write and pass all 57 tests in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_TEST_MATRIX.md`.
+4. Produce a validation log confirming file formats, safety flags, Thai text rendering, and role blocking.
 
-Only after these human actions may the gate decision be reconsidered.
+Official payment export, final authorization, payment approval, and payment release remain blocked pending a separate final authorization gate.
 
 ## What This Gate Does NOT Do
 

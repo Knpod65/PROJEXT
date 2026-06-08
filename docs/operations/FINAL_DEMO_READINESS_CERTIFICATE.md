@@ -234,3 +234,14 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - `payment_authorization_enabled=false` and `final_export_enabled=false` remain certified safety boundaries.
 - Production, pilot, demo, and payment readiness scores remain unchanged.
 - Next human action: authorized reviewer sets `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate; only then may export design proceed.
+
+## Draft Export Gate Re-Evaluation Certificate Note (2026-06-08)
+
+- Gate re-evaluation completed. All 10 preconditions passed via live API verification.
+- Review acceptance certified: review_id 4, reviewer `นางสาว มาธวี เมืองศรี` (admin), status `ACCEPTED_FOR_DRAFT_EXPORT`, Thai acceptance comment, decision `ACCEPT_FOR_DRAFT_EXPORT_DESIGN`.
+- Gate advanced to `ALLOW_DRAFT_EXPORT_DESIGN` per `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_GATE_REEVALUATION.md`.
+- Draft export is STILL NOT implemented and is NOT certified.
+- Payment approval NOT certified. Final authorization NOT certified.
+- `payment_authorization_enabled=false` and `final_export_enabled=false` remain certified.
+- `DRAFT_NOT_AUTHORIZED` remains the document status.
+- Production, pilot, demo, and payment readiness scores remain unchanged.

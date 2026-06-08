@@ -2,8 +2,8 @@
 # Payment Document Draft Export Requirements Checklist
 
 **วันที่ / Date**: 2026-06-08
-**สถานะ / Status**: `DRAFT_EXPORT_DESIGN_PENDING`
-**การตัดสินใจที่แนะนำ / Recommended decision**: `HOLD_PENDING_REVIEW_ACCEPTANCE`
+**สถานะ / Status**: `ALLOW_DRAFT_EXPORT_DESIGN` (updated 2026-06-08)
+**การตัดสินใจที่แนะนำ / Recommended decision**: `ALLOW_DRAFT_EXPORT_DESIGN`
 
 ---
 
@@ -21,9 +21,9 @@ Export is not implemented. Payment approval is not added. Final authorization is
 
 | รายการ | สถานะ | หมายเหตุ |
 |---|---|---|
-| สถานะการตรวจทานอยู่ที่ `ACCEPTED_FOR_DRAFT_EXPORT` หรือสูงกว่า | ยังไม่ผ่าน / NOT YET | ต้องได้รับการดำเนินการจากผู้ตรวจสอบ |
-| มีความคิดเห็นของผู้ตรวจสอบในระบบ | ยังไม่ผ่าน / NOT YET | ต้องกรอกข้อมูล |
-| บันทึกชื่อและบทบาทของผู้ตรวจสอบแล้ว | ยังไม่ผ่าน / NOT YET | ต้องกรอกข้อมูล |
+| สถานะการตรวจทานอยู่ที่ `ACCEPTED_FOR_DRAFT_EXPORT` หรือสูงกว่า | ผ่าน / PASS | review_id 4, 2026-06-08 |
+| มีความคิดเห็นของผู้ตรวจสอบในระบบ | ผ่าน / PASS | Thai comment recorded |
+| บันทึกชื่อและบทบาทของผู้ตรวจสอบแล้ว | ผ่าน / PASS | นางสาว มาธวี เมืองศรี, admin |
 
 **เงื่อนไขที่จำเป็น / Required conditions:**
 

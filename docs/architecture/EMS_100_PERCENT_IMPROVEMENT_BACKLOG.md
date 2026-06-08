@@ -191,3 +191,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Remaining: human reviewer sets `ACCEPTED_FOR_DRAFT_EXPORT`, paper-distribution source is confirmed, export format is decided, then all 10 gate preconditions can be re-evaluated.
 - Export is not implemented. Final authorization is still blocked. Payment approval is not added.
 - Readiness uplift not applied. Production, pilot, and payment readiness scores unchanged.
+
+## Draft Export Gate Re-Evaluation Backlog Note (2026-06-08)
+
+- Completed: gate re-evaluation pass. All 10 preconditions verified via live API. Review acceptance confirmed (review_id 4). Gate advanced to `ALLOW_DRAFT_EXPORT_DESIGN`. Re-evaluation in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_GATE_REEVALUATION.md`.
+- Remaining: implement backend draft export endpoint + frontend export button/trigger; write and pass all 57 tests in the test matrix; produce validation log.
+- Export is NOT yet implemented. Final authorization still blocked. Payment approval NOT added.
+- Readiness uplift not applied. Production, pilot, and payment readiness scores unchanged.

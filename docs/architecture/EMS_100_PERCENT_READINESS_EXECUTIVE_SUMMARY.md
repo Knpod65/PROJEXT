@@ -305,3 +305,12 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Export is not implemented. Final authorization is still blocked. Payment approval is not added.
 - Production, pilot, and payment readiness scores remain unchanged.
 - Next human action: reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate, then export design may be planned.
+
+## Draft Export Gate Re-Evaluation Note (2026-06-08)
+
+- Gate re-evaluation completed. Review acceptance confirmed via live API (review_id 4).
+- All 10 preconditions passed. Gate advanced to `ALLOW_DRAFT_EXPORT_DESIGN`.
+- Full re-evaluation in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_GATE_REEVALUATION.md`.
+- Export is NOT yet implemented. Final authorization still blocked. Payment approval NOT added.
+- Production, pilot, and payment readiness scores remain unchanged.
+- Next step: implement draft export per test matrix and gate requirements document.

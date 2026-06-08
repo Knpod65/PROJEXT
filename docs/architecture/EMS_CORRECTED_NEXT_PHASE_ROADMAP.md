@@ -198,3 +198,11 @@
 - Export is not implemented. Final authorization is still blocked. Payment approval is not added.
 - Production readiness, payment readiness, and active rates unchanged.
 - Next human action: reviewer sets `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate.
+
+## Draft Export Gate Re-Evaluation Roadmap Update (2026-06-08)
+
+- Gate re-evaluation completed. All 10 preconditions passed. Gate advanced to `ALLOW_DRAFT_EXPORT_DESIGN`.
+- Stage 7 (Export And Report Package — draft-only) may now begin for DRAFT EXPORT ONLY.
+- Official payment export, final authorization, payment approval, and payment release remain blocked.
+- Next safe roadmap action: implement backend draft export endpoint + frontend export trigger; write all 57 gate test cases; validate before merging.
+- Production readiness, payment readiness, and active rates unchanged.

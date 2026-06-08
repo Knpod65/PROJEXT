@@ -227,3 +227,12 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Production, pilot, and payment readiness scores are unchanged.
 - Demo operators must disclose: export is not available; the page remains `DRAFT_NOT_AUTHORIZED`; final authorization is still blocked.
 - Next human action: authorized supervisor/finance reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` at `/invigilation-payment-document-draft` if the draft format is appropriate.
+
+## Draft Export Gate Re-Evaluation Disclosure (2026-06-08)
+
+- Gate re-evaluation completed. Review acceptance confirmed via live API (review_id 4, reviewer `นางสาว มาธวี เมืองศรี`). Gate advanced to `ALLOW_DRAFT_EXPORT_DESIGN`.
+- Draft export is STILL NOT implemented. No export button, PDF, Excel, or export endpoint has been added.
+- Payment approval is NOT added. Final authorization is NOT added.
+- `DRAFT_NOT_AUTHORIZED` remains the document status.
+- Demo operators must still disclose: export is not yet available; page is `DRAFT_NOT_AUTHORIZED`; final authorization still blocked.
+- Production, pilot, and payment readiness scores are unchanged.
