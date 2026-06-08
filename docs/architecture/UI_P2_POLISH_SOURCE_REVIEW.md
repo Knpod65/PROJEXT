@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-08  
 **Scope**: targeted frontend display polish for three known P2 UI defects  
-**Status**: validated by frontend build and required i18n checks
+**Status**: validated by frontend build, required i18n checks, and route smoke
 
 ## Source Review
 
@@ -46,6 +46,8 @@ The prior review accepted all ten aligned routes for demo review, with no P0/P1 
 | `npm run check:i18n` | PASS, `en=1874`, `th=1874` |
 | `npm run check:i18n:raw` | PASS, warning-mode raw candidate scan remains noisy |
 | Backend validation | Not required; backend files were not changed |
+| Route HTTP smoke | PASS, `/platform-config`, `/governance`, and `/operational-health` returned HTTP `200` |
+| Final UI QA state | `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW` |
 | Route screenshot refresh | Not captured in this pass |
 
 ## Safety Confirmation

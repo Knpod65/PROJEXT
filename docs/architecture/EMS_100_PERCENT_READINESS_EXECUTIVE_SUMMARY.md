@@ -246,5 +246,6 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 ## Targeted P2 UI Polish Note (2026-06-08)
 
 - The three non-blocking UI label/status defects from screenshot review were fixed and validated by frontend build plus required i18n checks.
+- Reconciliation route smoke passed for the three affected pages, setting UI QA state to `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - Changes were limited to frontend display/i18n: platform-config eyebrow, governance eyebrow, and operational-health localized health band label.
 - No backend, payment logic, approval/export/final authorization, or readiness score changed.

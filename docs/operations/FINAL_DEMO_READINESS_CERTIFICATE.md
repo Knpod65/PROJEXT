@@ -175,5 +175,6 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 ## Targeted P2 UI Polish Certificate Note (2026-06-08)
 
 - The three open P2 polish defects were fixed in frontend display/i18n only and validated with frontend build plus required i18n checks.
+- Reconciliation route smoke passed for `/platform-config`, `/governance`, and `/operational-health`; final UI QA state is `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - Platform configuration and governance eyebrows now use localized labels; operational-health analytics badge now uses localized band text.
 - No backend, payment logic, rate logic, approval, official export, PDF, Excel, final authorization, or readiness score changed.

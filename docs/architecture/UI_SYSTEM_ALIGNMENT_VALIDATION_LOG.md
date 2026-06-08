@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-05  
 **Scope**: system-wide frontend UI/template alignment pass  
-**Status**: frontend validation passed; automated screenshot evidence captured; screenshot review passed with minor issues
+**Status**: frontend validation passed; automated screenshot evidence captured; P2 polish reconciled for supervisor review
 
 ## Pages Fixed
 
@@ -38,6 +38,8 @@
 | Targeted P2 polish build, 2026-06-08 | PASS, existing Vite large chunk warning remains |
 | Targeted P2 polish i18n parity, 2026-06-08 | PASS, `en=1874`, `th=1874` |
 | Targeted P2 polish raw scan, 2026-06-08 | PASS, warning-mode raw candidate scan remains noisy |
+| Targeted P2 route smoke, 2026-06-08 | PASS, `/platform-config`, `/governance`, and `/operational-health` returned HTTP `200` |
+| Final UI QA reconciliation state, 2026-06-08 | `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW` |
 
 Build retained the existing large main chunk warning. This pass did not introduce a backend change.
 
@@ -49,7 +51,7 @@ Build retained the existing large main chunk warning. This pass did not introduc
 - Local Playwright fallback: BLOCKED, no importable `playwright` or `@playwright/test`; CLI existed but browser executable was not installed.
 - Installed Chrome/Edge direct headless fallback: DIAGNOSTIC_ONLY, not used as final evidence because authenticated Chrome extension capture succeeded.
 - Screenshots captured: YES, 10 route screenshots under `docs/operations/demo-smoke-screenshots/`.
-- Screenshot review result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; no P0/P1 defects were found.
+- Screenshot review result after reconciliation: `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`; no P0/P1 defects were found and the three P2 items are validated.
 
 ## Known Residual Issues
 

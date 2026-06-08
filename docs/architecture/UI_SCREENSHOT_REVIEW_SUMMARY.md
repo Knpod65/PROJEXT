@@ -2,7 +2,7 @@
 
 **Date/time**: 2026-06-05 18:15:00 +07:00  
 **Review source**: `docs/operations/demo-smoke-screenshots/ui-alignment-*.png`  
-**Overall visual QA result**: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`
+**Overall visual QA result**: `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`
 
 ## Summary
 
@@ -15,6 +15,7 @@
 | P2 polish defects | 3 |
 | P2 defects validated in targeted follow-up | 3 |
 | Open P2 defects after targeted follow-up | 0 |
+| Supervisor-review readiness state | `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW` |
 
 ## Residual Defect Summary
 
@@ -22,7 +23,7 @@
 - `/governance`: raw key-like hero eyebrow `GOVERNANCE.EYEBROW`.
 - `/operational-health`: raw technical status chip text `red`.
 
-Follow-up on 2026-06-08: the three P2 label/status issues were fixed and validated by frontend build plus required i18n checks. Refreshed screenshots were not captured in that pass.
+Follow-up on 2026-06-08: the three P2 label/status issues were fixed and validated by frontend build plus required i18n checks. Reconciliation route smoke confirmed `/platform-config`, `/governance`, and `/operational-health` returned HTTP `200`. Refreshed screenshots were not captured in that pass.
 
 ## Payment Safety Confirmation
 

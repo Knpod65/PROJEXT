@@ -167,5 +167,6 @@ Any external system integration issues (con-1) are explicitly excluded from this
 ## Targeted P2 UI Polish Disclosure (2026-06-08)
 
 - The three known raw-looking label/status P2 items were fixed and validated by frontend build plus required i18n checks.
+- Reconciliation route smoke passed for the three affected pages; final UI QA state is `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - This was a display/i18n polish pass only; no backend, payment logic, rate logic, approval/export, final authorization, or production readiness changed.
 - Payment/document pages must still be presented as preview/draft only.

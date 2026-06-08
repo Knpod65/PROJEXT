@@ -2,7 +2,7 @@
 
 **Date/time**: 2026-06-05 18:15:00 +07:00
 **Source**: screenshot review after EMS UI alignment pass
-**Status**: No P0/P1 defects found from screenshot review; three P2 polish items validated by targeted frontend build/i18n pass on 2026-06-08.
+**Status**: No P0/P1 defects found from screenshot review; three P2 polish items validated by targeted frontend build/i18n and route-smoke pass on 2026-06-08.
 
 ## Defect Register
 
@@ -19,5 +19,6 @@
 - P2 polish defects from screenshot review: `3`.
 - P2 polish defects validated in targeted follow-up: `3`.
 - Open P0/P1/P2 defects from this register: `0`.
+- Final UI QA reconciliation state: `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - Code fixes were limited to frontend display/i18n only.
 - Recommended next action: proceed to supervisor/finance review or the next feature gate; capture refreshed visual evidence later only if required.

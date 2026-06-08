@@ -2,7 +2,7 @@
 
 **Date/time**: 2026-06-05 18:15:00 +07:00
 **Review source**: automated Chrome screenshot evidence from commit `39f02dc`
-**Overall result**: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; targeted P2 label/status polish validated on 2026-06-08
+**Overall result**: `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`; targeted P2 label/status polish validated and route-smoked on 2026-06-08
 
 ## Route Evidence
 
@@ -28,5 +28,7 @@
 - P2 polish defects from original screenshot review: `3`.
 - P2 polish defects validated in targeted follow-up: `3`.
 - Open P2 defects after targeted follow-up: `0`.
+- Supervisor-review readiness state: `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
+- Reconciliation route smoke on 2026-06-08: `/platform-config`, `/governance`, and `/operational-health` returned HTTP `200`.
 - Payment/document pages remain draft/preview evidence only and are not payment authorization.
 - Recommended next action: proceed to supervisor/finance review or the next feature gate; capture refreshed visual evidence later only if needed.
