@@ -22,10 +22,24 @@ export interface OfficialPaymentDraftMetadata {
   term_label: string;
   document_status: "DRAFT_NOT_AUTHORIZED";
   rate_source: string;
-  weekday_rate: number;
-  weekend_rate: number;
+  weekday_rate: number | null;
+  weekend_rate: number | null;
   rate_scope: string;
   paper_distribution_source_status: string;
+  settings_source_status: "CONFIGURED" | "PENDING_SETTINGS" | "INCOMPLETE_SETTINGS";
+  settings_term: string | null;
+  settings_status: string | null;
+  settings_weekday_rate: number | null;
+  settings_weekend_rate: number | null;
+  currency: string;
+  payment_unit: string;
+  paper_distribution_responsible_group: string | null;
+  paper_distribution_responsible_person: string | null;
+  calculation_status:
+    | "CALCULATED_FROM_SETTINGS"
+    | "BLOCKED_PENDING_SETTINGS"
+    | "BLOCKED_INCOMPLETE_SETTINGS";
+  settings_issues: string[];
 }
 
 export interface OfficialPaymentDraftRow {
@@ -35,22 +49,22 @@ export interface OfficialPaymentDraftRow {
   start_time: string | null;
   end_time: string | null;
   day_type: "WEEKDAY" | "WEEKEND" | "UNKNOWN";
-  rate_amount: number;
+  rate_amount: number | null;
   invigilation_committee_count: number;
-  invigilation_compensation_amount: number;
+  invigilation_compensation_amount: number | null;
   paper_distribution_committee_count: number;
-  paper_distribution_compensation_amount: number;
-  total_compensation_amount: number;
+  paper_distribution_compensation_amount: number | null;
+  total_compensation_amount: number | null;
   source_notes: string[];
   warnings: string[];
 }
 
 export interface OfficialPaymentDraftTotals {
   invigilation_committee_count: number;
-  invigilation_compensation_amount: number;
+  invigilation_compensation_amount: number | null;
   paper_distribution_committee_count: number;
-  paper_distribution_compensation_amount: number;
-  grand_total_amount: number;
+  paper_distribution_compensation_amount: number | null;
+  grand_total_amount: number | null;
   row_count: number;
 }
 

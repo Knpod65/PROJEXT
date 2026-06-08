@@ -95,6 +95,30 @@ export default function OfficialPaymentDocumentDraft() {
   const reviewTerm = useMemo(() => `${semester || "-"} / ${academicYear || "-"}`, [academicYear, semester]);
   const reviewRecords = usePaymentDocumentReviews(documentId);
   const paymentSettings = usePaymentDocumentSettings(settingsTerm);
+  const settingsSourceStatus = data?.metadata.settings_source_status
+    ?? (paymentSettings.data?.configuration_status === "PENDING_CONFIGURATION"
+      ? "PENDING_SETTINGS"
+      : paymentSettings.data?.status === "ACTIVE_FOR_DRAFT_PREVIEW"
+        ? "CONFIGURED"
+        : "INCOMPLETE_SETTINGS");
+  const settingsStatus = data?.metadata.settings_status ?? paymentSettings.data?.status ?? null;
+  const settingsWeekdayRate = data?.metadata.settings_weekday_rate ?? paymentSettings.data?.weekday_rate;
+  const settingsWeekendRate = data?.metadata.settings_weekend_rate ?? paymentSettings.data?.weekend_rate;
+  const settingsGroup = data?.metadata.paper_distribution_responsible_group
+    ?? paymentSettings.data?.paper_distribution_responsible_group
+    ?? null;
+  const settingsPerson = data?.metadata.paper_distribution_responsible_person
+    ?? paymentSettings.data?.paper_distribution_responsible_person
+    ?? null;
+  const settingsCurrency = data?.metadata.currency ?? paymentSettings.data?.currency ?? "THB";
+  const settingsUnit = data?.metadata.payment_unit ?? paymentSettings.data?.payment_unit ?? "PER_PERSON_SESSION";
+  const settingsIssues = data?.metadata.settings_issues ?? [];
+  const calculationStatus = data?.metadata.calculation_status
+    ?? (settingsSourceStatus === "CONFIGURED"
+      ? "CALCULATED_FROM_SETTINGS"
+      : settingsSourceStatus === "INCOMPLETE_SETTINGS"
+        ? "BLOCKED_INCOMPLETE_SETTINGS"
+        : "BLOCKED_PENDING_SETTINGS");
 
   const draftColumns = useMemo<Array<DataTableColumn<OfficialPaymentDraftRow>>>(() => [
     {
@@ -250,31 +274,59 @@ export default function OfficialPaymentDocumentDraft() {
         title={t("paymentDraft.settings.title")}
         subtitle={t("paymentDraft.settings.subtitle")}
         actions={
-          <Badge variant={paymentSettings.data?.configuration_status === "CONFIGURED" ? "green" : "gold"}>
-            {paymentSettings.data?.configuration_status ?? "PENDING_CONFIGURATION"}
+          <Badge variant={settingsSourceStatus === "CONFIGURED" ? "green" : "gold"}>
+            {settingsSourceStatus}
           </Badge>
         }
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="summary-box">
             <span>{t("paymentDraft.settings.term")}</span>
-            <strong>{settingsTerm}</strong>
+            <strong>{data?.metadata.settings_term ?? settingsTerm}</strong>
           </div>
           <div className="summary-box">
             <span>{t("paymentDraft.settings.weekdayRate")}</span>
-            <strong>{amountToCurrency(paymentSettings.data?.weekday_rate)}</strong>
+            <strong>{amountToCurrency(settingsWeekdayRate)}</strong>
           </div>
           <div className="summary-box">
             <span>{t("paymentDraft.settings.weekendRate")}</span>
-            <strong>{amountToCurrency(paymentSettings.data?.weekend_rate)}</strong>
+            <strong>{amountToCurrency(settingsWeekendRate)}</strong>
           </div>
           <div className="summary-box">
             <span>{t("paymentDraft.settings.group")}</span>
-            <strong>{paymentSettings.data?.paper_distribution_responsible_group ?? "Education_Student_Quality"}</strong>
+            <strong>{settingsGroup ?? "-"}</strong>
+          </div>
+          <div className="summary-box">
+            <span>{t("paymentDraft.settings.person")}</span>
+            <strong>{settingsPerson ?? "-"}</strong>
+          </div>
+          <div className="summary-box">
+            <span>{t("paymentDraft.settings.unit")}</span>
+            <strong>{settingsCurrency} / {settingsUnit}</strong>
+          </div>
+          <div className="summary-box">
+            <span>{t("paymentDraft.settings.status")}</span>
+            <strong>{settingsStatus ?? "-"}</strong>
+          </div>
+          <div className="summary-box">
+            <span>{t("paymentDraft.settings.calculationStatus")}</span>
+            <strong>{calculationStatus}</strong>
           </div>
         </div>
-        <p className="mt-4 text-sm text-gray-500">{t("paymentDraft.settings.nonCalculationNote")}</p>
+        <p className="mt-4 text-sm text-gray-500">{t("paymentDraft.settings.calculationNote")}</p>
       </Card>
+
+      {settingsSourceStatus !== "CONFIGURED" ? (
+        <AlertBanner
+          variant="warning"
+          title={t(`paymentDraft.settings.warning.${settingsSourceStatus}.title`)}
+          action={<Badge variant="gold">{calculationStatus}</Badge>}
+        >
+          {settingsIssues.length
+            ? settingsIssues.join(" ")
+            : t(`paymentDraft.settings.warning.${settingsSourceStatus}.body`)}
+        </AlertBanner>
+      ) : null}
 
       <Card
         title={t("paymentDraft.review.title")}
