@@ -116,6 +116,16 @@ export function canManageOperationalWork(user: UserMe | null | undefined): boole
   return hasAnyRole(user, "admin", "staff");
 }
 
+/** Comment on draft payment documents. */
+export function canCommentOnPaymentDocumentReview(user: UserMe | null | undefined): boolean {
+  return hasAnyRole(user, "admin", "staff", "esq_head", "secretary");
+}
+
+/** Set supervisor/finance review decisions on draft payment documents. */
+export function canManagePaymentDocumentReview(user: UserMe | null | undefined): boolean {
+  return hasAnyRole(user, "admin", "esq_head", "secretary");
+}
+
 /** Manage or view external (non-standard) exam entries. */
 export function canAccessExternalExams(
   user: UserMe | null | undefined,

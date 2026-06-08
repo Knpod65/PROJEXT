@@ -10,11 +10,24 @@ import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useOfficialPaymentDraftPreview } from "@/hooks/domain/useOfficialPaymentDraftPreview";
+import { usePaymentDocumentReviews } from "@/hooks/domain/usePaymentDocumentReviews";
 import { useI18n } from "@/i18n";
+import { useAuth } from "@/store/auth.store";
 import type { OfficialPaymentDraftManualPaperRow, OfficialPaymentDraftRow } from "@/types/officialPaymentDraft";
+import type { PaymentDocumentReviewRecord, PaymentDocumentReviewStatus } from "@/types/paymentDocumentReview";
 import { formatCurrency } from "@/utils/format";
+import { canCommentOnPaymentDocumentReview, canManagePaymentDocumentReview } from "@/utils/permissions";
 
 type EditablePaperRow = OfficialPaymentDraftManualPaperRow & { local_id: string };
+
+const REVIEW_STATUS_OPTIONS: PaymentDocumentReviewStatus[] = [
+  "DRAFT_READY_FOR_REVIEW",
+  "UNDER_REVIEW",
+  "REVISIONS_REQUESTED",
+  "ACCEPTED_FOR_DRAFT_EXPORT",
+  "REJECTED_REDESIGN_REQUIRED",
+  "FINAL_AUTHORIZATION_REQUIRED",
+];
 
 function newPaperRow(): EditablePaperRow {
   return {
@@ -38,14 +51,41 @@ function toRequestRow(row: EditablePaperRow): OfficialPaymentDraftManualPaperRow
   };
 }
 
+function formatReviewDate(value: string | null) {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString();
+}
+
+function reviewStatusVariant(status: PaymentDocumentReviewStatus) {
+  if (status === "ACCEPTED_FOR_DRAFT_EXPORT") return "green";
+  if (status === "REVISIONS_REQUESTED" || status === "REJECTED_REDESIGN_REQUIRED") return "orange";
+  if (status === "FINAL_AUTHORIZATION_REQUIRED") return "crimson";
+  if (status === "UNDER_REVIEW") return "blue";
+  return "gold";
+}
+
 export default function OfficialPaymentDocumentDraft() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [periodId, setPeriodId] = useState("");
   const [academicYear, setAcademicYear] = useState("2568");
   const [semester, setSemester] = useState("2");
   const [examType, setExamType] = useState("final");
   const [paperRows, setPaperRows] = useState<EditablePaperRow[]>([newPaperRow()]);
   const { data, isError, isLoading, preview } = useOfficialPaymentDraftPreview();
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewDecision, setReviewDecision] = useState("");
+  const [reviewStatus, setReviewStatus] = useState<PaymentDocumentReviewStatus>("DRAFT_READY_FOR_REVIEW");
+  const canCommentReview = canCommentOnPaymentDocumentReview(user);
+  const canManageReview = canManagePaymentDocumentReview(user);
+  const documentId = useMemo(
+    () => `ADVANCE_PAYMENT_DRAFT_SUMMARY:${academicYear || "unknown"}:${semester || "unknown"}:${examType || "unknown"}:${periodId || "all"}`,
+    [academicYear, examType, periodId, semester],
+  );
+  const reviewTerm = useMemo(() => `${semester || "-"} / ${academicYear || "-"}`, [academicYear, semester]);
+  const reviewRecords = usePaymentDocumentReviews(documentId);
 
   const draftColumns = useMemo<Array<DataTableColumn<OfficialPaymentDraftRow>>>(() => [
     {
@@ -109,6 +149,41 @@ export default function OfficialPaymentDocumentDraft() {
     },
   ], [t]);
 
+  const reviewColumns = useMemo<Array<DataTableColumn<PaymentDocumentReviewRecord>>>(() => [
+    {
+      key: "review_status",
+      label: t("paymentDraft.review.status"),
+      minWidth: "170px",
+      render: (row) => (
+        <Badge variant={reviewStatusVariant(row.review_status)}>{row.review_status}</Badge>
+      ),
+    },
+    {
+      key: "comment",
+      label: t("paymentDraft.review.comment"),
+      minWidth: "260px",
+      render: (row) => row.comment || "-",
+    },
+    {
+      key: "reviewer_name",
+      label: t("paymentDraft.review.reviewer"),
+      minWidth: "160px",
+      render: (row) => row.reviewer_name || "-",
+    },
+    {
+      key: "reviewer_role",
+      label: t("paymentDraft.review.role"),
+      width: "120px",
+      render: (row) => row.reviewer_role || "-",
+    },
+    {
+      key: "reviewed_at",
+      label: t("paymentDraft.review.reviewedAt"),
+      minWidth: "180px",
+      render: (row) => formatReviewDate(row.reviewed_at || row.created_at),
+    },
+  ], [t]);
+
   const updatePaperRow = (localId: string, patch: Partial<EditablePaperRow>) => {
     setPaperRows((rows) => rows.map((row) => (row.local_id === localId ? { ...row, ...patch } : row)));
   };
@@ -123,6 +198,26 @@ export default function OfficialPaymentDocumentDraft() {
       paper_distribution_rows: manualRows,
     });
   };
+
+  const submitReview = async () => {
+    if (!canCommentReview) return;
+    const requestedStatus = canManageReview ? reviewStatus : "DRAFT_READY_FOR_REVIEW";
+    await reviewRecords.create({
+      document_id: documentId,
+      document_type: "ADVANCE_PAYMENT_DRAFT_SUMMARY",
+      term: reviewTerm,
+      review_status: requestedStatus,
+      comment: reviewComment.trim() || null,
+      decision: canManageReview ? reviewDecision.trim() || null : null,
+      prepared_by: user?.full_name || user?.username || null,
+      revision_required: requestedStatus === "REVISIONS_REQUESTED",
+      note: t("paymentDraft.review.nonAuthorizationNote"),
+    });
+    setReviewComment("");
+    setReviewDecision("");
+  };
+
+  const latestReviewStatus = reviewRecords.latestRecord?.review_status ?? "DRAFT_NOT_AUTHORIZED";
 
   return (
     <div className="page-stack page-stack--spacious">
@@ -141,6 +236,66 @@ export default function OfficialPaymentDocumentDraft() {
       >
         {t("paymentDraft.warning.body")}
       </AlertBanner>
+
+      <Card
+        title={t("paymentDraft.review.title")}
+        subtitle={t("paymentDraft.review.subtitle")}
+        actions={<Badge variant={reviewStatusVariant(latestReviewStatus)}>{latestReviewStatus}</Badge>}
+      >
+        <div className="page-stack">
+          <AlertBanner variant="warning" title={t("paymentDraft.review.safetyTitle")}>
+            {t("paymentDraft.review.safetyBody")}
+          </AlertBanner>
+          <div className="form-grid">
+            <FormField label={t("paymentDraft.review.documentId")}>
+              <input value={documentId} readOnly />
+            </FormField>
+            {canManageReview ? (
+              <FormField label={t("paymentDraft.review.status")}>
+                <select value={reviewStatus} onChange={(event) => setReviewStatus(event.target.value as PaymentDocumentReviewStatus)}>
+                  {REVIEW_STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            ) : (
+              <FormField label={t("paymentDraft.review.status")}>
+                <input value="DRAFT_READY_FOR_REVIEW" readOnly />
+              </FormField>
+            )}
+            <FormField label={t("paymentDraft.review.decision")}>
+              <input value={reviewDecision} disabled={!canManageReview} onChange={(event) => setReviewDecision(event.target.value)} placeholder={t("paymentDraft.review.decisionPlaceholder")} />
+            </FormField>
+          </div>
+          <FormField label={t("paymentDraft.review.comment")}>
+            <textarea value={reviewComment} disabled={!canCommentReview} onChange={(event) => setReviewComment(event.target.value)} placeholder={t("paymentDraft.review.commentPlaceholder")} rows={4} />
+          </FormField>
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" iconLeft={<Icon name="save" />} loading={reviewRecords.isSaving} disabled={!canCommentReview} onClick={submitReview}>
+              {t("paymentDraft.review.save")}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => void reviewRecords.refresh()} loading={reviewRecords.isLoading}>
+              {t("common.refresh")}
+            </Button>
+          </div>
+          {reviewRecords.isError ? (
+            <AlertBanner variant="danger" title={t("paymentDraft.review.errorTitle")}>
+              {t("paymentDraft.review.errorBody")}
+            </AlertBanner>
+          ) : null}
+          <DataTable
+            columns={reviewColumns}
+            rows={reviewRecords.records}
+            rowKey={(row) => row.review_id}
+            loading={reviewRecords.isLoading}
+            emptyTitle={t("paymentDraft.review.emptyTitle")}
+            emptyDescription={t("paymentDraft.review.emptyDescription")}
+            compact
+          />
+        </div>
+      </Card>
 
       <Card title={t("paymentDraft.filters.title")} subtitle={t("paymentDraft.filters.subtitle")}>
         <div className="form-grid">
