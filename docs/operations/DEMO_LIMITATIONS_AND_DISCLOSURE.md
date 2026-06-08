@@ -217,3 +217,13 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Missing/incomplete settings display counts but block monetary amounts; demo rates are not used as fallback.
 - The page remains `DRAFT_NOT_AUTHORIZED` and review-required.
 - No approval, final authorization, official export/PDF/Excel, final truth, or production-readiness increase is available.
+
+## Draft Export Design Gate Disclosure (2026-06-08)
+
+- A draft export design gate document has been created to define the exact conditions and boundaries for a future draft export workflow.
+- Current gate status: `DRAFT_EXPORT_DESIGN_PENDING`; recommended decision: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Draft export is NOT implemented. No export button, PDF generation, Excel generation, or export endpoint has been added.
+- Payment approval is NOT added. Final authorization is NOT added.
+- Production, pilot, and payment readiness scores are unchanged.
+- Demo operators must disclose: export is not available; the page remains `DRAFT_NOT_AUTHORIZED`; final authorization is still blocked.
+- Next human action: authorized supervisor/finance reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` at `/invigilation-payment-document-draft` if the draft format is appropriate.

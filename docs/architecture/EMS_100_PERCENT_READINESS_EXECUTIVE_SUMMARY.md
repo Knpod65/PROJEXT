@@ -297,3 +297,11 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Active term-specific settings now provide official draft-preview rates and responsibility context.
 - Missing/incomplete settings return an explicit blocked calculation with null amounts.
 - Review remains required; no approval, final authorization, official export/PDF/Excel, or readiness increase is added.
+
+## Draft Export Design Gate Note (2026-06-08)
+
+- Draft export design gate is now defined in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_DESIGN_GATE.md`.
+- Current gate status: `DRAFT_EXPORT_DESIGN_PENDING`; recommended decision: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Export is not implemented. Final authorization is still blocked. Payment approval is not added.
+- Production, pilot, and payment readiness scores remain unchanged.
+- Next human action: reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate, then export design may be planned.

@@ -183,3 +183,11 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Missing/incomplete settings now block money fields while preserving grouped duty counts.
 - Remaining: supervisor/finance review acceptance and a separate decision on draft-export design.
 - Approval, authorization, official export/PDF/Excel, final truth, and readiness uplift remain blocked.
+
+## Draft Export Design Gate Backlog Note (2026-06-08)
+
+- Completed: draft export design gate defined in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_DESIGN_GATE.md`; source review in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_GATE_SOURCE_REVIEW.md`; requirements checklist in `docs/operations/PAYMENT_DOCUMENT_DRAFT_EXPORT_REQUIREMENTS_CHECKLIST.md`; test matrix in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_TEST_MATRIX.md`.
+- Current gate status: `DRAFT_EXPORT_DESIGN_PENDING`; recommended decision: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Remaining: human reviewer sets `ACCEPTED_FOR_DRAFT_EXPORT`, paper-distribution source is confirmed, export format is decided, then all 10 gate preconditions can be re-evaluated.
+- Export is not implemented. Final authorization is still blocked. Payment approval is not added.
+- Readiness uplift not applied. Production, pilot, and payment readiness scores unchanged.

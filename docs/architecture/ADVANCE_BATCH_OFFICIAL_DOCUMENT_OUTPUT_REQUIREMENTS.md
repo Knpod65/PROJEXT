@@ -61,6 +61,14 @@ This specification aligns EMS terminology and data requirements with a user-tran
 
 No Excel, PDF, payment report, approval action, or official export is implemented by this document.
 
+## 2026-06-08 Draft Export Design Gate Update
+
+- Draft export design gate document created: `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_DESIGN_GATE.md`.
+- Current gate status: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Export is not implemented. Payment approval is not added. Final authorization is not added.
+- Production readiness unchanged.
+- Next human action: authorized supervisor/finance reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` at `/invigilation-payment-document-draft` if appropriate.
+
 ## 2026-06-08 Settings-Backed Draft Calculation Update
 
 - Official draft-preview amounts now use the selected term's complete `ACTIVE_FOR_DRAFT_PREVIEW` payment-document settings.

@@ -188,3 +188,13 @@
 - Missing/incomplete settings block monetary calculation without using demo/simple-rate fallback.
 - Review remains required and the next gate is draft-export design only after review acceptance.
 - Approval, final authorization, official export/PDF/Excel, active-rate changes, and readiness remain unchanged.
+
+## Draft Export Design Gate Roadmap Update (2026-06-08)
+
+- Draft export design gate is now defined: `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_DESIGN_GATE.md`.
+- Current gate status: `DRAFT_EXPORT_DESIGN_PENDING`; recommended decision: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Stage 7 (Export And Report Package) in this roadmap may only begin after the gate advances to `ALLOW_DRAFT_EXPORT_DESIGN`.
+- The gate requires: review status `ACCEPTED_FOR_DRAFT_EXPORT` set by human reviewer, paper-distribution source confirmed, export format decided, and 10 preconditions met.
+- Export is not implemented. Final authorization is still blocked. Payment approval is not added.
+- Production readiness, payment readiness, and active rates unchanged.
+- Next human action: reviewer sets `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate.

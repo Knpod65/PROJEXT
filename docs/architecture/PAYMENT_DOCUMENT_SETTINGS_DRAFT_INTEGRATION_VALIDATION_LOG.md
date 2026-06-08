@@ -50,3 +50,12 @@ Live API metadata confirmed:
 ## Next Gate
 
 Draft export design may be considered only after review acceptance. This integration does not authorize export or payment.
+
+## Draft Export Design Gate Update (2026-06-08)
+
+- Draft export design gate document created: `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_DESIGN_GATE.md`.
+- Current gate status: `DRAFT_EXPORT_DESIGN_PENDING`; recommended decision: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Export is not implemented. Payment approval is not added. Final authorization is not added.
+- All safety flags (`payment_authorization_enabled=false`, `final_export_enabled=false`, `document_status=DRAFT_NOT_AUTHORIZED`) remain in force.
+- Production readiness unchanged.
+- Next human action: authorized supervisor/finance reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` at `/invigilation-payment-document-draft` if the draft format is appropriate for export design.

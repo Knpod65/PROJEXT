@@ -224,3 +224,13 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Missing/incomplete settings block monetary calculation and preserve grouped counts.
 - `DRAFT_NOT_AUTHORIZED`, required review, and false authorization/export flags remain certified.
 - No payment approval, final authorization, official export/PDF/Excel, final truth, or readiness score increase is certified.
+
+## Draft Export Design Gate Certificate Note (2026-06-08)
+
+- Draft export design gate defined in `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_DESIGN_GATE.md`.
+- Current gate status: `DRAFT_EXPORT_DESIGN_PENDING`; recommended decision: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Draft export is NOT implemented and is NOT certified. No export button, PDF, Excel, or export endpoint is added.
+- Payment approval NOT added. Final authorization NOT added.
+- `payment_authorization_enabled=false` and `final_export_enabled=false` remain certified safety boundaries.
+- Production, pilot, demo, and payment readiness scores remain unchanged.
+- Next human action: authorized reviewer sets `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate; only then may export design proceed.

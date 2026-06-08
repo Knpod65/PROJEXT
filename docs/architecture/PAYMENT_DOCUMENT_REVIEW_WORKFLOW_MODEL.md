@@ -80,6 +80,16 @@ Define a review-before-use model for EMS payment-related draft documents. This m
 - Review status remains separate from settings status; settings do not bypass `DRAFT_NOT_AUTHORIZED` or review history.
 - Settings do not authorize payment, final export, official PDF/Excel, or final payment truth.
 
+## Draft Export Design Gate Update (2026-06-08)
+
+- Draft export design gate document created: `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_DESIGN_GATE.md`.
+- Current gate status: `DRAFT_EXPORT_DESIGN_PENDING`; recommended decision: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Ten preconditions defined for export implementation. The primary unmet condition is that a human reviewer must set the review status to `ACCEPTED_FOR_DRAFT_EXPORT`.
+- Export is not implemented. Payment approval is not added. Final authorization is not added.
+- `ACCEPTED_FOR_DRAFT_EXPORT` continues to permit design of a later draft-export workflow only; it remains non-authorizing.
+- Production readiness unchanged.
+- Next human action: authorized supervisor/finance reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate.
+
 ## Settings-Backed Calculation Update (2026-06-08)
 
 - Active draft settings may now calculate the official draft preview.

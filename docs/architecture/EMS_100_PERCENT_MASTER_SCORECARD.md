@@ -250,3 +250,11 @@
 - Missing/incomplete settings block monetary fields and do not fall back to demo rates.
 - Review, `DRAFT_NOT_AUTHORIZED`, and false authorization/export flags remain in force.
 - Production, pilot, demo, and payment readiness scores remain unchanged.
+
+## Draft Export Design Gate Note (2026-06-08)
+
+- Draft export design gate document created: `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_DESIGN_GATE.md`.
+- Current gate status: `DRAFT_EXPORT_DESIGN_PENDING`; recommended decision: `HOLD_PENDING_REVIEW_ACCEPTANCE`.
+- Export is not implemented. Payment approval is not added. Final authorization is not added.
+- Production, pilot, demo, and payment readiness scores remain unchanged.
+- Next human action: authorized supervisor/finance reviewer sets review status to `ACCEPTED_FOR_DRAFT_EXPORT` if appropriate.
