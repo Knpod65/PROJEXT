@@ -67,3 +67,10 @@ Default conceptual group:
 - Admin write, staff read-only, and blocked unrelated-role behavior matched the model.
 - The draft-page context card displays settings without changing draft calculations.
 - Settings remain non-authorizing and non-exporting; readiness scores remain unchanged.
+
+## Draft Calculation Integration Update (2026-06-08)
+
+- Complete `ACTIVE_FOR_DRAFT_PREVIEW` settings are now the official draft-preview calculation source.
+- `DRAFT_CONFIG`, `ARCHIVED`, missing, or malformed settings block monetary calculation.
+- Blocked previews retain grouped counts but return null rates and amounts.
+- Settings still do not authorize payment, final truth, review bypass, or export.

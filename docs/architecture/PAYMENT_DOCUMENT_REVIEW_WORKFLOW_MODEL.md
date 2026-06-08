@@ -79,3 +79,9 @@ Define a review-before-use model for EMS payment-related draft documents. This m
 - Term-specific payment-document settings now exist as a separate preparation configuration layer.
 - Review status remains separate from settings status; settings do not bypass `DRAFT_NOT_AUTHORIZED` or review history.
 - Settings do not authorize payment, final export, official PDF/Excel, or final payment truth.
+
+## Settings-Backed Calculation Update (2026-06-08)
+
+- Active draft settings may now calculate the official draft preview.
+- Calculation source status remains separate from review status and cannot bypass review history.
+- `ACCEPTED_FOR_DRAFT_EXPORT` remains non-authorizing and does not enable export.

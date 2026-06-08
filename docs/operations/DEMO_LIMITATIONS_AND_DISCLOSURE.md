@@ -210,3 +210,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Admin can edit draft settings; staff can review saved settings without a save action; unrelated roles remain blocked.
 - The official draft displays settings as context only and remains `DRAFT_NOT_AUTHORIZED`.
 - No payment calculation, approval, final authorization, official export/PDF/Excel, active simple-rate, or production-readiness change is introduced.
+
+## Settings-Backed Draft Integration Disclosure (2026-06-08)
+
+- The official draft preview now calculates from complete active term-specific payment-document settings.
+- Missing/incomplete settings display counts but block monetary amounts; demo rates are not used as fallback.
+- The page remains `DRAFT_NOT_AUTHORIZED` and review-required.
+- No approval, final authorization, official export/PDF/Excel, final truth, or production-readiness increase is available.

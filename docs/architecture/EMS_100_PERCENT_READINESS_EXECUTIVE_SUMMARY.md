@@ -291,3 +291,9 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Real browser evidence confirms the settings page and draft settings-source context render correctly.
 - `DRAFT_NOT_AUTHORIZED` remains visible, and settings do not alter the draft calculation yet.
 - No payment approval, final authorization, official export/PDF/Excel, active-rate change, or readiness score increase is added.
+
+## Settings-Backed Draft Integration Note (2026-06-08)
+
+- Active term-specific settings now provide official draft-preview rates and responsibility context.
+- Missing/incomplete settings return an explicit blocked calculation with null amounts.
+- Review remains required; no approval, final authorization, official export/PDF/Excel, or readiness increase is added.

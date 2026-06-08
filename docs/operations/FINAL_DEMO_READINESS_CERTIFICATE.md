@@ -217,3 +217,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Screenshot evidence confirms admin edit capability and staff read-only behavior.
 - Settings responses retained false payment-authorization and final-export flags.
 - No payment calculation, payment approval, final authorization, official export/PDF/Excel, active simple-rate, or readiness score change is certified.
+
+## Settings-Backed Draft Integration Certificate Note (2026-06-08)
+
+- Complete active term-specific settings are certified as the draft-preview calculation source.
+- Missing/incomplete settings block monetary calculation and preserve grouped counts.
+- `DRAFT_NOT_AUTHORIZED`, required review, and false authorization/export flags remain certified.
+- No payment approval, final authorization, official export/PDF/Excel, final truth, or readiness score increase is certified.

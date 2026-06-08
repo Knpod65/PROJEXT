@@ -67,3 +67,10 @@ However, these sources are not yet validated as the authoritative payable `PAPER
 6. Official metadata, signatories, and export authority are missing.
 
 The historical sample-format document cannot be fully or officially generated until these blockers are closed.
+
+## 2026-06-08 Settings Integration Update
+
+- Term-specific rates and paper-distribution responsibility now have a persistent draft-settings source.
+- The official draft preview uses only complete settings marked `ACTIVE_FOR_DRAFT_PREVIEW`.
+- Missing/incomplete settings produce an explicit calculation block rather than silently using demo rates.
+- This closes the draft calculation-source gap only; authoritative payable paper-distribution truth, official metadata, approval, authorization, and export remain unresolved.

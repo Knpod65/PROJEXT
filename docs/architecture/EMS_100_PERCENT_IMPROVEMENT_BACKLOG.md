@@ -176,3 +176,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Staff can read settings; reviewer-level roles can save draft-preparation settings.
 - Remaining: approved connection of settings into the official payment draft preview calculation/source selection.
 - Still blocked: final payment approval, final authorization, official PDF/Excel/export, final payment truth, and readiness uplift.
+
+## Settings-Backed Draft Integration Backlog Note (2026-06-08)
+
+- Completed: connect complete active term settings into official draft-preview calculations.
+- Missing/incomplete settings now block money fields while preserving grouped duty counts.
+- Remaining: supervisor/finance review acceptance and a separate decision on draft-export design.
+- Approval, authorization, official export/PDF/Excel, final truth, and readiness uplift remain blocked.

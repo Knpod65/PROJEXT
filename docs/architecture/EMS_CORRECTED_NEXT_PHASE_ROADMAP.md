@@ -181,3 +181,10 @@
 - The settings layer is separate from active simple demo/test rates, review records, payment truth, and export logic.
 - The next safe branch is connecting approved settings as the source for the official draft preview, if supervisor/finance approves.
 - Official payment approval, final authorization, PDF/Excel/export, active-rate changes, and production/payment readiness remain unchanged.
+
+## Settings-Backed Draft Integration Roadmap Update (2026-06-08)
+
+- The selected term's complete active settings now drive official draft-preview amounts.
+- Missing/incomplete settings block monetary calculation without using demo/simple-rate fallback.
+- Review remains required and the next gate is draft-export design only after review acceptance.
+- Approval, final authorization, official export/PDF/Excel, active-rate changes, and readiness remain unchanged.

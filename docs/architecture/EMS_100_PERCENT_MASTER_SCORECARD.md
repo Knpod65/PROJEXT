@@ -243,3 +243,10 @@
 - Screenshots confirm the admin settings page, staff read-only view, and official-draft settings-source context.
 - Admin persistence and role boundaries passed; authorization/export flags remained false.
 - Payment calculations, active simple rates, approval, final authorization, official export/PDF/Excel, and readiness scores remain unchanged.
+
+## Settings-Backed Draft Integration Note (2026-06-08)
+
+- Official draft-preview amounts now use complete active term-specific payment-document settings.
+- Missing/incomplete settings block monetary fields and do not fall back to demo rates.
+- Review, `DRAFT_NOT_AUTHORIZED`, and false authorization/export flags remain in force.
+- Production, pilot, demo, and payment readiness scores remain unchanged.

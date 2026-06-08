@@ -61,6 +61,14 @@ This specification aligns EMS terminology and data requirements with a user-tran
 
 No Excel, PDF, payment report, approval action, or official export is implemented by this document.
 
+## 2026-06-08 Settings-Backed Draft Calculation Update
+
+- Official draft-preview amounts now use the selected term's complete `ACTIVE_FOR_DRAFT_PREVIEW` payment-document settings.
+- Missing or incomplete settings block monetary calculation without hiding grouped duty counts.
+- Active simple demo/test rates are not used as fallback.
+- Paper-distribution responsibility is shown as configurable draft context; manual counts remain non-persistent.
+- The document remains `DRAFT_NOT_AUTHORIZED`, review-required, and non-exporting.
+
 ## 2026-06-05 Draft Preview Decision
 
 - The next implementation is an in-app official-style draft preview for term `2/2568`.
