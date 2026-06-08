@@ -189,3 +189,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Stored review records are draft-review evidence only and remain separate from payment calculation and paper-distribution truth.
 - `DRAFT_NOT_AUTHORIZED` remains the visible document status; `ACCEPTED_FOR_DRAFT_EXPORT` does not authorize payment.
 - No approval, final authorization, official PDF/Excel/export, active-rate change, or production readiness is added.
+
+## Payment Document Review Panel Live Smoke Disclosure (2026-06-08)
+
+- Live API and browser smoke verified the draft-page review panel, review history, and screenshot evidence.
+- Admin can record reviewer status; staff can record preparer/comment review notes but cannot accept the draft for export design.
+- `ACCEPTED_FOR_DRAFT_EXPORT` must be explained as draft-export-design readiness only, not payment authorization.
+- No final payment approval, official export, PDF, Excel, final authorization, final truth, rate change, or production readiness is added.

@@ -67,3 +67,9 @@ Define a review-before-use model for EMS payment-related draft documents. This m
 - Review records are stored separately from payment calculations and paper-distribution source truth.
 - `payment_authorization_enabled=false` and `final_export_enabled=false` remain invariant in review responses.
 - Final payment approval, final authorization, official export/PDF/Excel, and production payment readiness remain out of scope.
+
+## Live Smoke Update (2026-06-08)
+
+- Live API and browser smoke confirmed the review panel can store comments and display review history.
+- `ACCEPTED_FOR_DRAFT_EXPORT` was tested in the live app and remains non-authorizing.
+- No final payment approval, final authorization, official PDF/Excel/export, or final-truth behavior was observed.

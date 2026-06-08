@@ -221,3 +221,10 @@
 - Review status and comments are stored separately from payment calculation and manual paper-distribution draft inputs.
 - `DRAFT_NOT_AUTHORIZED` remains visible; `ACCEPTED_FOR_DRAFT_EXPORT` does not authorize payment or official export.
 - Payment approval, final authorization, official PDF/Excel/export, active-rate changes, teaching workload, Work H, opencourse, coinstruc, and readiness scores remain unchanged.
+
+## Payment Document Review Panel Live Smoke Note (2026-06-08)
+
+- Live API and Chrome-browser smoke passed for the payment document review panel.
+- Screenshot evidence now exists for the panel, history, and `ACCEPTED_FOR_DRAFT_EXPORT` state.
+- Role smoke confirmed admin reviewer behavior, staff comment-only behavior, and teacher/print-shop blocking.
+- `ACCEPTED_FOR_DRAFT_EXPORT` remains non-authorizing; no payment approval, final authorization, official export/PDF/Excel, rate change, or readiness score increase is added.

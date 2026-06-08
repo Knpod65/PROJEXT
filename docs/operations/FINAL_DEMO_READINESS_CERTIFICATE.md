@@ -197,3 +197,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - The feature records comments, reviewer identity, and non-authorizing review statuses only.
 - `payment_authorization_enabled=false` and `final_export_enabled=false` remain certified safety boundaries.
 - No final payment approval, final authorization, official PDF/Excel/export, active-rate change, or readiness score increase is certified.
+
+## Payment Document Review Panel Live Smoke Certificate Note (2026-06-08)
+
+- Live API and Chrome-browser smoke passed for the payment document review panel.
+- Screenshots were captured for the review panel, review history, and `ACCEPTED_FOR_DRAFT_EXPORT` state.
+- Role behavior matched the intended permissions: admin reviewer actions passed, staff acceptance was blocked, and teacher/print-shop review API access was blocked.
+- The certificate remains unchanged for pilot/production/payment readiness; no payment approval, final authorization, official export/PDF/Excel, or readiness score increase is certified.

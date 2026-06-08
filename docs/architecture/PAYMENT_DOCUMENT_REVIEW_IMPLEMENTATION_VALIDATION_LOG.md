@@ -48,3 +48,12 @@ Raw-string scan still reports warning-mode candidates from existing page/import 
 ## Browser Smoke
 
 Not captured in this validation log. Backend/frontend command validation and focused/full tests passed; browser screenshot evidence can be captured in a later visual-evidence pass if required.
+
+## Live Smoke Evidence Update (2026-06-08)
+
+- Live API smoke passed for admin create/list/update through `UNDER_REVIEW`, `REVISIONS_REQUESTED`, and `ACCEPTED_FOR_DRAFT_EXPORT`.
+- Staff could create a preparer/comment record and was blocked from `ACCEPTED_FOR_DRAFT_EXPORT` with HTTP `403`.
+- Teacher and print shop review API access were blocked with HTTP `403`; student live smoke was not available because no seeded login account exists.
+- Chrome headless with a temporary profile captured browser evidence for the review panel, history, and accepted-for-draft-export state.
+- Screenshot evidence is recorded in `docs/architecture/PAYMENT_DOCUMENT_REVIEW_PANEL_LIVE_SMOKE_RESULTS.md`.
+- Code changed: NO; payment approval/export/final authorization remain absent.

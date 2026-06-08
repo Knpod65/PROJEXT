@@ -270,3 +270,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The implementation records comments, reviewer identity, review status, and history without changing draft calculation or paper-distribution source truth.
 - Review responses keep `payment_authorization_enabled=false` and `final_export_enabled=false`.
 - No payment approval, final authorization, official export/PDF/Excel, rate change, or readiness score increase is added.
+
+## Payment Document Review Panel Live Smoke Note (2026-06-08)
+
+- Live smoke confirmed the review panel loads, saves comments, displays history, and can show `ACCEPTED_FOR_DRAFT_EXPORT`.
+- The evidence pass captured three real browser screenshots under `docs/operations/demo-smoke-screenshots/`.
+- Admin/staff/teacher/print-shop behavior matched the implemented review permissions.
+- Payment approval, final authorization, official export/PDF/Excel, and readiness scores remain unchanged.
