@@ -53,3 +53,10 @@ Default conceptual group:
 - Settings do not create official PDF/Excel/export.
 - Settings do not make manual paper-distribution rows final payable truth.
 - Active EMS rate changes remain a separate controlled configuration action.
+
+## Runtime Implementation Update (2026-06-08)
+
+- Persistent term-specific payment-document settings are implemented separately from active simple invigilation rates.
+- Settings support weekday/weekend rates, configurable paper-distribution responsible group/person, updater traceability, and status.
+- `Education_Student_Quality` is the default suggested group, not a permanent hardcoded sole source.
+- Settings remain draft-preparation context only and do not authorize payment, final truth, official PDF/Excel/export, or review bypass.

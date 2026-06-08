@@ -73,3 +73,9 @@ Define a review-before-use model for EMS payment-related draft documents. This m
 - Live API and browser smoke confirmed the review panel can store comments and display review history.
 - `ACCEPTED_FOR_DRAFT_EXPORT` was tested in the live app and remains non-authorizing.
 - No final payment approval, final authorization, official PDF/Excel/export, or final-truth behavior was observed.
+
+## Configurable Settings Update (2026-06-08)
+
+- Term-specific payment-document settings now exist as a separate preparation configuration layer.
+- Review status remains separate from settings status; settings do not bypass `DRAFT_NOT_AUTHORIZED` or review history.
+- Settings do not authorize payment, final export, official PDF/Excel, or final payment truth.
