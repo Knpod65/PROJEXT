@@ -206,3 +206,14 @@
 - Official payment export, final authorization, payment approval, and payment release remain blocked.
 - Next safe roadmap action: implement backend draft export endpoint + frontend export trigger; write all 57 gate test cases; validate before merging.
 - Production readiness, payment readiness, and active rates unchanged.
+
+## Draft Export Implementation Roadmap Update (2026-06-08)
+
+- Draft payment document Excel export is now implemented.
+- Backend endpoint: `POST /api/invigilation-advance-batch/official-document-draft-export`.
+- Frontend trigger: export button on `/invigilation-payment-document-draft` page.
+- 21 backend tests pass; 1552 total passing. Frontend build and i18n PASS.
+- Stage 7 (draft-only) is complete for the settings-backed 2/2568 payment document.
+- Official payment export, final authorization, payment approval, and payment release remain blocked.
+- Production readiness, payment readiness, and active rates unchanged.
+- Next gate: if official export is needed, a separate final authorization gate is required.

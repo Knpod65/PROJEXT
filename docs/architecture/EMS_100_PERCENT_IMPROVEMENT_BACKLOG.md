@@ -198,3 +198,13 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Remaining: implement backend draft export endpoint + frontend export button/trigger; write and pass all 57 tests in the test matrix; produce validation log.
 - Export is NOT yet implemented. Final authorization still blocked. Payment approval NOT added.
 - Readiness uplift not applied. Production, pilot, and payment readiness scores unchanged.
+
+## Draft Export Implementation Backlog Note (2026-06-08)
+
+- Completed: draft payment document Excel export endpoint + frontend trigger + 21 backend tests + validation log.
+- Backend: `POST /api/invigilation-advance-batch/official-document-draft-export`; 8-gate check; openpyxl workbook with Thai draft labels on all sheets; stateless; no DB writes.
+- Frontend: export button visible to admin/esq_head/secretary; gated on `ACCEPTED_FOR_DRAFT_EXPORT` review status; `exportOfficialPaymentDraftExcel()` service function.
+- All safety invariants confirmed: `payment_authorization_enabled=false`, `final_export_enabled=false`, `document_status=DRAFT_NOT_AUTHORIZED`.
+- Full backend test suite: 1552 PASS. Frontend build: PASS. i18n: 1953/1953 parity PASS.
+- Remaining: official payment export, final authorization, payment approval, and payment release remain blocked by separate future gate.
+- Readiness uplift not applied. Production, pilot, and payment readiness scores unchanged.

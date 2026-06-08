@@ -268,3 +268,14 @@
 - `payment_authorization_enabled=false` and `final_export_enabled=false` remain confirmed.
 - Production, pilot, demo, and payment readiness scores remain unchanged.
 - Next action: implement draft export per test matrix and gate requirements.
+
+## Draft Export Implementation Note (2026-06-08)
+
+- Draft payment document Excel export is now implemented per gate requirements.
+- Backend: `POST /api/invigilation-advance-batch/official-document-draft-export` with 8-check gate.
+- Frontend: export button on `/invigilation-payment-document-draft` for admin/esq_head/secretary when review status is `ACCEPTED_FOR_DRAFT_EXPORT`.
+- 21 new backend tests; full suite 1552 passed. Frontend build PASS. i18n 1953/1953 PASS.
+- All safety invariants remain confirmed: `payment_authorization_enabled=false`, `final_export_enabled=false`, `document_status=DRAFT_NOT_AUTHORIZED`.
+- Export is draft-labelled on every sheet; stateless; no DB writes.
+- Payment approval NOT added. Final authorization NOT added.
+- Production, pilot, demo, and payment readiness scores remain unchanged.
