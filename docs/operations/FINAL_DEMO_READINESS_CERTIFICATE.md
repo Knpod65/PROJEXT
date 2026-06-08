@@ -178,3 +178,9 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Reconciliation route smoke passed for `/platform-config`, `/governance`, and `/operational-health`; final UI QA state is `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - Platform configuration and governance eyebrows now use localized labels; operational-health analytics badge now uses localized band text.
 - No backend, payment logic, rate logic, approval, official export, PDF, Excel, final authorization, or readiness score changed.
+
+## Supervisor / Finance Review Package Certificate Note (2026-06-08)
+
+- The supervisor/finance review package is prepared for the draft 2/2568 official-style payment document.
+- UI is accepted for supervisor review, and the package provides a one-pager, decision form, talking script, quick checklist, and source review.
+- The draft remains `DRAFT_NOT_AUTHORIZED`; no payment approval, final authorization, official PDF/Excel/export, or readiness score increase is certified.

@@ -199,3 +199,10 @@
 - Reconciliation route smoke passed for `/platform-config`, `/governance`, and `/operational-health`; final UI QA state is `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - Backend, payment logic, rate logic, approval, final authorization, official export, PDF, and Excel behavior remain unchanged.
 - Demo, pilot, production, and payment readiness scores remain unchanged.
+
+## Supervisor / Finance Review Package Note (2026-06-08)
+
+- Thai-first supervisor/finance review package is prepared for the draft 2/2568 official-style payment document.
+- UI is accepted for supervisor review, but the draft remains `DRAFT_NOT_AUTHORIZED`.
+- Reviewer decision remains the next gate; paper-distribution authoritative source and final approval/export are still blocked.
+- No code, payment logic, rate logic, active-rate change, approval, final authorization, official export, PDF, Excel, or readiness score change is added.

@@ -107,3 +107,14 @@ This status is limited to in-app draft preview generation. It is not `ANSWERED_A
 This decision capture does not authorize payment.
 
 The 2026-06-05 decision permits only an in-app official-style draft preview using term-specific `120/200` and manual staff paper-distribution input. EMS must still not implement final payment approval, official payment authorization, or official export from this decision capture.
+
+## 2026-06-08 Supervisor / Finance Review Package Reference
+
+The next human review package is prepared in:
+
+- `docs/operations/EMS_PAYMENT_DOCUMENT_DRAFT_REVIEW_ONE_PAGER.md`
+- `docs/operations/SUPERVISOR_FINANCE_REVIEW_DECISION_FORM.md`
+- `docs/operations/SUPERVISOR_FINANCE_REVIEW_TALKING_SCRIPT.md`
+- `docs/operations/SUPERVISOR_FINANCE_QUICK_REVIEW_CHECKLIST.md`
+
+This package asks reviewers to confirm the rate set, authoritative paper-distribution committee source, document format, and safe next step. It does not upgrade `RATE_AND_SOURCE_CONFIRMED` beyond draft-output purposes and does not authorize payment or export.

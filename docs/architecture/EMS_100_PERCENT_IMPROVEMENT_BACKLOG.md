@@ -147,3 +147,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Remaining: authenticated visual browser smoke and screenshot capture after Chrome/browser automation is available.
 - Next required human action: supervisor/finance review selects one allowed decision and validates the authoritative paper-distribution source.
 - No approval, authorization, official export, active-rate change, teaching workload, Work H, opencourse, or coinstruc work is added.
+
+## Supervisor / Finance Review Package Backlog Note (2026-06-08)
+
+- Completed: Thai-first one-pager, decision form, talking script, quick checklist, and source review for supervisor/finance review.
+- Current gate remains `PENDING_SUPERVISOR_FINANCE_REVIEW`; no reviewer decision is prefilled.
+- Remaining: reviewer completes the decision form, confirms rate set, validates the authoritative paper-distribution source, and decides whether draft-export design may proceed later.
+- Official payment approval, final authorization, PDF/Excel/export, active-rate change, and readiness uplift remain blocked.

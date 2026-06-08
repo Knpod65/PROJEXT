@@ -64,6 +64,18 @@ Required review fields:
 - `notes`:
 - `signature`:
 
+## 2026-06-08 ชุดเอกสารสำหรับผู้บังคับบัญชา/ฝ่ายการเงิน
+
+ชุดเอกสารประกอบการตรวจทานที่อ่านง่ายสำหรับผู้ที่ไม่ใช่นักพัฒนาเตรียมไว้แล้ว:
+
+- `docs/operations/SUPERVISOR_FINANCE_REVIEW_PACKAGE_SOURCE_REVIEW.md`
+- `docs/operations/EMS_PAYMENT_DOCUMENT_DRAFT_REVIEW_ONE_PAGER.md`
+- `docs/operations/SUPERVISOR_FINANCE_REVIEW_DECISION_FORM.md`
+- `docs/operations/SUPERVISOR_FINANCE_REVIEW_TALKING_SCRIPT.md`
+- `docs/operations/SUPERVISOR_FINANCE_QUICK_REVIEW_CHECKLIST.md`
+
+สถานะ gate ยังเป็น `PENDING_SUPERVISOR_FINANCE_REVIEW` และสถานะเอกสารยังเป็น `DRAFT_NOT_AUTHORIZED` จนกว่าจะมีผลการตรวจทานจริงจากผู้มีอำนาจ
+
 Decision meaning:
 
 - `ACCEPT_DRAFT_FORMAT`: ยอมรับรูปแบบร่างเอกสารเพื่อพิจารณา workflow ร่าง export ในอนาคต แต่ยังไม่ใช่การอนุมัติจ่ายเงิน

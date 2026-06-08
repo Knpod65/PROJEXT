@@ -39,3 +39,15 @@ The gate does not authorize payment, does not create final truth, and does not p
 ## Next Human Decision
 
 Supervisor/finance must review the draft table format and decide one of the allowed outcomes. If the paper-distribution source remains unvalidated, the safe route is `HOLD_PENDING_DATA_SOURCE`.
+
+## 2026-06-08 Supervisor / Finance Review Package
+
+The review package is now prepared for non-developer supervisor/finance review:
+
+- `docs/operations/SUPERVISOR_FINANCE_REVIEW_PACKAGE_SOURCE_REVIEW.md`
+- `docs/operations/EMS_PAYMENT_DOCUMENT_DRAFT_REVIEW_ONE_PAGER.md`
+- `docs/operations/SUPERVISOR_FINANCE_REVIEW_DECISION_FORM.md`
+- `docs/operations/SUPERVISOR_FINANCE_REVIEW_TALKING_SCRIPT.md`
+- `docs/operations/SUPERVISOR_FINANCE_QUICK_REVIEW_CHECKLIST.md`
+
+Current gate remains `PENDING_SUPERVISOR_FINANCE_REVIEW`. The review package does not record acceptance, does not authorize payment, and does not permit official export.

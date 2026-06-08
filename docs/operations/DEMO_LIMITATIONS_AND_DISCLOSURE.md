@@ -170,3 +170,9 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Reconciliation route smoke passed for the three affected pages; final UI QA state is `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - This was a display/i18n polish pass only; no backend, payment logic, rate logic, approval/export, final authorization, or production readiness changed.
 - Payment/document pages must still be presented as preview/draft only.
+
+## Supervisor / Finance Review Package Disclosure (2026-06-08)
+
+- A Thai-first supervisor/finance review package is prepared for the draft payment document.
+- The package supports review and decision capture only; it does not approve payment, export, PDF, Excel, final truth, or production readiness.
+- The draft remains `DRAFT_NOT_AUTHORIZED`; reviewer decision and authoritative paper-distribution source validation remain the next human gates.

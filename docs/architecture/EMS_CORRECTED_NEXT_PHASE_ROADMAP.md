@@ -152,3 +152,10 @@
 - HTTP fallback confirms the backend and draft route are reachable; authenticated visual smoke and screenshot capture remain blocked by unavailable Chrome automation.
 - Current status moves through `PENDING_SUPERVISOR_FINANCE_REVIEW`, with allowed outcomes documented in the decision gate.
 - The next phase is human review and authoritative paper-source validation, not final approval, payment authorization, or official export.
+
+## Supervisor / Finance Review Package Roadmap Update (2026-06-08)
+
+- Supervisor/finance review package is prepared for the 2/2568 draft payment document.
+- The package is docs-only and supports human decisions on format, rates, paper-distribution source, and whether draft-export design may be planned later.
+- Current gate remains `PENDING_SUPERVISOR_FINANCE_REVIEW`; no official approval/export work may start without a real reviewer decision.
+- Production readiness, payment readiness, active rates, approval, authorization, and official export remain unchanged.

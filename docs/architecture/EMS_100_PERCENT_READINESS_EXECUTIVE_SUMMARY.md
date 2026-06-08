@@ -249,3 +249,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Reconciliation route smoke passed for the three affected pages, setting UI QA state to `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - Changes were limited to frontend display/i18n: platform-config eyebrow, governance eyebrow, and operational-health localized health band label.
 - No backend, payment logic, approval/export/final authorization, or readiness score changed.
+
+## Supervisor / Finance Review Package Note (2026-06-08)
+
+- A Thai-first review package is now ready for supervisor/finance decision-making on the draft payment document.
+- The package covers document format, rate set, paper-distribution source, draft-export readiness, and blocked authorization/export items.
+- The document remains `DRAFT_NOT_AUTHORIZED`; gate remains `PENDING_SUPERVISOR_FINANCE_REVIEW`.
+- Production readiness and all payment authorization/export capabilities remain unchanged.
