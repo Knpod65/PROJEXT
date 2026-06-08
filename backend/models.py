@@ -56,6 +56,12 @@ class InvigilationRateRuleStatus(str, enum.Enum):
     archived = "ARCHIVED"
 
 
+class PaymentDocumentSettingsStatus(str, enum.Enum):
+    draft_config = "DRAFT_CONFIG"
+    active_for_draft_preview = "ACTIVE_FOR_DRAFT_PREVIEW"
+    archived = "ARCHIVED"
+
+
 # ─── Users ───────────────────────────────────────────────────
 class User(Base):
     __tablename__ = "users"
@@ -1318,6 +1324,35 @@ class PaymentDocumentReviewRecord(Base):
 
 
 # ─── Exam Period (รอบสอบ) ────────────────────────────────────
+class PaymentDocumentSettings(Base):
+    """Term-specific settings for draft payment-document preparation only."""
+    __tablename__ = "payment_document_settings"
+
+    id                                      = Column(Integer, primary_key=True, index=True)
+    settings_id                             = Column(String(200), unique=True, nullable=False, index=True)
+    term                                    = Column(String(80), unique=True, nullable=False, index=True)
+    weekday_rate                            = Column(Numeric(12, 2), nullable=False)
+    weekend_rate                            = Column(Numeric(12, 2), nullable=False)
+    currency                                = Column(String(10), nullable=False, default="THB")
+    payment_unit                            = Column(String(80), nullable=False, default="PER_PERSON_SESSION")
+    paper_distribution_responsible_group    = Column(String(200), nullable=False)
+    paper_distribution_responsible_person   = Column(String(200), nullable=True)
+    status                                  = Column(Enum(PaymentDocumentSettingsStatus), nullable=False, default=PaymentDocumentSettingsStatus.draft_config)
+    effective_from                          = Column(Date, nullable=True)
+    effective_to                            = Column(Date, nullable=True)
+    note                                    = Column(Text, nullable=True)
+    updated_by                              = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_at                              = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    payment_authorization_enabled           = Column(Boolean, default=False, nullable=False)
+    final_export_enabled                    = Column(Boolean, default=False, nullable=False)
+
+    updater = relationship("User", foreign_keys=[updated_by])
+
+    __table_args__ = (
+        Index("ix_payment_doc_settings_status", "status"),
+    )
+
+
 class ExamPeriod(Base):
     """
     แต่ละรอบสอบ — 1 ปีมีได้ 4-5 รอบ

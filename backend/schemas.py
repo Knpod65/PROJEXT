@@ -783,6 +783,53 @@ class PaymentDocumentReviewListResponse(BaseModel):
     final_export_enabled: bool = False
 
 
+PaymentDocumentSettingsStatus = Literal[
+    "DRAFT_CONFIG",
+    "ACTIVE_FOR_DRAFT_PREVIEW",
+    "ARCHIVED",
+]
+
+
+class PaymentDocumentSettingsUpdate(BaseModel):
+    term: str = Field(min_length=1, max_length=80)
+    weekday_rate: Decimal
+    weekend_rate: Decimal
+    currency: str = "THB"
+    payment_unit: str = "PER_PERSON_SESSION"
+    paper_distribution_responsible_group: str = Field(min_length=1, max_length=200)
+    paper_distribution_responsible_person: Optional[str] = Field(default=None, max_length=200)
+    status: PaymentDocumentSettingsStatus = "DRAFT_CONFIG"
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    note: Optional[str] = None
+
+
+class PaymentDocumentSettingsOut(BaseModel):
+    settings_id: str
+    term: str
+    weekday_rate: Optional[Decimal] = None
+    weekend_rate: Optional[Decimal] = None
+    currency: str = "THB"
+    payment_unit: str = "PER_PERSON_SESSION"
+    paper_distribution_responsible_group: str
+    paper_distribution_responsible_person: Optional[str] = None
+    status: str
+    configuration_status: str
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    note: Optional[str] = None
+    updated_by: Optional[int] = None
+    updated_at: Optional[datetime] = None
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
+class PaymentDocumentSettingsListResponse(BaseModel):
+    settings: list[PaymentDocumentSettingsOut] = Field(default_factory=list)
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
 class InvigilationRateRuleCreate(BaseModel):
     rate_name: str
     payment_unit: str = "PER_SESSION"
