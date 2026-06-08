@@ -206,3 +206,11 @@
 - UI is accepted for supervisor review, but the draft remains `DRAFT_NOT_AUTHORIZED`.
 - Reviewer decision remains the next gate; paper-distribution authoritative source and final approval/export are still blocked.
 - No code, payment logic, rate logic, active-rate change, approval, final authorization, official export, PDF, Excel, or readiness score change is added.
+
+## Supervisor / Finance Decision Intake And Review Model Note (2026-06-08)
+
+- Human decision is recorded: draft format `ACCEPT_DRAFT_FORMAT` for now.
+- Payment-related documents now have a documented review/comment workflow model before official use.
+- Rates must remain configurable and term-specific; paper-distribution responsibility defaults conceptually to `Education_Student_Quality` but remains configurable by group/person.
+- Current implementation decision is `DOCS_ONLY_MODEL_NOW`; no runtime review table/API/page change is added.
+- Payment approval, final authorization, official export/PDF/Excel, active-rate changes, and readiness scores remain unchanged.

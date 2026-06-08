@@ -1,6 +1,22 @@
 # แบบฟอร์มตัดสินใจสำหรับผู้บังคับบัญชา/ฝ่ายการเงิน
 
 **English title**: Supervisor / Finance Review Decision Form  
+
+## 2026-06-08 Decision Captured From User
+
+This section records the user-provided supervisor/finance-facing decision. It does not fill or replace the reviewer signature fields below.
+
+| Field | Value |
+|---|---|
+| document_format_decision | `ACCEPT_DRAFT_FORMAT` |
+| reviewer_comment_workflow_required | `YES` |
+| rate_must_remain_configurable | `YES` |
+| paper_distribution_default_group | `Education_Student_Quality` |
+| paper_distribution_source_must_be_configurable | `YES` |
+| final_payment_authorization | `NO` |
+| official_export_authorized | `NO` |
+| implementation_decision | `DOCS_ONLY_MODEL_NOW` |
+| notes | Current draft format is acceptable for now and may be adjusted later. Every payment-related document should pass review/comment before official use. |
 **เอกสารที่ตรวจทาน**: EMS official-style payment document draft for term `2/2568`  
 **สถานะเอกสาร**: `DRAFT_NOT_AUTHORIZED`  
 **หมายเหตุสำคัญ**: แบบฟอร์มนี้ไม่ใช่การอนุมัติจ่ายเงิน

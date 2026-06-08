@@ -154,3 +154,11 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Current gate remains `PENDING_SUPERVISOR_FINANCE_REVIEW`; no reviewer decision is prefilled.
 - Remaining: reviewer completes the decision form, confirms rate set, validates the authoritative paper-distribution source, and decides whether draft-export design may proceed later.
 - Official payment approval, final authorization, PDF/Excel/export, active-rate change, and readiness uplift remain blocked.
+
+## Supervisor / Finance Decision Intake And Review Model Backlog Note (2026-06-08)
+
+- Completed: decision intake source review, payment-document review workflow model, configurable settings model, and implementation decision gate.
+- Recorded decision: `ACCEPT_DRAFT_FORMAT`, with review/comment required before official use.
+- Current recommended implementation gate is `DOCS_ONLY_MODEL_NOW`.
+- Remaining: choose persistent review storage, reviewer identity/permissions, settings UI/API, and audit behavior before runtime implementation.
+- Final payment approval, official export, final authorization, and readiness uplift remain blocked.

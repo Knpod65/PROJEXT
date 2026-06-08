@@ -176,3 +176,9 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - A Thai-first supervisor/finance review package is prepared for the draft payment document.
 - The package supports review and decision capture only; it does not approve payment, export, PDF, Excel, final truth, or production readiness.
 - The draft remains `DRAFT_NOT_AUTHORIZED`; reviewer decision and authoritative paper-distribution source validation remain the next human gates.
+
+## Supervisor / Finance Decision Intake And Review Model Disclosure (2026-06-08)
+
+- The draft format has been accepted for now, but every payment-related document still requires review/comment before official use.
+- Rates and paper-distribution responsibility must remain configurable; `Education_Student_Quality` is a configurable default, not a permanent hardcoded source.
+- No payment approval, final authorization, official export/PDF/Excel, rate change, or production readiness is added.

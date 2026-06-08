@@ -159,3 +159,11 @@
 - The package is docs-only and supports human decisions on format, rates, paper-distribution source, and whether draft-export design may be planned later.
 - Current gate remains `PENDING_SUPERVISOR_FINANCE_REVIEW`; no official approval/export work may start without a real reviewer decision.
 - Production readiness, payment readiness, active rates, approval, authorization, and official export remain unchanged.
+
+## Supervisor / Finance Decision Intake And Review Model Roadmap Update (2026-06-08)
+
+- Draft format is accepted for now as `ACCEPT_DRAFT_FORMAT`.
+- Next safe roadmap branch is review/comment workflow and configurable payment-document settings, not final authorization or export.
+- Rates remain configurable and term-specific; paper-distribution responsible group/person remains configurable with default `Education_Student_Quality`.
+- Runtime implementation is deferred until persistent review records, reviewer permissions, and settings ownership are selected.
+- Production readiness, payment readiness, active rates, approval, authorization, and official export remain unchanged.

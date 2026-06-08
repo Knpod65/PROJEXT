@@ -184,3 +184,9 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - The supervisor/finance review package is prepared for the draft 2/2568 official-style payment document.
 - UI is accepted for supervisor review, and the package provides a one-pager, decision form, talking script, quick checklist, and source review.
 - The draft remains `DRAFT_NOT_AUTHORIZED`; no payment approval, final authorization, official PDF/Excel/export, or readiness score increase is certified.
+
+## Supervisor / Finance Decision Intake And Review Model Certificate Note (2026-06-08)
+
+- Decision intake records `ACCEPT_DRAFT_FORMAT` and the requirement for review/comment before payment-related documents are used officially.
+- Configurable rate and paper-distribution responsibility models are documented, with `Education_Student_Quality` as configurable default group.
+- This is docs-only model scaffolding; no runtime review controls, payment approval, final authorization, official export/PDF/Excel, or readiness score increase is certified.

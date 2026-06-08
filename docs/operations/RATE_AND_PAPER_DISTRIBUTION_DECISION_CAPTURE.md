@@ -118,3 +118,18 @@ The next human review package is prepared in:
 - `docs/operations/SUPERVISOR_FINANCE_QUICK_REVIEW_CHECKLIST.md`
 
 This package asks reviewers to confirm the rate set, authoritative paper-distribution committee source, document format, and safe next step. It does not upgrade `RATE_AND_SOURCE_CONFIRMED` beyond draft-output purposes and does not authorize payment or export.
+
+## 2026-06-08 Document Review Workflow Intake
+
+| Field | Value |
+|---|---|
+| document_format_status | `ACCEPT_DRAFT_FORMAT` |
+| rate_configuration_policy | `CONFIGURABLE_TERM_SPECIFIC` |
+| paper_distribution_source_policy | `CONFIGURABLE_RESPONSIBLE_GROUP` |
+| default_paper_distribution_group | `Education_Student_Quality` |
+| current_review_workflow_gate | `ACCEPTED_DRAFT_FORMAT_PENDING_REVIEW_WORKFLOW` |
+| review_comment_workflow_required | `YES` |
+| final_payment_authorization | `NO` |
+| official_export_authorized | `NO` |
+
+This review-intake status is separate from payment authorization. It records that the draft format may be used as a baseline for review workflow design, while rates and paper-distribution responsibility must remain configurable. It does not approve final payment, official PDF/Excel/export, or final payment truth.

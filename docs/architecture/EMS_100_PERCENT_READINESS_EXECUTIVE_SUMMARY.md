@@ -256,3 +256,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The package covers document format, rate set, paper-distribution source, draft-export readiness, and blocked authorization/export items.
 - The document remains `DRAFT_NOT_AUTHORIZED`; gate remains `PENDING_SUPERVISOR_FINANCE_REVIEW`.
 - Production readiness and all payment authorization/export capabilities remain unchanged.
+
+## Supervisor / Finance Decision Intake And Review Model Note (2026-06-08)
+
+- The user-provided supervisor/finance-facing decision accepts the current draft format while requiring review/comment before official use.
+- Rate settings and paper-distribution responsibility must remain configurable; `Education_Student_Quality` is only the configurable default group.
+- This pass documents the workflow and settings model only; no code, database, export, approval, or final authorization is added.
+- Production, pilot, payment, and demo readiness scores remain unchanged.
