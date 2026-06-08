@@ -718,6 +718,71 @@ class OfficialPaymentDocumentDraftResponse(BaseModel):
     supervisor_finance_review_required: bool = True
 
 
+PaymentDocumentType = Literal[
+    "ADVANCE_PAYMENT_DRAFT_SUMMARY",
+    "PAYMENT_RECONCILIATION_DRAFT",
+    "ABSENCE_EXPLANATION_REQUEST",
+    "REFUND_OFFSET_TRACKING_DRAFT",
+]
+
+PaymentDocumentReviewStatus = Literal[
+    "DRAFT_NOT_AUTHORIZED",
+    "DRAFT_READY_FOR_REVIEW",
+    "UNDER_REVIEW",
+    "REVISIONS_REQUESTED",
+    "ACCEPTED_FOR_DRAFT_EXPORT",
+    "REJECTED_REDESIGN_REQUIRED",
+    "FINAL_AUTHORIZATION_REQUIRED",
+]
+
+
+class PaymentDocumentReviewCreate(BaseModel):
+    document_id: str = Field(min_length=1, max_length=200)
+    document_type: PaymentDocumentType = "ADVANCE_PAYMENT_DRAFT_SUMMARY"
+    term: Optional[str] = Field(default=None, max_length=80)
+    review_status: PaymentDocumentReviewStatus = "DRAFT_READY_FOR_REVIEW"
+    comment: Optional[str] = None
+    decision: Optional[str] = Field(default=None, max_length=120)
+    prepared_by: Optional[str] = Field(default=None, max_length=200)
+    revision_required: bool = False
+    note: Optional[str] = None
+
+
+class PaymentDocumentReviewUpdate(BaseModel):
+    review_status: Optional[PaymentDocumentReviewStatus] = None
+    comment: Optional[str] = None
+    decision: Optional[str] = Field(default=None, max_length=120)
+    revision_required: Optional[bool] = None
+    note: Optional[str] = None
+
+
+class PaymentDocumentReviewOut(BaseModel):
+    review_id: int
+    document_id: str
+    document_type: str
+    term: Optional[str] = None
+    review_status: str
+    comment: Optional[str] = None
+    decision: Optional[str] = None
+    reviewer_name: Optional[str] = None
+    reviewer_role: Optional[str] = None
+    reviewer_user_id: Optional[int] = None
+    prepared_by: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    reviewed_at: Optional[datetime] = None
+    revision_required: bool = False
+    note: Optional[str] = None
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
+class PaymentDocumentReviewListResponse(BaseModel):
+    records: list[PaymentDocumentReviewOut] = Field(default_factory=list)
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
 class InvigilationRateRuleCreate(BaseModel):
     rate_name: str
     payment_unit: str = "PER_SESSION"

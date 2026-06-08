@@ -1286,6 +1286,37 @@ class InvigilationPaymentRateRule(Base):
     )
 
 
+class PaymentDocumentReviewRecord(Base):
+    """Persistent review/comment records for draft payment documents."""
+    __tablename__ = "payment_document_review_records"
+
+    id                            = Column(Integer, primary_key=True, index=True)
+    document_id                   = Column(String(200), nullable=False, index=True)
+    document_type                 = Column(String(80), nullable=False, index=True)
+    term                          = Column(String(80), nullable=True)
+    review_status                 = Column(String(80), nullable=False, default="DRAFT_READY_FOR_REVIEW", index=True)
+    comment                       = Column(Text, nullable=True)
+    decision                      = Column(String(120), nullable=True)
+    reviewer_name                 = Column(String(200), nullable=True)
+    reviewer_role                 = Column(String(80), nullable=True)
+    reviewer_user_id              = Column(Integer, ForeignKey("users.id"), nullable=True)
+    prepared_by                   = Column(String(200), nullable=True)
+    created_at                    = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at                    = Column(DateTime(timezone=True), onupdate=func.now())
+    reviewed_at                   = Column(DateTime(timezone=True), nullable=True)
+    revision_required             = Column(Boolean, default=False, nullable=False)
+    note                          = Column(Text, nullable=True)
+    payment_authorization_enabled = Column(Boolean, default=False, nullable=False)
+    final_export_enabled          = Column(Boolean, default=False, nullable=False)
+
+    reviewer = relationship("User", foreign_keys=[reviewer_user_id])
+
+    __table_args__ = (
+        Index("ix_payment_doc_review_document_created", "document_id", "created_at"),
+        Index("ix_payment_doc_review_type_status", "document_type", "review_status"),
+    )
+
+
 # ─── Exam Period (รอบสอบ) ────────────────────────────────────
 class ExamPeriod(Base):
     """
