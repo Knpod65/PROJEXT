@@ -675,10 +675,21 @@ class OfficialPaymentDocumentDraftMetadata(BaseModel):
     term_label: str
     document_status: str = "DRAFT_NOT_AUTHORIZED"
     rate_source: str
-    weekday_rate: Decimal
-    weekend_rate: Decimal
+    weekday_rate: Optional[Decimal] = None
+    weekend_rate: Optional[Decimal] = None
     rate_scope: str
     paper_distribution_source_status: str
+    settings_source_status: str
+    settings_term: Optional[str] = None
+    settings_status: Optional[str] = None
+    settings_weekday_rate: Optional[Decimal] = None
+    settings_weekend_rate: Optional[Decimal] = None
+    currency: str = "THB"
+    payment_unit: str = "PER_PERSON_SESSION"
+    paper_distribution_responsible_group: Optional[str] = None
+    paper_distribution_responsible_person: Optional[str] = None
+    calculation_status: str
+    settings_issues: list[str] = Field(default_factory=list)
 
 
 class OfficialPaymentDocumentDraftRow(BaseModel):
@@ -688,22 +699,22 @@ class OfficialPaymentDocumentDraftRow(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     day_type: str
-    rate_amount: Decimal
+    rate_amount: Optional[Decimal] = None
     invigilation_committee_count: int = 0
-    invigilation_compensation_amount: Decimal = Decimal("0")
+    invigilation_compensation_amount: Optional[Decimal] = None
     paper_distribution_committee_count: int = 0
-    paper_distribution_compensation_amount: Decimal = Decimal("0")
-    total_compensation_amount: Decimal = Decimal("0")
+    paper_distribution_compensation_amount: Optional[Decimal] = None
+    total_compensation_amount: Optional[Decimal] = None
     source_notes: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
 
 class OfficialPaymentDocumentDraftTotals(BaseModel):
     invigilation_committee_count: int = 0
-    invigilation_compensation_amount: Decimal = Decimal("0")
+    invigilation_compensation_amount: Optional[Decimal] = None
     paper_distribution_committee_count: int = 0
-    paper_distribution_compensation_amount: Decimal = Decimal("0")
-    grand_total_amount: Decimal = Decimal("0")
+    paper_distribution_compensation_amount: Optional[Decimal] = None
+    grand_total_amount: Optional[Decimal] = None
     row_count: int = 0
 
 

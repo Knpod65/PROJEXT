@@ -38,6 +38,9 @@ ALLOWED_STATUSES = {
 DEFAULT_RESPONSIBLE_GROUP = "Education_Student_Quality"
 PAYMENT_UNIT = "PER_PERSON_SESSION"
 CURRENCY = "THB"
+SETTINGS_CONFIGURED = "CONFIGURED"
+SETTINGS_PENDING = "PENDING_SETTINGS"
+SETTINGS_INCOMPLETE = "INCOMPLETE_SETTINGS"
 
 
 def _role(user: models.User) -> models.UserRole:
@@ -73,6 +76,14 @@ def _positive_amount(value: Any, field_name: str) -> Decimal:
     if amount <= 0:
         raise HTTPException(status_code=400, detail=f"{field_name} must be positive")
     return amount
+
+
+def _optional_positive_amount(value: Any) -> Decimal | None:
+    try:
+        amount = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+    return amount if amount > 0 else None
 
 
 def _status_value(value: object) -> str:
@@ -120,6 +131,80 @@ def _serialize(record: models.PaymentDocumentSettings) -> schemas.PaymentDocumen
         payment_authorization_enabled=False,
         final_export_enabled=False,
     )
+
+
+def resolve_payment_document_settings_for_draft(
+    db: Session,
+    *,
+    term: str | None,
+) -> dict[str, Any]:
+    """Resolve settings for draft calculation without applying route permissions."""
+    clean_term = _clean_text(term)
+    if not clean_term:
+        return {
+            "settings_source_status": SETTINGS_PENDING,
+            "settings_term": None,
+            "settings_id": None,
+            "settings_status": None,
+            "weekday_rate": None,
+            "weekend_rate": None,
+            "currency": CURRENCY,
+            "payment_unit": PAYMENT_UNIT,
+            "paper_distribution_responsible_group": None,
+            "paper_distribution_responsible_person": None,
+            "settings_issues": ["Unable to resolve a term for payment document settings."],
+        }
+
+    record = db.query(models.PaymentDocumentSettings).filter(
+        models.PaymentDocumentSettings.term == clean_term
+    ).first()
+    if not record:
+        return {
+            "settings_source_status": SETTINGS_PENDING,
+            "settings_term": clean_term,
+            "settings_id": _settings_id(clean_term),
+            "settings_status": None,
+            "weekday_rate": None,
+            "weekend_rate": None,
+            "currency": CURRENCY,
+            "payment_unit": PAYMENT_UNIT,
+            "paper_distribution_responsible_group": None,
+            "paper_distribution_responsible_person": None,
+            "settings_issues": [f"No saved payment document settings exist for term {clean_term}."],
+        }
+
+    issues: list[str] = []
+    status = _status_value(record.status)
+    weekday_rate = _optional_positive_amount(record.weekday_rate)
+    weekend_rate = _optional_positive_amount(record.weekend_rate)
+    responsible_group = _clean_text(record.paper_distribution_responsible_group)
+
+    if status != "ACTIVE_FOR_DRAFT_PREVIEW":
+        issues.append(f"Settings status {status} is not active for draft preview.")
+    if weekday_rate is None:
+        issues.append("weekday_rate is missing or invalid.")
+    if weekend_rate is None:
+        issues.append("weekend_rate is missing or invalid.")
+    if str(record.currency or "").upper() != CURRENCY:
+        issues.append("currency must be THB.")
+    if record.payment_unit != PAYMENT_UNIT:
+        issues.append("payment_unit must be PER_PERSON_SESSION.")
+    if not responsible_group:
+        issues.append("paper_distribution_responsible_group is missing.")
+
+    return {
+        "settings_source_status": SETTINGS_INCOMPLETE if issues else SETTINGS_CONFIGURED,
+        "settings_term": clean_term,
+        "settings_id": record.settings_id,
+        "settings_status": status,
+        "weekday_rate": weekday_rate,
+        "weekend_rate": weekend_rate,
+        "currency": record.currency,
+        "payment_unit": record.payment_unit,
+        "paper_distribution_responsible_group": responsible_group,
+        "paper_distribution_responsible_person": _clean_text(record.paper_distribution_responsible_person),
+        "settings_issues": issues,
+    }
 
 
 def _pending(term: str) -> schemas.PaymentDocumentSettingsOut:

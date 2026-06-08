@@ -178,7 +178,7 @@ def test_saving_settings_does_not_create_review_acceptance_or_export(app_and_db)
     assert response.json()["final_export_enabled"] is False
 
 
-def test_saving_settings_does_not_mutate_draft_preview_or_manual_paper_truth(app_and_db):
+def test_saving_settings_enables_draft_preview_amounts_without_persisting_manual_paper_truth(app_and_db):
     app, _session = app_and_db
     client = _client_for_role(app, models.UserRole.admin)
     draft_payload = {
@@ -192,12 +192,21 @@ def test_saving_settings_does_not_mutate_draft_preview_or_manual_paper_truth(app
 
     before = client.post("/api/invigilation-advance-batch/official-document-draft-preview", json=draft_payload)
     assert before.status_code == 200
+    assert before.json()["metadata"]["settings_source_status"] == "PENDING_SETTINGS"
+    assert before.json()["totals"]["paper_distribution_committee_count"] == 2
+    assert before.json()["totals"]["paper_distribution_compensation_amount"] is None
+    assert before.json()["totals"]["grand_total_amount"] is None
     settings = client.put(f"/api/payment-document-settings/{TERM}", json=_payload())
     assert settings.status_code == 200
     after = client.post("/api/invigilation-advance-batch/official-document-draft-preview", json=draft_payload)
     assert after.status_code == 200
-    assert after.json()["totals"] == before.json()["totals"]
-    assert after.json()["rows"] == before.json()["rows"]
+    assert after.json()["metadata"]["settings_source_status"] == "CONFIGURED"
+    assert after.json()["metadata"]["calculation_status"] == "CALCULATED_FROM_SETTINGS"
+    assert after.json()["totals"]["paper_distribution_committee_count"] == 2
+    assert after.json()["totals"]["paper_distribution_compensation_amount"] == "400.00"
+    assert after.json()["totals"]["grand_total_amount"] == "400.00"
+    assert after.json()["payment_authorization_enabled"] is False
+    assert after.json()["final_export_enabled"] is False
 
     without_manual_rows = client.post(
         "/api/invigilation-advance-batch/official-document-draft-preview",
@@ -205,3 +214,28 @@ def test_saving_settings_does_not_mutate_draft_preview_or_manual_paper_truth(app
     )
     assert without_manual_rows.status_code == 200
     assert without_manual_rows.json()["totals"]["paper_distribution_committee_count"] == 0
+
+
+@pytest.mark.parametrize("status", ["DRAFT_CONFIG", "ARCHIVED"])
+def test_non_active_settings_block_draft_calculation(app_and_db, status):
+    app, _session = app_and_db
+    client = _client_for_role(app, models.UserRole.admin)
+    assert client.put(f"/api/payment-document-settings/{TERM}", json=_payload(status=status)).status_code == 200
+
+    response = client.post(
+        "/api/invigilation-advance-batch/official-document-draft-preview",
+        json={
+            "academic_year": "2568",
+            "semester": "2",
+            "exam_type": "final",
+            "paper_distribution_rows": [
+                {"exam_date": "2026-03-21", "exam_time": "09:00-12:00", "committee_count": 1}
+            ],
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["metadata"]["settings_source_status"] == "INCOMPLETE_SETTINGS"
+    assert payload["metadata"]["calculation_status"] == "BLOCKED_INCOMPLETE_SETTINGS"
+    assert payload["rows"][0]["rate_amount"] is None
+    assert payload["totals"]["grand_total_amount"] is None
