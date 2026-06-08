@@ -35,6 +35,9 @@
 | Local frontend route smoke | PASS, all ten target routes returned HTTP `200` |
 | Automated screenshot capture | PASS, 10 of 10 target routes captured through the Chrome extension browser client |
 | Screenshot review and residual defect triage | PASS_WITH_MINOR_ISSUES, P0 `0`, P1 `0`, P2 `3` |
+| Targeted P2 polish build, 2026-06-08 | PASS, existing Vite large chunk warning remains |
+| Targeted P2 polish i18n parity, 2026-06-08 | PASS, `en=1874`, `th=1874` |
+| Targeted P2 polish raw scan, 2026-06-08 | PASS, warning-mode raw candidate scan remains noisy |
 
 Build retained the existing large main chunk warning. This pass did not introduce a backend change.
 
@@ -53,7 +56,9 @@ Build retained the existing large main chunk warning. This pass did not introduc
 - Some large legacy/custom pages still contain manual tables or raw-string candidates and should be cleaned in smaller follow-up passes.
 - `check:i18n:coverage` still needs a separate tooling repair.
 - Platform configuration remains read-only and partially wired by design; this pass does not claim new backend readiness.
-- Residual P2 items: raw key-like platform-config eyebrow, raw key-like governance eyebrow, and raw technical operational-health status chip text.
+- Residual P2 items from the screenshot review were fixed in a targeted frontend display/i18n pass on 2026-06-08:
+  `platformConfig.eyebrow`, `governance.eyebrow`, and the operational-health analytics badge label.
+- Refreshed screenshot evidence was not captured in the targeted P2 pass.
 
 ## Safety Confirmation
 

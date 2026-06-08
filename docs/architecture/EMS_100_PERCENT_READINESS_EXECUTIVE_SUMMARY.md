@@ -239,6 +239,12 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 
 - All 10 automated UI alignment screenshots were reviewed against the EMS page template.
 - Result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; P0 `0`, P1 `0`, P2 `3`.
-- Remaining P2 issues are limited to non-blocking raw-looking labels/status text on three operational pages.
+- The P2 issues were limited to non-blocking raw-looking labels/status text on three operational pages and were later handled in the 2026-06-08 targeted P2 pass.
 - Payment/document screenshots remain safe: `PREVIEW_ONLY` and `DRAFT_NOT_AUTHORIZED` are visible where required.
 - No code, payment logic, approval/export/final authorization, or readiness score changed.
+
+## Targeted P2 UI Polish Note (2026-06-08)
+
+- The three non-blocking UI label/status defects from screenshot review were fixed and validated by frontend build plus required i18n checks.
+- Changes were limited to frontend display/i18n: platform-config eyebrow, governance eyebrow, and operational-health localized health band label.
+- No backend, payment logic, approval/export/final authorization, or readiness score changed.

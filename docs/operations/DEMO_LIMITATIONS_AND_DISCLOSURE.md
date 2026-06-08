@@ -160,6 +160,12 @@ Any external system integration issues (con-1) are explicitly excluded from this
 
 - Automated screenshot evidence for 10 aligned routes was reviewed after capture.
 - Result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; P0 `0`, P1 `0`, P2 `3`.
-- Remaining P2 items do not block demo review but should be polished later.
+- Remaining P2 items did not block demo review and were later handled in the 2026-06-08 targeted P2 pass.
 - Payment/document pages must still be presented as preview/draft only; no final payment approval, payment authorization, official export, PDF, or Excel output is available.
 - No code, payment logic, rate logic, approval/export, or production readiness changed.
+
+## Targeted P2 UI Polish Disclosure (2026-06-08)
+
+- The three known raw-looking label/status P2 items were fixed and validated by frontend build plus required i18n checks.
+- This was a display/i18n polish pass only; no backend, payment logic, rate logic, approval/export, final authorization, or production readiness changed.
+- Payment/document pages must still be presented as preview/draft only.

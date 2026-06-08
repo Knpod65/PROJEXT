@@ -168,6 +168,12 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 
 - Ten UI alignment screenshots were reviewed and triaged.
 - Result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; P0 `0`, P1 `0`, P2 `3`.
-- All reviewed pages are accepted/no-fix-now for demo review; three polish-only label defects remain open.
+- All reviewed pages were accepted/no-fix-now for demo review; the three polish-only label defects were later handled in the 2026-06-08 targeted P2 pass.
 - Payment/document evidence remains draft/preview only and does not authorize payment.
 - No code, payment logic, approval/export/final authorization, or readiness score changed.
+
+## Targeted P2 UI Polish Certificate Note (2026-06-08)
+
+- The three open P2 polish defects were fixed in frontend display/i18n only and validated with frontend build plus required i18n checks.
+- Platform configuration and governance eyebrows now use localized labels; operational-health analytics badge now uses localized band text.
+- No backend, payment logic, rate logic, approval, official export, PDF, Excel, final authorization, or readiness score changed.

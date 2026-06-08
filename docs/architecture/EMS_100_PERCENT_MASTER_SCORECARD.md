@@ -187,6 +187,14 @@
 
 - Screenshot review completed for all 10 UI alignment screenshots.
 - Result: `HUMAN_VISUAL_QA_PASSED_WITH_MINOR_ISSUES`; P0 `0`, P1 `0`, P2 `3`.
-- Pages are accepted/no-fix-now for demo review; remaining defects are polish-only label issues.
+- Pages were accepted/no-fix-now for demo review; the polish-only label issues were later handled in the 2026-06-08 targeted P2 pass.
 - No code, payment logic, rate logic, approval, final authorization, official export, PDF, or Excel capability changed.
+- Demo, pilot, production, and payment readiness scores remain unchanged.
+
+## Targeted P2 UI Polish Note (2026-06-08)
+
+- The three screenshot-review P2 label/status issues were fixed in frontend display/i18n only.
+- `platformConfig.eyebrow` and `governance.eyebrow` now have EN/TH labels; operational-health analytics status now renders existing localized band labels instead of raw `red`.
+- Frontend build, i18n parity, and raw-string warning-mode checks passed.
+- Backend, payment logic, rate logic, approval, final authorization, official export, PDF, and Excel behavior remain unchanged.
 - Demo, pilot, production, and payment readiness scores remain unchanged.
