@@ -190,3 +190,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Decision intake records `ACCEPT_DRAFT_FORMAT` and the requirement for review/comment before payment-related documents are used officially.
 - Configurable rate and paper-distribution responsibility models are documented, with `Education_Student_Quality` as configurable default group.
 - This is docs-only model scaffolding; no runtime review controls, payment approval, final authorization, official export/PDF/Excel, or readiness score increase is certified.
+
+## Persistent Payment Document Review Records Certificate Note (2026-06-08)
+
+- Persistent payment-document review records and a draft-page review panel are now implemented for the official payment draft.
+- The feature records comments, reviewer identity, and non-authorizing review statuses only.
+- `payment_authorization_enabled=false` and `final_export_enabled=false` remain certified safety boundaries.
+- No final payment approval, final authorization, official PDF/Excel/export, active-rate change, or readiness score increase is certified.

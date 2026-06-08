@@ -60,3 +60,10 @@ Define a review-before-use model for EMS payment-related draft documents. This m
 - Final payment approval or final authorization.
 - Active rate changes.
 - Teaching workload, Work H, opencourse, or coinstruc logic.
+
+## Runtime Implementation Update (2026-06-08)
+
+- Persistent review records and an in-app draft review panel are now implemented for `ADVANCE_PAYMENT_DRAFT_SUMMARY`.
+- Review records are stored separately from payment calculations and paper-distribution source truth.
+- `payment_authorization_enabled=false` and `final_export_enabled=false` remain invariant in review responses.
+- Final payment approval, final authorization, official export/PDF/Excel, and production payment readiness remain out of scope.

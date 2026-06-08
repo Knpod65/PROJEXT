@@ -182,3 +182,10 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - The draft format has been accepted for now, but every payment-related document still requires review/comment before official use.
 - Rates and paper-distribution responsibility must remain configurable; `Education_Student_Quality` is a configurable default, not a permanent hardcoded source.
 - No payment approval, final authorization, official export/PDF/Excel, rate change, or production readiness is added.
+
+## Persistent Payment Document Review Records Disclosure (2026-06-08)
+
+- The official payment draft page can now store persistent review comments and review status history.
+- Stored review records are draft-review evidence only and remain separate from payment calculation and paper-distribution truth.
+- `DRAFT_NOT_AUTHORIZED` remains the visible document status; `ACCEPTED_FOR_DRAFT_EXPORT` does not authorize payment.
+- No approval, final authorization, official PDF/Excel/export, active-rate change, or production readiness is added.

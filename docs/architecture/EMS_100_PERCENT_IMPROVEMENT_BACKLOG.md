@@ -162,3 +162,10 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Current recommended implementation gate is `DOCS_ONLY_MODEL_NOW`.
 - Remaining: choose persistent review storage, reviewer identity/permissions, settings UI/API, and audit behavior before runtime implementation.
 - Final payment approval, official export, final authorization, and readiness uplift remain blocked.
+
+## Persistent Payment Document Review Records Backlog Note (2026-06-08)
+
+- Completed: persistent review table/API, draft-page review panel, API contract, source review, and focused review tests.
+- Review records support comments, reviewer identity, review history, and non-authorizing statuses.
+- Remaining: supervisor/finance validates the workflow in use, then separately decides whether draft-export design should proceed.
+- Still blocked: final payment approval, final authorization, official PDF/Excel/export, authoritative paper-distribution source truth, and readiness uplift.

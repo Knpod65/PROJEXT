@@ -214,3 +214,10 @@
 - Rates must remain configurable and term-specific; paper-distribution responsibility defaults conceptually to `Education_Student_Quality` but remains configurable by group/person.
 - Current implementation decision is `DOCS_ONLY_MODEL_NOW`; no runtime review table/API/page change is added.
 - Payment approval, final authorization, official export/PDF/Excel, active-rate changes, and readiness scores remain unchanged.
+
+## Persistent Payment Document Review Records Note (2026-06-08)
+
+- EMS now has persistent review/comment records and a draft-page review panel for `ADVANCE_PAYMENT_DRAFT_SUMMARY`.
+- Review status and comments are stored separately from payment calculation and manual paper-distribution draft inputs.
+- `DRAFT_NOT_AUTHORIZED` remains visible; `ACCEPTED_FOR_DRAFT_EXPORT` does not authorize payment or official export.
+- Payment approval, final authorization, official PDF/Excel/export, active-rate changes, teaching workload, Work H, opencourse, coinstruc, and readiness scores remain unchanged.

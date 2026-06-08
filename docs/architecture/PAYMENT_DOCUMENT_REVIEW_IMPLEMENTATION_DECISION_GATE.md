@@ -39,3 +39,10 @@ Rationale: the current repo has a draft preview route and configuration foundati
 - `ACCEPTED_FOR_DRAFT_EXPORT` is not official export and not final payment authorization.
 - Final authorization remains a separate future gate.
 - Teaching workload, Work H, opencourse, and coinstruc are out of scope.
+
+## Implementation Update (2026-06-08)
+
+- Current implementation has advanced from `DOCS_ONLY_MODEL_NOW` to persistent review records plus a draft-page review panel.
+- The implemented path is limited to durable comments, review status, reviewer identity, and review history for `ADVANCE_PAYMENT_DRAFT_SUMMARY`.
+- `ACCEPTED_FOR_DRAFT_EXPORT` remains non-authorizing and does not enable final export.
+- Payment approval, final authorization, official PDF/Excel/export, active-rate changes, and final payable truth remain blocked.

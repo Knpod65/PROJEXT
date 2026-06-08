@@ -167,3 +167,10 @@
 - Rates remain configurable and term-specific; paper-distribution responsible group/person remains configurable with default `Education_Student_Quality`.
 - Runtime implementation is deferred until persistent review records, reviewer permissions, and settings ownership are selected.
 - Production readiness, payment readiness, active rates, approval, authorization, and official export remain unchanged.
+
+## Persistent Payment Document Review Records Roadmap Update (2026-06-08)
+
+- Persistent review records and the draft-page review panel are now implemented for `ADVANCE_PAYMENT_DRAFT_SUMMARY`.
+- The next safe roadmap branch is supervisor/finance use of the review workflow and a later decision on draft-export design.
+- `ACCEPTED_FOR_DRAFT_EXPORT` can route to draft-export design only; it is not final authorization.
+- Official payment approval, final authorization, PDF/Excel/export, active-rate changes, and production/payment readiness remain unchanged.

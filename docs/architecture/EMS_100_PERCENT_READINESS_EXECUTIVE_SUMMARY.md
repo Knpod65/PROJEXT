@@ -263,3 +263,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Rate settings and paper-distribution responsibility must remain configurable; `Education_Student_Quality` is only the configurable default group.
 - This pass documents the workflow and settings model only; no code, database, export, approval, or final authorization is added.
 - Production, pilot, payment, and demo readiness scores remain unchanged.
+
+## Persistent Payment Document Review Records Note (2026-06-08)
+
+- Runtime review persistence is now available for the official payment draft page.
+- The implementation records comments, reviewer identity, review status, and history without changing draft calculation or paper-distribution source truth.
+- Review responses keep `payment_authorization_enabled=false` and `final_export_enabled=false`.
+- No payment approval, final authorization, official export/PDF/Excel, rate change, or readiness score increase is added.
