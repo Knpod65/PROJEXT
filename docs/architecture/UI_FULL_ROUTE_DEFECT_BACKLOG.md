@@ -40,3 +40,11 @@ Narrow P2 fixed count: `3`. Readiness scores and all backend/business behavior r
 | Analytics, optimizer, optimizer trace, historical schedules, teacher-specific exam workflow | `DEFER_REQUIRES_PRODUCT_DECISION` | Retained for separate data-sensitive passes. |
 
 Selected routes fixed: `6`. Backend, permissions, business logic, payment/export/review/settings behavior, and readiness scores remain unchanged.
+
+## Full Regression Closure (2026-06-11)
+
+- Closure state: `NO_P0_OR_P1_UI_BLOCKERS_REMAINING`.
+- Final safe visual fixes validated on `/swaps`, `/printreview`, `/external`, and `/rooms-v2`.
+- Residual P2 route decisions: `16` total: workload excluded `3`, product-decision deferred `5`, auth-limited `1`, and low-risk polish deferred `7`.
+- All other route declarations are closed or acceptable with note.
+- Backend, APIs, permissions, payment/export/review/settings logic, workload-domain files, and readiness scores remain unchanged.
