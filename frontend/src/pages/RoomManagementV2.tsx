@@ -317,9 +317,9 @@ export function RoomManagementV2Page() {
       const updated = await updateRoom(roomId, data);
       setRooms((prev) => prev.map((room) => (room.id === roomId ? updated : room)));
       setEditTarget(null);
-      toast("Room updated.", "success");
+      toast(t("legacy.rooms.toast.updated"), "success");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to update room.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.rooms.toast.updateFailed"), "error");
     } finally {
       setEditBusy(false);
     }
@@ -329,9 +329,9 @@ export function RoomManagementV2Page() {
     try {
       await deleteRoomUnavailability(id);
       await loadBlocks();
-      toast("Block removed.", "warning");
+      toast(t("legacy.rooms.toast.blockRemoved"), "warning");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to remove block.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.rooms.toast.removeBlockFailed"), "error");
     }
   };
 
@@ -351,7 +351,7 @@ export function RoomManagementV2Page() {
         }));
 
     if (payloads.length === 0) {
-      toast("Select at least one time slot to block.", "warning");
+      toast(t("legacy.rooms.toast.selectSlot"), "warning");
       return;
     }
 
@@ -363,9 +363,9 @@ export function RoomManagementV2Page() {
       await loadBlocks();
       setSelectedSlots([]);
       setDraftAllDay(false);
-      toast("Room availability updated.", "success");
+      toast(t("legacy.rooms.toast.availabilityUpdated"), "success");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to save room availability.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.rooms.toast.availabilityFailed"), "error");
     } finally {
       setBlockBusy(false);
     }

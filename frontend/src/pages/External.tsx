@@ -47,6 +47,7 @@ function emptyForm(): ExamFormData {
 }
 
 function ExamStatusBadge({ status }: { status: string | undefined }) {
+  const { t } = useI18n();
   const normalized = status ?? "draft";
   const classMap: Record<string, string> = {
     draft: "ext-badge ext-badge--draft",
@@ -54,7 +55,7 @@ function ExamStatusBadge({ status }: { status: string | undefined }) {
     completed: "ext-badge ext-badge--completed",
     cancelled: "ext-badge ext-badge--cancelled",
   };
-  return <span className={classMap[normalized] ?? "ext-badge"}>{normalized}</span>;
+  return <span className={classMap[normalized] ?? "ext-badge"}>{t(`legacy.external.status.${normalized}`)}</span>;
 }
 
 function ExamFormModal({
@@ -70,6 +71,7 @@ function ExamFormModal({
   onClose: () => void;
   onSave: (data: ExamFormData) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [form, setForm] = useState<ExamFormData>(emptyForm);
 
   useEffect(() => {
@@ -101,51 +103,51 @@ function ExamFormModal({
   return (
     <Modal
       open={open}
-      title={exam ? "Edit external exam" : "Create external exam"}
+      title={exam ? t("legacy.external.form.editTitle") : t("legacy.external.form.createTitle")}
       onClose={onClose}
       footer={(
         <div className="inline-actions">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
           <Button type="button" disabled={!canSave} loading={busy} onClick={() => void onSave(form)}>
-            {exam ? "Save changes" : "Create exam"}
+            {exam ? t("common.saveChanges") : t("legacy.external.actions.create")}
           </Button>
         </div>
       )}
     >
       <div className="ext-form">
         <div className="form-field">
-          <label htmlFor="external-title">Exam / activity name</label>
+          <label htmlFor="external-title">{t("legacy.external.form.name")}</label>
           <input id="external-title" type="text" value={form.title} onChange={(event) => setField("title", event.target.value)} />
         </div>
         <div className="import-upload-grid">
           <div className="form-field">
-            <label htmlFor="external-organizer">Organizer</label>
+            <label htmlFor="external-organizer">{t("legacy.external.form.organizer")}</label>
             <input id="external-organizer" type="text" value={form.organizer} onChange={(event) => setField("organizer", event.target.value)} />
           </div>
           <div className="form-field">
-            <label htmlFor="external-room">Venue reference</label>
+            <label htmlFor="external-room">{t("legacy.external.form.venue")}</label>
             <input id="external-room" type="text" value={form.room_name} onChange={(event) => setField("room_name", event.target.value)} />
-            <span className="form-hint">Reference only. External optimization does not assign rooms.</span>
+            <span className="form-hint">{t("legacy.external.form.venueHint")}</span>
           </div>
           <div className="form-field">
-            <label htmlFor="external-date">Date</label>
+            <label htmlFor="external-date">{t("common.date")}</label>
             <input id="external-date" type="date" value={form.exam_date} onChange={(event) => setField("exam_date", event.target.value)} />
           </div>
           <div className="form-field">
-            <label htmlFor="external-time">Time</label>
+            <label htmlFor="external-time">{t("common.time")}</label>
             <input id="external-time" type="text" placeholder="09:00-12:00" value={form.exam_time} onChange={(event) => setField("exam_time", event.target.value)} />
           </div>
           <div className="form-field">
-            <label htmlFor="external-students">Attendees</label>
+            <label htmlFor="external-students">{t("legacy.external.form.attendees")}</label>
             <input id="external-students" type="number" min={0} value={form.num_students} onChange={(event) => setField("num_students", event.target.value === "" ? "" : Number(event.target.value))} />
           </div>
           <div className="form-field">
-            <label htmlFor="external-staff">Staff required</label>
+            <label htmlFor="external-staff">{t("legacy.external.form.staffRequired")}</label>
             <input id="external-staff" type="number" min={1} value={form.invigilators_needed} onChange={(event) => setField("invigilators_needed", event.target.value === "" ? "" : Number(event.target.value))} />
           </div>
         </div>
         <div className="form-field">
-          <label htmlFor="external-notes">Notes</label>
+          <label htmlFor="external-notes">{t("common.notes")}</label>
           <textarea id="external-notes" rows={2} value={form.notes} onChange={(event) => setField("notes", event.target.value)} />
         </div>
       </div>
@@ -162,36 +164,37 @@ function PreviewSection({
   subtitle?: string;
   rows: Array<{ user_id: number; full_name: string | null; division?: string | null; unit?: string | null; total_load: number; reason?: string }>;
 }) {
+  const { t } = useI18n();
   return (
     <Card title={title} subtitle={subtitle}>
       <DataTable
         columns={[
           {
             key: "full_name",
-            label: "Staff",
+            label: t("legacy.external.preview.staff"),
             width: "38%",
             render: (row) => (
               <div className="data-table__content data-table__content--clamp">
-                <strong>{row.full_name ?? `User #${row.user_id}`}</strong>
-                <p>{row.division ?? row.unit ?? "No organizational label"}</p>
+                <strong>{row.full_name ?? t("legacy.external.preview.userFallback", { id: row.user_id })}</strong>
+                <p>{row.division ?? row.unit ?? t("legacy.external.preview.noOrganization")}</p>
               </div>
             ),
           },
           {
             key: "total_load",
-            label: "Historical Load",
+            label: t("legacy.external.preview.historicalLoad"),
             width: "18%",
             align: "right",
             render: (row) => row.total_load,
           },
           {
             key: "reason",
-            label: "Reason",
+            label: t("legacy.external.preview.reason"),
             width: "44%",
-            render: (row) => row.reason ?? "Eligible for allocation",
+            render: (row) => row.reason ?? t("legacy.external.preview.eligible"),
           },
         ]}
-        emptyTitle="No rows"
+        emptyTitle={t("legacy.external.preview.noRows")}
         rowKey={(row) => row.user_id}
         rows={rows}
         scrollThreshold={5}
@@ -212,17 +215,18 @@ function AssignmentPreviewPanel({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  const { t } = useI18n();
   const exam = preview.exam;
 
   return (
     <Card
-      title={`Staff allocation review: ${exam.title ?? "External exam"}`}
-      subtitle="Preview only. This flow assigns staff only and does not assign rooms."
+      title={t("legacy.external.preview.title", { name: exam.title ?? t("legacy.external.preview.examFallback") })}
+      subtitle={t("legacy.external.preview.subtitle")}
       actions={(
         <div className="inline-actions">
-          <Button type="button" variant="outline" onClick={onClose}>Close</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{t("common.close")}</Button>
           <Button type="button" loading={busy} disabled={preview.shortage_count > 0 || preview.needed_count === 0} onClick={onConfirm}>
-            Confirm staff allocation
+            {t("legacy.external.preview.confirm")}
           </Button>
         </div>
       )}
@@ -231,28 +235,28 @@ function AssignmentPreviewPanel({
         <article className="dashboard-metric dashboard-metric--accent">
           <div className="dashboard-metric__icon"><Icon name="groups" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Needed now</p>
+            <p className="dashboard-metric__label">{t("legacy.external.preview.needed")}</p>
             <strong className="dashboard-metric__value">{preview.needed_count}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--neutral">
           <div className="dashboard-metric__icon"><Icon name="person_search" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Eligible staff</p>
+            <p className="dashboard-metric__label">{t("legacy.external.preview.eligibleStaff")}</p>
             <strong className="dashboard-metric__value">{preview.eligible_candidates.length}</strong>
           </div>
         </article>
         <article className={`dashboard-metric ${preview.shortage_count > 0 ? "dashboard-metric--warning" : "dashboard-metric--success"}`}>
           <div className="dashboard-metric__icon"><Icon name={preview.shortage_count > 0 ? "warning" : "check_circle"} /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Shortage</p>
+            <p className="dashboard-metric__label">{t("legacy.external.preview.shortage")}</p>
             <strong className="dashboard-metric__value">{preview.shortage_count}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--neutral">
           <div className="dashboard-metric__icon"><Icon name="analytics" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Fairness score</p>
+            <p className="dashboard-metric__label">{t("legacy.external.preview.fairness")}</p>
             <strong className="dashboard-metric__value">
               {preview.fairness.current_score} → {preview.fairness.projected_score}
             </strong>
@@ -274,23 +278,23 @@ function AssignmentPreviewPanel({
 
       <div className="page-stack">
         <PreviewSection
-          title="Recommended allocation"
-          subtitle="The fairness engine selects the lowest historical loads first."
+          title={t("legacy.external.preview.recommended")}
+          subtitle={t("legacy.external.preview.recommendedHint")}
           rows={preview.recommended_assignment}
         />
         <PreviewSection
-          title="Eligible reserve pool"
-          subtitle="These staff remain available if you need to rerun or adjust."
+          title={t("legacy.external.preview.reserve")}
+          subtitle={t("legacy.external.preview.reserveHint")}
           rows={preview.eligible_candidates}
         />
         <PreviewSection
-          title="Conflicted or unavailable staff"
-          subtitle="These staff are filtered out before allocation because of timing conflicts or declared unavailability."
+          title={t("legacy.external.preview.conflicted")}
+          subtitle={t("legacy.external.preview.conflictedHint")}
           rows={preview.conflicted_staff}
         />
         <PreviewSection
-          title="Excluded staff"
-          subtitle="Excluded by policy for external exams."
+          title={t("legacy.external.preview.excluded")}
+          subtitle={t("legacy.external.preview.excludedHint")}
           rows={preview.excluded_staff}
         />
       </div>
@@ -313,6 +317,7 @@ function ExamCard({
   onDelete: () => void;
   onPreview: () => void;
 }) {
+  const { t } = useI18n();
   const assigned = exam.supervisions?.length ?? 0;
   const needed = exam.invigilators_needed ?? 0;
   const staffReady = assigned >= needed;
@@ -321,7 +326,7 @@ function ExamCard({
     <article className="ext-exam-card">
       <div className="ext-exam-card__header">
         <div>
-          <strong className="ext-exam-card__title">{exam.title ?? "External Exam"}</strong>
+          <strong className="ext-exam-card__title">{exam.title ?? t("legacy.external.preview.examFallback")}</strong>
           {exam.organizer && <span className="text-muted ext-exam-card__organizer">{exam.organizer}</span>}
         </div>
         <ExamStatusBadge status={exam.status} />
@@ -329,21 +334,21 @@ function ExamCard({
 
       <div className="ext-exam-card__meta">
         <span><Icon name="event" /> {exam.exam_date ?? "-"} {exam.exam_time ?? ""}</span>
-        <span><Icon name="location_on" /> {exam.room_name ?? "No venue reference"}</span>
-        <span><Icon name="groups" /> {exam.num_students ?? 0} attendees</span>
+        <span><Icon name="location_on" /> {exam.room_name ?? t("legacy.external.card.noVenue")}</span>
+        <span><Icon name="groups" /> {t("legacy.external.card.attendees", { count: exam.num_students ?? 0 })}</span>
         <span className={staffReady ? "ext-staff-ok" : "ext-staff-missing"}>
           <Icon name={staffReady ? "check_circle" : "warning"} />
-          {assigned}/{needed} staff assigned
+          {t("legacy.external.card.staffAssigned", { assigned, needed })}
         </span>
       </div>
 
-      <p className="text-muted ext-exam-card__notes">Staff allocation only. External optimization does not assign rooms.</p>
+      <p className="text-muted ext-exam-card__notes">{t("legacy.external.form.venueHint")}</p>
 
       {exam.supervisions && exam.supervisions.length > 0 && (
         <div className="ext-invig-list">
           {exam.supervisions.map((supervision) => (
             <span key={supervision.id} className="staff-slot-tag">
-              {supervision.full_name ?? supervision.user_name ?? `User #${supervision.user_id ?? supervision.id}`}
+              {supervision.full_name ?? supervision.user_name ?? t("legacy.external.preview.userFallback", { id: supervision.user_id ?? supervision.id })}
               {supervision.confirmed && <Icon name="check" />}
             </span>
           ))}
@@ -354,13 +359,13 @@ function ExamCard({
 
       {(canManage || canOptimize) && (
         <div className="inline-actions ext-exam-card__actions">
-          {canManage && <Button type="button" size="sm" variant="outline" onClick={onEdit}>Edit</Button>}
+          {canManage && <Button type="button" size="sm" variant="outline" onClick={onEdit}>{t("common.edit")}</Button>}
           {canOptimize && (
             <Button type="button" size="sm" onClick={onPreview}>
-              Review staff allocation
+              {t("legacy.external.actions.reviewAllocation")}
             </Button>
           )}
-          {canManage && <Button type="button" size="sm" variant="ghost" onClick={onDelete}>Delete</Button>}
+          {canManage && <Button type="button" size="sm" variant="ghost" onClick={onDelete}>{t("common.delete")}</Button>}
         </div>
       )}
     </article>
@@ -406,16 +411,16 @@ export function ExternalPage() {
     try {
       if (editTarget) {
         await updateExternalExam(editTarget.id, data as unknown as Record<string, unknown>);
-        toast("External exam updated.", "success");
+        toast(t("legacy.external.toast.updated"), "success");
       } else {
         await createExternalExam(data as unknown as Record<string, unknown>);
-        toast("External exam created.", "success");
+        toast(t("legacy.external.toast.created"), "success");
       }
       setShowForm(false);
       setEditTarget(null);
       await load();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to save external exam.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.external.toast.saveFailed"), "error");
     } finally {
       setFormBusy(false);
     }
@@ -424,10 +429,10 @@ export function ExternalPage() {
   const handleDelete = async (exam: ExternalExam) => {
     try {
       await deleteExternalExam(exam.id);
-      toast("External exam deleted.", "warning");
+      toast(t("legacy.external.toast.deleted"), "warning");
       await load();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to delete external exam.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.external.toast.deleteFailed"), "error");
     }
   };
 
@@ -437,7 +442,7 @@ export function ExternalPage() {
       const nextPreview = await previewExternalExamAssignment(examId);
       setPreview(nextPreview);
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to preview staff allocation.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.external.toast.previewFailed"), "error");
     } finally {
       setPreviewLoading(false);
     }
@@ -451,10 +456,10 @@ export function ExternalPage() {
     try {
       const response = await applyExternalExamAssignment(preview.exam.id);
       setPreview(response.preview);
-      toast("External exam staff allocated.", "success");
+      toast(t("legacy.external.toast.allocated"), "success");
       await load();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to assign staff.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.external.toast.allocateFailed"), "error");
     } finally {
       setAssignBusy(false);
     }

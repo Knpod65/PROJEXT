@@ -61,6 +61,7 @@ function SubmissionDetailPanel({
   onReject: (id: number, reason: string) => Promise<void>;
   isAdmin: boolean;
 }) {
+  const { t } = useI18n();
   const { toast } = useUi();
   const [detail, setDetail] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,17 +83,17 @@ function SubmissionDetailPanel({
     setBusy(true);
     try {
       await onApprove(item.id);
-      toast("Submission approved.", "success");
+      toast(t("legacy.printReview.toast.approved"), "success");
       onClose();
     } finally { setBusy(false); }
   };
 
   const handleReject = async () => {
-    if (!rejectReason.trim()) { toast("Rejection reason is required.", "error"); return; }
+    if (!rejectReason.trim()) { toast(t("legacy.printReview.toast.reasonRequired"), "error"); return; }
     setBusy(true);
     try {
       await onReject(item.id, rejectReason.trim());
-      toast("Submission returned.", "warning");
+      toast(t("legacy.printReview.toast.returned"), "warning");
       onClose();
     } finally { setBusy(false); }
   };
@@ -103,74 +104,74 @@ function SubmissionDetailPanel({
     try {
       await sendMessage(item.id, note.trim());
       setNote("");
-      toast("Note sent.", "success");
+      toast(t("legacy.printReview.toast.noteSent"), "success");
     } catch {
-      toast("Failed to send note.", "error");
+      toast(t("legacy.printReview.toast.noteFailed"), "error");
     } finally { setSendingNote(false); }
   };
 
   return (
     <Modal
       open
-      title={`${item.course_name ?? item.course_id ?? "Submission"} §${item.section_no ?? ""}`}
+      title={t("legacy.printReview.detail.title", { name: item.course_name ?? item.course_id ?? t("legacy.printReview.cardTitle"), section: item.section_no ?? "" })}
       onClose={onClose}
       footer={
         isAdmin && item.status === "submitted" ? (
           <div className="inline-actions">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
             {showReject ? (
               <>
-                <Button type="button" variant="outline" onClick={() => setShowReject(false)}>Back</Button>
+                <Button type="button" variant="outline" onClick={() => setShowReject(false)}>{t("common.back")}</Button>
                 <Button type="button" variant="danger" loading={busy} disabled={!rejectReason.trim()} onClick={handleReject}>
-                  Return with comments
+                  {t("legacy.printReview.actions.returnWithComments")}
                 </Button>
               </>
             ) : (
               <>
                 <Button type="button" variant="ghost" onClick={() => setShowReject(true)}>
-                  Return
+                  {t("legacy.printReview.actions.return")}
                 </Button>
                 <Button type="button" loading={busy} onClick={handleApprove}>
-                  Approve
+                  {t("legacy.printReview.actions.approve")}
                 </Button>
               </>
             )}
           </div>
         ) : (
-          <Button type="button" variant="outline" onClick={onClose}>Close</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{t("common.close")}</Button>
         )
       }
     >
       {loading ? (
         <Skeleton className="dashboard-skeleton" />
       ) : !detail ? (
-        <p className="text-muted">Could not load submission details.</p>
+        <p className="text-muted">{t("legacy.printReview.detail.loadFailed")}</p>
       ) : (
         <div className="pr-detail">
           <div className="pr-detail__grid">
             <div className="pr-detail__field">
-              <span>Status</span>
+              <span>{t("common.status")}</span>
               <StatusBadge status={detail.status ?? "draft"} />
             </div>
             <div className="pr-detail__field">
-              <span>Exam method</span>
-              <strong>{detail.exam_type_choice ?? "Not set"}</strong>
+              <span>{t("legacy.printReview.detail.examMethod")}</span>
+              <strong>{detail.exam_type_choice ? t(`legacy.printReview.method.${detail.exam_type_choice}`) : t("common.notRecorded")}</strong>
             </div>
             <div className="pr-detail__field">
-              <span>PDF uploaded</span>
-              <strong>{detail.has_uploaded_pdf ? "Yes" : "No"}</strong>
+              <span>{t("legacy.printReview.detail.pdfUploaded")}</span>
+              <strong>{detail.has_uploaded_pdf ? t("common.yes") : t("common.no")}</strong>
             </div>
             <div className="pr-detail__field">
-              <span>Pages</span>
+              <span>{t("legacy.printReview.detail.pages")}</span>
               <strong>{detail.a4_pages_count ?? "—"}</strong>
             </div>
             <div className="pr-detail__field">
-              <span>Shared exam</span>
-              <strong>{detail.is_shared_exam ? "Yes" : "No"}</strong>
+              <span>{t("legacy.printReview.detail.sharedExam")}</span>
+              <strong>{detail.is_shared_exam ? t("common.yes") : t("common.no")}</strong>
             </div>
             {detail.answer_formats && detail.answer_formats.length > 0 && (
               <div className="pr-detail__field pr-detail__field--full">
-                <span>Answer formats</span>
+                <span>{t("legacy.printReview.detail.answerFormats")}</span>
                 <strong>{detail.answer_formats.join(", ")}</strong>
               </div>
             )}
@@ -184,18 +185,18 @@ function SubmissionDetailPanel({
 
           {detail.rejected_reason && (
             <div className="pr-rejected-note">
-              <Icon name="undo" /> <span><strong>Returned:</strong> {detail.rejected_reason}</span>
+              <Icon name="undo" /> <span><strong>{t("legacy.printReview.detail.returned")}:</strong> {detail.rejected_reason}</span>
             </div>
           )}
 
           {showReject && (
             <div className="form-field" style={{ marginTop: "12px" }}>
-              <label htmlFor="reject-reason">Return reason (required)</label>
+              <label htmlFor="reject-reason">{t("legacy.printReview.detail.returnReason")}</label>
               <textarea
                 id="reject-reason"
                 rows={3}
                 value={rejectReason}
-                placeholder="Explain what needs to be corrected…"
+                placeholder={t("legacy.printReview.detail.returnPlaceholder")}
                 onChange={(e) => setRejectReason(e.target.value)}
               />
             </div>
@@ -205,13 +206,13 @@ function SubmissionDetailPanel({
           <div className="pr-note-row">
             <input
               type="text"
-              placeholder="Add a note to teacher…"
+              placeholder={t("legacy.printReview.detail.notePlaceholder")}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") void handleSendNote(); }}
             />
             <Button type="button" size="sm" variant="outline" loading={sendingNote} onClick={handleSendNote}>
-              Send note
+              {t("legacy.printReview.actions.sendNote")}
             </Button>
           </div>
         </div>
@@ -229,6 +230,7 @@ function PrintRow({
   item: SubmissionListItem;
   onOpen: () => void;
 }) {
+  const { t } = useI18n();
   const isOnsite = item.exam_type_choice === "onsite";
   const missingPdf = isOnsite && !item.has_uploaded_pdf;
 
@@ -246,16 +248,16 @@ function PrintRow({
         <StatusBadge status={item.status} />
       </td>
       <td>
-        <span className="pr-type-tag">{item.exam_type_choice ?? "Not set"}</span>
+        <span className="pr-type-tag">{item.exam_type_choice ? t(`legacy.printReview.method.${item.exam_type_choice}`) : t("common.notRecorded")}</span>
       </td>
       <td>
-        {missingPdf && <span className="pr-missing-chip"><Icon name="warning" /> Missing PDF</span>}
-        {isOnsite && item.has_uploaded_pdf && <span className="pr-ok-chip"><Icon name="picture_as_pdf" /> PDF ready</span>}
-        {!isOnsite && item.exam_type_choice && <span className="pr-na-chip">No print needed</span>}
+        {missingPdf && <span className="pr-missing-chip"><Icon name="warning" /> {t("legacy.printReview.readiness.missingPdf")}</span>}
+        {isOnsite && item.has_uploaded_pdf && <span className="pr-ok-chip"><Icon name="picture_as_pdf" /> {t("legacy.printReview.readiness.pdfReady")}</span>}
+        {!isOnsite && item.exam_type_choice && <span className="pr-na-chip">{t("legacy.printReview.readiness.noPrint")}</span>}
       </td>
       <td>
         <Button type="button" size="sm" variant="outline" onClick={onOpen}>
-          Review
+          {t("legacy.printReview.actions.review")}
         </Button>
       </td>
     </tr>
@@ -286,7 +288,7 @@ export function PrintReviewPage() {
       const data = await listSubmissions();
       setItems(data);
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to load.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.printReview.toast.loadFailed"), "error");
     } finally {
       setLoading(false);
     }
@@ -402,7 +404,7 @@ export function PrintReviewPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
           {search && (
-            <Button type="button" size="sm" variant="ghost" onClick={() => setSearch("")}>Clear</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setSearch("")}>{t("common.clear")}</Button>
           )}
         </div>
 
@@ -421,11 +423,11 @@ export function PrintReviewPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Course / Section</th>
-                  <th>Teacher</th>
-                  <th>Status</th>
-                  <th>Method</th>
-                  <th>Print readiness</th>
+                  <th>{t("legacy.printReview.table.courseSection")}</th>
+                  <th>{t("legacy.printReview.table.teacher")}</th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("legacy.printReview.table.method")}</th>
+                  <th>{t("legacy.printReview.table.readiness")}</th>
                   <th></th>
                 </tr>
               </thead>

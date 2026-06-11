@@ -197,7 +197,7 @@ export function SwapsV2Page() {
       setShowCreate(false);
       toast(t("legacy.swaps.toast.sent"), "success");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to create swap.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.swaps.toast.createFailed"), "error");
     }
   };
 
@@ -207,7 +207,7 @@ export function SwapsV2Page() {
       setRespondTarget(null);
       toast(accept ? t("legacy.swaps.toast.accepted") : t("legacy.swaps.toast.rejected"), accept ? "success" : "warning");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to respond to swap.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.swaps.toast.respondFailed"), "error");
     }
   };
 
@@ -216,7 +216,7 @@ export function SwapsV2Page() {
       await doCancel(swapId);
       toast(t("legacy.swaps.toast.cancelled"), "warning");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to cancel swap.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.swaps.toast.cancelFailed"), "error");
     }
   };
 
@@ -283,7 +283,7 @@ export function SwapsV2Page() {
       {error && (
         <Card title={t("legacy.swaps.errorTitle")}>
           <p className="import-issue import-issue--error">{error}</p>
-          <Button type="button" variant="ghost" onClick={() => void load()}>Retry</Button>
+          <Button type="button" variant="ghost" onClick={() => void load()}>{t("common.retry")}</Button>
         </Card>
       )}
 

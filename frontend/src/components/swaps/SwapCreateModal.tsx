@@ -100,7 +100,7 @@ export function SwapCreateModal({
               value={selectedSlot?.supervision_id ?? ""}
               onChange={(e) => void handleSlotChange(Number(e.target.value))}
             >
-              <option value="">Select a slot…</option>
+              <option value="">{t("legacy.swaps.create.selectSlot")}</option>
               {supervisions.map((slot) => (
                 <option
                   key={slot.supervision_id}
@@ -108,7 +108,7 @@ export function SwapCreateModal({
                   disabled={slot.swap_requested}
                 >
                   {slotLabel(slot)}
-                  {slot.swap_requested ? " (pending swap)" : ""}
+                  {slot.swap_requested ? ` (${t("legacy.swaps.create.pendingSwap")})` : ""}
                 </option>
               ))}
             </select>
@@ -128,7 +128,7 @@ export function SwapCreateModal({
                 value={targetUserId ?? ""}
                 onChange={(e) => setTargetUserId(Number(e.target.value))}
               >
-                <option value="">Select a person…</option>
+                <option value="">{t("legacy.swaps.create.selectPerson")}</option>
                 {availableUsers.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.full_name ?? u.username} ({u.role})
@@ -145,7 +145,7 @@ export function SwapCreateModal({
             id="swap-message"
             rows={3}
             value={message}
-            placeholder="Reason for the swap request…"
+            placeholder={t("legacy.swaps.create.messagePlaceholder")}
             onChange={(e) => setMessage(e.target.value)}
           />
         </div>
