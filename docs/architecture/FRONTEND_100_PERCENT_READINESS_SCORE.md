@@ -90,3 +90,11 @@ The Claude design source and all registered route declarations were reconciled i
 - Reconciliation route smoke passed for `/platform-config`, `/governance`, and `/operational-health`; final UI QA state is `HUMAN_VISUAL_QA_PASSED_ACCEPTED_FOR_SUPERVISOR_REVIEW`.
 - Frontend score remains **76 / 100**; this does not prove accessibility, mobile, pilot, or production readiness.
 - Backend, payment logic, approval/export, final authorization, and readiness scores remain unchanged.
+
+## Narrow P2 Payment UI Polish And Role Evidence Note (2026-06-11)
+
+- Three presentation-only P2 items were fixed and validated: payment warning copy, draft-export tooltip language, and blocked-role explanation.
+- Six real role-based screenshots confirm unchanged admin/staff/teacher/print-shop behavior.
+- Frontend build and required i18n checks passed.
+- Frontend score remains **76 / 100**; broad legacy/custom-page polish and workload-route presentation remain deferred.
+- Backend, permissions, payment/export/review/settings logic, and readiness scores remain unchanged.

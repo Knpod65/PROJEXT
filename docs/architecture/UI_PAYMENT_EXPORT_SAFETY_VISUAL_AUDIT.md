@@ -36,3 +36,12 @@
 - Final payment approval button: absent.
 - Official/final export control: absent.
 - Backend safety invariants and gate logic: unchanged.
+
+## Narrow P2 Role Evidence (2026-06-11)
+
+- Admin evidence shows `DRAFT_NOT_AUTHORIZED`, the review-only draft-export gate, and the restricted draft-export control.
+- Staff evidence shows review-comment/request capability and no draft-export control.
+- Teacher and print-shop evidence confirms payment-route access remains blocked with a clearer localized explanation.
+- Warning copy now states that a review-accepted draft XLSX may be produced while official/final export, payment approval, and final authorization remain disabled.
+- Screenshots: `role-admin-payment-draft.png`, `role-admin-draft-export-button.png`, `role-staff-payment-draft.png`, `role-staff-payment-settings-readonly.png`, `role-teacher-payment-blocked.png`, and `role-printshop-payment-blocked.png`.
+- Payment/export/review/settings logic changed: `NO`.

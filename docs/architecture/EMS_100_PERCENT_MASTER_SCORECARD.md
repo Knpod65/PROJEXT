@@ -287,3 +287,11 @@ The full-route UI alignment pass recovered the authoritative EMS design source a
 - Export is read-only: no DB writes, no status mutations
 - Final payment approval, final authorization, official export, payment release: still blocked
 - Production readiness: unchanged
+
+## Narrow P2 Payment UI Polish And Role Evidence Note (2026-06-11)
+
+- Three safe presentation-only P2 items were fixed and evidenced across admin, staff, teacher, and print-shop roles.
+- `DRAFT_NOT_AUTHORIZED` remains visible; draft XLSX remains gated, review-only, and non-authorizing.
+- Staff settings remains read-only; teacher and print shop remain blocked from the payment draft.
+- Backend, payment calculation, settings, review, permissions, export-gate logic, and workload-domain files changed: `NO`.
+- Production, pilot, demo, payment, and frontend readiness scores remain unchanged.

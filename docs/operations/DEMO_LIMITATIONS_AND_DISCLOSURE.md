@@ -259,3 +259,11 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Export is read-only: no DB writes, no status mutations
 - Final payment approval, final authorization, official export, payment release: still blocked
 - Production readiness: unchanged
+
+## Narrow P2 Payment UI And Role Evidence Disclosure (2026-06-11)
+
+- Real screenshots confirm admin and staff payment-document states, staff read-only settings, and blocked teacher/print-shop states.
+- Demo operators must continue to describe XLSX output as a gated review draft only.
+- `DRAFT_NOT_AUTHORIZED` remains required; official/final export, payment approval, and final authorization remain unavailable.
+- Broad legacy/custom operational-page polish and workload-route presentation remain deferred.
+- No backend, payment, settings, review, permission, export-gate, or readiness change is introduced.

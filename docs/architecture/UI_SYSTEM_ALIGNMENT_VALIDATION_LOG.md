@@ -87,3 +87,15 @@ Build retained the existing large main chunk warning. This pass did not introduc
 - Advance batch inclusion logic changed: NO.
 - Auth bridge / Laravel integration changed: NO.
 - Teaching workload / Work H / opencourse / coinstruc touched: NO.
+
+## 2026-06-11 Narrow P2 Payment UI Polish And Role Evidence
+
+- Fixed three presentation-only P2 items: payment warning copy, disabled draft-export tooltip wording, and shared blocked-role explanation.
+- Frontend build: `PASS`.
+- EN/TH i18n parity: `PASS`, `1973/1973`.
+- Raw-string scan: `PASS` in the existing warning-only mode.
+- Local backend health and payment-draft route: HTTP `200`.
+- Real role-based screenshots captured: `6` across admin, staff, teacher, and print shop.
+- Role behavior remained unchanged: staff has no draft-export control; staff settings is read-only; teacher and print shop remain blocked.
+- Backend, permissions, payment calculations, settings, review, draft-export gate, and workload-domain files changed: `NO`.
+- Readiness scores remain unchanged.

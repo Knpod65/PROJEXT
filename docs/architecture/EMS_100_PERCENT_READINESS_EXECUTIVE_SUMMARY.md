@@ -318,3 +318,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Export is NOT yet implemented. Final authorization still blocked. Payment approval NOT added.
 - Production, pilot, and payment readiness scores remain unchanged.
 - Next step: implement draft export per test matrix and gate requirements document.
+
+## Narrow P2 Payment UI Polish And Role Evidence Note (2026-06-11)
+
+- Role-based visual evidence confirms the payment draft remains clearly non-authorizing across admin and staff, while teacher and print shop remain blocked.
+- The warning and gate language now accurately distinguishes gated draft XLSX from official/final export, payment approval, and final authorization.
+- Three narrow P2 presentation items are validated; broad legacy/custom and workload-route presentation work remains deferred.
+- No backend/business behavior or readiness score changed.

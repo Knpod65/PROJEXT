@@ -18,3 +18,15 @@
 - P1 validated: `3`
 - P2 identified: `3`
 - Backend/API/business-logic changes: `NO`
+
+## Narrow P2 Payment Polish Reconciliation (2026-06-11)
+
+| defect_id | Route/state | Classification | Result |
+|---|---|---|---|
+| UI-P2-PAY-001 | Official payment draft warning | `P2_SAFE_FIX_NOW` | `VALIDATED`: copy distinguishes gated draft XLSX from official/final export and payment authorization. |
+| UI-P2-PAY-002 | Disabled draft-export tooltip | `P2_SAFE_FIX_NOW` | `VALIDATED`: localized human-readable gate language replaces the raw review enum in the tooltip. |
+| UI-P2-ROLE-001 | Shared unauthorized route state | `P2_SAFE_FIX_NOW` | `VALIDATED`: teacher and print-shop screenshots show a clear current-role access explanation. |
+| UI-P2-LEGACY-001 | Broad legacy/custom operational routes | `P2_DEFER_VISUAL_ONLY` | Deferred to smaller route-specific passes. |
+| UI-P2-WORKLOAD-001 | Workload routes | `P2_DEFER_WORKLOAD_SCOPE_NOT_TOUCHING` | No workload-domain files changed. |
+
+Narrow P2 fixed count: `3`. Readiness scores and all backend/business behavior remain unchanged.

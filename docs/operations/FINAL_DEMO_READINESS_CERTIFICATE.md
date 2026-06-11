@@ -264,3 +264,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Export is read-only: no DB writes, no status mutations
 - Final payment approval, final authorization, official export, payment release: still blocked
 - Production readiness: unchanged
+
+## Narrow P2 Payment UI And Role Evidence Certificate Note (2026-06-11)
+
+- Six real role-based screenshots certify the clarified payment warning, draft-export gate language, staff read-only settings state, and blocked-role explanation.
+- Role permissions and payment/export safety behavior remain unchanged.
+- `DRAFT_NOT_AUTHORIZED` remains certified as the required document status.
+- No payment approval, final authorization, official/final export, backend/business-logic change, workload-domain change, or readiness-score increase is certified.
