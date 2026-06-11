@@ -296,6 +296,14 @@ The full-route UI alignment pass recovered the authoritative EMS design source a
 - Backend, payment calculation, settings, review, permissions, export-gate logic, and workload-domain files changed: `NO`.
 - Production, pilot, demo, payment, and frontend readiness scores remain unchanged.
 
+## Full UI Regression Closure Note (2026-06-11)
+
+- Full route regression closure completed: `50` declarations, `43` visual destinations, and `44/44` renderable URL smoke.
+- P0/P1 UI blockers remaining: `0/0`.
+- Residual P2 route decisions: `16`, all explicitly deferred or accepted with reason.
+- Payment/export/review/settings safety and workload exclusions remain unchanged.
+- Production, pilot, demo, payment, and frontend readiness scores remain unchanged.
+
 ## Targeted Legacy Operational Polish Note (2026-06-11)
 
 - Six non-workload operational routes received presentation-only localization and state polish.

@@ -46,6 +46,14 @@
 - Screenshots: `role-admin-payment-draft.png`, `role-admin-draft-export-button.png`, `role-staff-payment-draft.png`, `role-staff-payment-settings-readonly.png`, `role-teacher-payment-blocked.png`, and `role-printshop-payment-blocked.png`.
 - Payment/export/review/settings logic changed: `NO`.
 
+## Full UI Regression Safety Recheck (2026-06-11)
+
+- Evidence: `regression-payment-draft.png` and `regression-payment-settings.png`.
+- `DRAFT_NOT_AUTHORIZED`, settings source, review panel, and gated draft XLSX control remain visible.
+- The draft XLSX control remains review-only and non-authorizing.
+- Final payment approval, final authorization, and official-final export controls remain absent.
+- Payment/export/review/settings code and behavior changed: `NO`.
+
 ## Legacy Operational Polish Regression Check (2026-06-11)
 
 - The six-route operational polish did not edit payment draft or payment settings files.

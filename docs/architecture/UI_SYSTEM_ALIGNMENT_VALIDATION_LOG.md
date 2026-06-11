@@ -100,6 +100,20 @@ Build retained the existing large main chunk warning. This pass did not introduc
 - Backend, permissions, payment calculations, settings, review, draft-export gate, and workload-domain files changed: `NO`.
 - Readiness scores remain unchanged.
 
+## 2026-06-11 Full UI Regression Closure
+
+- Route declarations rechecked: `50`.
+- Visual destinations assessed: `43`.
+- Renderable URL HTTP smoke: `44/44` returned HTTP `200`.
+- New real regression screenshots: `8`.
+- Final safe visual-only fixes: `/swaps`, `/printreview`, `/external`, and `/rooms-v2`.
+- Frontend build: PASS.
+- EN/TH i18n parity: PASS, `2260/2260`.
+- Raw-string scan: PASS in warning-only mode.
+- P0: `0`; P1: `0`; residual P2 route decisions: `16`.
+- Closure state: `NO_P0_OR_P1_UI_BLOCKERS_REMAINING`.
+- Backend, payment/export/review/settings behavior, workload files, and readiness scores changed: `NO`.
+
 ## 2026-06-11 Targeted Legacy Operational Polish
 
 - Selected route tranche: `/submissions`, `/swaps`, `/printreview`, `/external`, `/rooms-v2`, and `/period`.

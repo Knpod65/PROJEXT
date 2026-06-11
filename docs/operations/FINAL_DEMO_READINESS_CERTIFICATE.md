@@ -278,3 +278,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Required frontend build and EN/TH checks passed.
 - Payment draft/settings safety boundaries and all existing business behavior remain unchanged.
 - No final approval, final authorization, official-final export, workload-domain change, or readiness-score increase is certified.
+
+## Full UI Regression Closure Certificate Note (2026-06-11)
+
+- All registered route declarations were reconciled and no P0/P1 UI blocker remains.
+- Eight real regression screenshots and `44/44` renderable URL smoke support the closure result.
+- Residual P2 presentation work remains deferred with explicit reasons.
+- Payment/export safety, workload exclusion, business behavior, and readiness scores remain unchanged.

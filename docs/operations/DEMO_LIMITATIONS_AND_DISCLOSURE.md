@@ -275,3 +275,11 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Workload routes and larger data-sensitive legacy routes remain deferred.
 - Demo operators must continue to present the payment document as `DRAFT_NOT_AUTHORIZED`; draft XLSX is review-gated and non-authorizing.
 - No backend, permission, business-logic, payment/export/review/settings, workload-domain, or readiness change is introduced.
+
+## Full UI Regression Closure Disclosure (2026-06-11)
+
+- Full route regression completed with `44/44` renderable URLs returning HTTP `200` and eight new real screenshots.
+- No P0/P1 UI blockers remain; residual P2 presentation work is documented and non-blocking.
+- Workload presentation remains excluded and product-sensitive routes remain deferred.
+- Payment documents remain `DRAFT_NOT_AUTHORIZED`; draft XLSX remains review-gated and non-authorizing.
+- No backend, permission, business-logic, payment/export/review/settings, workload-domain, or readiness change is introduced.

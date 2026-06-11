@@ -332,3 +332,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The pass improves visible localization, route state clarity, and responsive containment without changing workflows.
 - Payment draft/settings safety behavior and workload-domain surfaces remain unchanged.
 - Production, pilot, payment, and frontend readiness scores remain unchanged.
+
+## Full UI Regression Closure Note (2026-06-11)
+
+- The UI regression closure found no P0/P1 blockers after rechecking every registered route declaration.
+- Four final visual-only residuals were fixed; remaining P2 work is explicitly deferred by scope or product decision.
+- Payment draft/export safety and all backend/business behavior remain unchanged.
+- Readiness scores remain unchanged.

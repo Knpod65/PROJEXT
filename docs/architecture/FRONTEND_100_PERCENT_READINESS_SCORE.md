@@ -99,6 +99,13 @@ The Claude design source and all registered route declarations were reconciled i
 - Frontend score remains **76 / 100**; broad legacy/custom-page polish and workload-route presentation remain deferred.
 - Backend, permissions, payment/export/review/settings logic, and readiness scores remain unchanged.
 
+## Full UI Regression Closure Note (2026-06-11)
+
+- All `50` route declarations were reconciled, `43` visual destinations assessed, and `44/44` renderable URLs returned HTTP `200`.
+- Four final route-local P2 residuals were fixed; eight real regression screenshots were captured.
+- No P0/P1 UI blockers remain. Residual P2 work is deferred by workload, product-decision, auth, or low-risk classification.
+- Frontend score remains **76 / 100**; closure evidence does not prove broader production readiness.
+
 ## Targeted Legacy Operational Polish Note (2026-06-11)
 
 - Six selected operational routes were aligned and evidenced: submissions, swaps, print review, external exams, rooms, and periods.
