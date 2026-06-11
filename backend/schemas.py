@@ -668,6 +668,12 @@ class OfficialPaymentDocumentDraftRequest(BaseModel):
     paper_distribution_rows: list[OfficialPaymentDocumentDraftManualPaperRow] = Field(default_factory=list)
 
 
+class OfficialPaymentDocumentDraftExportRequest(BaseModel):
+    preview_request: OfficialPaymentDocumentDraftRequest
+    export_format: Literal["XLSX_DRAFT", "HTML_DRAFT", "JSON_DRAFT"] = "XLSX_DRAFT"
+    filename_override: Optional[str] = None
+
+
 class OfficialPaymentDocumentDraftMetadata(BaseModel):
     academic_year: Optional[str] = None
     semester: Optional[str] = None

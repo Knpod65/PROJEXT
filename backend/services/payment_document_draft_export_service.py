@@ -1,20 +1,12 @@
-"""Draft payment document Excel export service.
+"""Draft-only payment document export service.
 
-Generates a draft-labelled Excel workbook from the term-specific
-payment document settings. Export is blocked unless all gate checks
-pass. No database writes occur; export is stateless.
-
-Safety invariants enforced:
-  - payment_authorization_enabled remains false
-  - final_export_enabled remains false
-  - document_status remains DRAFT_NOT_AUTHORIZED
-  - requires ACCEPTED_FOR_DRAFT_EXPORT review record with comment
+Generates a gated xlsx workbook from the existing draft preview.
+No DB writes. Safety flags (payment_authorization_enabled,
+final_export_enabled) are never set to true.
 """
 from __future__ import annotations
 
-import io
 from datetime import datetime, timezone
-from decimal import Decimal
 from typing import Any
 
 from fastapi import HTTPException
@@ -22,280 +14,270 @@ from sqlalchemy.orm import Session
 
 import models
 from services.official_payment_document_draft_service import (
+    CALCULATED_FROM_SETTINGS,
     build_official_payment_document_draft_preview,
 )
+from services.payment_document_settings_service import SETTINGS_CONFIGURED
 
-THAI_DRAFT_LABEL = "ร่างเอกสารเพื่อการตรวจทานเท่านั้น ยังไม่ใช่เอกสารอนุมัติเบิกจ่าย"
-ENGLISH_DRAFT_LABEL = "Draft for review only. Not payment authorization."
-DRAFT_NOT_AUTHORIZED = "DRAFT_NOT_AUTHORIZED"
+try:
+    import openpyxl
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+    _OPENPYXL_AVAILABLE = True
+except ImportError:
+    _OPENPYXL_AVAILABLE = False
+
+
+ACCEPTED_STATUS = "ACCEPTED_FOR_DRAFT_EXPORT"
+ACTIVE_SETTINGS_STATUS = "ACTIVE_FOR_DRAFT_PREVIEW"
+DRAFT_LABEL_TH = "ร่างเอกสารเพื่อการตรวจทานเท่านั้น ยังไม่ใช่เอกสารอนุมัติเบิกจ่าย"
+DRAFT_LABEL_EN = "Draft for review only. Not payment authorization."
+DRAFT_FOOTER_TH = "เอกสารนี้เป็นร่างเพื่อการตรวจทาน ไม่ใช่เอกสารอนุมัติเบิกจ่าย"
 
 
 def _document_id(payload: dict[str, Any]) -> str:
-    academic_year = payload.get("academic_year") or "unknown"
-    semester = payload.get("semester") or "unknown"
-    exam_type = payload.get("exam_type") or "unknown"
-    period_id = payload.get("period_id") or "all"
-    return f"ADVANCE_PAYMENT_DRAFT_SUMMARY:{academic_year}:{semester}:{exam_type}:{period_id}"
+    ay = payload.get("academic_year") or "unknown"
+    sem = payload.get("semester") or "unknown"
+    et = payload.get("exam_type") or "unknown"
+    pid = payload.get("period_id")
+    return f"ADVANCE_PAYMENT_DRAFT_SUMMARY:{ay}:{sem}:{et}:{pid if pid is not None else 'all'}"
 
 
 def _find_accepted_review(
     db: Session, document_id: str
-) -> models.PaymentDocumentReviewRecord:
+) -> "models.PaymentDocumentReviewRecord":
     record = (
         db.query(models.PaymentDocumentReviewRecord)
         .filter(
             models.PaymentDocumentReviewRecord.document_id == document_id,
-            models.PaymentDocumentReviewRecord.review_status == "ACCEPTED_FOR_DRAFT_EXPORT",
+            models.PaymentDocumentReviewRecord.review_status == ACCEPTED_STATUS,
         )
-        .order_by(models.PaymentDocumentReviewRecord.created_at.desc())
+        .order_by(models.PaymentDocumentReviewRecord.id.desc())
         .first()
     )
     if record is None:
         raise HTTPException(
-            status_code=400,
-            detail="export gate: no ACCEPTED_FOR_DRAFT_EXPORT review record for this document",
+            400,
+            f"No {ACCEPTED_STATUS} review record found for document '{document_id}'. "
+            "Export requires an accepted review.",
         )
-    if not record.comment:
+    if not (record.comment or "").strip():
         raise HTTPException(
-            status_code=400,
-            detail="export gate: reviewer comment is required",
+            400,
+            "Review record comment is required for export but is empty.",
         )
     return record
 
 
 def _check_gate(draft: dict[str, Any]) -> None:
-    meta = draft["metadata"]
-    if meta.get("settings_source_status") != "CONFIGURED":
-        raise HTTPException(400, "export gate: settings_source_status must be CONFIGURED")
-    if meta.get("settings_status") != "ACTIVE_FOR_DRAFT_PREVIEW":
-        raise HTTPException(400, "export gate: settings_status must be ACTIVE_FOR_DRAFT_PREVIEW")
-    if meta.get("calculation_status") != "CALCULATED_FROM_SETTINGS":
-        raise HTTPException(400, "export gate: calculation_status must be CALCULATED_FROM_SETTINGS")
-    if not meta.get("paper_distribution_responsible_group"):
-        raise HTTPException(400, "export gate: paper_distribution_responsible_group is required")
-    if draft.get("payment_authorization_enabled", False):
-        raise HTTPException(400, "export gate: payment_authorization_enabled invariant violated")
-    if draft.get("final_export_enabled", False):
-        raise HTTPException(400, "export gate: final_export_enabled invariant violated")
+    meta = draft.get("metadata") or {}
+    checks = [
+        (
+            meta.get("settings_source_status") != SETTINGS_CONFIGURED,
+            "settings_source_status must be CONFIGURED",
+        ),
+        (
+            meta.get("settings_status") != ACTIVE_SETTINGS_STATUS,
+            "settings_status must be ACTIVE_FOR_DRAFT_PREVIEW",
+        ),
+        (
+            meta.get("calculation_status") != CALCULATED_FROM_SETTINGS,
+            "calculation_status must be CALCULATED_FROM_SETTINGS",
+        ),
+        (
+            not (meta.get("paper_distribution_responsible_group") or "").strip(),
+            "paper_distribution_responsible_group must be set in settings",
+        ),
+        (
+            draft.get("payment_authorization_enabled"),
+            "payment_authorization_enabled must be false",
+        ),
+        (
+            draft.get("final_export_enabled"),
+            "final_export_enabled must be false",
+        ),
+    ]
+    for failed, message in checks:
+        if failed:
+            raise HTTPException(400, f"Draft export gate failed: {message}")
 
 
-def _fmt_amount(value: Any) -> str:
-    if value is None:
-        return "-"
-    try:
-        return f"{Decimal(str(value)):.2f}"
-    except Exception:
-        return str(value)
-
-
-def _fmt_int(value: Any) -> int:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return 0
+def _yellow_fill() -> "PatternFill":
+    return PatternFill("solid", fgColor="FFFF00")
 
 
 def _build_workbook(
     draft: dict[str, Any],
-    review: models.PaymentDocumentReviewRecord,
-    generated_at: str,
-) -> Any:
-    import openpyxl
-    from openpyxl.styles import Alignment, Font, PatternFill
-    from openpyxl.utils import get_column_letter
+    review: "models.PaymentDocumentReviewRecord",
+    generated_at: datetime,
+) -> "openpyxl.Workbook":
+    if not _OPENPYXL_AVAILABLE:
+        raise HTTPException(500, "openpyxl is not installed; xlsx export unavailable.")
+
+    meta = draft.get("metadata") or {}
+    rows = draft.get("rows") or []
+    totals = draft.get("totals") or {}
 
     wb = openpyxl.Workbook()
-    meta = draft["metadata"]
-    rows = draft["rows"]
-    totals = draft["totals"]
-
-    YELLOW_FILL = PatternFill("solid", fgColor="FFFF99")
-    BLUE_FILL = PatternFill("solid", fgColor="BDD7EE")
-    GRAY_FILL = PatternFill("solid", fgColor="F2F2F2")
-    RED_FONT = Font(bold=True, color="C00000")
-    BOLD = Font(bold=True)
-    BOLD_WHITE = Font(bold=True, color="FFFFFF")
-    CENTER = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
-    RIGHT = Alignment(horizontal="right", vertical="center")
-
-    # ── Sheet 1: ร่างเอกสาร ──────────────────────────────────────────────────
     ws1 = wb.active
     ws1.title = "ร่างเอกสาร"
 
-    num_cols = 8
+    NCOLS = 9
+    col_range = f"A1:{get_column_letter(NCOLS)}"
 
-    def _banner_row(ws: Any, row_num: int, text: str, fill: Any, font: Font) -> None:
-        ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=num_cols)
-        cell = ws.cell(row_num, 1, text)
-        cell.fill = fill
-        cell.font = font
-        cell.alignment = CENTER
-        ws.row_dimensions[row_num].height = 22
+    # --- Draft banners (rows 1-3) ---
+    ws1.merge_cells(f"{col_range}1")
+    ws1["A1"] = DRAFT_LABEL_TH
+    ws1["A1"].font = Font(bold=True, size=13)
+    ws1["A1"].fill = _yellow_fill()
+    ws1["A1"].alignment = Alignment(horizontal="center")
 
-    _banner_row(ws1, 1, THAI_DRAFT_LABEL, YELLOW_FILL, Font(bold=True, size=12))
-    _banner_row(ws1, 2, ENGLISH_DRAFT_LABEL, YELLOW_FILL, Font(size=10))
-    _banner_row(ws1, 3, DRAFT_NOT_AUTHORIZED, YELLOW_FILL, Font(bold=True, color="C00000"))
+    ws1.merge_cells(f"A2:{get_column_letter(NCOLS)}2")
+    ws1["A2"] = DRAFT_LABEL_EN
+    ws1["A2"].font = Font(bold=True)
+    ws1["A2"].fill = _yellow_fill()
+    ws1["A2"].alignment = Alignment(horizontal="center")
 
-    ws1.row_dimensions[4].height = 8
+    ws1.merge_cells(f"A3:{get_column_letter(NCOLS)}3")
+    ws1["A3"] = "DRAFT_NOT_AUTHORIZED"
+    ws1["A3"].fill = _yellow_fill()
+    ws1["A3"].alignment = Alignment(horizontal="center")
 
-    term_label = meta.get("term_label") or f"{meta.get('semester','')}/{meta.get('academic_year','')}"
-    _banner_row(ws1, 5, f"สรุปจำนวนกรรมการและค่าตอบแทน — ภาคการศึกษาที่ {term_label}", PatternFill(), BOLD)
+    # --- Title and metadata (rows 5-8) ---
+    ws1.merge_cells(f"A5:{get_column_letter(NCOLS)}5")
+    ws1["A5"] = "สรุปจำนวนกรรมการและค่าตอบแทน รายวัน/ช่วงเวลา"
+    ws1["A5"].font = Font(bold=True, size=12)
+    ws1["A5"].alignment = Alignment(horizontal="center")
 
-    weekday_rate = _fmt_amount(meta.get("settings_weekday_rate"))
-    weekend_rate = _fmt_amount(meta.get("settings_weekend_rate"))
-    calc_status = meta.get("calculation_status", "")
-    ws1.merge_cells(start_row=6, start_column=1, end_row=6, end_column=num_cols)
-    ws1.cell(6, 1, f"อัตราวันจันทร์-ศุกร์: {weekday_rate} บาท | อัตราวันเสาร์-อาทิตย์: {weekend_rate} บาท | {calc_status}").alignment = LEFT
+    term_label = meta.get("term_label") or f"{meta.get('semester')}/{meta.get('academic_year')}"
+    currency = meta.get("currency") or "THB"
+    wd_rate = meta.get("weekday_rate")
+    we_rate = meta.get("weekend_rate")
 
-    group = meta.get("paper_distribution_responsible_group") or "-"
-    person = meta.get("paper_distribution_responsible_person") or ""
-    responsible = f"{group}" + (f" / {person}" if person else "")
-    ws1.merge_cells(start_row=7, start_column=1, end_row=7, end_column=num_cols)
-    ws1.cell(7, 1, f"ผู้รับผิดชอบจ่ายข้อสอบ: {responsible}").alignment = LEFT
+    ws1.merge_cells(f"A6:{get_column_letter(NCOLS)}6")
+    ws1["A6"] = f"ภาคการศึกษา: {term_label}"
 
-    ws1.row_dimensions[8].height = 8
+    ws1.merge_cells(f"A7:{get_column_letter(NCOLS)}7")
+    ws1["A7"] = (
+        f"อัตราวันธรรมดา: {wd_rate} {currency}  |  "
+        f"อัตราวันหยุด: {we_rate} {currency}"
+    )
 
+    ws1.merge_cells(f"A8:{get_column_letter(NCOLS)}8")
+    ws1["A8"] = (
+        f"หน่วยงานรับผิดชอบจ่ายข้อสอบ: "
+        f"{meta.get('paper_distribution_responsible_group', '')}"
+    )
+
+    # --- Column headers (row 9) ---
     headers = [
         "วันที่สอบ",
         "ช่วงเวลา",
         "ประเภทวัน",
         "จำนวนกรรมการคุมสอบ",
-        "ค่าตอบแทนคุมสอบ (บาท)",
+        "ค่าตอบแทนคุมสอบ",
         "จำนวนกรรมการจ่ายข้อสอบ",
-        "ค่าตอบแทนจ่ายข้อสอบ (บาท)",
-        "รวมค่าตอบแทน (บาท)",
+        "ค่าตอบแทนจ่ายข้อสอบ",
+        "รวมค่าตอบแทน",
+        "อัตรา",
     ]
-    HEADER_ROW = 9
-    for col_idx, header in enumerate(headers, 1):
-        cell = ws1.cell(HEADER_ROW, col_idx, header)
-        cell.fill = BLUE_FILL
-        cell.font = BOLD
-        cell.alignment = CENTER
-    ws1.row_dimensions[HEADER_ROW].height = 30
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws1.cell(row=9, column=col_idx, value=header)
+        cell.font = Font(bold=True)
 
-    DATA_START = 10
-    for row_num, row in enumerate(rows, DATA_START):
-        day_type_th = "วันหยุด" if row["day_type"] == "WEEKEND" else ("วันธรรมดา" if row["day_type"] == "WEEKDAY" else row["day_type"])
-        values = [
-            row.get("exam_date") or "",
-            row.get("time_slot") or "",
-            day_type_th,
-            _fmt_int(row.get("invigilation_committee_count")),
-            _fmt_amount(row.get("invigilation_compensation_amount")),
-            _fmt_int(row.get("paper_distribution_committee_count")),
-            _fmt_amount(row.get("paper_distribution_compensation_amount")),
-            _fmt_amount(row.get("total_compensation_amount")),
-        ]
-        fill = GRAY_FILL if (row_num - DATA_START) % 2 == 1 else PatternFill()
-        for col_idx, val in enumerate(values, 1):
-            cell = ws1.cell(row_num, col_idx, val)
-            cell.fill = fill
-            cell.alignment = RIGHT if col_idx >= 4 else LEFT
+    # --- Data rows (row 10+) ---
+    def _float(value: Any) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
 
-    totals_row = DATA_START + len(rows)
-    totals_values = [
-        "รวมทั้งสิ้น", "",  "", "",
-        _fmt_amount(totals.get("invigilation_compensation_amount")),
-        "",
-        _fmt_amount(totals.get("paper_distribution_compensation_amount")),
-        _fmt_amount(totals.get("grand_total_amount")),
-    ]
-    for col_idx, val in enumerate(totals_values, 1):
-        cell = ws1.cell(totals_row, col_idx, val)
-        cell.font = RED_FONT
-        cell.alignment = RIGHT if col_idx >= 4 else LEFT
+    for r, row in enumerate(rows, start=10):
+        ws1.cell(row=r, column=1, value=row.get("exam_date") or row.get("normalized_exam_date"))
+        ws1.cell(row=r, column=2, value=row.get("time_slot"))
+        ws1.cell(row=r, column=3, value=row.get("day_type"))
+        ws1.cell(row=r, column=4, value=row.get("invigilation_committee_count"))
+        ws1.cell(row=r, column=5, value=_float(row.get("invigilation_compensation_amount")))
+        ws1.cell(row=r, column=6, value=row.get("paper_distribution_committee_count"))
+        ws1.cell(row=r, column=7, value=_float(row.get("paper_distribution_compensation_amount")))
+        ws1.cell(row=r, column=8, value=_float(row.get("total_compensation_amount")))
+        ws1.cell(row=r, column=9, value=_float(row.get("rate_amount")))
 
-    inv_count = _fmt_int(totals.get("invigilation_committee_count"))
-    paper_count = _fmt_int(totals.get("paper_distribution_committee_count"))
-    ws1.cell(totals_row, 4, inv_count).font = RED_FONT
-    ws1.cell(totals_row, 6, paper_count).font = RED_FONT
+    # --- Totals row ---
+    totals_row = 10 + len(rows)
+    ws1.cell(row=totals_row, column=1, value="รวม").font = Font(bold=True)
+    ws1.cell(row=totals_row, column=4, value=totals.get("invigilation_committee_count"))
+    ws1.cell(row=totals_row, column=5, value=_float(totals.get("invigilation_compensation_amount")))
+    ws1.cell(row=totals_row, column=6, value=totals.get("paper_distribution_committee_count"))
+    ws1.cell(row=totals_row, column=7, value=_float(totals.get("paper_distribution_compensation_amount")))
+    ws1.cell(row=totals_row, column=8, value=_float(totals.get("grand_total_amount")))
+    for col_idx in range(1, NCOLS + 1):
+        ws1.cell(row=totals_row, column=col_idx).font = Font(bold=True)
 
-    ts_row = totals_row + 2
-    ws1.merge_cells(start_row=ts_row, start_column=1, end_row=ts_row, end_column=num_cols)
-    ws1.cell(ts_row, 1, f"สร้างไฟล์เมื่อ: {generated_at}").alignment = LEFT
-    ts_row2 = ts_row + 1
-    ws1.merge_cells(start_row=ts_row2, start_column=1, end_row=ts_row2, end_column=num_cols)
-    ws1.cell(ts_row2, 1, f"{THAI_DRAFT_LABEL}").font = Font(bold=True, color="C00000")
-    ws1.cell(ts_row2, 1).alignment = CENTER
-    ws1.cell(ts_row2, 1).fill = YELLOW_FILL
+    # --- Footer draft label ---
+    footer_row = totals_row + 2
+    ws1.merge_cells(f"A{footer_row}:{get_column_letter(NCOLS)}{footer_row}")
+    ws1.cell(row=footer_row, column=1, value=DRAFT_FOOTER_TH)
+    ws1.cell(row=footer_row, column=1).fill = _yellow_fill()
+    ws1.cell(row=footer_row, column=1).alignment = Alignment(horizontal="center")
 
-    col_widths = [16, 18, 14, 20, 24, 24, 28, 22]
-    for col_idx, width in enumerate(col_widths, 1):
+    # --- Column widths (use get_column_letter to avoid MergedCell AttributeError) ---
+    col_widths = [20, 18, 12, 22, 22, 24, 24, 18, 12]
+    for col_idx, width in enumerate(col_widths, start=1):
         ws1.column_dimensions[get_column_letter(col_idx)].width = width
 
-    # ── Sheet 2: การตรวจร่าง ─────────────────────────────────────────────────
+    # --- Sheet 2: review metadata ---
     ws2 = wb.create_sheet("การตรวจร่าง")
+    reviewed_at_str = str(review.reviewed_at) if review.reviewed_at else ""
+    review_rows = [
+        ("ผู้ตรวจ (Reviewer)", review.reviewer_name or ""),
+        ("บทบาท (Role)", review.reviewer_role or ""),
+        ("สถานะการตรวจ (Review Status)", review.review_status or ""),
+        ("วันที่ตรวจ (Reviewed At)", reviewed_at_str),
+        ("หมายเหตุ (Comment)", review.comment or ""),
+        ("", ""),
+        ("แหล่งที่มาของการตั้งค่า (Settings Source)", meta.get("rate_source", "")),
+        ("สถานะการตั้งค่า (Settings Status)", meta.get("settings_status", "")),
+        ("สถานะการคำนวณ (Calculation Status)", meta.get("calculation_status", "")),
+        ("", ""),
+        ("สถานะเอกสาร (Document Status)", "DRAFT_NOT_AUTHORIZED"),
+        ("payment_authorization_enabled", "false"),
+        ("final_export_enabled", "false"),
+        ("", ""),
+        ("สร้างเมื่อ (Generated At)", generated_at.isoformat()),
+    ]
+    for row_idx, (key, val) in enumerate(review_rows, start=1):
+        ws2.cell(row=row_idx, column=1, value=key)
+        ws2.cell(row=row_idx, column=2, value=val)
 
-    _banner_row(ws2, 1, THAI_DRAFT_LABEL, YELLOW_FILL, Font(bold=True, size=12))
-    _banner_row(ws2, 2, ENGLISH_DRAFT_LABEL, YELLOW_FILL, Font(size=10))
-    ws2.row_dimensions[3].height = 8
-
-    review_headers = ["ผู้ตรวจ", "บทบาท", "สถานะการตรวจ", "เวลาตรวจ"]
-    for col_idx, h in enumerate(review_headers, 1):
-        cell = ws2.cell(4, col_idx, h)
-        cell.fill = BLUE_FILL
-        cell.font = BOLD
-        cell.alignment = CENTER
-
-    reviewed_at = getattr(review, "reviewed_at", None) or getattr(review, "created_at", None)
-    ws2.cell(5, 1, getattr(review, "reviewer_name", "") or "").alignment = LEFT
-    ws2.cell(5, 2, getattr(review, "reviewer_role", "") or "").alignment = LEFT
-    ws2.cell(5, 3, getattr(review, "review_status", "") or "").alignment = LEFT
-    ws2.cell(5, 4, str(reviewed_at) if reviewed_at else "-").alignment = LEFT
-
-    ws2.row_dimensions[6].height = 8
-
-    ws2.merge_cells(start_row=7, start_column=1, end_row=7, end_column=4)
-    ws2.cell(7, 1, "ความเห็นผู้ตรวจ:").font = BOLD
-
-    comment_text = getattr(review, "comment", "") or ""
-    ws2.merge_cells(start_row=8, start_column=1, end_row=8, end_column=4)
-    comment_cell = ws2.cell(8, 1, comment_text)
-    comment_cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
-    ws2.row_dimensions[8].height = 60
-
-    ws2.row_dimensions[9].height = 8
-
-    settings_ref = f"ภาคเรียน: {meta.get('settings_term') or term_label} | สถานะการตั้งค่า: {meta.get('settings_status') or '-'}"
-    ws2.merge_cells(start_row=10, start_column=1, end_row=10, end_column=4)
-    ws2.cell(10, 1, settings_ref).alignment = LEFT
-
-    ws2.merge_cells(start_row=11, start_column=1, end_row=11, end_column=4)
-    ws2.cell(11, 1, f"สร้างไฟล์เมื่อ: {generated_at}").alignment = LEFT
-
-    ws2.merge_cells(start_row=12, start_column=1, end_row=12, end_column=4)
-    ws2.cell(12, 1, f"{DRAFT_NOT_AUTHORIZED}").font = Font(bold=True, color="C00000")
-
-    for col_idx, width in enumerate([28, 16, 28, 22], 1):
-        ws2.column_dimensions[get_column_letter(col_idx)].width = width
+    ws2.column_dimensions[get_column_letter(1)].width = 42
+    ws2.column_dimensions[get_column_letter(2)].width = 60
 
     return wb
 
 
 def _export_filename(payload: dict[str, Any], generated_at: datetime) -> str:
-    semester = payload.get("semester") or "x"
-    academic_year = payload.get("academic_year") or "xxxx"
+    sem = payload.get("semester") or "X"
+    ay = payload.get("academic_year") or "XXXX"
     ts = generated_at.strftime("%Y%m%d_%H%M")
-    return f"EMS_DRAFT_PAYMENT_DOCUMENT_{semester}-{academic_year}_{ts}.xlsx"
+    return f"EMS_DRAFT_PAYMENT_DOCUMENT_{sem}-{ay}_{ts}.xlsx"
 
 
 def build_payment_document_draft_export(
-    db: Session,
-    request_payload: dict[str, Any],
-) -> tuple[Any, str]:
-    """Build draft payment document Excel workbook.
+    db: Session, request_payload: dict[str, Any]
+) -> tuple["openpyxl.Workbook", str]:
+    """Gate-checked draft export. Returns (workbook, filename).
 
-    Returns (workbook, filename). Raises HTTPException on gate failure.
-    This function performs no DB writes.
+    Raises HTTPException 400 if any precondition fails.
+    Never sets payment_authorization_enabled or final_export_enabled to true.
     """
-    doc_id = _document_id(request_payload)
-    review = _find_accepted_review(db, doc_id)
-
+    document_id = _document_id(request_payload)
+    review = _find_accepted_review(db, document_id)
     draft = build_official_payment_document_draft_preview(db, request_payload)
     _check_gate(draft)
-
     generated_at = datetime.now(timezone.utc)
-    wb = _build_workbook(draft, review, generated_at.strftime("%Y-%m-%d %H:%M UTC"))
+    wb = _build_workbook(draft, review, generated_at)
     filename = _export_filename(request_payload, generated_at)
     return wb, filename

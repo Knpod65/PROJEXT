@@ -53,11 +53,6 @@ def export_official_payment_document_draft(
     db: Session = Depends(get_db),
     _current_user=Depends(require_view_all),
 ):
-    """Generate a draft-labelled Excel export of the payment document.
-
-    Requires ACCEPTED_FOR_DRAFT_EXPORT review status for the document.
-    Does not mutate any database records or safety flags.
-    """
     wb, filename = build_payment_document_draft_export(db, payload.model_dump())
     buf = io.BytesIO()
     wb.save(buf)
