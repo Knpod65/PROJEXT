@@ -1909,7 +1909,7 @@ export const en = {
   "paymentDraft.paper.count": "Paper committee count",
   "paymentDraft.paper.notes": "Notes",
   "paymentDraft.actions.preview": "Preview draft",
-  "paymentDraft.actions.exportDraft": "Download draft Excel",
+  "paymentDraft.actions.exportDraft": "Export draft document",
   "paymentDraft.actions.exportGated": "Export requires ACCEPTED_FOR_DRAFT_EXPORT review status",
   "paymentDraft.actions.exportSuccess": "Draft Excel downloaded",
   "paymentDraft.actions.exportFailed": "Export failed",

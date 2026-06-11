@@ -1900,7 +1900,7 @@ export const th = {
   "paymentDraft.paper.count": "จำนวนกรรมการจ่ายข้อสอบ",
   "paymentDraft.paper.notes": "หมายเหตุ",
   "paymentDraft.actions.preview": "ดูตัวอย่างร่าง",
-  "paymentDraft.actions.exportDraft": "ดาวน์โหลด Excel ร่าง",
+  "paymentDraft.actions.exportDraft": "ส่งออกร่างเอกสาร",
   "paymentDraft.actions.exportGated": "การส่งออกต้องการสถานะ ACCEPTED_FOR_DRAFT_EXPORT",
   "paymentDraft.actions.exportSuccess": "ดาวน์โหลด Excel ร่างเรียบร้อย",
   "paymentDraft.actions.exportFailed": "การส่งออกล้มเหลว",

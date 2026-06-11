@@ -12,8 +12,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { useOfficialPaymentDraftPreview } from "@/hooks/domain/useOfficialPaymentDraftPreview";
 import { usePaymentDocumentSettings } from "@/hooks/domain/usePaymentDocumentSettings";
 import { usePaymentDocumentReviews } from "@/hooks/domain/usePaymentDocumentReviews";
-import { exportOfficialPaymentDraftExcel } from "@/services/officialPaymentDraft.service";
 import { useI18n } from "@/i18n";
+import { exportOfficialPaymentDraftExcel } from "@/services/officialPaymentDraft.service";
 import { useAuth } from "@/store/auth.store";
 import type { OfficialPaymentDraftManualPaperRow, OfficialPaymentDraftRow } from "@/types/officialPaymentDraft";
 import type { PaymentDocumentReviewRecord, PaymentDocumentReviewStatus } from "@/types/paymentDocumentReview";
@@ -238,7 +238,9 @@ export default function OfficialPaymentDocumentDraft() {
     if (latestReviewStatus !== "ACCEPTED_FOR_DRAFT_EXPORT") return;
     setIsExporting(true);
     try {
-      const manualRows = paperRows.map(toRequestRow).filter((row): row is OfficialPaymentDraftManualPaperRow => Boolean(row));
+      const manualRows = paperRows
+        .map(toRequestRow)
+        .filter((row): row is OfficialPaymentDraftManualPaperRow => Boolean(row));
       const blob = await exportOfficialPaymentDraftExcel({
         period_id: periodId ? Number(periodId) : null,
         academic_year: academicYear || null,
@@ -249,7 +251,7 @@ export default function OfficialPaymentDocumentDraft() {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `EMS_DRAFT_PAYMENT_DOCUMENT_${semester || "2"}-${academicYear || "2568"}_draft.xlsx`;
+      anchor.download = `EMS_DRAFT_PAYMENT_DOCUMENT_${semester}-${academicYear}_draft.xlsx`;
       anchor.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -474,7 +476,11 @@ export default function OfficialPaymentDocumentDraft() {
               iconLeft={<Icon name="download" />}
               loading={isExporting}
               disabled={latestReviewStatus !== "ACCEPTED_FOR_DRAFT_EXPORT" || !data}
-              title={latestReviewStatus !== "ACCEPTED_FOR_DRAFT_EXPORT" ? t("paymentDraft.actions.exportGated") : undefined}
+              title={
+                latestReviewStatus !== "ACCEPTED_FOR_DRAFT_EXPORT"
+                  ? t("paymentDraft.actions.exportGated")
+                  : undefined
+              }
               onClick={submitExport}
             >
               {t("paymentDraft.actions.exportDraft")}
