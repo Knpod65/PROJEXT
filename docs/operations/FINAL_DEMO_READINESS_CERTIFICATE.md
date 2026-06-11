@@ -1,5 +1,9 @@
 # FINAL_DEMO_READINESS_CERTIFICATE.md
 
+## 2026-06-11 UI Alignment Record
+
+The authoritative EMS design source and all registered route declarations were reviewed. Targeted display-only fixes preserve all payment, settings, review, role, and draft-export gates. Draft XLSX remains review-only; approval, official/final export, and final authorization remain absent. Readiness scores are unchanged.
+
 **Date**: 2026-05-25 (updated for Post-Demo Decision + Laravel Contract Dispatch)  
 **Commit**: d8ec2c9 + this pass docs  
 **Scope**: Standalone EMS demo only

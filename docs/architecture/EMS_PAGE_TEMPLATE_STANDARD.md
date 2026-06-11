@@ -19,6 +19,6 @@
 ## Payment/Document Addendum
 
 - `DRAFT_NOT_AUTHORIZED` must remain visible on official document drafts.
-- No approve, authorize, final payment, official export, PDF, or Excel control should appear.
+- A gated draft XLSX control may appear only after `ACCEPTED_FOR_DRAFT_EXPORT` and must be labeled as review-only and non-authorizing.
+- No approve, authorize, final payment, official/final export, or official PDF/Excel control should appear.
 - Paper-distribution manual rows must be described as request-only and non-persistent.
-

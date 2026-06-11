@@ -1,5 +1,13 @@
 # DEMO_LIMITATIONS_AND_DISCLOSURE.md
 
+## 2026-06-11 UI Alignment Disclosure
+
+- The payment document remains `DRAFT_NOT_AUTHORIZED`.
+- `ACCEPTED_FOR_DRAFT_EXPORT` permits only gated draft XLSX output for review.
+- Draft XLSX is not official/final export, payment approval, final authorization, or final truth.
+- Workload routes were visually inventoried but not changed in this alignment pass.
+- Production readiness scores remain unchanged.
+
 **Date**: 2026-05-25  
 **Audience**: All internal and external stakeholders for standalone EMS demo.
 

@@ -1,5 +1,9 @@
 # EMS_100_PERCENT_MASTER_SCORECARD.md
 
+## 2026-06-11 UI Alignment Note
+
+The full-route UI alignment pass recovered the authoritative EMS design source and corrected targeted presentation drift without changing backend or business behavior. Draft XLSX remains gated, review-only, and non-authorizing. Readiness scores are unchanged.
+
 **Date**: 2026-05-25  
 **Audit**: EMS 100% SYSTEM READINESS AUDIT  
 **Scoring Method**: 0-100 per dimension with verifiable evidence from disk + safe execution. Separate targets for Demo 100%, Pilot 100%, Production 100%. "100" requires no known gaps at that level.

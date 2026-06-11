@@ -1,5 +1,19 @@
 # UI System Alignment Validation Log
 
+## 2026-06-11 Full Route Alignment Pass
+
+- Recovered the Claude design handoff and confirmed the Quiet Institutional Command Center direction.
+- Inventoried all `50` registered route declarations.
+- Scoped frontend fixes to localized payment/review/settings statuses, visible draft-export gate messaging, shared form helper/error presentation, and Platform Configuration display cleanup.
+- Workload routes were inventoried but not modified.
+- Backend, payment calculation, settings logic, review gate, and draft-export gate changes: `NO`.
+- Frontend build: `PASS`.
+- EN/TH i18n parity: `PASS`, `1972/1972` keys.
+- Raw-string scan: `PASS` in existing warning-only mode.
+- Backend health: HTTP `200`; renderable frontend route HTTP smoke: `44/44`.
+- Authenticated real screenshots retained: `38`; four role-specific routes were auth-blocked and two public routes redirected under the active session.
+- Payment/export live visual safety audit: `PASS`.
+
 **Date**: 2026-06-05  
 **Scope**: system-wide frontend UI/template alignment pass  
 **Status**: frontend validation passed; automated screenshot evidence captured; P2 polish reconciled for supervisor review

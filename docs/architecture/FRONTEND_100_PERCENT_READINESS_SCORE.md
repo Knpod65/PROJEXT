@@ -1,5 +1,9 @@
 # FRONTEND_100_PERCENT_READINESS_SCORE.md
 
+## 2026-06-11 UI Alignment Note
+
+The Claude design source and all registered route declarations were reconciled into a full-route template inventory. Targeted display-only alignment improved payment/export safety communication and localized visible statuses. Production readiness scores are unchanged; route-specific P2 polish and production evidence remain separate work.
+
 **Date**: 2026-05-25  
 **Audit**: EMS 100% SYSTEM READINESS AUDIT  
 **Scope**: App.tsx (465 lines), main.tsx, config/navigation.ts, 244 ts/tsx in src/, i18n (1688 keys), build output (754 kB main chunk), prior FRONTEND_SUPERIOR_ENGINEER_AUDIT + fresh validation
