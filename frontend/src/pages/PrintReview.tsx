@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
+import { useI18n } from "@/i18n";
 import {
   approveSubmission,
   getSubmissionForSection,
@@ -23,24 +24,26 @@ import { canApproveSubmission } from "@/utils/permissions";
 // ── Status badge ───────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    draft:     { label: "Draft",     cls: "pr-badge pr-badge--draft" },
-    submitted: { label: "Submitted", cls: "pr-badge pr-badge--submitted" },
-    approved:  { label: "Approved",  cls: "pr-badge pr-badge--approved" },
-    rejected:  { label: "Returned",  cls: "pr-badge pr-badge--rejected" },
-    released:  { label: "Released",  cls: "pr-badge pr-badge--released" },
+  const { t } = useI18n();
+  const map: Record<string, { labelKey: string; cls: string }> = {
+    draft:     { labelKey: "legacy.printReview.status.draft",     cls: "pr-badge pr-badge--draft" },
+    submitted: { labelKey: "legacy.printReview.status.submitted", cls: "pr-badge pr-badge--submitted" },
+    approved:  { labelKey: "legacy.printReview.status.approved",  cls: "pr-badge pr-badge--approved" },
+    rejected:  { labelKey: "legacy.printReview.status.rejected",  cls: "pr-badge pr-badge--rejected" },
+    released:  { labelKey: "legacy.printReview.status.released",  cls: "pr-badge pr-badge--released" },
   };
-  const { label, cls } = map[status] ?? { label: status, cls: "pr-badge" };
-  return <span className={cls}>{label}</span>;
+  const entry = map[status];
+  return <span className={entry?.cls ?? "pr-badge"}>{entry ? t(entry.labelKey) : status}</span>;
 }
 
 function PrintSpecBadge({ duplex, staple }: { duplex?: boolean; staple?: string }) {
+  const { t } = useI18n();
   if (duplex === undefined && !staple) return null;
   const parts = [];
-  if (duplex) parts.push("Duplex");
-  if (staple && staple !== "none") parts.push(`Staple: ${staple.replace("_", " ")}`);
-  if (parts.length === 0) parts.push("Simplex, no staple");
-  return <span className="pr-spec-tag">{parts.join(" · ")}</span>;
+  if (duplex) parts.push(t("legacy.printReview.spec.duplex"));
+  if (staple && staple !== "none") parts.push(t("legacy.printReview.spec.staple", { value: staple.replace("_", " ") }));
+  if (parts.length === 0) parts.push(t("legacy.printReview.spec.simplexNoStaple"));
+  return <span className="pr-spec-tag">{parts.join(" / ")}</span>;
 }
 
 // ── Detail panel ───────────────────────────────────────────────
@@ -264,6 +267,7 @@ function PrintRow({
 type PrintTab = "all" | "submitted" | "approved" | "released" | "needs_attention";
 
 export function PrintReviewPage() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const { user } = useAuth();
   const { activePeriod } = usePeriod();
@@ -326,26 +330,24 @@ export function PrintReviewPage() {
   }), [items]);
 
   const tabItems = [
-    { key: "all", label: "All", badge: stats.total },
-    { key: "submitted", label: "Pending review", badge: stats.submitted || undefined },
-    { key: "approved", label: "Approved / Released", badge: stats.approved || undefined },
-    { key: "needs_attention", label: "Needs attention", badge: stats.needsAction || undefined },
-    { key: "released", label: "Released" },
+    { key: "all", label: t("common.all"), badge: stats.total },
+    { key: "submitted", label: t("legacy.printReview.status.submitted"), badge: stats.submitted || undefined },
+    { key: "approved", label: t("legacy.printReview.tabs.approvedReleased"), badge: stats.approved || undefined },
+    { key: "needs_attention", label: t("legacy.printReview.metrics.needsAttention"), badge: stats.needsAction || undefined },
+    { key: "released", label: t("legacy.printReview.status.released") },
   ];
 
   return (
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">Pre-print review</span>
-          <h1 className="page-hero__title">Submission review & print handoff</h1>
-          <p className="page-hero__description">
-            Review submitted exam papers, approve for print, and track what's missing before handoff to the print shop.
-          </p>
+          <span className="page-hero__eyebrow">{t("legacy.printReview.eyebrow")}</span>
+          <h1 className="page-hero__title">{t("legacy.printReview.title")}</h1>
+          <p className="page-hero__description">{t("legacy.printReview.description")}</p>
         </div>
         <div className="page-hero__actions">
           <Button type="button" variant="outline" onClick={() => void load()} disabled={loading}>
-            Refresh
+            {t("common.refresh")}
           </Button>
         </div>
       </section>
@@ -353,7 +355,7 @@ export function PrintReviewPage() {
       {activePeriod && (
         <div className="wf-period-bar">
           <Icon name="calendar_month" />
-          <span>Active period: <strong>{activePeriod.label}</strong></span>
+          <span>{t("common.activePeriod")}: <strong>{activePeriod.label}</strong></span>
         </div>
       )}
 
@@ -361,41 +363,41 @@ export function PrintReviewPage() {
         <article className="dashboard-metric dashboard-metric--accent">
           <div className="dashboard-metric__icon"><Icon name="description" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Total courses</p>
+            <p className="dashboard-metric__label">{t("legacy.printReview.metrics.total")}</p>
             <strong className="dashboard-metric__value">{stats.total}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--warning">
           <div className="dashboard-metric__icon"><Icon name="pending_actions" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Pending review</p>
+            <p className="dashboard-metric__label">{t("legacy.printReview.metrics.pending")}</p>
             <strong className="dashboard-metric__value">{stats.submitted}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--success">
           <div className="dashboard-metric__icon"><Icon name="check_circle" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Approved</p>
+            <p className="dashboard-metric__label">{t("legacy.printReview.metrics.approved")}</p>
             <strong className="dashboard-metric__value">{stats.approved}</strong>
           </div>
         </article>
         <article className={`dashboard-metric ${stats.needsAction > 0 ? "dashboard-metric--danger" : "dashboard-metric--neutral"}`}>
           <div className="dashboard-metric__icon"><Icon name="warning" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Needs attention</p>
+            <p className="dashboard-metric__label">{t("legacy.printReview.metrics.needsAttention")}</p>
             <strong className="dashboard-metric__value">{stats.needsAction}</strong>
           </div>
         </article>
       </div>
 
-      <Card title="Submissions">
+      <Card title={t("legacy.printReview.cardTitle")}>
         <Tabs activeKey={activeTab} items={tabItems} onChange={(k) => setActiveTab(k as PrintTab)} />
 
         <div className="filter-bar" style={{ marginBottom: "12px" }}>
           <input
             type="text"
             className="filter-bar__search"
-            placeholder="Search course, section, teacher…"
+            placeholder={t("legacy.printReview.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -411,8 +413,8 @@ export function PrintReviewPage() {
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Icon name="inbox" />}
-            title="No submissions in this view"
-            description="Switch tabs or clear the search filter."
+            title={t("legacy.printReview.emptyTitle")}
+            description={t("legacy.printReview.emptyDescription")}
           />
         ) : (
           <div className="table-wrap">

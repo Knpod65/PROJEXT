@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { SwapItem } from "@/types/api";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { useI18n } from "@/i18n";
 
 interface SwapRespondModalProps {
   swap: SwapItem | null;
@@ -12,6 +13,7 @@ interface SwapRespondModalProps {
 }
 
 export function SwapRespondModal({ busy, onClose, onRespond, swap }: SwapRespondModalProps) {
+  const { t } = useI18n();
   const [decision, setDecision] = useState<"accept" | "reject" | null>(null);
   const [reason, setReason] = useState("");
 
@@ -38,12 +40,12 @@ export function SwapRespondModal({ busy, onClose, onRespond, swap }: SwapRespond
   return (
     <Modal
       open={swap !== null}
-      title={`Swap request from ${swap.requester_name ?? "Unknown"}`}
+      title={t("legacy.swaps.respond.title", { value: swap.requester_name ?? t("common.unknown") })}
       onClose={handleClose}
       footer={
         <div className="inline-actions">
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             type="button"
@@ -52,7 +54,7 @@ export function SwapRespondModal({ busy, onClose, onRespond, swap }: SwapRespond
             loading={busy}
             onClick={handleSubmit}
           >
-            {decision === "accept" ? "Accept swap" : decision === "reject" ? "Reject swap" : "Respond"}
+            {decision === "accept" ? t("legacy.swaps.actions.accept") : decision === "reject" ? t("legacy.swaps.actions.reject") : t("legacy.swaps.actions.respond")}
           </Button>
         </div>
       }
@@ -66,14 +68,14 @@ export function SwapRespondModal({ busy, onClose, onRespond, swap }: SwapRespond
 
         <div className="swap-shift-pair">
           <div className="swap-shift-card">
-            <span className="swap-shift-card__label">Their slot</span>
+            <span className="swap-shift-card__label">{t("legacy.swaps.table.theirSlot")}</span>
             <strong>{theirShift?.course ?? "—"} §{theirShift?.section_no ?? "—"}</strong>
             <span>{theirShift?.date ?? "—"} {theirShift?.time ?? "—"}</span>
             <span className="text-muted">{theirShift?.room ?? "—"}</span>
           </div>
           <div className="swap-shift-card__arrow">⇄</div>
           <div className="swap-shift-card">
-            <span className="swap-shift-card__label">Your slot</span>
+            <span className="swap-shift-card__label">{t("legacy.swaps.table.yourSlot")}</span>
             <strong>{myShift?.course ?? "—"} §{myShift?.section_no ?? "—"}</strong>
             <span>{myShift?.date ?? "—"} {myShift?.time ?? "—"}</span>
             <span className="text-muted">{myShift?.room ?? "—"}</span>
@@ -86,20 +88,20 @@ export function SwapRespondModal({ busy, onClose, onRespond, swap }: SwapRespond
             className={`swap-respond__btn swap-respond__btn--accept${decision === "accept" ? " active" : ""}`}
             onClick={() => setDecision("accept")}
           >
-            Accept
+            {t("legacy.swaps.actions.accept")}
           </button>
           <button
             type="button"
             className={`swap-respond__btn swap-respond__btn--reject${decision === "reject" ? " active" : ""}`}
             onClick={() => setDecision("reject")}
           >
-            Reject
+            {t("legacy.swaps.actions.reject")}
           </button>
         </div>
 
         {decision === "reject" && (
           <div className="form-field">
-            <label htmlFor="reject-reason">Reason for rejection</label>
+            <label htmlFor="reject-reason">{t("legacy.swaps.respond.rejectReason")}</label>
             <textarea
               id="reject-reason"
               rows={3}

@@ -6,6 +6,7 @@ import type { UserOut } from "@/types/api";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useI18n } from "@/i18n";
 
 interface SwapCreateModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function SwapCreateModal({
   open,
   supervisions,
 }: SwapCreateModalProps) {
+  const { t } = useI18n();
   const [selectedSlot, setSelectedSlot] = useState<MySupervisionSlot | null>(null);
   const [availableUsers, setAvailableUsers] = useState<UserOut[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -72,26 +74,26 @@ export function SwapCreateModal({
   return (
     <Modal
       open={open}
-      title="Request a swap"
+      title={t("legacy.swaps.create.title")}
       onClose={onClose}
       footer={
         <div className="inline-actions">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="button" disabled={!canSubmit} loading={busy} onClick={handleSubmit}>
-            Send request
+            {t("legacy.swaps.actions.sendRequest")}
           </Button>
         </div>
       }
     >
       <div className="swap-create-form">
         <div className="form-field">
-          <label htmlFor="swap-slot">My supervision slot</label>
+          <label htmlFor="swap-slot">{t("legacy.swaps.create.mySlot")}</label>
           {loadingSlots ? (
             <Skeleton className="form-skeleton" />
           ) : supervisions.length === 0 ? (
-            <p className="form-hint">No active supervision slots found.</p>
+            <p className="form-hint">{t("legacy.swaps.create.noSlots")}</p>
           ) : (
             <select
               id="swap-slot"
@@ -115,11 +117,11 @@ export function SwapCreateModal({
 
         {selectedSlot && (
           <div className="form-field">
-            <label htmlFor="swap-target">Swap with</label>
+            <label htmlFor="swap-target">{t("legacy.swaps.create.swapWith")}</label>
             {loadingUsers ? (
               <Skeleton className="form-skeleton" />
             ) : availableUsers.length === 0 ? (
-              <p className="form-hint">No available staff for this time slot.</p>
+              <p className="form-hint">{t("legacy.swaps.create.noAvailableStaff")}</p>
             ) : (
               <select
                 id="swap-target"
@@ -138,7 +140,7 @@ export function SwapCreateModal({
         )}
 
         <div className="form-field">
-          <label htmlFor="swap-message">Message (optional)</label>
+          <label htmlFor="swap-message">{t("legacy.swaps.create.message")}</label>
           <textarea
             id="swap-message"
             rows={3}

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useI18n } from "@/i18n";
 import {
   addRoomUnavailability,
   deleteRoomUnavailability,
@@ -25,9 +26,10 @@ type SlotDefinition = {
 };
 
 function RoomStatusBadge({ active }: { active: boolean }) {
+  const { t } = useI18n();
   return (
     <span className={`room-badge ${active ? "room-badge--active" : "room-badge--inactive"}`}>
-      {active ? "Active" : "Inactive"}
+      {active ? t("status.active") : t("status.inactive")}
     </span>
   );
 }
@@ -136,6 +138,7 @@ function RoomsTable({
   onSelect: (room: RoomOut) => void;
   onEdit: (room: RoomOut) => void;
 }) {
+  const { t } = useI18n();
   if (loading) {
     return (
       <div className="page-stack">
@@ -148,8 +151,8 @@ function RoomsTable({
     return (
       <EmptyState
         icon={<Icon name="meeting_room" />}
-        title="No rooms found."
-        description="Add a room using the button above, or adjust your filters."
+        title={t("legacy.rooms.emptyTitle")}
+        description={t("legacy.rooms.emptyDescription")}
       />
     );
   }
@@ -166,11 +169,11 @@ function RoomsTable({
         </colgroup>
         <thead>
           <tr>
-            <th>Room</th>
-            <th>Building</th>
-            <th>Capacity</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>{t("legacy.rooms.table.room")}</th>
+            <th>{t("legacy.rooms.table.building")}</th>
+            <th>{t("legacy.rooms.table.capacity")}</th>
+            <th>{t("common.status")}</th>
+            <th>{t("common.actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -181,7 +184,7 @@ function RoomsTable({
                 <td>
                   <div className="data-table__content data-table__content--clamp">
                     <strong>{room.room_name}</strong>
-                    <p>{selected ? "Selected for availability editing" : "Select to edit availability"}</p>
+                    <p>{selected ? t("legacy.rooms.table.selectedDescription") : t("legacy.rooms.table.selectDescription")}</p>
                   </div>
                 </td>
                 <td className="text-muted">{room.building ?? "-"}</td>
@@ -190,10 +193,10 @@ function RoomsTable({
                 <td>
                   <div className="inline-actions">
                     <Button type="button" size="sm" variant={selected ? "primary" : "outline"} onClick={() => onSelect(room)}>
-                      {selected ? "Selected" : "Select"}
+                      {selected ? t("legacy.rooms.actions.selected") : t("legacy.rooms.actions.select")}
                     </Button>
                     <Button type="button" size="sm" variant="ghost" onClick={() => onEdit(room)}>
-                      Edit
+                      {t("common.edit")}
                     </Button>
                   </div>
                 </td>
@@ -207,6 +210,7 @@ function RoomsTable({
 }
 
 export function RoomManagementV2Page() {
+  const { t } = useI18n();
   const { toast } = useUi();
 
   const [rooms, setRooms] = useState<RoomOut[]>([]);
@@ -385,15 +389,13 @@ export function RoomManagementV2Page() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">Room operations</span>
-          <h1 className="page-hero__title">Room capacity & availability</h1>
-          <p className="page-hero__description">
-            Select a room, review its operational calendar, and block unavailable time ranges before optimization runs.
-          </p>
+          <span className="page-hero__eyebrow">{t("legacy.rooms.eyebrow")}</span>
+          <h1 className="page-hero__title">{t("legacy.rooms.title")}</h1>
+          <p className="page-hero__description">{t("legacy.rooms.description")}</p>
         </div>
         <div className="page-hero__actions">
           <Button type="button" variant="outline" onClick={() => { void loadRooms(); void loadBlocks(); }} disabled={roomsLoading || blocksLoading}>
-            Refresh
+            {t("common.refresh")}
           </Button>
         </div>
       </section>
@@ -402,38 +404,38 @@ export function RoomManagementV2Page() {
         <article className="dashboard-metric dashboard-metric--accent">
           <div className="dashboard-metric__icon"><Icon name="meeting_room" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Active rooms</p>
+            <p className="dashboard-metric__label">{t("legacy.rooms.metrics.active")}</p>
             <strong className="dashboard-metric__value">{activeCount}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--neutral">
           <div className="dashboard-metric__icon"><Icon name="chair" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Total capacity</p>
+            <p className="dashboard-metric__label">{t("legacy.rooms.metrics.capacity")}</p>
             <strong className="dashboard-metric__value">{totalCapacity}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--warning">
           <div className="dashboard-metric__icon"><Icon name="block" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Availability blocks</p>
+            <p className="dashboard-metric__label">{t("legacy.rooms.metrics.blocks")}</p>
             <strong className="dashboard-metric__value">{blocks.length}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--neutral">
           <div className="dashboard-metric__icon"><Icon name="visibility_off" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Inactive rooms</p>
+            <p className="dashboard-metric__label">{t("legacy.rooms.metrics.inactive")}</p>
             <strong className="dashboard-metric__value">{inactiveCount}</strong>
           </div>
         </article>
       </div>
 
-      <Card title="Rooms" subtitle="Choose a room to edit its operational availability for the active period">
+      <Card title={t("legacy.rooms.cardTitle")} subtitle={t("legacy.rooms.cardSubtitle")}>
         <div className="filter-bar">
           <input
             type="text"
-            placeholder="Search room name or building..."
+            placeholder={t("legacy.rooms.searchPlaceholder")}
             value={query}
             className="filter-bar__search"
             onChange={(event) => setQuery(event.target.value)}
@@ -444,11 +446,11 @@ export function RoomManagementV2Page() {
               checked={showInactive}
               onChange={(event) => setShowInactive(event.target.checked)}
             />
-            Show inactive
+            {t("legacy.rooms.showInactive")}
           </label>
           {query && (
             <Button type="button" size="sm" variant="ghost" onClick={() => setQuery("")}>
-              Clear
+              {t("common.clear")}
             </Button>
           )}
         </div>
@@ -462,21 +464,21 @@ export function RoomManagementV2Page() {
       </Card>
 
       <Card
-        title={selectedRoom ? `Availability calendar: ${selectedRoom.room_name}` : "Availability calendar"}
-        subtitle={selectedRoom ? "Manual blocks here are optimizer room constraints. They do not change teaching rooms or exam-room assignments." : "Select a room above to edit its calendar."}
+        title={selectedRoom ? t("legacy.rooms.availability.titleFor", { value: selectedRoom.room_name }) : t("legacy.rooms.availability.title")}
+        subtitle={selectedRoom ? t("legacy.rooms.availability.subtitle") : t("legacy.rooms.availability.selectRoom")}
       >
         {!selectedRoom ? (
           <EmptyState
             icon={<Icon name="calendar_month" />}
-            title="No room selected"
-            description="Select a room from the table above to edit its availability."
+            title={t("legacy.rooms.availability.noRoom")}
+            description={t("legacy.rooms.availability.selectRoom")}
           />
         ) : (
           <div className="room-availability-layout">
             <div className="room-availability-editor">
               <div className="filter-bar">
                 <div className="filter-field">
-                  <span>Date</span>
+                  <span>{t("common.date")}</span>
                   <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
                 </div>
                 <div className="filter-bar__actions">
@@ -490,7 +492,7 @@ export function RoomManagementV2Page() {
                     }}
                     disabled={Boolean(existingAllDayBlock)}
                   >
-                    {draftAllDay ? "All day selected" : "Mark all day unavailable"}
+                    {draftAllDay ? t("legacy.rooms.availability.allDaySelected") : t("legacy.rooms.availability.markAllDay")}
                   </Button>
                   <Button
                     type="button"
@@ -502,10 +504,10 @@ export function RoomManagementV2Page() {
                     }}
                     disabled={selectedSlots.length === 0 && !draftAllDay}
                   >
-                    Clear selection
+                    {t("legacy.rooms.availability.clearSelection")}
                   </Button>
                   <Button type="button" size="sm" loading={blockBusy} onClick={() => void handleSaveAvailability()}>
-                    Save unavailable time
+                    {t("legacy.rooms.availability.save")}
                   </Button>
                 </div>
               </div>
@@ -513,7 +515,7 @@ export function RoomManagementV2Page() {
               {existingAllDayBlock ? (
                 <div className="wf-validation wf-validation--ok">
                   <Icon name="event_busy" />
-                  <span>This room is already blocked for the full day. Remove the full-day block from the list to edit half-hour slots.</span>
+                  <span>{t("legacy.rooms.availability.fullDayBlocked")}</span>
                 </div>
               ) : (
                 <div className="room-slot-grid" role="grid" aria-label="Room availability slots">
@@ -529,7 +531,7 @@ export function RoomManagementV2Page() {
                         disabled={isBlocked}
                       >
                         <strong>{slot.label}</strong>
-                        <span>{isBlocked ? "Blocked" : isSelected ? "Selected" : "Available"}</span>
+                        <span>{isBlocked ? t("legacy.rooms.availability.blocked") : isSelected ? t("legacy.rooms.actions.selected") : t("legacy.rooms.availability.available")}</span>
                       </button>
                     );
                   })}
@@ -540,27 +542,27 @@ export function RoomManagementV2Page() {
             <div className="room-availability-sidebar">
               <div className="room-availability-sidebar__summary">
                 <strong>{selectedRoom.room_name}</strong>
-                <span>{selectedRoom.building ?? "No building label"}</span>
-                <span>Capacity {selectedRoom.capacity}</span>
+                <span>{selectedRoom.building ?? t("legacy.rooms.availability.noBuilding")}</span>
+                <span>{t("legacy.rooms.availability.capacity", { value: selectedRoom.capacity })}</span>
               </div>
 
               <div className="page-stack">
                 <div>
-                  <strong>Saved blocks on {selectedDate}</strong>
+                  <strong>{t("legacy.rooms.availability.savedOn", { value: selectedDate })}</strong>
                   {blocksLoading ? (
                     <Skeleton className="dashboard-skeleton" />
                   ) : blocksForSelectedDate.length === 0 ? (
-                    <p className="text-muted">No saved unavailability for this date.</p>
+                    <p className="text-muted">{t("legacy.rooms.availability.noneOnDate")}</p>
                   ) : (
                     <div className="room-block-list">
                       {blocksForSelectedDate.map((row) => (
                         <div key={row.id} className="room-block-list__item">
                           <div>
-                            <strong>{row.all_day ? "All day" : row.block_time ?? "Blocked"}</strong>
-                            <p>{row.reason ?? "Manual operational block"}</p>
+                            <strong>{row.all_day ? t("legacy.rooms.availability.allDay") : row.block_time ?? t("legacy.rooms.availability.blocked")}</strong>
+                            <p>{row.reason ?? t("legacy.rooms.availability.manualBlock")}</p>
                           </div>
                           <Button type="button" size="sm" variant="ghost" onClick={() => void handleDeleteBlock(row.id)}>
-                            Remove
+                            {t("common.remove")}
                           </Button>
                         </div>
                       ))}
@@ -569,18 +571,18 @@ export function RoomManagementV2Page() {
                 </div>
 
                 <div>
-                  <strong>Upcoming saved blocks</strong>
+                  <strong>{t("legacy.rooms.availability.upcoming")}</strong>
                   {blocksLoading ? (
                     <Skeleton className="dashboard-skeleton" />
                   ) : selectedRoomBlocks.length === 0 ? (
-                    <p className="text-muted">No saved blocks for this room in the active period.</p>
+                    <p className="text-muted">{t("legacy.rooms.availability.noneUpcoming")}</p>
                   ) : (
                     <div className="room-block-list room-block-list--compact">
                       {selectedRoomBlocks.slice(0, 8).map((row) => (
                         <div key={row.id} className="room-block-list__item">
                           <div>
                             <strong>{row.block_date}</strong>
-                            <p>{row.all_day ? "All day" : row.block_time ?? "Blocked"}</p>
+                            <p>{row.all_day ? t("legacy.rooms.availability.allDay") : row.block_time ?? t("legacy.rooms.availability.blocked")}</p>
                           </div>
                         </div>
                       ))}

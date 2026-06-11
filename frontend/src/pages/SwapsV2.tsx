@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
+import { useI18n } from "@/i18n";
 import { useSwapsLive, type SwapsTab } from "@/hooks/useSwapsLive";
 import type { MySupervisionSlot } from "@/services/swap.service";
 import { useAuth } from "@/store/auth.store";
@@ -18,8 +19,9 @@ import { canManageExamPeriods } from "@/utils/permissions";
 import { getEffectiveRole } from "@/utils/roles";
 
 function SwapStatusBadge({ status }: { status: string }) {
+  const { t } = useI18n();
   const cls = `swap-badge swap-badge--${status}`;
-  return <span className={cls}>{status}</span>;
+  return <span className={cls}>{t(`legacy.swaps.status.${status}`)}</span>;
 }
 
 function ShiftCell({ shift }: { shift: SwapItem["my_shift"] }) {
@@ -44,6 +46,7 @@ function SwapRow({
   onCancel: (id: number) => void;
   onRespond: (swap: SwapItem) => void;
 }) {
+  const { t } = useI18n();
   const canCancel = swap.status === "pending" && swap.is_requester;
 
   return (
@@ -54,7 +57,7 @@ function SwapRow({
       <td>
         <div className="swap-party">
           <strong>{swap.requester_name ?? "—"}</strong>
-          <span className="text-muted">{swap.is_requester ? "You" : "Requester"}</span>
+          <span className="text-muted">{swap.is_requester ? t("legacy.swaps.you") : t("legacy.swaps.requester")}</span>
         </div>
       </td>
       <td><ShiftCell shift={swap.my_shift} /></td>
@@ -75,12 +78,12 @@ function SwapRow({
         <div className="inline-actions">
           {isIncoming && swap.status === "pending" && (
             <Button type="button" size="sm" onClick={() => onRespond(swap)}>
-              Respond
+              {t("legacy.swaps.actions.respond")}
             </Button>
           )}
           {canCancel && (
             <Button type="button" size="sm" variant="ghost" onClick={() => onCancel(swap.id)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           )}
         </div>
@@ -100,12 +103,13 @@ function SwapTable({
   onCancel: (id: number) => void;
   onRespond: (swap: SwapItem) => void;
 }) {
+  const { t } = useI18n();
   if (rows.length === 0) {
     return (
       <EmptyState
         icon={<Icon name="swap_horiz" />}
-        title="No swap requests here."
-        description="Requests will appear once they are created or received."
+        title={t("legacy.swaps.emptyTitle")}
+        description={t("legacy.swaps.emptyDescription")}
       />
     );
   }
@@ -115,14 +119,14 @@ function SwapTable({
       <table className="data-table">
         <thead>
           <tr>
-            <th>Status</th>
-            <th>From</th>
-            <th>Their slot</th>
-            <th>Your slot</th>
-            <th>To</th>
-            <th>Note</th>
-            <th>Date</th>
-            <th>Actions</th>
+            <th>{t("common.status")}</th>
+            <th>{t("legacy.swaps.table.from")}</th>
+            <th>{t("legacy.swaps.table.theirSlot")}</th>
+            <th>{t("legacy.swaps.table.yourSlot")}</th>
+            <th>{t("legacy.swaps.table.to")}</th>
+            <th>{t("common.notes")}</th>
+            <th>{t("common.date")}</th>
+            <th>{t("common.actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -142,6 +146,7 @@ function SwapTable({
 }
 
 export function SwapsV2Page() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const { user } = useAuth();
   const role = getEffectiveRole(user);
@@ -190,7 +195,7 @@ export function SwapsV2Page() {
     try {
       await doCreate(supervisionId, targetUserId, message);
       setShowCreate(false);
-      toast("Swap request sent.", "success");
+      toast(t("legacy.swaps.toast.sent"), "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to create swap.", "error");
     }
@@ -200,7 +205,7 @@ export function SwapsV2Page() {
     try {
       await doRespond(swapId, accept, reason);
       setRespondTarget(null);
-      toast(accept ? "Swap accepted." : "Swap rejected.", accept ? "success" : "warning");
+      toast(accept ? t("legacy.swaps.toast.accepted") : t("legacy.swaps.toast.rejected"), accept ? "success" : "warning");
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to respond to swap.", "error");
     }
@@ -209,16 +214,16 @@ export function SwapsV2Page() {
   const handleCancel = async (swapId: number) => {
     try {
       await doCancel(swapId);
-      toast("Swap request cancelled.", "warning");
+      toast(t("legacy.swaps.toast.cancelled"), "warning");
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to cancel swap.", "error");
     }
   };
 
   const tabItems = [
-    { key: "mine" as SwapsTab, label: "My Requests", badge: stats.pendingMine || undefined },
-    { key: "incoming" as SwapsTab, label: "Incoming", badge: stats.incomingCount || undefined },
-    { key: "history" as SwapsTab, label: "History" },
+    { key: "mine" as SwapsTab, label: t("legacy.swaps.tabs.mine"), badge: stats.pendingMine || undefined },
+    { key: "incoming" as SwapsTab, label: t("legacy.swaps.tabs.incoming"), badge: stats.incomingCount || undefined },
+    { key: "history" as SwapsTab, label: t("legacy.swaps.tabs.history") },
   ];
 
   const activeRows = tab === "mine" ? mine : tab === "incoming" ? incoming : history;
@@ -228,19 +233,17 @@ export function SwapsV2Page() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">Swap requests</span>
-          <h1 className="page-hero__title">Invigilation swap coordination</h1>
-          <p className="page-hero__description">
-            Request, review, and resolve duty swaps. Approved swaps update the live schedule automatically.
-          </p>
+          <span className="page-hero__eyebrow">{t("legacy.swaps.eyebrow")}</span>
+          <h1 className="page-hero__title">{t("legacy.swaps.title")}</h1>
+          <p className="page-hero__description">{t("legacy.swaps.description")}</p>
         </div>
         <div className="page-hero__actions">
           <Button type="button" variant="outline" onClick={() => void load()} disabled={loading}>
-            Refresh
+            {t("common.refresh")}
           </Button>
           {!isAdmin && (
             <Button type="button" onClick={() => void handleOpenCreate()}>
-              Request swap
+              {t("legacy.swaps.actions.request")}
             </Button>
           )}
         </div>
@@ -250,41 +253,41 @@ export function SwapsV2Page() {
         <article className="dashboard-metric dashboard-metric--accent">
           <div className="dashboard-metric__icon"><Icon name="pending_actions" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Pending mine</p>
+            <p className="dashboard-metric__label">{t("legacy.swaps.metrics.pendingMine")}</p>
             <strong className="dashboard-metric__value">{stats.pendingMine}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--warning">
           <div className="dashboard-metric__icon"><Icon name="inbox" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Incoming requests</p>
+            <p className="dashboard-metric__label">{t("legacy.swaps.metrics.incoming")}</p>
             <strong className="dashboard-metric__value">{stats.incomingCount}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--neutral">
           <div className="dashboard-metric__icon"><Icon name="history" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Total my requests</p>
+            <p className="dashboard-metric__label">{t("legacy.swaps.metrics.totalMine")}</p>
             <strong className="dashboard-metric__value">{stats.totalMine}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--success">
           <div className="dashboard-metric__icon"><Icon name="task_alt" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Resolved</p>
+            <p className="dashboard-metric__label">{t("legacy.swaps.metrics.resolved")}</p>
             <strong className="dashboard-metric__value">{stats.historyCount}</strong>
           </div>
         </article>
       </div>
 
       {error && (
-        <Card title="Error loading swaps">
+        <Card title={t("legacy.swaps.errorTitle")}>
           <p className="import-issue import-issue--error">{error}</p>
           <Button type="button" variant="ghost" onClick={() => void load()}>Retry</Button>
         </Card>
       )}
 
-      <Card title="Swap requests">
+      <Card title={t("legacy.swaps.cardTitle")}>
         <Tabs
           activeKey={tab}
           items={tabItems}

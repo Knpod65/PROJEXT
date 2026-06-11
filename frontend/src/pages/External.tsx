@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useI18n } from "@/i18n";
 import {
   applyExternalExamAssignment,
   createExternalExam,
@@ -367,6 +368,7 @@ function ExamCard({
 }
 
 export function ExternalPage() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const { user } = useAuth();
   const role = getEffectiveRole(user);
@@ -471,19 +473,17 @@ export function ExternalPage() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero">
         <div>
-          <span className="page-hero__eyebrow">External exams</span>
-          <h1 className="page-hero__title">Staff allocation without room assignment</h1>
-          <p className="page-hero__description">
-            External exam optimization mirrors the main fairness flow for staff allocation, but it deliberately skips room assignment.
-          </p>
+          <span className="page-hero__eyebrow">{t("legacy.external.eyebrow")}</span>
+          <h1 className="page-hero__title">{t("legacy.external.title")}</h1>
+          <p className="page-hero__description">{t("legacy.external.description")}</p>
         </div>
         <div className="page-hero__actions">
           <Button type="button" variant="outline" onClick={() => void load()} disabled={loading}>
-            Refresh
+            {t("common.refresh")}
           </Button>
           {canManage && (
             <Button type="button" onClick={() => { setEditTarget(null); setShowForm(true); }}>
-              Create exam
+              {t("legacy.external.actions.create")}
             </Button>
           )}
         </div>
@@ -493,21 +493,21 @@ export function ExternalPage() {
         <article className="dashboard-metric dashboard-metric--accent">
           <div className="dashboard-metric__icon"><Icon name="language" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Active external exams</p>
+            <p className="dashboard-metric__label">{t("legacy.external.metrics.active")}</p>
             <strong className="dashboard-metric__value">{exams.length}</strong>
           </div>
         </article>
         <article className="dashboard-metric dashboard-metric--neutral">
           <div className="dashboard-metric__icon"><Icon name="groups" /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Assigned staff</p>
+            <p className="dashboard-metric__label">{t("legacy.external.metrics.assigned")}</p>
             <strong className="dashboard-metric__value">{totalAssigned}</strong>
           </div>
         </article>
         <article className={`dashboard-metric ${pendingCount > 0 ? "dashboard-metric--warning" : "dashboard-metric--success"}`}>
           <div className="dashboard-metric__icon"><Icon name={pendingCount > 0 ? "warning" : "check_circle"} /></div>
           <div className="dashboard-metric__body">
-            <p className="dashboard-metric__label">Need allocation</p>
+            <p className="dashboard-metric__label">{t("legacy.external.metrics.pending")}</p>
             <strong className="dashboard-metric__value">{pendingCount}</strong>
           </div>
         </article>
@@ -518,15 +518,15 @@ export function ExternalPage() {
           {[0, 1, 2].map((index) => <Skeleton key={index} className="dashboard-skeleton" />)}
         </div>
       ) : exams.length === 0 ? (
-        <Card title="External exams">
+        <Card title={t("legacy.external.cardTitle")}>
           <EmptyState
             icon={<Icon name="language" />}
-            title="No external exams scheduled"
-            description={canManage ? "Create the first external exam using the button above." : "No external exams are scheduled for the current period."}
+            title={t("legacy.external.emptyTitle")}
+            description={canManage ? t("legacy.external.emptyManage") : t("legacy.external.emptyReadOnly")}
           />
         </Card>
       ) : (
-        <Card title="Current external exams" subtitle={`${exams.length} exam${exams.length !== 1 ? "s" : ""} in the active period`}>
+        <Card title={t("legacy.external.currentTitle")} subtitle={t("legacy.external.currentSubtitle", { count: exams.length })}>
           <div className="page-stack">
             {exams.map((exam) => (
               <ExamCard

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { useI18n } from "@/i18n";
 import type { SubmissionListItem } from "@/types/api";
 import { formatDateTime } from "@/utils/format";
 
@@ -24,18 +25,19 @@ interface SubmissionsTableProps {
 }
 
 export function SubmissionsTable({ items, onOpenMessages }: SubmissionsTableProps) {
+  const { t } = useI18n();
   return (
     <div className="table-wrap">
       <table className="data-table submissions-table">
         <thead>
           <tr>
-            <th>Exam ID</th>
-            <th>Subject</th>
-            <th>Submitted</th>
-            <th>Status</th>
-            <th>Exam type</th>
-            <th>Version</th>
-            <th className="submissions-table__actions-header">Actions</th>
+            <th>{t("legacy.submissions.table.examId")}</th>
+            <th>{t("legacy.submissions.table.subject")}</th>
+            <th>{t("legacy.submissions.table.submitted")}</th>
+            <th>{t("common.status")}</th>
+            <th>{t("legacy.submissions.table.examType")}</th>
+            <th>{t("legacy.submissions.table.version")}</th>
+            <th className="submissions-table__actions-header">{t("common.actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -43,24 +45,24 @@ export function SubmissionsTable({ items, onOpenMessages }: SubmissionsTableProp
             <tr key={item.id}>
               <td>
                 <strong>#{item.id}</strong>
-                <p>Section {item.section_no ?? "-"}</p>
+                <p>{t("legacy.submissions.table.section", { value: item.section_no ?? "-" })}</p>
               </td>
               <td>
-                <strong>{item.course_name ?? item.course_id ?? "Untitled submission"}</strong>
-                <p>{item.course_id ?? "Course code pending"}</p>
+                <strong>{item.course_name ?? item.course_id ?? t("legacy.submissions.table.untitled")}</strong>
+                <p>{item.course_id ?? t("legacy.submissions.table.coursePending")}</p>
               </td>
               <td>
                 <strong>{formatDateTime(item.submitted_at)}</strong>
-                <p>{item.submitter ?? "Pending submission owner"}</p>
+                <p>{item.submitter ?? t("legacy.submissions.table.ownerPending")}</p>
               </td>
               <td>
-                <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>
+                <Badge variant={getStatusVariant(item.status)}>{t(`legacy.submissions.status.${item.status}`)}</Badge>
               </td>
               <td>{item.exam_type_choice ?? "-"}</td>
               <td>v{item.version ?? 1}</td>
               <td className="submissions-table__actions-cell">
                 <Button size="sm" type="button" variant="outline" onClick={() => onOpenMessages(item)}>
-                  Open thread
+                  {t("legacy.submissions.actions.openThread")}
                 </Button>
               </td>
             </tr>

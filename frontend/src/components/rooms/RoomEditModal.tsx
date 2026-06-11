@@ -4,6 +4,7 @@ import type { RoomOut } from "@/types/api";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import type { RoomUpdateData } from "@/services/rooms.service";
+import { useI18n } from "@/i18n";
 
 interface RoomEditModalProps {
   room: RoomOut | null;
@@ -13,6 +14,7 @@ interface RoomEditModalProps {
 }
 
 export function RoomEditModal({ busy, onClose, onSave, room }: RoomEditModalProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState<RoomUpdateData>({});
 
   useEffect(() => {
@@ -45,18 +47,18 @@ export function RoomEditModal({ busy, onClose, onSave, room }: RoomEditModalProp
   return (
     <Modal
       open={room !== null}
-      title={`Edit room — ${room.room_name}`}
+      title={t("legacy.rooms.edit.title", { value: room.room_name })}
       onClose={onClose}
       footer={
         <div className="inline-actions">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="button" loading={busy} onClick={() => void handleSave()}>Save changes</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button type="button" loading={busy} onClick={() => void handleSave()}>{t("common.saveChanges")}</Button>
         </div>
       }
     >
       <div className="room-edit-form">
         <div className="form-field">
-          <label htmlFor="re-name">Room name</label>
+          <label htmlFor="re-name">{t("legacy.rooms.edit.name")}</label>
           <input
             id="re-name"
             type="text"
@@ -65,17 +67,17 @@ export function RoomEditModal({ busy, onClose, onSave, room }: RoomEditModalProp
           />
         </div>
         <div className="form-field">
-          <label htmlFor="re-building">Building</label>
+          <label htmlFor="re-building">{t("legacy.rooms.table.building")}</label>
           <input
             id="re-building"
             type="text"
             value={form.building ?? ""}
-            placeholder="e.g. Main Tower"
+            placeholder={t("legacy.rooms.edit.buildingPlaceholder")}
             onChange={(e) => setForm((f) => ({ ...f, building: e.target.value }))}
           />
         </div>
         <div className="form-field">
-          <label htmlFor="re-capacity">Capacity (seats)</label>
+          <label htmlFor="re-capacity">{t("legacy.rooms.edit.capacity")}</label>
           <input
             id="re-capacity"
             type="number"
@@ -83,7 +85,7 @@ export function RoomEditModal({ busy, onClose, onSave, room }: RoomEditModalProp
             value={form.capacity ?? 0}
             onChange={(e) => setForm((f) => ({ ...f, capacity: Number(e.target.value) }))}
           />
-          <span className="form-hint">Room must fit all assigned students. Optimizer uses this limit.</span>
+          <span className="form-hint">{t("legacy.rooms.edit.capacityHelper")}</span>
         </div>
         <div className="form-field form-field--checkbox">
           <label>
@@ -92,7 +94,7 @@ export function RoomEditModal({ busy, onClose, onSave, room }: RoomEditModalProp
               checked={form.is_active ?? true}
               onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
             />
-            Room is active (available for scheduling)
+            {t("legacy.rooms.edit.active")}
           </label>
         </div>
       </div>

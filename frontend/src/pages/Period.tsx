@@ -4,11 +4,18 @@ import { useCallback, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { FormField } from "@/components/ui/FormField";
+import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { createPeriod, activatePeriod, listPeriods } from "@/services/period.service";
 import { useAsyncData } from "@/hooks/useAsyncData";
+import { useI18n } from "@/i18n";
 import { useUi } from "@/store/ui.store";
 
 export function PeriodPage() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const loader = useCallback(() => listPeriods(), []);
   const state = useAsyncData(loader, [loader]);
@@ -23,72 +30,80 @@ export function PeriodPage() {
     event.preventDefault();
     try {
       await createPeriod(form);
-      toast("สร้างรอบสอบใหม่แล้ว", "success");
+      toast(t("legacy.period.toast.created"), "success");
       await state.reload();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "สร้างรอบสอบไม่สำเร็จ", "error");
+      toast(err instanceof Error ? err.message : t("legacy.period.toast.createFailed"), "error");
     }
   };
 
   const handleActivate = async (periodId: number) => {
     try {
       await activatePeriod(periodId);
-      toast("เปลี่ยน active period แล้ว", "success");
+      toast(t("legacy.period.toast.activated"), "success");
       await state.reload();
     } catch (err) {
-      toast(err instanceof Error ? err.message : "เปลี่ยนรอบสอบไม่สำเร็จ", "error");
+      toast(err instanceof Error ? err.message : t("legacy.period.toast.activateFailed"), "error");
     }
   };
 
   return (
-    <div className="page-stack">
-      <Card title="สร้างรอบสอบใหม่">
+    <div className="page-stack page-stack--spacious">
+      <PageHeader
+        eyebrow={t("legacy.period.eyebrow")}
+        title={t("legacy.period.title")}
+        description={t("legacy.period.description")}
+      />
+
+      <Card title={t("legacy.period.createTitle")} subtitle={t("legacy.period.createSubtitle")}>
         <form className="inline-form" onSubmit={handleCreate}>
-          <input
-            onChange={(event) => setForm((current) => ({ ...current, academic_year: event.target.value }))}
-            placeholder="ปีการศึกษา"
-            value={form.academic_year}
-          />
-          <select
-            onChange={(event) => setForm((current) => ({ ...current, semester: event.target.value }))}
-            value={form.semester}
-          >
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="summer">summer</option>
-          </select>
-          <select
-            onChange={(event) => setForm((current) => ({ ...current, exam_type: event.target.value }))}
-            value={form.exam_type}
-          >
-            <option value="midterm">midterm</option>
-            <option value="final">final</option>
-          </select>
-          <input
-            onChange={(event) => setForm((current) => ({ ...current, label: event.target.value }))}
-            placeholder="ชื่อรอบสอบ"
-            value={form.label}
-          />
-          <Button type="submit">สร้างรอบ</Button>
+          <FormField label={t("legacy.period.academicYear")}>
+            <input onChange={(event) => setForm((current) => ({ ...current, academic_year: event.target.value }))} value={form.academic_year} />
+          </FormField>
+          <FormField label={t("legacy.period.semester")}>
+            <select onChange={(event) => setForm((current) => ({ ...current, semester: event.target.value }))} value={form.semester}>
+              <option value="1">{t("legacy.period.semesterOne")}</option>
+              <option value="2">{t("legacy.period.semesterTwo")}</option>
+              <option value="summer">{t("legacy.period.semesterSummer")}</option>
+            </select>
+          </FormField>
+          <FormField label={t("legacy.period.examType")}>
+            <select onChange={(event) => setForm((current) => ({ ...current, exam_type: event.target.value }))} value={form.exam_type}>
+              <option value="midterm">{t("legacy.period.midterm")}</option>
+              <option value="final">{t("legacy.period.final")}</option>
+            </select>
+          </FormField>
+          <FormField label={t("legacy.period.label")}>
+            <input onChange={(event) => setForm((current) => ({ ...current, label: event.target.value }))} placeholder={t("legacy.period.labelPlaceholder")} value={form.label} />
+          </FormField>
+          <Button type="submit">{t("legacy.period.actions.create")}</Button>
         </form>
       </Card>
 
-      <div className="page-stack">
-        {(state.data ?? []).map((period) => (
+      {state.loading ? (
+        <div className="page-stack">{[0, 1].map((item) => <Skeleton key={item} className="dashboard-skeleton" />)}</div>
+      ) : state.error ? (
+        <EmptyState icon={<Icon name="error" />} title={t("legacy.period.errorTitle")} description={state.error} />
+      ) : (state.data ?? []).length === 0 ? (
+        <EmptyState icon={<Icon name="event" />} title={t("legacy.period.emptyTitle")} description={t("legacy.period.emptyDescription")} />
+      ) : (
+        <div className="page-stack">
+          {(state.data ?? []).map((period) => (
           <Card
             key={period.id}
             title={period.label}
-            subtitle={`${period.exam_type} • ${period.semester}/${period.academic_year}`}
-            actions={<Badge variant={period.is_active ? "green" : "gray"}>{period.is_active ? "active" : "archived"}</Badge>}
+            subtitle={`${t(`legacy.period.type.${period.exam_type}`)} · ${period.semester}/${period.academic_year}`}
+            actions={<Badge variant={period.is_active ? "green" : "gray"}>{period.is_active ? t("status.active") : t("status.archived")}</Badge>}
           >
             {!period.is_active ? (
               <Button type="button" variant="outline" onClick={() => void handleActivate(period.id)}>
-                Activate
+                {t("legacy.period.actions.activate")}
               </Button>
             ) : null}
           </Card>
         ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

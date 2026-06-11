@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
+import { useI18n } from "@/i18n";
 import { listMessages, listSubmissions, sendMessage } from "@/services/submission.service";
 import { useAuth } from "@/store/auth.store";
 import { useUi } from "@/store/ui.store";
@@ -26,6 +27,7 @@ export function SubmissionsPage() {
   const { user } = useAuth();
   const role = getEffectiveRole(user);
   const { toast } = useUi();
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<SubmissionTab>("all");
   const [items, setItems] = useState<SubmissionListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export function SubmissionsPage() {
       const response = await listSubmissions();
       setItems(response);
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Unable to load submissions.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.submissions.toast.loadFailed"), "error");
     } finally {
       setLoading(false);
     }
@@ -85,12 +87,12 @@ export function SubmissionsPage() {
 
   const tabItems = useMemo(
     () => [
-      { key: "all", label: "All", badge: items.length },
-      { key: "pending", label: "Pending", badge: items.filter((item) => item.status === "pending").length },
-      { key: "approved", label: "Approved", badge: items.filter((item) => item.status === "approved").length },
-      { key: "rejected", label: "Needs work", badge: items.filter((item) => item.status === "rejected").length },
+      { key: "all", label: t("common.all"), badge: items.length },
+      { key: "pending", label: t("legacy.submissions.status.pending"), badge: items.filter((item) => item.status === "pending").length },
+      { key: "approved", label: t("legacy.submissions.status.approved"), badge: items.filter((item) => item.status === "approved").length },
+      { key: "rejected", label: t("legacy.submissions.status.rejected"), badge: items.filter((item) => item.status === "rejected").length },
     ],
-    [items],
+    [items, t],
   );
 
   const handleSendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -103,9 +105,9 @@ export function SubmissionsPage() {
       setMessageText("");
       const updated = await listMessages(selected.id);
       setMessages(updated);
-      toast("Message sent.", "success");
+      toast(t("legacy.submissions.toast.messageSent"), "success");
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Unable to send this message.", "error");
+      toast(err instanceof Error ? err.message : t("legacy.submissions.toast.messageFailed"), "error");
     } finally {
       setMessageLoading(false);
     }
@@ -115,11 +117,9 @@ export function SubmissionsPage() {
     <div className="page-stack page-stack--spacious">
       <section className="page-hero page-hero--submissions">
         <div>
-          <span className="page-hero__eyebrow">Editorial authority pattern</span>
-          <h2 className="page-hero__title">Submission control board</h2>
-          <p className="page-hero__description">
-            The chosen Stitch submissions screen has been refactored into reusable EMS cards, filters, and a data table connected to the existing submission API and message threads.
-          </p>
+          <span className="page-hero__eyebrow">{t("legacy.submissions.eyebrow")}</span>
+          <h2 className="page-hero__title">{t("legacy.submissions.title")}</h2>
+          <p className="page-hero__description">{t("legacy.submissions.description")}</p>
         </div>
         <div className="page-hero__actions">
           <Button
@@ -127,7 +127,7 @@ export function SubmissionsPage() {
             type="button"
             onClick={() => navigate(canViewOwnExamWork(user) ? "/myexam" : "/schedule")}
           >
-            {canViewOwnExamWork(user) ? "Open my exam work" : "Review schedule"}
+            {canViewOwnExamWork(user) ? t("legacy.submissions.actions.openMyExam") : t("legacy.submissions.actions.reviewSchedule")}
           </Button>
         </div>
       </section>
@@ -143,28 +143,28 @@ export function SubmissionsPage() {
           <section className="submission-summary-grid">
             <SubmissionSummaryCard
               icon="database"
-              label="Total records"
-              note="All submissions visible to your current role."
+              label={t("legacy.submissions.metrics.total")}
+              note={t("legacy.submissions.metrics.totalNote")}
               value={String(items.length)}
             />
             <SubmissionSummaryCard
               icon="visibility"
-              label="Pending review"
-              note="Records waiting for review or action."
+              label={t("legacy.submissions.metrics.pending")}
+              note={t("legacy.submissions.metrics.pendingNote")}
               tone="warning"
               value={String(items.filter((item) => item.status === "pending").length)}
             />
             <SubmissionSummaryCard
               icon="check_circle"
-              label="Approved"
-              note="Submissions cleared for the next workflow step."
+              label={t("legacy.submissions.metrics.approved")}
+              note={t("legacy.submissions.metrics.approvedNote")}
               tone="success"
               value={String(items.filter((item) => item.status === "approved").length)}
             />
             <SubmissionSummaryCard
               icon="report"
-              label="Needs work"
-              note="Items that need revision or follow-up."
+              label={t("legacy.submissions.metrics.rejected")}
+              note={t("legacy.submissions.metrics.rejectedNote")}
               tone="danger"
               value={String(items.filter((item) => item.status === "rejected").length)}
             />
@@ -175,15 +175,15 @@ export function SubmissionsPage() {
           <FilterBar
             actions={
               <Button iconLeft={<Icon name="refresh" />} type="button" variant="ghost" onClick={() => void loadSubmissions()}>
-                Refresh data
+                {t("common.refresh")}
               </Button>
             }
           >
             <label className="filter-field">
-              <span>Search</span>
+              <span>{t("common.search")}</span>
               <input
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search subject, code, section, or owner"
+                placeholder={t("legacy.submissions.searchPlaceholder")}
                 value={searchQuery}
               />
             </label>
@@ -192,8 +192,8 @@ export function SubmissionsPage() {
           {filteredItems.length === 0 ? (
             <EmptyState
               icon={<Icon name="inbox" />}
-              title="No submissions match the current filters."
-              description="Try switching tabs or clearing the search field."
+              title={t("legacy.submissions.emptyTitle")}
+              description={t("legacy.submissions.emptyDescription")}
             />
           ) : (
             <SubmissionsTable items={filteredItems} onOpenMessages={setSelected} />
@@ -203,16 +203,16 @@ export function SubmissionsPage() {
 
       <Modal
         open={Boolean(selected)}
-        title={selected ? `Message thread for ${selected.course_name ?? selected.course_id ?? "submission"}` : "Message thread"}
+        title={selected ? t("legacy.submissions.threadTitleFor", { value: selected.course_name ?? selected.course_id ?? t("legacy.submissions.submission") }) : t("legacy.submissions.threadTitle")}
         onClose={() => setSelected(null)}
       >
         <div className="message-thread">
           {messages.length === 0 ? (
-            <EmptyState icon={<Icon name="mail" />} title="No messages yet." />
+            <EmptyState icon={<Icon name="mail" />} title={t("legacy.submissions.noMessages")} />
           ) : (
             messages.map((message) => (
               <div key={message.id} className="message-thread__item">
-                <strong>{message.sender_name ?? "EMS user"}</strong>
+                <strong>{message.sender_name ?? t("legacy.submissions.emsUser")}</strong>
                 <p>{message.message}</p>
                 <span>{formatDateTime(message.created_at)}</span>
               </div>
@@ -223,12 +223,12 @@ export function SubmissionsPage() {
         <form className="message-thread__composer" onSubmit={handleSendMessage}>
           <textarea
             onChange={(event) => setMessageText(event.target.value)}
-            placeholder="Write a note to the next reviewer or operations team"
+            placeholder={t("legacy.submissions.messagePlaceholder")}
             rows={4}
             value={messageText}
           />
           <Button loading={messageLoading} type="submit">
-            Send message
+            {t("legacy.submissions.actions.sendMessage")}
           </Button>
         </form>
       </Modal>
