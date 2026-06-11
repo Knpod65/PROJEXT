@@ -325,3 +325,10 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - The warning and gate language now accurately distinguishes gated draft XLSX from official/final export, payment approval, and final authorization.
 - Three narrow P2 presentation items are validated; broad legacy/custom and workload-route presentation work remains deferred.
 - No backend/business behavior or readiness score changed.
+
+## Targeted Legacy Operational Polish Note (2026-06-11)
+
+- Six selected legacy operational routes were polished and validated with real screenshots.
+- The pass improves visible localization, route state clarity, and responsive containment without changing workflows.
+- Payment draft/settings safety behavior and workload-domain surfaces remain unchanged.
+- Production, pilot, payment, and frontend readiness scores remain unchanged.

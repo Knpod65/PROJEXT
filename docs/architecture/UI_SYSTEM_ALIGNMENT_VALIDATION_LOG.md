@@ -99,3 +99,15 @@ Build retained the existing large main chunk warning. This pass did not introduc
 - Role behavior remained unchanged: staff has no draft-export control; staff settings is read-only; teacher and print shop remain blocked.
 - Backend, permissions, payment calculations, settings, review, draft-export gate, and workload-domain files changed: `NO`.
 - Readiness scores remain unchanged.
+
+## 2026-06-11 Targeted Legacy Operational Polish
+
+- Selected route tranche: `/submissions`, `/swaps`, `/printreview`, `/external`, `/rooms-v2`, and `/period`.
+- Frontend build: `PASS`.
+- EN/TH i18n parity: `PASS`, `2165/2165`.
+- Raw-string scan: `PASS` in the existing warning-only mode.
+- Real updated screenshots captured: `6`.
+- Visual result: `TARGETED_LEGACY_OPERATIONAL_POLISH_VALIDATED`.
+- Payment draft/settings regression: safety status and role/export boundaries remain unchanged.
+- Backend, API, permissions, workload-domain files, and payment/export/review/settings logic changed: `NO`.
+- Readiness scores remain unchanged.

@@ -45,3 +45,11 @@
 - Warning copy now states that a review-accepted draft XLSX may be produced while official/final export, payment approval, and final authorization remain disabled.
 - Screenshots: `role-admin-payment-draft.png`, `role-admin-draft-export-button.png`, `role-staff-payment-draft.png`, `role-staff-payment-settings-readonly.png`, `role-teacher-payment-blocked.png`, and `role-printshop-payment-blocked.png`.
 - Payment/export/review/settings logic changed: `NO`.
+
+## Legacy Operational Polish Regression Check (2026-06-11)
+
+- The six-route operational polish did not edit payment draft or payment settings files.
+- `DRAFT_NOT_AUTHORIZED` remains required and visible.
+- Draft XLSX remains gated, review-only, and non-authorizing.
+- Final approval, final authorization, official-final export, and payment authorization were not added.
+- Payment/export/review/settings logic changed: `NO`.

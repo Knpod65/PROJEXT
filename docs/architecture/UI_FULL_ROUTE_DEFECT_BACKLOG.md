@@ -30,3 +30,13 @@
 | UI-P2-WORKLOAD-001 | Workload routes | `P2_DEFER_WORKLOAD_SCOPE_NOT_TOUCHING` | No workload-domain files changed. |
 
 Narrow P2 fixed count: `3`. Readiness scores and all backend/business behavior remain unchanged.
+
+## Targeted Legacy Operational Polish Reconciliation (2026-06-11)
+
+| Route tranche | Classification | Result |
+|---|---|---|
+| `/submissions`, `/swaps`, `/printreview`, `/external`, `/rooms-v2`, `/period` | `P2_SAFE_FIX_NOW` | `VALIDATED`: presentation and route-scoped localization polished with six real screenshots. |
+| `/workload-duty-analytics`, `/duty-workload`, `/my-workload` | `DEFER_WORKLOAD_SCOPE` | No workload-domain files changed. |
+| Analytics, optimizer, optimizer trace, historical schedules, teacher-specific exam workflow | `DEFER_REQUIRES_PRODUCT_DECISION` | Retained for separate data-sensitive passes. |
+
+Selected routes fixed: `6`. Backend, permissions, business logic, payment/export/review/settings behavior, and readiness scores remain unchanged.

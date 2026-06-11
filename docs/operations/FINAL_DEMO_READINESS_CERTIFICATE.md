@@ -271,3 +271,10 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Role permissions and payment/export safety behavior remain unchanged.
 - `DRAFT_NOT_AUTHORIZED` remains certified as the required document status.
 - No payment approval, final authorization, official/final export, backend/business-logic change, workload-domain change, or readiness-score increase is certified.
+
+## Targeted Legacy Operational Polish Certificate Note (2026-06-11)
+
+- Six selected non-workload operational routes have validated presentation-only polish and real screenshot evidence.
+- Required frontend build and EN/TH checks passed.
+- Payment draft/settings safety boundaries and all existing business behavior remain unchanged.
+- No final approval, final authorization, official-final export, workload-domain change, or readiness-score increase is certified.

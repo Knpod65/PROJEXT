@@ -98,3 +98,11 @@ The Claude design source and all registered route declarations were reconciled i
 - Frontend build and required i18n checks passed.
 - Frontend score remains **76 / 100**; broad legacy/custom-page polish and workload-route presentation remain deferred.
 - Backend, permissions, payment/export/review/settings logic, and readiness scores remain unchanged.
+
+## Targeted Legacy Operational Polish Note (2026-06-11)
+
+- Six selected operational routes were aligned and evidenced: submissions, swaps, print review, external exams, rooms, and periods.
+- Frontend build and EN/TH checks passed; six real updated screenshots were captured.
+- Workload routes and data-sensitive legacy routes remain explicitly deferred.
+- Frontend score remains **76 / 100**; the pass improves presentation consistency without proving broader production readiness.
+- Backend, permissions, payment/export/review/settings logic, and readiness scores remain unchanged.

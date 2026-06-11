@@ -295,3 +295,11 @@ The full-route UI alignment pass recovered the authoritative EMS design source a
 - Staff settings remains read-only; teacher and print shop remain blocked from the payment draft.
 - Backend, payment calculation, settings, review, permissions, export-gate logic, and workload-domain files changed: `NO`.
 - Production, pilot, demo, payment, and frontend readiness scores remain unchanged.
+
+## Targeted Legacy Operational Polish Note (2026-06-11)
+
+- Six non-workload operational routes received presentation-only localization and state polish.
+- Build/i18n validation passed and six real route screenshots were captured.
+- Payment/settings regression boundaries remain intact; `DRAFT_NOT_AUTHORIZED` and the non-authorizing draft XLSX gate are unchanged.
+- Backend, API, permissions, payment/export/review/settings logic, and workload-domain files changed: `NO`.
+- Production, pilot, demo, payment, and frontend readiness scores remain unchanged.

@@ -267,3 +267,11 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - `DRAFT_NOT_AUTHORIZED` remains required; official/final export, payment approval, and final authorization remain unavailable.
 - Broad legacy/custom operational-page polish and workload-route presentation remain deferred.
 - No backend, payment, settings, review, permission, export-gate, or readiness change is introduced.
+
+## Targeted Legacy Operational Polish Disclosure (2026-06-11)
+
+- Submissions, swaps, print review, external exams, rooms, and periods now have improved localized presentation and clearer route states.
+- Six real screenshots support the visual result.
+- Workload routes and larger data-sensitive legacy routes remain deferred.
+- Demo operators must continue to present the payment document as `DRAFT_NOT_AUTHORIZED`; draft XLSX is review-gated and non-authorizing.
+- No backend, permission, business-logic, payment/export/review/settings, workload-domain, or readiness change is introduced.
