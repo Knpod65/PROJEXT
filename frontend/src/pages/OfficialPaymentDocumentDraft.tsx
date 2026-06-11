@@ -121,6 +121,9 @@ export default function OfficialPaymentDocumentDraft() {
       : settingsSourceStatus === "INCOMPLETE_SETTINGS"
         ? "BLOCKED_INCOMPLETE_SETTINGS"
         : "BLOCKED_PENDING_SETTINGS");
+  const statusLabel = (status: string | null | undefined) => (
+    status ? t(`paymentDraft.status.${status}`) : "-"
+  );
 
   const draftColumns = useMemo<Array<DataTableColumn<OfficialPaymentDraftRow>>>(() => [
     {
@@ -190,7 +193,7 @@ export default function OfficialPaymentDocumentDraft() {
       label: t("paymentDraft.review.status"),
       minWidth: "170px",
       render: (row) => (
-        <Badge variant={reviewStatusVariant(row.review_status)}>{row.review_status}</Badge>
+        <Badge variant={reviewStatusVariant(row.review_status)}>{statusLabel(row.review_status)}</Badge>
       ),
     },
     {
@@ -302,7 +305,7 @@ export default function OfficialPaymentDocumentDraft() {
         subtitle={t("paymentDraft.settings.subtitle")}
         actions={
           <Badge variant={settingsSourceStatus === "CONFIGURED" ? "green" : "gold"}>
-            {settingsSourceStatus}
+            {statusLabel(settingsSourceStatus)}
           </Badge>
         }
       >
@@ -333,11 +336,11 @@ export default function OfficialPaymentDocumentDraft() {
           </div>
           <div className="summary-box">
             <span>{t("paymentDraft.settings.status")}</span>
-            <strong>{settingsStatus ?? "-"}</strong>
+            <strong>{statusLabel(settingsStatus)}</strong>
           </div>
           <div className="summary-box">
             <span>{t("paymentDraft.settings.calculationStatus")}</span>
-            <strong>{calculationStatus}</strong>
+            <strong>{statusLabel(calculationStatus)}</strong>
           </div>
         </div>
         <p className="mt-4 text-sm text-gray-500">{t("paymentDraft.settings.calculationNote")}</p>
@@ -347,7 +350,7 @@ export default function OfficialPaymentDocumentDraft() {
         <AlertBanner
           variant="warning"
           title={t(`paymentDraft.settings.warning.${settingsSourceStatus}.title`)}
-          action={<Badge variant="gold">{calculationStatus}</Badge>}
+          action={<Badge variant="gold">{statusLabel(calculationStatus)}</Badge>}
         >
           {settingsIssues.length
             ? settingsIssues.join(" ")
@@ -358,7 +361,7 @@ export default function OfficialPaymentDocumentDraft() {
       <Card
         title={t("paymentDraft.review.title")}
         subtitle={t("paymentDraft.review.subtitle")}
-        actions={<Badge variant={reviewStatusVariant(latestReviewStatus)}>{latestReviewStatus}</Badge>}
+        actions={<Badge variant={reviewStatusVariant(latestReviewStatus)}>{statusLabel(latestReviewStatus)}</Badge>}
       >
         <div className="page-stack">
           <AlertBanner variant="warning" title={t("paymentDraft.review.safetyTitle")}>
@@ -373,14 +376,14 @@ export default function OfficialPaymentDocumentDraft() {
                 <select value={reviewStatus} onChange={(event) => setReviewStatus(event.target.value as PaymentDocumentReviewStatus)}>
                   {REVIEW_STATUS_OPTIONS.map((status) => (
                     <option key={status} value={status}>
-                      {status}
+                      {statusLabel(status)}
                     </option>
                   ))}
                 </select>
               </FormField>
             ) : (
               <FormField label={t("paymentDraft.review.status")}>
-                <input value="DRAFT_READY_FOR_REVIEW" readOnly />
+                <input value={statusLabel("DRAFT_READY_FOR_REVIEW")} readOnly />
               </FormField>
             )}
             <FormField label={t("paymentDraft.review.decision")}>
@@ -487,6 +490,15 @@ export default function OfficialPaymentDocumentDraft() {
             </Button>
           )}
         </div>
+        <AlertBanner
+          variant={latestReviewStatus === "ACCEPTED_FOR_DRAFT_EXPORT" ? "info" : "warning"}
+          title={t("paymentDraft.actions.exportSafetyTitle")}
+          action={<Badge variant={reviewStatusVariant(latestReviewStatus)}>{statusLabel(latestReviewStatus)}</Badge>}
+        >
+          {latestReviewStatus === "ACCEPTED_FOR_DRAFT_EXPORT"
+            ? t("paymentDraft.actions.exportSafetyReady")
+            : t("paymentDraft.actions.exportSafetyBlocked")}
+        </AlertBanner>
       </Card>
 
       {isError ? (

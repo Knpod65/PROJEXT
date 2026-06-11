@@ -127,7 +127,7 @@ export default function PlatformConfiguration() {
               <td>{row.name_th}</td>
               <td>{row.name_en}</td>
               <td>
-                {row.is_active ? "✓" : translate("common.no")}
+                {row.is_active ? translate("common.yes") : translate("common.no")}
               </td>
             </tr>
           )}
@@ -146,7 +146,7 @@ export default function PlatformConfiguration() {
           rows={workloadPolicies}
           render={(row: any, i) => (
             <tr key={i}>
-              <td>{row.faculty_id ?? "—"}</td>
+              <td>{row.faculty_id ?? "-"}</td>
               <td>{row.paper_distribution_division}</td>
               <td>{row.max_supervision_sessions}</td>
               <td>
@@ -164,7 +164,7 @@ export default function PlatformConfiguration() {
           rows={governanceFlows}
           render={(row: any, i) => (
             <tr key={i}>
-              <td>{row.faculty_id ?? "—"}</td>
+              <td>{row.faculty_id ?? "-"}</td>
               <td>{row.flow_name}</td>
               <td>
                 {row.requires_governance_review ? translate("common.yes") : translate("common.no")}

@@ -86,6 +86,8 @@ export default function PaymentDocumentSettings() {
 
   const configured = settings.data?.configuration_status === "CONFIGURED";
   const readOnly = !canEdit;
+  const displayStatus = configured ? form.status : "PENDING_CONFIGURATION";
+  const statusLabel = (status: string) => t(`paymentDraft.status.${status}`);
 
   const validateAmount = (value: string) => {
     if (!value.trim()) return t("paymentSettings.validation.required");
@@ -178,7 +180,7 @@ export default function PaymentDocumentSettings() {
         description={t("paymentSettings.description")}
         status={
           <>
-            <Badge variant={statusVariant(form.status, configured)}>{configured ? form.status : "PENDING_CONFIGURATION"}</Badge>
+            <Badge variant={statusVariant(form.status, configured)}>{statusLabel(displayStatus)}</Badge>
             {readOnly ? <Badge variant="blue">{t("paymentSettings.readOnly")}</Badge> : null}
           </>
         }
@@ -207,7 +209,11 @@ export default function PaymentDocumentSettings() {
               placeholder="2/2568"
             />
           </FormField>
-          <FormField label={t("paymentSettings.weekdayRate")}>
+          <FormField
+            label={t("paymentSettings.weekdayRate")}
+            helper={t("paymentSettings.unit")}
+            error={errors.weekdayRate}
+          >
             <input
               aria-invalid={Boolean(errors.weekdayRate)}
               inputMode="decimal"
@@ -221,10 +227,12 @@ export default function PaymentDocumentSettings() {
                 setErrors((current) => ({ ...current, weekdayRate: undefined }));
               }}
             />
-            <small className="form-hint">{t("paymentSettings.unit")}</small>
-            {errors.weekdayRate ? <p className="form-error">{errors.weekdayRate}</p> : null}
           </FormField>
-          <FormField label={t("paymentSettings.weekendRate")}>
+          <FormField
+            label={t("paymentSettings.weekendRate")}
+            helper={t("paymentSettings.unit")}
+            error={errors.weekendRate}
+          >
             <input
               aria-invalid={Boolean(errors.weekendRate)}
               inputMode="decimal"
@@ -238,8 +246,6 @@ export default function PaymentDocumentSettings() {
                 setErrors((current) => ({ ...current, weekendRate: undefined }));
               }}
             />
-            <small className="form-hint">{t("paymentSettings.unit")}</small>
-            {errors.weekendRate ? <p className="form-error">{errors.weekendRate}</p> : null}
           </FormField>
           <FormField label={t("paymentSettings.status")}>
             <select
@@ -247,8 +253,8 @@ export default function PaymentDocumentSettings() {
               value={form.status}
               onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as SettingsForm["status"] }))}
             >
-              <option value="DRAFT_CONFIG">DRAFT_CONFIG</option>
-              <option value="ACTIVE_FOR_DRAFT_PREVIEW">ACTIVE_FOR_DRAFT_PREVIEW</option>
+              <option value="DRAFT_CONFIG">{statusLabel("DRAFT_CONFIG")}</option>
+              <option value="ACTIVE_FOR_DRAFT_PREVIEW">{statusLabel("ACTIVE_FOR_DRAFT_PREVIEW")}</option>
             </select>
           </FormField>
         </div>
@@ -256,7 +262,11 @@ export default function PaymentDocumentSettings() {
 
       <Card title={t("paymentSettings.paperSection.title")} subtitle={t("paymentSettings.paperSection.subtitle")}>
         <div className="form-grid">
-          <FormField label={t("paymentSettings.responsibleGroup")}>
+          <FormField
+            label={t("paymentSettings.responsibleGroup")}
+            helper={t("paymentSettings.groupHint")}
+            error={errors.responsibleGroup}
+          >
             <input
               aria-invalid={Boolean(errors.responsibleGroup)}
               readOnly={readOnly}
@@ -266,8 +276,6 @@ export default function PaymentDocumentSettings() {
                 setErrors((current) => ({ ...current, responsibleGroup: undefined }));
               }}
             />
-            <small className="form-hint">{t("paymentSettings.groupHint")}</small>
-            {errors.responsibleGroup ? <p className="form-error">{errors.responsibleGroup}</p> : null}
           </FormField>
           <FormField label={t("paymentSettings.responsiblePerson")}>
             <input
