@@ -71,7 +71,13 @@ function GuardedPage({ children, roles, allowBaseAdminPreview }: GuardedPageProp
   const { user } = useAuth();
 
   if (!hasRole(user, roles, { allowBaseAdminPreview })) {
-    return <EmptyState icon={<Icon name="shield" />} title={t("app.unauthorized.title")} />;
+    return (
+      <EmptyState
+        icon={<Icon name="shield" />}
+        title={t("app.unauthorized.title")}
+        description={t("app.unauthorized.description")}
+      />
+    );
   }
 
   return <>{children}</>;
