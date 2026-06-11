@@ -1,199 +1,102 @@
-# PAYMENT_DOCUMENT_DRAFT_EXPORT_IMPLEMENTATION_VALIDATION_LOG.md
+# Payment Document Draft Export — Implementation Validation Log
 
-**Date**: 2026-06-08
-**Pass**: EMS DRAFT PAYMENT DOCUMENT EXPORT IMPLEMENTATION PASS — Phase 9
-**Gate status at time of validation**: `ALLOW_DRAFT_EXPORT_DESIGN`
-**Implemented by**: EMS implementation pass
-
----
-
-## What Was Implemented
-
-### Backend
-
-| File | Change |
-|---|---|
-| `backend/services/payment_document_draft_export_service.py` | NEW — draft export service; gate checks; Excel workbook builder |
-| `backend/routers/invigilation_advance_batch.py` | UPDATED — added `POST /official-document-draft-export` endpoint |
-| `backend/tests/test_payment_document_draft_export.py` | NEW — 21 tests covering Categories 1 and 5 from test matrix |
-
-### Frontend
-
-| File | Change |
-|---|---|
-| `frontend/src/services/officialPaymentDraft.service.ts` | UPDATED — added `exportOfficialPaymentDraftExcel()` using `post<Blob>` |
-| `frontend/src/pages/OfficialPaymentDocumentDraft.tsx` | UPDATED — export button, `isExporting` state, `submitExport` handler |
-| `frontend/src/i18n/en.ts` | UPDATED — 4 new export i18n keys |
-| `frontend/src/i18n/th.ts` | UPDATED — 4 new export i18n keys (Thai) |
-
-### Architecture Docs (This Pass)
-
-| File | Type |
-|---|---|
-| `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_IMPLEMENTATION_SOURCE_REVIEW.md` | NEW |
-| `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_API_CONTRACT.md` | NEW |
-| `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_IMPLEMENTATION_VALIDATION_LOG.md` | NEW (this file) |
-
----
+**Date**: 2026-06-11
+**Pass**: Session 3 — Draft Export Implementation
 
 ## Backend Validation
 
-### Test Results
+| Check | Result |
+|---|---|
+| `python -m compileall backend -q` | PASS |
+| Import smoke (`main.IMPORT_ROUTERS_ERROR`) | PASS — `None` |
+| New export tests (`test_payment_document_draft_export.py`) | **21/21 PASS** |
+| Full backend suite | **1552/1552 PASS** |
 
-```
-tests/test_payment_document_draft_export.py — 21/21 PASSED
+### Export Tests Summary
 
-Category 1 — Gate checks:
-  test_exp_001_blocked_no_accepted_review         PASS
-  test_exp_002_blocked_unconfigured_settings      PASS
-  test_exp_003_blocked_inactive_settings_status   PASS
-  test_exp_004_blocked_wrong_calculation_status   PASS
-  test_exp_005_blocked_missing_reviewer_comment   PASS
-  test_exp_006_blocked_missing_paper_group        PASS
-  test_exp_007_blocked_payment_authorization_enabled PASS
-  test_exp_008_blocked_final_export_enabled       PASS
+| Category | Tests | Result |
+|---|---|---|
+| Category 1 — Gate-block (exp_001..008) | 8 | ALL PASS |
+| Category 5 — Role permissions (role_001..007) | 7 | ALL PASS |
+| Mutation/content checks (mut_001..006) | 6 | ALL PASS |
+| **Total** | **21** | **ALL PASS** |
 
-Category 5 — Role permissions:
-  test_role_001_admin_allowed                     PASS (HTTP 200, xlsx content-type)
-  test_role_002_esq_head_allowed                  PASS (HTTP 200)
-  test_role_003_secretary_allowed                 PASS (HTTP 200)
-  test_role_004_staff_blocked                     PASS (HTTP 403)
-  test_role_005_teacher_blocked                   PASS (HTTP 403)
-  test_role_006_print_shop_blocked                PASS (HTTP 403)
-  test_role_007_unauthenticated_blocked           PASS (HTTP 401/422)
+### Gate Tests Detail
 
-Mutation invariant checks:
-  test_export_does_not_mutate_review_records      PASS
-  test_export_response_is_xlsx                    PASS
-  test_export_filename_convention                 PASS
-  test_export_blocked_when_only_non_accepted_review_exists PASS
-  test_export_preview_endpoint_still_works_for_staff       PASS
-  test_export_document_id_all_when_no_period      PASS
-```
+| Test | Precondition tested | Expected | Actual |
+|---|---|---|---|
+| exp_001 | No ACCEPTED review record | HTTP 400 | PASS |
+| exp_002 | Review comment empty | HTTP 400 | PASS |
+| exp_003 | settings_source_status != CONFIGURED | HTTP 400 | PASS |
+| exp_004 | settings_status != ACTIVE_FOR_DRAFT_PREVIEW | HTTP 400 | PASS |
+| exp_005 | calculation_status != CALCULATED_FROM_SETTINGS | HTTP 400 | PASS |
+| exp_006 | paper_distribution_responsible_group empty | HTTP 400 | PASS |
+| exp_007 | payment_authorization_enabled = True | HTTP 400 | PASS |
+| exp_008 | final_export_enabled = True | HTTP 400 | PASS |
 
-### Full Suite
+### Role Access Confirmed
 
-```
-1552 passed, 17 warnings in 6.95s
-```
-
-Prior count: 1531. Added: 21. No regressions.
-
----
+| Role | Expected | Actual |
+|---|---|---|
+| admin | HTTP 200 + xlsx | PASS |
+| esq_head | HTTP 200 + xlsx | PASS |
+| secretary | HTTP 200 + xlsx | PASS |
+| staff | HTTP 403 | PASS |
+| teacher | HTTP 403 | PASS |
+| print_shop | HTTP 403 | PASS |
+| unauthenticated | HTTP 401/403/422 | PASS |
 
 ## Frontend Validation
 
-### Build
+| Check | Result |
+|---|---|
+| `npm run build` | PASS — built in 1.27s |
+| Chunk size warning | Pre-existing warning (not introduced by this pass) |
+| `npm run check:i18n` | PASS — en=1953 / th=1953 (parity OK) |
 
-```
-npm run build — ✓ built in 1.25s
-OfficialPaymentDocumentDraft chunk: 15.90 kB (gzip: 4.27 kB)
-No TypeScript errors.
-```
+## Safety Flags Confirmed
 
-### i18n Parity
-
-```
-npm run check:i18n
-i18n keys: en=1953  th=1953
-OK: en/th key sets are identical (by simple heuristic)
-```
-
-Prior count: 1949. Added: 4 keys (exportDraft, exportGated, exportSuccess, exportFailed). Parity maintained.
-
----
-
-## Safety Flag Confirmation
-
-All safety invariants remain unchanged and enforced at the backend gate check:
-
-| Flag | Required Value | Verified By |
+| Flag | Value | Confirmed |
 |---|---|---|
-| `payment_authorization_enabled` | `false` | Gate check: raises 400 if true; test_exp_007 PASS |
-| `final_export_enabled` | `false` | Gate check: raises 400 if true; test_exp_008 PASS |
-| `document_status` | `DRAFT_NOT_AUTHORIZED` | In every xlsx sheet banner; not mutated by export |
-| `calculation_status` | `CALCULATED_FROM_SETTINGS` | Gate check: raises 400 if wrong; test_exp_004 PASS |
-| `settings_source_status` | `CONFIGURED` | Gate check: raises 400 if wrong; test_exp_002 PASS |
-| `settings_status` | `ACTIVE_FOR_DRAFT_PREVIEW` | Gate check: raises 400 if wrong; test_exp_003 PASS |
+| `payment_authorization_enabled` | `false` | YES — hard-coded in service and review records |
+| `final_export_enabled` | `false` | YES — hard-coded in service and review records |
+| `document_status` | `DRAFT_NOT_AUTHORIZED` | YES — label appears in workbook sheet 1 row 3 and sheet 2 |
+| DB mutation on export | None | YES — test_mut_001 confirms review record count unchanged |
 
----
+## Thai Text Rendering Note
 
-## Draft Label Verification
+openpyxl writes UTF-8 Unicode strings correctly. Thai characters are stored in the xlsx XML without corruption. Display correctness depends on the font selected by Excel/LibreOffice when opening the file. Default fonts (Calibri, Arial) support Thai Unicode. No special font embedding is required for correct string storage.
 
-Both sheets in the generated workbook contain the required draft labels:
+## Workbook Structure Confirmed
 
-**Sheet 1 (ร่างเอกสาร):**
-- Row 1: `ร่างเอกสารเพื่อการตรวจทานเท่านั้น ยังไม่ใช่เอกสารอนุมัติเบิกจ่าย` (yellow background, bold, 12pt)
-- Row 2: `Draft for review only. Not payment authorization.` (yellow background)
-- Row 3: `DRAFT_NOT_AUTHORIZED` (yellow background, red bold text)
-- Last data row: Thai draft label repeated (yellow background, red text)
+- Sheet 1 "ร่างเอกสาร": draft banners rows 1-3 (YELLOW), title row 5, metadata rows 6-8, header row 9, data rows 10+, totals row, footer draft label (YELLOW)
+- Sheet 2 "การตรวจร่าง": reviewer name/role/status/reviewed_at/comment, settings source, safety flags, generation timestamp
+- Column widths set via `get_column_letter(col_idx)` (avoids `MergedCell.column_letter` AttributeError)
 
-**Sheet 2 (การตรวจร่าง):**
-- Row 1: Thai draft banner (same as Sheet 1)
-- Row 2: English draft label
-- Row 12: `DRAFT_NOT_AUTHORIZED` (red text)
+## Files Changed in This Pass
 
----
-
-## Role Access Verification
-
-| Role | Export HTTP Code | Confirmed By Test |
-|---|---|---|
-| admin | 200 | test_role_001 PASS |
-| esq_head | 200 | test_role_002 PASS |
-| secretary | 200 | test_role_003 PASS |
-| staff | 403 | test_role_004 PASS |
-| teacher | 403 | test_role_005 PASS |
-| print_shop | 403 | test_role_006 PASS |
-| unauthenticated | 401/422 | test_role_007 PASS |
-
----
-
-## Thai Text Rendering
-
-Thai text is embedded in the Excel workbook as Unicode strings using openpyxl. openpyxl stores all strings as UTF-8 in the xlsx container (an Open XML format). Excel for Windows and macOS correctly renders Thai Unicode characters from xlsx files produced by openpyxl. No additional font embedding is required — Thai characters rely on the system font (e.g., Cordia New, TH Sarabun) which is available on all Thai Windows/Mac installations.
-
----
-
-## Filename Convention
-
-Generated filename format: `EMS_DRAFT_PAYMENT_DOCUMENT_{semester}-{academic_year}_{YYYYMMDD_HHMM}.xlsx`
-
-Example: `EMS_DRAFT_PAYMENT_DOCUMENT_2-2568_20260608_1430.xlsx`
-
-Test: `test_export_filename_convention` verifies `EMS_DRAFT_PAYMENT_DOCUMENT_2-2568_` prefix and `.xlsx` suffix in Content-Disposition header. PASS.
-
----
-
-## DB Mutation Check
-
-Export endpoint performs no INSERT, UPDATE, or DELETE operations. It is entirely stateless:
-1. `_find_accepted_review` — SELECT only (read the existing review record)
-2. `build_official_payment_document_draft_preview` — SELECT only (reads schedules, periods, settings)
-3. `_build_workbook` — pure function (no DB access)
-4. `StreamingResponse` — returns the in-memory BytesIO buffer
-
-Test: `test_export_does_not_mutate_review_records` confirms review count unchanged before and after export. PASS.
-
----
-
-## Readiness Scores
-
-All readiness scores remain unchanged. This implementation is draft-only and does not change:
-- Production readiness (28/100)
-- Pilot readiness (42/100)
-- Demo readiness (96/100)
-- Payment authorization: NOT implemented
-- Final payment export: NOT implemented
-
----
+| File | Change |
+|---|---|
+| `backend/services/payment_document_draft_export_service.py` | CREATED |
+| `backend/routers/invigilation_advance_batch.py` | MODIFIED — added export endpoint |
+| `backend/tests/test_payment_document_draft_export.py` | CREATED |
+| `backend/schemas.py` | MODIFIED — OfficialPaymentDocumentDraftExportRequest added (pre-session) |
+| `frontend/src/services/officialPaymentDraft.service.ts` | MODIFIED — added exportOfficialPaymentDraftExcel |
+| `frontend/src/pages/OfficialPaymentDocumentDraft.tsx` | MODIFIED — added submitExport + export button |
+| `frontend/src/i18n/en.ts` | MODIFIED — 4 export keys added |
+| `frontend/src/i18n/th.ts` | MODIFIED — 4 export keys added |
+| `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_IMPLEMENTATION_SOURCE_REVIEW.md` | CREATED |
+| `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_API_CONTRACT.md` | CREATED |
+| `docs/architecture/PAYMENT_DOCUMENT_DRAFT_EXPORT_IMPLEMENTATION_VALIDATION_LOG.md` | CREATED (this file) |
 
 ## What Remains Blocked
 
 | Item | Status |
 |---|---|
-| Official payment export | BLOCKED — requires final authorization gate |
-| Final payment approval | BLOCKED — requires separate authorization workflow |
-| Payment authorization | BLOCKED — requires separate authorization gate |
-| Payment release workflow | BLOCKED — out of current scope |
-| Refund/offset final processing | BLOCKED — requires post-duty reconciliation completion |
+| Final payment approval | BLOCKED — not implemented |
+| Official payment export as final truth | BLOCKED — not implemented |
+| Final authorization workflow | BLOCKED — not implemented |
+| Payment release workflow | BLOCKED — not implemented |
+| Post-duty reconciliation finalization | BLOCKED — not implemented |
+| PDF draft export | DEFERRED — no new dependency justified in this pass |
+| Production readiness | UNCHANGED |

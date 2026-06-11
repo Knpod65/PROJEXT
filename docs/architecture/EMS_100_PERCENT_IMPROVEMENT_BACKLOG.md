@@ -199,12 +199,17 @@ This backlog is now constrained by `EMS_SCOPE_BOUNDARY_EXAM_AND_INVIGILATION_ONL
 - Export is NOT yet implemented. Final authorization still blocked. Payment approval NOT added.
 - Readiness uplift not applied. Production, pilot, and payment readiness scores unchanged.
 
-## Draft Export Implementation Backlog Note (2026-06-08)
+## Draft Payment Document Export Implementation Note (2026-06-11)
 
-- Completed: draft payment document Excel export endpoint + frontend trigger + 21 backend tests + validation log.
-- Backend: `POST /api/invigilation-advance-batch/official-document-draft-export`; 8-gate check; openpyxl workbook with Thai draft labels on all sheets; stateless; no DB writes.
-- Frontend: export button visible to admin/esq_head/secretary; gated on `ACCEPTED_FOR_DRAFT_EXPORT` review status; `exportOfficialPaymentDraftExcel()` service function.
-- All safety invariants confirmed: `payment_authorization_enabled=false`, `final_export_enabled=false`, `document_status=DRAFT_NOT_AUTHORIZED`.
-- Full backend test suite: 1552 PASS. Frontend build: PASS. i18n: 1953/1953 parity PASS.
-- Remaining: official payment export, final authorization, payment approval, and payment release remain blocked by separate future gate.
-- Readiness uplift not applied. Production, pilot, and payment readiness scores unchanged.
+- Draft export endpoint implemented: `POST /api/invigilation-advance-batch/official-document-draft-export`
+- Format: xlsx (openpyxl, no new dependency added)
+- Gate enforced: 8 preconditions checked before any bytes generated
+- Review acceptance required: `ACCEPTED_FOR_DRAFT_EXPORT` + non-empty comment
+- Role guard: `require_view_all` (admin/esq_head/secretary only)
+- Frontend: export button added, gated behind `latestReviewStatus === ACCEPTED_FOR_DRAFT_EXPORT` and `canManageReview`
+- Backend tests: 21 new tests, all pass; full suite 1552/1552
+- Frontend build: PASS; i18n EN/TH parity 1953/1953
+- Safety flags: `payment_authorization_enabled=false`, `final_export_enabled=false` — unchanged
+- Export is read-only: no DB writes, no status mutations
+- Final payment approval, final authorization, official export, payment release: still blocked
+- Production readiness: unchanged

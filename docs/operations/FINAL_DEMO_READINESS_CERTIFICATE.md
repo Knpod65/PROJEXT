@@ -246,14 +246,17 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - `DRAFT_NOT_AUTHORIZED` remains the document status.
 - Production, pilot, demo, and payment readiness scores remain unchanged.
 
-## Draft Export Implementation Certificate Note (2026-06-08)
+## Draft Payment Document Export Implementation Note (2026-06-11)
 
-- Draft payment document Excel export is now implemented and certified.
-- Backend: `POST /api/invigilation-advance-batch/official-document-draft-export`; 8-gate check enforced; role guard: admin/esq_head/secretary only; stateless operation.
-- Frontend: export button on `/invigilation-payment-document-draft`; visible and clickable only when `ACCEPTED_FOR_DRAFT_EXPORT` review status and `data` are present; for admin/esq_head/secretary roles only.
-- Export output: two-sheet xlsx workbook; Thai draft label on every sheet; DRAFT_NOT_AUTHORIZED on every sheet; review metadata included; settings source included.
-- Validation: 21 backend tests PASS (1552 total); frontend build PASS; i18n 1953/1953 PASS.
-- `payment_authorization_enabled=false` and `final_export_enabled=false` certified.
-- `DRAFT_NOT_AUTHORIZED` remains the document status; export does not change this.
-- Payment approval NOT certified. Final authorization NOT certified. Official export NOT certified.
-- Production, pilot, demo, and payment readiness scores remain unchanged.
+- Draft export endpoint implemented: `POST /api/invigilation-advance-batch/official-document-draft-export`
+- Format: xlsx (openpyxl, no new dependency added)
+- Gate enforced: 8 preconditions checked before any bytes generated
+- Review acceptance required: `ACCEPTED_FOR_DRAFT_EXPORT` + non-empty comment
+- Role guard: `require_view_all` (admin/esq_head/secretary only)
+- Frontend: export button added, gated behind `latestReviewStatus === ACCEPTED_FOR_DRAFT_EXPORT` and `canManageReview`
+- Backend tests: 21 new tests, all pass; full suite 1552/1552
+- Frontend build: PASS; i18n EN/TH parity 1953/1953
+- Safety flags: `payment_authorization_enabled=false`, `final_export_enabled=false` — unchanged
+- Export is read-only: no DB writes, no status mutations
+- Final payment approval, final authorization, official export, payment release: still blocked
+- Production readiness: unchanged

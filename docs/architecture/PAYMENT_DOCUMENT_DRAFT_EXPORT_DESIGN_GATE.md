@@ -10,20 +10,16 @@ Define the exact conditions, boundaries, formats, warnings, data requirements, a
 
 This document does NOT implement export. It defines the gate.
 
-## Current Export Status (Updated 2026-06-08 — Implementation Pass)
+## Current Export Status
 
 | Field | Value |
 |---|---|
-| Export implemented | YES — `POST /api/invigilation-advance-batch/official-document-draft-export` |
-| Export format | Excel `.xlsx` (two-sheet workbook with draft labels on every sheet) |
-| Export type | DRAFT_EXPORT_ONLY |
+| Export implemented | **YES** (2026-06-11, xlsx draft export) |
 | Payment approval added | NO |
 | Final authorization added | NO |
 | Draft export design gate status | `ALLOW_DRAFT_EXPORT_DESIGN` |
-| Document status | `DRAFT_NOT_AUTHORIZED` (unchanged) |
-| `payment_authorization_enabled` | `false` (unchanged) |
-| `final_export_enabled` | `false` (unchanged) |
 | Recommended decision | `ALLOW_DRAFT_EXPORT_DESIGN` |
+| Implementation validation | `PAYMENT_DOCUMENT_DRAFT_EXPORT_IMPLEMENTATION_VALIDATION_LOG.md` |
 
 ## Allowed Future Export Concept
 

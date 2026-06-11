@@ -237,12 +237,17 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Demo operators must still disclose: export is not yet available; page is `DRAFT_NOT_AUTHORIZED`; final authorization still blocked.
 - Production, pilot, and payment readiness scores are unchanged.
 
-## Draft Export Implementation Disclosure (2026-06-08)
+## Draft Payment Document Export Implementation Note (2026-06-11)
 
-- Draft payment document Excel export is now available at `/invigilation-payment-document-draft` for admin/esq_head/secretary roles when review status is `ACCEPTED_FOR_DRAFT_EXPORT`.
-- The exported file is labelled as draft on every sheet: `ร่างเอกสารเพื่อการตรวจทานเท่านั้น ยังไม่ใช่เอกสารอนุมัติเบิกจ่าย` / `Draft for review only. Not payment authorization.`
-- `DRAFT_NOT_AUTHORIZED` appears on every sheet. Export does not change document status.
-- Export is gated: requires `ACCEPTED_FOR_DRAFT_EXPORT` review record with reviewer comment.
-- Demo operators must disclose: this is a draft export for review only; it is not official payment authorization, approval, or release.
-- Payment approval NOT added. Final authorization NOT added. Official payment export NOT added.
-- Production, pilot, and payment readiness scores are unchanged.
+- Draft export endpoint implemented: `POST /api/invigilation-advance-batch/official-document-draft-export`
+- Format: xlsx (openpyxl, no new dependency added)
+- Gate enforced: 8 preconditions checked before any bytes generated
+- Review acceptance required: `ACCEPTED_FOR_DRAFT_EXPORT` + non-empty comment
+- Role guard: `require_view_all` (admin/esq_head/secretary only)
+- Frontend: export button added, gated behind `latestReviewStatus === ACCEPTED_FOR_DRAFT_EXPORT` and `canManageReview`
+- Backend tests: 21 new tests, all pass; full suite 1552/1552
+- Frontend build: PASS; i18n EN/TH parity 1953/1953
+- Safety flags: `payment_authorization_enabled=false`, `final_export_enabled=false` — unchanged
+- Export is read-only: no DB writes, no status mutations
+- Final payment approval, final authorization, official export, payment release: still blocked
+- Production readiness: unchanged

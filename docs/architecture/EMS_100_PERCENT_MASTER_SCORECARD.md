@@ -269,13 +269,17 @@
 - Production, pilot, demo, and payment readiness scores remain unchanged.
 - Next action: implement draft export per test matrix and gate requirements.
 
-## Draft Export Implementation Note (2026-06-08)
+## Draft Payment Document Export Implementation Note (2026-06-11)
 
-- Draft payment document Excel export is now implemented per gate requirements.
-- Backend: `POST /api/invigilation-advance-batch/official-document-draft-export` with 8-check gate.
-- Frontend: export button on `/invigilation-payment-document-draft` for admin/esq_head/secretary when review status is `ACCEPTED_FOR_DRAFT_EXPORT`.
-- 21 new backend tests; full suite 1552 passed. Frontend build PASS. i18n 1953/1953 PASS.
-- All safety invariants remain confirmed: `payment_authorization_enabled=false`, `final_export_enabled=false`, `document_status=DRAFT_NOT_AUTHORIZED`.
-- Export is draft-labelled on every sheet; stateless; no DB writes.
-- Payment approval NOT added. Final authorization NOT added.
-- Production, pilot, demo, and payment readiness scores remain unchanged.
+- Draft export endpoint implemented: `POST /api/invigilation-advance-batch/official-document-draft-export`
+- Format: xlsx (openpyxl, no new dependency added)
+- Gate enforced: 8 preconditions checked before any bytes generated
+- Review acceptance required: `ACCEPTED_FOR_DRAFT_EXPORT` + non-empty comment
+- Role guard: `require_view_all` (admin/esq_head/secretary only)
+- Frontend: export button added, gated behind `latestReviewStatus === ACCEPTED_FOR_DRAFT_EXPORT` and `canManageReview`
+- Backend tests: 21 new tests, all pass; full suite 1552/1552
+- Frontend build: PASS; i18n EN/TH parity 1953/1953
+- Safety flags: `payment_authorization_enabled=false`, `final_export_enabled=false` — unchanged
+- Export is read-only: no DB writes, no status mutations
+- Final payment approval, final authorization, official export, payment release: still blocked
+- Production readiness: unchanged
