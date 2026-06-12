@@ -221,3 +221,11 @@
 - Export is read-only: no DB writes, no status mutations
 - Final payment approval, final authorization, official export, payment release: still blocked
 - Production readiness: unchanged
+
+## Demo/Review Release Candidate RC1 Roadmap Note (2026-06-12)
+
+- `EMS_DEMO_REVIEW_RC_1` is frozen and validated for supervisor/finance demonstration within documented constraints.
+- The existing settings-backed draft, persistent review workflow, and review-gated draft XLSX are included.
+- Final approval, final authorization, official-final export, payment release, production deployment claims, and workload-presentation work remain outside RC1.
+- Exact next gate: run the supervisor/finance demo and capture the human decision on the draft XLSX format.
+- Readiness scores remain unchanged.

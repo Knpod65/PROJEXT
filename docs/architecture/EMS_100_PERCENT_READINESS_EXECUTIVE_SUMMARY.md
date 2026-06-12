@@ -339,3 +339,12 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Four final visual-only residuals were fixed; remaining P2 work is explicitly deferred by scope or product decision.
 - Payment draft/export safety and all backend/business behavior remain unchanged.
 - Readiness scores remain unchanged.
+
+## Demo/Review Release Candidate RC1 Note (2026-06-12)
+
+- Current EMS state is frozen as `EMS_DEMO_REVIEW_RC_1` for supervised demonstration and review.
+- Full backend/frontend validation and live route smoke passed; seven fresh screenshots support the evidence pack.
+- Term `2/2568` settings, settings-backed draft calculation, accepted review, and gated draft XLSX were verified live.
+- `DRAFT_NOT_AUTHORIZED`, `payment_authorization_enabled=false`, and `final_export_enabled=false` remain in force.
+- This does not claim production-final readiness, final finance authorization, official-final export, or payment release.
+- Residual P2 and workload-presentation deferrals remain documented; readiness scores are unchanged.

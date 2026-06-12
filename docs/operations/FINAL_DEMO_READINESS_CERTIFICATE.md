@@ -285,3 +285,13 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Eight real regression screenshots and `44/44` renderable URL smoke support the closure result.
 - Residual P2 presentation work remains deferred with explicit reasons.
 - Payment/export safety, workload exclusion, business behavior, and readiness scores remain unchanged.
+
+## EMS Demo/Review RC1 Certificate Note (2026-06-12)
+
+- `EMS_DEMO_REVIEW_RC_1` is certified for supervised demo/review within documented constraints.
+- Backend validation: compile/import PASS; full suite `1552/1552` PASS.
+- Frontend validation: build PASS; EN/TH `2260/2260`; registered renderable route smoke `44/44`.
+- Seven fresh real screenshots and live draft-XLSX evidence support the certificate.
+- `DRAFT_NOT_AUTHORIZED`, false authorization/final-export flags, and role restrictions remain certified.
+- Final payment approval, final authorization, official-final export, payment release, and production readiness are not certified.
+- Workload-domain presentation and logic remain untouched. Readiness scores remain unchanged.

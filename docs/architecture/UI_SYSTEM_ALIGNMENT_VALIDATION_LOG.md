@@ -100,6 +100,15 @@ Build retained the existing large main chunk warning. This pass did not introduc
 - Backend, permissions, payment calculations, settings, review, draft-export gate, and workload-domain files changed: `NO`.
 - Readiness scores remain unchanged.
 
+## 2026-06-12 Demo/Review Release Candidate RC1
+
+- Registered renderable URL smoke: `44/44` HTTP `200`; not-found behavior also HTTP `200`.
+- Twelve critical authenticated routes rendered with expected URLs, non-empty content, and no browser page errors.
+- Seven real RC screenshots were captured.
+- Payment safety evidence confirms visible `DRAFT_NOT_AUTHORIZED`, settings/review context, and a gated non-authorizing draft XLSX.
+- Teacher and print shop remain blocked from the payment draft; staff remains non-exporting.
+- UI regression closure and residual P2 decisions remain unchanged.
+
 ## 2026-06-11 Full UI Regression Closure
 
 - Route declarations rechecked: `50`.

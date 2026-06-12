@@ -276,6 +276,16 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Demo operators must continue to present the payment document as `DRAFT_NOT_AUTHORIZED`; draft XLSX is review-gated and non-authorizing.
 - No backend, permission, business-logic, payment/export/review/settings, workload-domain, or readiness change is introduced.
 
+## EMS Demo/Review RC1 Disclosure (2026-06-12)
+
+- `EMS_DEMO_REVIEW_RC_1` is validated for a supervised demo/review only.
+- The demo may show term settings, settings-backed draft calculation, review history, and a review-gated XLSX draft export.
+- Every operator must state that the payment document remains `DRAFT_NOT_AUTHORIZED`.
+- Draft XLSX is not official-final export, payment approval, final authorization, or payment release.
+- Workload presentation remains deferred; production deployment and production-auth readiness are not claimed.
+- Readiness scores remain unchanged.
+- Next human action: run the supervisor/finance demo and capture the decision on the draft XLSX format.
+
 ## Full UI Regression Closure Disclosure (2026-06-11)
 
 - Full route regression completed with `44/44` renderable URLs returning HTTP `200` and eight new real screenshots.

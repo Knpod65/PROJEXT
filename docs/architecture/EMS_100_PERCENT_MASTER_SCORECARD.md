@@ -296,6 +296,16 @@ The full-route UI alignment pass recovered the authoritative EMS design source a
 - Backend, payment calculation, settings, review, permissions, export-gate logic, and workload-domain files changed: `NO`.
 - Production, pilot, demo, payment, and frontend readiness scores remain unchanged.
 
+## Demo/Review Release Candidate RC1 Note (2026-06-12)
+
+- `EMS_DEMO_REVIEW_RC_1` evidence pack is prepared for supervisor/finance demonstration.
+- Backend validation passed: compile/import and `1552/1552` tests.
+- Frontend validation passed: build, EN/TH parity `2260/2260`, and raw scan in existing warning-only mode.
+- Registered renderable URL smoke remains `44/44`; no P0/P1 UI blocker remains.
+- Seven fresh RC screenshots and real gated draft-XLSX evidence were captured.
+- Draft export remains review-only and non-authorizing; final approval, final authorization, official-final export, and payment release remain blocked.
+- Workload presentation remains deferred. Production readiness is not claimed. All scores remain unchanged.
+
 ## Full UI Regression Closure Note (2026-06-11)
 
 - Full route regression closure completed: `50` declarations, `43` visual destinations, and `44/44` renderable URL smoke.

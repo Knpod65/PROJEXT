@@ -99,6 +99,13 @@ The Claude design source and all registered route declarations were reconciled i
 - Frontend score remains **76 / 100**; broad legacy/custom-page polish and workload-route presentation remain deferred.
 - Backend, permissions, payment/export/review/settings logic, and readiness scores remain unchanged.
 
+## Demo/Review Release Candidate RC1 Note (2026-06-12)
+
+- Frontend RC validation passed: build, EN/TH parity `2260/2260`, raw scan in warning-only mode, `44/44` registered renderable URL smoke, and twelve authenticated critical-route checks with no page errors.
+- Seven fresh real screenshots cover dashboard, payment draft/settings/export state, staff, teacher-blocked, and print-shop-blocked states.
+- UI regression closure remains valid with P0 `0`, P1 `0`, and documented residual P2 decisions.
+- Frontend score remains **76 / 100**; RC evidence does not prove production, accessibility, mobile, or final-finance readiness.
+
 ## Full UI Regression Closure Note (2026-06-11)
 
 - All `50` route declarations were reconciled, `43` visual destinations assessed, and `44/44` renderable URLs returned HTTP `200`.

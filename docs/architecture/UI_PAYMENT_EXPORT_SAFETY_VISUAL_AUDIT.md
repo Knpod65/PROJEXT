@@ -54,6 +54,15 @@
 - Final payment approval, final authorization, and official-final export controls remain absent.
 - Payment/export/review/settings code and behavior changed: `NO`.
 
+## Demo/Review Release Candidate RC1 Safety Recheck (2026-06-12)
+
+- Fresh evidence: `rc-payment-draft.png`, `rc-draft-export.png`, `rc-payment-settings.png`, `rc-role-staff.png`, `rc-role-teacher-blocked.png`, and `rc-role-printshop-blocked.png`.
+- Admin UI successfully produced a real gated draft XLSX after preview and accepted review.
+- Workbook inspection confirmed draft-review-only wording, `DRAFT_NOT_AUTHORIZED`, `ACCEPTED_FOR_DRAFT_EXPORT`, `payment_authorization_enabled = false`, and `final_export_enabled = false`.
+- Staff remained non-exporting; teacher and print shop remained blocked.
+- Final payment approval, final authorization, official-final export, and payment release remain absent.
+- Payment/export/review/settings logic changed: `NO`.
+
 ## Legacy Operational Polish Regression Check (2026-06-11)
 
 - The six-route operational polish did not edit payment draft or payment settings files.
