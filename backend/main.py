@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from cmu_sso import router as sso_router
 from config.policy import ALLOWED_ORIGINS, LOGIN_RATE_MAX, LOGIN_RATE_WINDOW
-from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing, historical_schedules, invigilation_advance_batch, invigilation_rate_rules, payment_document_reviews, payment_document_settings, analytics as analytics_router
+from routers import auth, courses, schedule, users, dashboard, pdf, public, settings, submissions, swaps, checkins, exports, swaps_v2, documents, period, external_exams, optimize_workflow, co_exam, exam_manager, printing, historical_schedules, invigilation_advance_batch, invigilation_rate_rules, payment_document_reviews, payment_document_review_checklist, payment_document_settings, analytics as analytics_router
 from routers import scheduler, exports_excel, health as health_router
 from routers import admin as admin_router
 from routers import dashboard_intelligence
@@ -243,6 +243,7 @@ app.include_router(historical_schedules.router, prefix="/api/historical-schedule
 app.include_router(invigilation_advance_batch.router, prefix="/api/invigilation-advance-batch", tags=["invigilation-advance-batch"])
 app.include_router(invigilation_rate_rules.router, prefix="/api/invigilation-payment", tags=["invigilation-payment"])
 app.include_router(payment_document_reviews.router, prefix="/api/payment-document-reviews", tags=["payment-document-reviews"])
+app.include_router(payment_document_review_checklist.router, prefix="/api/payment-document-review-checklist", tags=["payment-document-review-checklist"])
 app.include_router(payment_document_settings.router, prefix="/api/payment-document-settings", tags=["payment-document-settings"])
 app.include_router(scheduler.router,         prefix="/api/scheduler",       tags=["scheduler"])
 app.include_router(exports_excel.router,     prefix="/api/exports",         tags=["exports-excel"])

@@ -1323,6 +1323,35 @@ class PaymentDocumentReviewRecord(Base):
     )
 
 
+class PaymentDocumentReviewChecklistItem(Base):
+    """Persistent inspection evidence kept separate from review decisions."""
+    __tablename__ = "payment_document_review_checklist_items"
+
+    id                            = Column(Integer, primary_key=True, index=True)
+    document_id                   = Column(String(200), nullable=False, index=True)
+    document_type                 = Column(String(80), nullable=False, index=True)
+    term                          = Column(String(80), nullable=True)
+    item_key                      = Column(String(100), nullable=False)
+    item_order                    = Column(Integer, nullable=False)
+    item_status                   = Column(String(40), nullable=False, default="NOT_STARTED", index=True)
+    reviewer_user_id              = Column(Integer, ForeignKey("users.id"), nullable=True)
+    reviewer_name                 = Column(String(200), nullable=True)
+    reviewer_role                 = Column(String(80), nullable=True)
+    comment                       = Column(Text, nullable=True)
+    checked_at                    = Column(DateTime(timezone=True), nullable=True)
+    created_at                    = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at                    = Column(DateTime(timezone=True), onupdate=func.now())
+    payment_authorization_enabled = Column(Boolean, default=False, nullable=False)
+    final_export_enabled          = Column(Boolean, default=False, nullable=False)
+
+    reviewer = relationship("User", foreign_keys=[reviewer_user_id])
+
+    __table_args__ = (
+        UniqueConstraint("document_id", "item_key", name="uq_payment_doc_checklist_document_item"),
+        Index("ix_payment_doc_checklist_document_order", "document_id", "item_order"),
+    )
+
+
 # ─── Exam Period (รอบสอบ) ────────────────────────────────────
 class PaymentDocumentSettings(Base):
     """Term-specific settings for draft payment-document preparation only."""

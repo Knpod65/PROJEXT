@@ -800,6 +800,63 @@ class PaymentDocumentReviewListResponse(BaseModel):
     final_export_enabled: bool = False
 
 
+PaymentDocumentReviewChecklistItemKey = Literal[
+    "CHECK_PAYMENT_DOCUMENT_SETTINGS",
+    "CHECK_OFFICIAL_PAYMENT_DOCUMENT_DRAFT",
+    "CHECK_REVIEW_PANEL_STATUS",
+    "CHECK_DRAFT_XLSX_FILE_LAYOUT",
+    "CHECK_DRAFT_ONLY_LABEL",
+    "CHECK_NOT_PAYMENT_AUTHORIZATION",
+    "CHECK_FINAL_AUTHORIZATION_DISABLED",
+]
+
+PaymentDocumentReviewChecklistStatus = Literal[
+    "NOT_STARTED",
+    "IN_PROGRESS",
+    "CHECKED",
+    "NEEDS_ATTENTION",
+    "BLOCKED",
+]
+
+
+class PaymentDocumentReviewChecklistUpdate(BaseModel):
+    item_status: PaymentDocumentReviewChecklistStatus
+    comment: Optional[str] = None
+
+
+class PaymentDocumentReviewChecklistItemOut(BaseModel):
+    checklist_id: Optional[int] = None
+    document_id: str
+    document_type: str
+    term: Optional[str] = None
+    item_key: str
+    item_order: int
+    item_status: str
+    reviewer_user_id: Optional[int] = None
+    reviewer_name: Optional[str] = None
+    reviewer_role: Optional[str] = None
+    comment: Optional[str] = None
+    checked_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
+class PaymentDocumentReviewChecklistResponse(BaseModel):
+    document_id: str
+    document_type: str
+    term: Optional[str] = None
+    items: list[PaymentDocumentReviewChecklistItemOut] = Field(default_factory=list)
+    total_items: int
+    checked_items: int
+    remaining_items: int
+    overall_status: str
+    decision_gate_status: str = "HOLD_PENDING_ADDITIONAL_REVIEW"
+    payment_authorization_enabled: bool = False
+    final_export_enabled: bool = False
+
+
 PaymentDocumentSettingsStatus = Literal[
     "DRAFT_CONFIG",
     "ACTIVE_FOR_DRAFT_PREVIEW",
