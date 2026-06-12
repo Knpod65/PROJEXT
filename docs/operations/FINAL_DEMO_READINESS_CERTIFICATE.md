@@ -312,3 +312,12 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Checklist completion remains non-authorizing and cannot accept the produced XLSX format.
 - Human decision remains `HOLD_PENDING_ADDITIONAL_REVIEW`; final authorization design remains blocked.
 - Production/readiness scores remain unchanged.
+
+## RC1 Checklist Completion And Decision Hold Certificate Note (2026-06-12)
+
+- Persistent checklist capability and the real XLSX evidence package are certified as available.
+- Human checklist completion is not certified: saved rows `0`, effective completion `0/7`.
+- Human acceptance of the XLSX format is not certified; reviewer identity remains `NOT_PROVIDED`.
+- XLSX format gate remains `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- No payment approval, final authorization, official-final export, code change, or readiness-score increase is certified.

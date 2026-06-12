@@ -230,6 +230,15 @@
 - Exact next gate: run the supervisor/finance demo and capture the human decision on the draft XLSX format.
 - Readiness scores remain unchanged.
 
+## RC1 Checklist Completion Routing (2026-06-12)
+
+- Checklist infrastructure and XLSX evidence preparation are complete.
+- Saved human checklist findings are not present; effective completion is `0/7`.
+- No explicit reviewer decision or identity is recorded.
+- Current route remains `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Next safe action: reviewer inspects and saves all relevant checklist findings, reviews the real XLSX, and supplies an explicit decision.
+- Final authorization design, final payment approval, and official-final export remain blocked.
+
 ## RC1 Draft XLSX Human Decision Hold (2026-06-12)
 
 - No post-RC1 supervisor/finance decision or reviewer identity is recorded.

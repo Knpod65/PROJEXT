@@ -333,6 +333,15 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - Payment draft/settings safety behavior and workload-domain surfaces remain unchanged.
 - Production, pilot, payment, and frontend readiness scores remain unchanged.
 
+## RC1 Checklist And Evidence Decision Status (2026-06-12)
+
+- The persistent checklist and real XLSX evidence package are available for supervisor/finance review.
+- No reviewer checklist rows have been saved; effective completion is `0/7`.
+- Evidence recheck passed, but no identified reviewer has recorded an explicit format decision.
+- Draft XLSX format remains `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Final authorization design remains blocked; payment approval and official-final export remain unavailable.
+- Readiness scores remain unchanged.
+
 ## Full UI Regression Closure Note (2026-06-11)
 
 - The UI regression closure found no P0/P1 blockers after rechecking every registered route declaration.

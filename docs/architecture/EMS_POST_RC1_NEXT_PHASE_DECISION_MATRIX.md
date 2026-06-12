@@ -23,3 +23,12 @@ Rerun the supervisor/finance RC1 demo and record one explicit decision option, r
 ## Evidence-Assisted Hold Branch Update (2026-06-12)
 
 The selected branch remains `HOLD_PENDING_ADDITIONAL_REVIEW`. The rerun must use the in-system seven-step checklist and the real RC1 XLSX visual evidence package before requesting an explicit decision. Checklist completion alone does not open another implementation gate.
+
+## Verified Routing After Checklist Recheck (2026-06-12)
+
+- Saved reviewer checklist records: `0`
+- Effective completion: `0/7`
+- XLSX evidence package: `VERIFIED_COMPLETE_FOR_REVIEW`
+- Explicit reviewer decision: `NO`
+- Selected branch remains `HOLD_PENDING_ADDITIONAL_REVIEW`
+- Exact next action remains reviewer inspection, saved checklist findings, and an explicit format decision with reviewer identity.

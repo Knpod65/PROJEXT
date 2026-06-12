@@ -284,6 +284,15 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Draft XLSX is not official-final export, payment approval, final authorization, or payment release.
 - Workload presentation remains deferred; production deployment and production-auth readiness are not claimed.
 - Readiness scores remain unchanged.
+
+## RC1 Checklist Completion And Decision Hold Disclosure (2026-06-12)
+
+- The in-system checklist exists, but no reviewer checklist rows are saved; effective completion is `0/7`.
+- The real XLSX evidence package is verified complete for review, but evidence availability is not human acceptance.
+- No reviewer identity or explicit decision is recorded.
+- The format gate remains `HOLD_PENDING_ADDITIONAL_REVIEW`; final authorization design remains blocked.
+- Demo operators must not imply checklist completion, XLSX acceptance, payment approval, or official-final export.
+- Readiness scores remain unchanged.
 - Next human action: run the supervisor/finance demo and capture the decision on the draft XLSX format.
 
 ## RC1 Draft XLSX Decision Hold Disclosure (2026-06-12)

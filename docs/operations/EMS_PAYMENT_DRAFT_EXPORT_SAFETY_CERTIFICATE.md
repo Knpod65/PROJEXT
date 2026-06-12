@@ -48,3 +48,12 @@
 - ไฟล์ `draft-xlsx-sample-rc1.xlsx` ถูกสร้างจาก existing gated endpoint จริง
 - PNG/Markdown/cell map ยืนยันข้อความร่าง อัตรา ตาราง ยอดรวม และ safety flags
 - การตรวจ checklist และหลักฐานนี้ไม่ใช่การยอมรับรูปแบบ ไม่ใช่การอนุมัติเบิกจ่าย และไม่ใช่ Final Authorization
+
+## ผลการตรวจ Completion และ Decision Gate (2026-06-12)
+
+- Checklist persistence exists, but saved reviewer rows for RC1 = `0`
+- Effective checklist completion = `0/7`; ทุกข้อเป็น `NOT_STARTED`
+- XLSX evidence package = `VERIFIED_COMPLETE_FOR_REVIEW`
+- Human decision found = `NO`; reviewer identity = `NOT_PROVIDED`
+- `DRAFT_NOT_AUTHORIZED`, `payment_authorization_enabled=false`, และ `final_export_enabled=false` ยังคงเดิม
+- Final payment approval, Final Authorization, official-final export และ payment release ยังคงไม่ถูกเปิดใช้

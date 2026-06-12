@@ -296,6 +296,16 @@ The full-route UI alignment pass recovered the authoritative EMS design source a
 - Backend, payment calculation, settings, review, permissions, export-gate logic, and workload-domain files changed: `NO`.
 - Production, pilot, demo, payment, and frontend readiness scores remain unchanged.
 
+## RC1 Checklist Completion And Decision Hold Note (2026-06-12)
+
+- Persistent in-system checklist capability: `YES`.
+- Saved reviewer checklist records: `0`; effective completion: `0/7`, all `NOT_STARTED`.
+- Real XLSX evidence package: `VERIFIED_COMPLETE_FOR_REVIEW`.
+- Human format decision found: `NO`; reviewer identity: `NOT_PROVIDED`.
+- XLSX format gate remains `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- No payment approval, final authorization, official-final export, code change, or readiness score change is recorded.
+
 ## Demo/Review Release Candidate RC1 Note (2026-06-12)
 
 - `EMS_DEMO_REVIEW_RC_1` evidence pack is prepared for supervisor/finance demonstration.

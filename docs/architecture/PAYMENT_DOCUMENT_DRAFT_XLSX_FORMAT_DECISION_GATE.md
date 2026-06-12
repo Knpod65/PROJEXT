@@ -44,3 +44,13 @@ No explicit post-RC1 human decision or reviewer identity is recorded. Therefore:
 - Checklist completion is deliberately separate from this explicit human decision gate.
 - No checklist state can set `DRAFT_XLSX_FORMAT_ACCEPTED` or open final-authorization design.
 - Current format gate remains `HOLD_PENDING_ADDITIONAL_REVIEW`.
+
+## Checklist Completion And Evidence Recheck (2026-06-12)
+
+- Persistent checklist capability exists, but no reviewer item rows are saved for the RC1 document.
+- Effective checklist state is `0/7 CHECKED`; all seven items remain `NOT_STARTED`.
+- The XLSX sample, PNG, Markdown preview, and cell map are verified complete.
+- Evidence availability and the existing draft-export review record do not prove human format acceptance.
+- Explicit decision found: `NO`; reviewer identity: `NOT_PROVIDED`.
+- Current format gate remains `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.

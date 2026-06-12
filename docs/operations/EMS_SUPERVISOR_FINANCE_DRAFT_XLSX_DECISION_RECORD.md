@@ -44,3 +44,15 @@
 - Human decision found ยังเป็น `NO`
 - Reviewer identity ยังเป็น `NOT_PROVIDED`
 - Decision และ draft XLSX gate ยังคง `HOLD_PENDING_ADDITIONAL_REVIEW`
+
+## ผลการตรวจสถานะ Checklist และหลักฐาน (2026-06-12)
+
+- Persistent checklist table/API exists: `YES`
+- Saved reviewer checklist records: `0`
+- Effective checklist completion: `0/7`; ทุกข้อเป็น `NOT_STARTED`
+- Real XLSX evidence package verified: `YES`
+- XLSX evidence reviewed by an identified human reviewer: `NO`
+- Explicit human decision found: `NO`
+- Reviewer identity: `NOT_PROVIDED`
+- Decision option and XLSX format gate remain `HOLD_PENDING_ADDITIONAL_REVIEW`
+- Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`
