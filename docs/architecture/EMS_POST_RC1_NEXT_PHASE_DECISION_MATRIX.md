@@ -20,3 +20,6 @@ The current route is `HOLD_PENDING_ADDITIONAL_REVIEW`. No implementation or fina
 
 Rerun the supervisor/finance RC1 demo and record one explicit decision option, reviewer name, reviewer role, decision date, and feedback.
 
+## Evidence-Assisted Hold Branch Update (2026-06-12)
+
+The selected branch remains `HOLD_PENDING_ADDITIONAL_REVIEW`. The rerun must use the in-system seven-step checklist and the real RC1 XLSX visual evidence package before requesting an explicit decision. Checklist completion alone does not open another implementation gate.

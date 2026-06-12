@@ -303,3 +303,12 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - Produced-format gate: `HOLD_PENDING_ADDITIONAL_REVIEW`.
 - Final-authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
 - No payment approval, final authorization, official-final export, production readiness, or readiness-score increase is certified.
+
+## In-System Checklist And XLSX Evidence Certificate Note (2026-06-12)
+
+- Seven persistent inspection steps are implemented and role-validated on the payment draft page.
+- A real RC1 XLSX sample, PNG layout preview, Markdown preview, and cell map support the next human review.
+- Browser smoke confirms the checklist, hold gate, and `DRAFT_NOT_AUTHORIZED` are visible without console errors.
+- Checklist completion remains non-authorizing and cannot accept the produced XLSX format.
+- Human decision remains `HOLD_PENDING_ADDITIONAL_REVIEW`; final authorization design remains blocked.
+- Production/readiness scores remain unchanged.

@@ -95,3 +95,10 @@ Define a review-before-use model for EMS payment-related draft documents. This m
 - Active draft settings may now calculate the official draft preview.
 - Calculation source status remains separate from review status and cannot bypass review history.
 - `ACCEPTED_FOR_DRAFT_EXPORT` remains non-authorizing and does not enable export.
+
+## Inspection Checklist Separation (2026-06-12)
+
+- Persistent checklist items record inspection evidence separately from `PaymentDocumentReviewRecord`.
+- Checklist statuses are `NOT_STARTED`, `IN_PROGRESS`, `CHECKED`, `NEEDS_ATTENTION`, and `BLOCKED`.
+- Checklist progress cannot mutate review status, accepted-export eligibility, calculation results, payment authorization, final export, or the explicit XLSX format decision.
+- The produced-format gate remains `HOLD_PENDING_ADDITIONAL_REVIEW`.

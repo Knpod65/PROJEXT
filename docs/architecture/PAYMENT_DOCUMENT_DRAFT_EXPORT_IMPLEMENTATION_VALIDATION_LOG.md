@@ -109,3 +109,18 @@ openpyxl writes UTF-8 Unicode strings correctly. Thai characters are stored in t
 - Reviewer identity: `NOT_PROVIDED`.
 - Final-authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
 - Implementation, export behavior, safety flags, and readiness remain unchanged.
+
+## In-System Checklist And RC1 Visual Evidence Validation (2026-06-12)
+
+- Persistent checklist focused tests: `11/11 PASS`.
+- Checklist defaults: seven ordered `NOT_STARTED` items without creating rows on read.
+- Reviewer roles can persist status/comments; staff is read-only; teacher, print shop, and student are blocked.
+- Completing all checklist items leaves the existing review status unchanged and keeps both safety flags false.
+- Existing gated endpoint generated `draft-xlsx-sample-rc1.xlsx` with HTTP `200`.
+- Workbook inspection found two sheets, draft warnings, term/rates, main table, totals, review metadata, and false safety flags.
+- Browser smoke found all seven steps, `HOLD_PENDING_ADDITIONAL_REVIEW`, and `DRAFT_NOT_AUTHORIZED` with no console errors.
+- Backend compile/import: PASS; `IMPORT_ROUTERS_ERROR=None`.
+- Focused checklist/review/export tests: `43/43 PASS`.
+- Full backend suite: `1563/1563 PASS`.
+- Frontend build and EN/TH parity/raw checks: PASS; `2298/2298` keys.
+- Human XLSX-format decision remains held.

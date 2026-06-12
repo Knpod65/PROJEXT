@@ -301,3 +301,11 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Workload presentation remains excluded and product-sensitive routes remain deferred.
 - Payment documents remain `DRAFT_NOT_AUTHORIZED`; draft XLSX remains review-gated and non-authorizing.
 - No backend, permission, business-logic, payment/export/review/settings, workload-domain, or readiness change is introduced.
+
+## In-System XLSX Review Checklist Disclosure (2026-06-12)
+
+- The payment draft page now includes a persistent seven-step inspection checklist for supervisor/finance review evidence.
+- Checklist completion does not accept the XLSX format, authorize payment, enable final authorization, or change the existing draft-export gate.
+- A real gated RC1 XLSX sample and structural visual evidence are available for the next demo.
+- The produced-format decision remains `HOLD_PENDING_ADDITIONAL_REVIEW`; reviewer identity remains `NOT_PROVIDED`.
+- Readiness scores remain unchanged.

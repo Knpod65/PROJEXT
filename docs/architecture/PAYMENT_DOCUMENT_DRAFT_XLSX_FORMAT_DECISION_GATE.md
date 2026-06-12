@@ -37,3 +37,10 @@ No explicit post-RC1 human decision or reviewer identity is recorded. Therefore:
 - `final_export_enabled=false`.
 - No final payment approval, final authorization, official-final export, or payment release is authorized.
 
+## In-System Checklist And Evidence Update (2026-06-12)
+
+- A persistent seven-step inspection checklist now supports evidence-based review.
+- A real RC1 XLSX sample plus PNG, Markdown preview, and cell map are available for inspection.
+- Checklist completion is deliberately separate from this explicit human decision gate.
+- No checklist state can set `DRAFT_XLSX_FORMAT_ACCEPTED` or open final-authorization design.
+- Current format gate remains `HOLD_PENDING_ADDITIONAL_REVIEW`.

@@ -36,3 +36,11 @@
 
 สาธิต RC1 ต่อผู้บังคับบัญชา/ฝ่ายการเงินอีกครั้ง และบันทึกตัวเลือกการตัดสินใจพร้อมชื่อและบทบาทของผู้ตรวจอย่างชัดเจน
 
+## หลักฐานเพิ่มเติมและ Checklist ในระบบ (2026-06-12)
+
+- ระบบมีรายการตรวจสอบแบบถาวร 7 ขั้นตอนสำหรับเอกสาร `ADVANCE_PAYMENT_DRAFT_SUMMARY:2568:2:final:all`
+- ไฟล์ XLSX จริงและหลักฐานภาพ/โครงสร้างถูกสร้างไว้ใน `docs/operations/demo-smoke-screenshots/`
+- การตรวจ checklist ครบไม่ใช่การยอมรับรูปแบบและไม่เปลี่ยน review/export gate
+- Human decision found ยังเป็น `NO`
+- Reviewer identity ยังเป็น `NOT_PROVIDED`
+- Decision และ draft XLSX gate ยังคง `HOLD_PENDING_ADDITIONAL_REVIEW`

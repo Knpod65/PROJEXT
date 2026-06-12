@@ -40,3 +40,11 @@
 - สถานะ `ACCEPTED_FOR_DRAFT_EXPORT` เดิมอนุญาตเฉพาะการสร้างไฟล์ร่างตามเงื่อนไข ไม่ใช่การยอมรับรูปแบบไฟล์ที่ผลิตแล้ว
 - การออกแบบ final authorization ยังคงเป็น `FINAL_AUTHORIZATION_DESIGN_BLOCKED`
 - ขอบเขตความปลอดภัยทั้งหมดในใบรับรองนี้ยังคงเดิม
+
+## Checklist และหลักฐาน XLSX จริง (2026-06-12)
+
+- ระบบมี checklist แบบถาวรสำหรับบันทึกหลักฐานการตรวจ โดยแยกจาก review decision และ export gate
+- การทดสอบยืนยันว่า checklist ทุกข้อสามารถเป็น `CHECKED` ได้โดยไม่เปลี่ยน review record หรือ safety flags
+- ไฟล์ `draft-xlsx-sample-rc1.xlsx` ถูกสร้างจาก existing gated endpoint จริง
+- PNG/Markdown/cell map ยืนยันข้อความร่าง อัตรา ตาราง ยอดรวม และ safety flags
+- การตรวจ checklist และหลักฐานนี้ไม่ใช่การยอมรับรูปแบบ ไม่ใช่การอนุมัติเบิกจ่าย และไม่ใช่ Final Authorization
