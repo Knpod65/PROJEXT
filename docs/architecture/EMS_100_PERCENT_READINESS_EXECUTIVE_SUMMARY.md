@@ -348,3 +348,11 @@ The frontend is now the most ready part of any future faculty web deployment. Au
 - `DRAFT_NOT_AUTHORIZED`, `payment_authorization_enabled=false`, and `final_export_enabled=false` remain in force.
 - This does not claim production-final readiness, final finance authorization, official-final export, or payment release.
 - Residual P2 and workload-presentation deferrals remain documented; readiness scores are unchanged.
+
+## RC1 Draft XLSX Human Decision Hold Note (2026-06-12)
+
+- The technical RC1 evidence pack is complete, but no post-RC1 supervisor/finance format decision is recorded.
+- Draft XLSX format status is `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- The existing accepted review permits draft generation only; it does not prove acceptance of the produced format.
+- Final-authorization design, payment approval, final authorization, and official-final export remain blocked.
+- Production readiness is not claimed and readiness scores remain unchanged.

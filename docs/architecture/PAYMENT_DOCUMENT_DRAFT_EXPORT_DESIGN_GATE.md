@@ -164,3 +164,12 @@ Official payment export, final authorization, payment approval, and payment rele
 - This document does not change `document_status`, `payment_authorization_enabled`, or `final_export_enabled`.
 - This document does not advance any readiness score.
 - This document does not substitute for a human reviewer decision.
+
+## RC1 Produced-Format Decision Note (2026-06-12)
+
+- RC1 proved that the existing review-gated draft XLSX can be generated safely.
+- No post-RC1 supervisor/finance decision accepts or rejects the produced XLSX format.
+- The existing `ACCEPTED_FOR_DRAFT_EXPORT` review record remains permission for gated draft generation only; it is not acceptance of the generated RC1 format.
+- Produced-format gate: `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Final-authorization design gate: `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- No payment approval, final authorization, official-final export, payment release, or readiness increase is introduced.

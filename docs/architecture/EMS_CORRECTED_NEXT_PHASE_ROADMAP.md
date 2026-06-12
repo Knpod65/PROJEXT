@@ -229,3 +229,12 @@
 - Final approval, final authorization, official-final export, payment release, production deployment claims, and workload-presentation work remain outside RC1.
 - Exact next gate: run the supervisor/finance demo and capture the human decision on the draft XLSX format.
 - Readiness scores remain unchanged.
+
+## RC1 Draft XLSX Human Decision Hold (2026-06-12)
+
+- No post-RC1 supervisor/finance decision or reviewer identity is recorded.
+- Draft XLSX produced-format gate is `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Existing `ACCEPTED_FOR_DRAFT_EXPORT` permits the gated draft workflow only and does not accept the produced RC1 format.
+- Final-authorization design remains blocked.
+- Exact next action: rerun the supervisor/finance RC1 demo and capture an explicit format decision.
+- Readiness scores remain unchanged.

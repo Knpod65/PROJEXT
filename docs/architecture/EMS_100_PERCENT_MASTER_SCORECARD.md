@@ -306,6 +306,14 @@ The full-route UI alignment pass recovered the authoritative EMS design source a
 - Draft export remains review-only and non-authorizing; final approval, final authorization, official-final export, and payment release remain blocked.
 - Workload presentation remains deferred. Production readiness is not claimed. All scores remain unchanged.
 
+## RC1 Draft XLSX Human Decision Hold Note (2026-06-12)
+
+- Human decision on the produced RC1 draft XLSX format found: `NO`.
+- Current decision: `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Reviewer name: `NOT_PROVIDED`; reviewer role was not explicitly identified.
+- Final-authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- No payment approval, final authorization, official-final export, code change, or readiness score change is recorded.
+
 ## Full UI Regression Closure Note (2026-06-11)
 
 - Full route regression closure completed: `50` declarations, `43` visual destinations, and `44/44` renderable URL smoke.

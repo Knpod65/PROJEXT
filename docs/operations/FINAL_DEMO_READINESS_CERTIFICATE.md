@@ -295,3 +295,11 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - `DRAFT_NOT_AUTHORIZED`, false authorization/final-export flags, and role restrictions remain certified.
 - Final payment approval, final authorization, official-final export, payment release, and production readiness are not certified.
 - Workload-domain presentation and logic remain untouched. Readiness scores remain unchanged.
+
+## RC1 Draft XLSX Human Decision Hold Certificate Note (2026-06-12)
+
+- Technical demo evidence remains certified, but human acceptance of the produced RC1 XLSX format is not certified.
+- Human decision found: `NO`; reviewer identity: `NOT_PROVIDED`.
+- Produced-format gate: `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Final-authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- No payment approval, final authorization, official-final export, production readiness, or readiness-score increase is certified.

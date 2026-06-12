@@ -286,6 +286,14 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - Readiness scores remain unchanged.
 - Next human action: run the supervisor/finance demo and capture the decision on the draft XLSX format.
 
+## RC1 Draft XLSX Decision Hold Disclosure (2026-06-12)
+
+- No post-RC1 supervisor/finance decision or reviewer identity has been supplied.
+- The produced draft XLSX format remains `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- `ACCEPTED_FOR_DRAFT_EXPORT` must not be presented as acceptance of the produced RC1 file format.
+- Final-authorization design, final approval, official-final export, and payment release remain blocked.
+- Next human action: rerun the demo and capture an explicit decision with reviewer identity.
+
 ## Full UI Regression Closure Disclosure (2026-06-11)
 
 - Full route regression completed with `44/44` renderable URLs returning HTTP `200` and eight new real screenshots.

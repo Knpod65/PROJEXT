@@ -100,3 +100,12 @@ openpyxl writes UTF-8 Unicode strings correctly. Thai characters are stored in t
 | Post-duty reconciliation finalization | BLOCKED — not implemented |
 | PDF draft export | DEFERRED — no new dependency justified in this pass |
 | Production readiness | UNCHANGED |
+
+## RC1 Human Format Decision Reconciliation (2026-06-12)
+
+- Draft XLSX implementation and RC1 evidence remain validated.
+- Human decision on the produced RC1 XLSX format found: `NO`.
+- Current produced-format gate: `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Reviewer identity: `NOT_PROVIDED`.
+- Final-authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- Implementation, export behavior, safety flags, and readiness remain unchanged.

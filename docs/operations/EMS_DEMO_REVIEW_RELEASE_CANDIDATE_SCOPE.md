@@ -45,3 +45,10 @@
 - No workload-domain changes.
 - Only a true release-candidate blocker may justify a separately validated and separately committed fix.
 
+## Post-Demo Decision Status (2026-06-12)
+
+- Human decision on the produced RC1 draft XLSX format: `NOT_PROVIDED`.
+- Current format gate: `HOLD_PENDING_ADDITIONAL_REVIEW`.
+- Existing `ACCEPTED_FOR_DRAFT_EXPORT` remains a draft-generation gate only.
+- Final-authorization design remains blocked.
+- RC1 scope, safety boundaries, and readiness claims remain unchanged.
