@@ -321,3 +321,15 @@ All DEMO CORE routes (login, dashboards, intelligence, workload, governance, sch
 - XLSX format gate remains `HOLD_PENDING_ADDITIONAL_REVIEW`.
 - Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
 - No payment approval, final authorization, official-final export, code change, or readiness-score increase is certified.
+
+## Draft XLSX Format Accepted + Supporting Roster Design Certificate Note (2026-06-12)
+
+- Human decision `ACCEPT_DRAFT_XLSX_FORMAT` recorded. Draft XLSX format gate: `DRAFT_XLSX_FORMAT_ACCEPTED`.
+- Reviewer identity: `NOT_PROVIDED`. No code change introduced.
+- Acceptance of draft XLSX summary format is not payment authorization. `DRAFT_NOT_AUTHORIZED` remains certified.
+- `payment_authorization_enabled=false` and `final_export_enabled=false` remain certified unchanged.
+- Supporting finance invigilation roster export design opened (`SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED`).
+- Supporting roster implementation gate: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`. Not yet implemented.
+- Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- No payment approval, final authorization, official-final export, production readiness, or readiness-score increase is certified.
+- Production readiness: unchanged.

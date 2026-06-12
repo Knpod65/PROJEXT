@@ -1,5 +1,9 @@
 # EMS_100_PERCENT_READINESS_EXECUTIVE_SUMMARY.md
 
+## 2026-06-12 Draft XLSX Format Accepted + Supporting Roster Design Note
+
+Human decision `ACCEPT_DRAFT_XLSX_FORMAT` recorded. Draft XLSX format gate: `DRAFT_XLSX_FORMAT_ACCEPTED`. Reviewer identity: `NOT_PROVIDED`. Acceptance is not payment authorization. Supporting finance invigilation roster export design opened; implementation gate at `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`. Final authorization remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`. Readiness scores are unchanged.
+
 ## 2026-06-11 UI Alignment Note
 
 EMS now has an authoritative page-template standard and a full inventory of all registered routes. Targeted payment/settings/export presentation drift was corrected while payment approval, official/final export, and final authorization remain absent. This evidence does not increase production readiness scores.

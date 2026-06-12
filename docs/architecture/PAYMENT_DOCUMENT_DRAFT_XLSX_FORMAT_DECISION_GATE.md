@@ -2,9 +2,12 @@
 
 **Date**: 2026-06-12  
 **Release candidate**: `EMS_DEMO_REVIEW_RC_1`  
-**Human decision found**: `NO`  
-**Current format gate**: `HOLD_PENDING_ADDITIONAL_REVIEW`  
-**Final authorization design gate**: `FINAL_AUTHORIZATION_DESIGN_BLOCKED`
+**Human decision found**: `YES` (2026-06-12)  
+**Decision option**: `ACCEPT_DRAFT_XLSX_FORMAT`  
+**Reviewer identity**: `NOT_PROVIDED`  
+**Current format gate**: `DRAFT_XLSX_FORMAT_ACCEPTED`  
+**Final authorization design gate**: `FINAL_AUTHORIZATION_DESIGN_BLOCKED`  
+**Supporting requirement opened**: `SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED`
 
 ## Purpose
 
@@ -21,13 +24,16 @@ This gate records the supervisor/finance decision on the produced RC1 draft XLSX
 | `REJECT_DRAFT_XLSX_FORMAT` | `DRAFT_XLSX_FORMAT_REJECTED` | Redesign is required |
 | `ALLOW_FINAL_AUTHORIZATION_DESIGN_PHASE` | Existing format result plus `FINAL_AUTHORIZATION_DESIGN_ALLOWED` | Docs-only design phase only; no approval implementation |
 
-## Current Decision
+## Current Decision (2026-06-12)
 
-No explicit post-RC1 human decision or reviewer identity is recorded. Therefore:
+Human decision `ACCEPT_DRAFT_XLSX_FORMAT` has been recorded. Reviewer identity is `NOT_PROVIDED` — no identity was fabricated.
 
-- Draft XLSX format gate: `HOLD_PENDING_ADDITIONAL_REVIEW`
-- Final authorization design gate: `FINAL_AUTHORIZATION_DESIGN_BLOCKED`
-- Next implementation gate opened: `NO`
+- Draft XLSX format gate: `DRAFT_XLSX_FORMAT_ACCEPTED`
+- Final authorization design gate: `FINAL_AUTHORIZATION_DESIGN_BLOCKED` (unchanged)
+- New supporting requirement: `SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED`
+- Implementation gate for supporting roster: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`
+
+**Acceptance of the draft XLSX format is not payment authorization.** The accepted summary XLSX is a review-only draft. A supporting finance invigilation roster export (`DRAFT_FINANCE_INVIGILATION_ROSTER_XLSX`) is required before finance can verify signatures and headcounts. See `PAYMENT_SUPPORTING_FINANCE_ROSTER_EXPORT_CONTRACT.md`.
 
 ## Invariants
 

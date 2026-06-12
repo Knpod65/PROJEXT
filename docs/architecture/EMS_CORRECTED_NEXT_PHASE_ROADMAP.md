@@ -247,3 +247,21 @@
 - Final-authorization design remains blocked.
 - Exact next action: rerun the supervisor/finance RC1 demo and capture an explicit format decision.
 - Readiness scores remain unchanged.
+
+## RC1 Draft XLSX Format Accepted + Supporting Roster Design Opened (2026-06-12)
+
+- Human decision `ACCEPT_DRAFT_XLSX_FORMAT` recorded. Draft XLSX format gate: `DRAFT_XLSX_FORMAT_ACCEPTED`.
+- Reviewer identity: `NOT_PROVIDED`. No identity was fabricated.
+- Acceptance of the draft XLSX summary format is not payment authorization.
+- New requirement opened: `SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED`.
+- A supporting finance invigilation roster export (`DRAFT_FINANCE_INVIGILATION_ROSTER_XLSX`) is required before finance can verify signatures and headcounts.
+- 4 design docs created:
+  - `PAYMENT_SUPPORTING_FINANCE_ROSTER_SOURCE_REVIEW.md`
+  - `PAYMENT_SUPPORTING_FINANCE_ROSTER_EXPORT_CONTRACT.md`
+  - `PAYMENT_SUPPORTING_FINANCE_ROSTER_ALGORITHM.md`
+  - `PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_GATE.md`
+- Supporting roster implementation gate: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`
+- 5 items must be confirmed by admin/finance before implementation begins.
+- Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- Payment approval, final authorization, official-final export, payment release: still blocked.
+- Production readiness: unchanged.

@@ -7,24 +7,32 @@
 
 | รายการ | ค่า |
 |---|---|
-| human_decision_found | `NO` |
+| human_decision_found | `YES` |
 | reviewer_name | `NOT_PROVIDED` |
-| reviewer_role | `supervisor/finance reviewer not explicitly identified` |
-| decision_option | `HOLD_PENDING_ADDITIONAL_REVIEW` |
-| draft_xlsx_gate_status | `HOLD_PENDING_ADDITIONAL_REVIEW` |
+| reviewer_role | `NOT_PROVIDED` |
+| decision_option | `ACCEPT_DRAFT_XLSX_FORMAT` |
+| draft_xlsx_gate_status | `DRAFT_XLSX_FORMAT_ACCEPTED` |
 | final_authorization_design_status | `FINAL_AUTHORIZATION_DESIGN_BLOCKED` |
+| supporting_requirement | `SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED` |
+| decision_date | `2026-06-12` |
 
 ## สรุป
 
-ยังไม่มีหลักฐานการตัดสินใจจากผู้บังคับบัญชาหรือฝ่ายการเงินหลังการสาธิต RC1 และยังไม่มีการระบุตัวผู้ตรวจอย่างชัดเจน จึงไม่สามารถถือว่ารูปแบบ XLSX ฉบับร่างได้รับการยอมรับ ถูกขอแก้ไข หรือถูกปฏิเสธได้
+ผู้บังคับบัญชา/ฝ่ายการเงินได้ให้การตัดสินใจ `ACCEPT_DRAFT_XLSX_FORMAT` สำหรับรูปแบบ XLSX ฉบับร่าง RC1
+รูปแบบ XLSX ฉบับร่างสรุป (summary XLSX) ได้รับการยอมรับสำหรับการใช้เป็นร่างเพื่อการตรวจทาน
 
-สถานะ `ACCEPTED_FOR_DRAFT_EXPORT` ที่มีอยู่เดิมอนุญาตให้ระบบสร้างไฟล์ XLSX ฉบับร่างตามเงื่อนไขที่กำหนดเท่านั้น ไม่ใช่หลักฐานว่าผู้ตรวจยอมรับรูปแบบไฟล์ที่ผลิตจาก RC1
+**การยอมรับรูปแบบ XLSX ฉบับร่างนี้ไม่ใช่การอนุมัติเบิกจ่ายเงิน**
+
+ฝ่ายการเงินต้องการไฟล์สนับสนุนเพิ่มเติม (`SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED`)
+เพื่อช่วยตรวจสอบจำนวนหัวและลายเซ็นก่อนที่จะสามารถตรวจนับได้อย่างสมบูรณ์
+
+ตัวตนของผู้ตรวจยังไม่ได้รับการระบุ (`NOT_PROVIDED`) — ไม่มีการสร้างตัวตนขึ้นเอง
 
 ## ขอบเขตการตัดสินใจ
 
-- accepted_scope: ไม่มี
-- required_revisions: ยังไม่มีข้อมูล
-- rejected_or_deferred_scope: การตัดสินใจรูปแบบ XLSX และการออกแบบ final authorization ถูกพักไว้
+- accepted_scope: รูปแบบ XLSX ฉบับร่างสรุป (draft summary XLSX format) สำหรับ RC1
+- required_revisions: ไม่มี — รูปแบบได้รับการยอมรับตามที่เป็น
+- rejected_or_deferred_scope: Final authorization ยังถูกบล็อก; Supporting finance roster ยังอยู่ในขั้นออกแบบ
 
 ## ข้อความกำกับ
 
@@ -32,9 +40,14 @@
 
 `Final authorization remains a separate gate.`
 
+การยอมรับรูปแบบ draft XLSX summary ไม่เปิด final authorization design และไม่เปิด official-final export
+
 ## การดำเนินการถัดไป
 
-สาธิต RC1 ต่อผู้บังคับบัญชา/ฝ่ายการเงินอีกครั้ง และบันทึกตัวเลือกการตัดสินใจพร้อมชื่อและบทบาทของผู้ตรวจอย่างชัดเจน
+1. ยืนยัน authoritative optimized roster source และ finance column format จาก admin/finance
+   (รายการ 5 ข้อใน `PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_GATE.md`)
+2. หลังยืนยันครบ → gate เปลี่ยนเป็น `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
+3. Final authorization ยังต้องผ่าน gate แยกต่างหาก
 
 ## หลักฐานเพิ่มเติมและ Checklist ในระบบ (2026-06-12)
 

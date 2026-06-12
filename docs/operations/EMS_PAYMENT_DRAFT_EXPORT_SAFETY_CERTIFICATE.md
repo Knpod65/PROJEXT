@@ -57,3 +57,14 @@
 - Human decision found = `NO`; reviewer identity = `NOT_PROVIDED`
 - `DRAFT_NOT_AUTHORIZED`, `payment_authorization_enabled=false`, และ `final_export_enabled=false` ยังคงเดิม
 - Final payment approval, Final Authorization, official-final export และ payment release ยังคงไม่ถูกเปิดใช้
+
+## การยอมรับรูปแบบ XLSX ฉบับร่างและความต้องการไฟล์สนับสนุน (2026-06-12)
+
+- Human decision: `ACCEPT_DRAFT_XLSX_FORMAT` — รูปแบบ XLSX สรุปฉบับร่าง RC1 ได้รับการยอมรับ
+- Reviewer identity: `NOT_PROVIDED`
+- Draft XLSX format gate: `DRAFT_XLSX_FORMAT_ACCEPTED`
+- Supporting requirement: `SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED`
+- Supporting roster implementation gate: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`
+- **การยอมรับรูปแบบ XLSX ฉบับร่างนี้ไม่ใช่การอนุมัติเบิกจ่ายเงิน**
+- ขอบเขตความปลอดภัยทั้งหมดในใบรับรองนี้ยังคงเดิม: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`
+- Final Authorization ยังคง `FINAL_AUTHORIZATION_DESIGN_BLOCKED`

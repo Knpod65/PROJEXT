@@ -1,5 +1,9 @@
 # EMS_100_PERCENT_MASTER_SCORECARD.md
 
+## 2026-06-12 Draft XLSX Format Accepted + Supporting Roster Design Note
+
+Human decision `ACCEPT_DRAFT_XLSX_FORMAT` recorded. Draft XLSX format gate: `DRAFT_XLSX_FORMAT_ACCEPTED`. Reviewer identity: `NOT_PROVIDED`. Acceptance is not payment authorization. Supporting finance invigilation roster export design opened (`SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED`); implementation gate at `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`. Final authorization remains blocked. Readiness scores are unchanged.
+
 ## 2026-06-11 UI Alignment Note
 
 The full-route UI alignment pass recovered the authoritative EMS design source and corrected targeted presentation drift without changing backend or business behavior. Draft XLSX remains gated, review-only, and non-authorizing. Readiness scores are unchanged.

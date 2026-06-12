@@ -318,3 +318,14 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - A real gated RC1 XLSX sample and structural visual evidence are available for the next demo.
 - The produced-format decision remains `HOLD_PENDING_ADDITIONAL_REVIEW`; reviewer identity remains `NOT_PROVIDED`.
 - Readiness scores remain unchanged.
+
+## Draft XLSX Format Accepted + Supporting Finance Roster Design Disclosure (2026-06-12)
+
+- Human decision `ACCEPT_DRAFT_XLSX_FORMAT` has been recorded. Draft XLSX format gate: `DRAFT_XLSX_FORMAT_ACCEPTED`.
+- Reviewer identity: `NOT_PROVIDED`.
+- **Acceptance of the draft XLSX format is not payment authorization.**
+- Demo operators must state: the accepted format is a draft/review-only summary; final authorization, payment approval, official-final export, and payment release remain blocked.
+- A supporting finance invigilation roster export (`DRAFT_FINANCE_INVIGILATION_ROSTER_XLSX`) is required before finance can verify signatures and headcounts.
+- Supporting roster implementation gate: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` — not yet implemented.
+- `DRAFT_NOT_AUTHORIZED` remains the required document status; `payment_authorization_enabled=false` and `final_export_enabled=false` remain unchanged.
+- Readiness scores remain unchanged.
