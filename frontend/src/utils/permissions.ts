@@ -126,6 +126,11 @@ export function canManagePaymentDocumentReview(user: UserMe | null | undefined):
   return hasAnyRole(user, "admin", "esq_head", "secretary");
 }
 
+/** Update the separate evidence checklist for a draft payment document. */
+export function canManagePaymentDocumentReviewChecklist(user: UserMe | null | undefined): boolean {
+  return hasAnyRole(user, "admin", "esq_head", "secretary");
+}
+
 /** Read term-specific payment document preparation settings. */
 export function canViewPaymentDocumentSettings(user: UserMe | null | undefined): boolean {
   return hasAnyRole(user, "admin", "esq_head", "secretary", "staff");

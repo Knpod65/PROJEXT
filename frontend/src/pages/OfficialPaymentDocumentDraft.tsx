@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AlertBanner } from "@/components/ui/AlertBanner";
 import { Badge } from "@/components/ui/Badge";
@@ -11,14 +11,23 @@ import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useOfficialPaymentDraftPreview } from "@/hooks/domain/useOfficialPaymentDraftPreview";
 import { usePaymentDocumentSettings } from "@/hooks/domain/usePaymentDocumentSettings";
+import { usePaymentDocumentReviewChecklist } from "@/hooks/domain/usePaymentDocumentReviewChecklist";
 import { usePaymentDocumentReviews } from "@/hooks/domain/usePaymentDocumentReviews";
 import { useI18n } from "@/i18n";
 import { exportOfficialPaymentDraftExcel } from "@/services/officialPaymentDraft.service";
 import { useAuth } from "@/store/auth.store";
 import type { OfficialPaymentDraftManualPaperRow, OfficialPaymentDraftRow } from "@/types/officialPaymentDraft";
 import type { PaymentDocumentReviewRecord, PaymentDocumentReviewStatus } from "@/types/paymentDocumentReview";
+import type {
+  PaymentDocumentReviewChecklistItem,
+  PaymentDocumentReviewChecklistStatus,
+} from "@/types/paymentDocumentReviewChecklist";
 import { formatCurrency } from "@/utils/format";
-import { canCommentOnPaymentDocumentReview, canManagePaymentDocumentReview } from "@/utils/permissions";
+import {
+  canCommentOnPaymentDocumentReview,
+  canManagePaymentDocumentReview,
+  canManagePaymentDocumentReviewChecklist,
+} from "@/utils/permissions";
 
 type EditablePaperRow = OfficialPaymentDraftManualPaperRow & { local_id: string };
 
@@ -29,6 +38,14 @@ const REVIEW_STATUS_OPTIONS: PaymentDocumentReviewStatus[] = [
   "ACCEPTED_FOR_DRAFT_EXPORT",
   "REJECTED_REDESIGN_REQUIRED",
   "FINAL_AUTHORIZATION_REQUIRED",
+];
+
+const CHECKLIST_STATUS_OPTIONS: PaymentDocumentReviewChecklistStatus[] = [
+  "NOT_STARTED",
+  "IN_PROGRESS",
+  "CHECKED",
+  "NEEDS_ATTENTION",
+  "BLOCKED",
 ];
 
 function newPaperRow(): EditablePaperRow {
@@ -74,6 +91,76 @@ function reviewStatusVariant(status: PaymentDocumentReviewStatus) {
   return "gold";
 }
 
+function checklistStatusVariant(status: PaymentDocumentReviewChecklistStatus) {
+  if (status === "CHECKED") return "green";
+  if (status === "BLOCKED") return "crimson";
+  if (status === "NEEDS_ATTENTION") return "orange";
+  if (status === "IN_PROGRESS") return "blue";
+  return "gray";
+}
+
+function ChecklistItemEditor({
+  canManage,
+  item,
+  isSaving,
+  onSave,
+}: {
+  canManage: boolean;
+  item: PaymentDocumentReviewChecklistItem;
+  isSaving: boolean;
+  onSave: (status: PaymentDocumentReviewChecklistStatus, comment: string) => Promise<unknown>;
+}) {
+  const { t } = useI18n();
+  const [status, setStatus] = useState(item.item_status);
+  const [comment, setComment] = useState(item.comment ?? "");
+
+  useEffect(() => {
+    setStatus(item.item_status);
+    setComment(item.comment ?? "");
+  }, [item.comment, item.item_status]);
+
+  return (
+    <div className="summary-box">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <span>{t("paymentDraft.checklist.step", { step: item.item_order })}</span>
+          <strong>{t(`paymentDraft.checklist.item.${item.item_key}.label`)}</strong>
+        </div>
+        <Badge variant={checklistStatusVariant(item.item_status)}>
+          {t(`paymentDraft.checklist.status.${item.item_status}`)}
+        </Badge>
+      </div>
+      <p className="mt-2 text-sm text-gray-500">{t(`paymentDraft.checklist.item.${item.item_key}.description`)}</p>
+      {canManage ? (
+        <div className="mt-4 page-stack">
+          <FormField label={t("paymentDraft.checklist.itemStatus")}>
+            <select value={status} onChange={(event) => setStatus(event.target.value as PaymentDocumentReviewChecklistStatus)}>
+              {CHECKLIST_STATUS_OPTIONS.map((option) => (
+                <option key={option} value={option}>{t(`paymentDraft.checklist.status.${option}`)}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label={t("paymentDraft.checklist.comment")}>
+            <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={2} placeholder={t("paymentDraft.checklist.commentPlaceholder")} />
+          </FormField>
+          <Button type="button" size="sm" variant="outline" iconLeft={<Icon name="save" />} loading={isSaving} onClick={() => void onSave(status, comment)}>
+            {t("paymentDraft.checklist.save")}
+          </Button>
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-gray-500">
+          {item.comment || t("paymentDraft.checklist.readOnlyItem")}
+        </p>
+      )}
+      {item.reviewer_name ? (
+        <p className="mt-3 text-sm text-gray-500">
+          {t("paymentDraft.checklist.lastUpdatedBy", { name: item.reviewer_name, role: item.reviewer_role ?? "-" })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export default function OfficialPaymentDocumentDraft() {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -89,6 +176,7 @@ export default function OfficialPaymentDocumentDraft() {
   const [reviewStatus, setReviewStatus] = useState<PaymentDocumentReviewStatus>("DRAFT_READY_FOR_REVIEW");
   const canCommentReview = canCommentOnPaymentDocumentReview(user);
   const canManageReview = canManagePaymentDocumentReview(user);
+  const canManageChecklist = canManagePaymentDocumentReviewChecklist(user);
   const documentId = useMemo(
     () => `ADVANCE_PAYMENT_DRAFT_SUMMARY:${academicYear || "unknown"}:${semester || "unknown"}:${examType || "unknown"}:${periodId || "all"}`,
     [academicYear, examType, periodId, semester],
@@ -96,6 +184,7 @@ export default function OfficialPaymentDocumentDraft() {
   const settingsTerm = useMemo(() => `${semester || "2"}/${academicYear || "2568"}`, [academicYear, semester]);
   const reviewTerm = useMemo(() => `${semester || "-"} / ${academicYear || "-"}`, [academicYear, semester]);
   const reviewRecords = usePaymentDocumentReviews(documentId);
+  const checklist = usePaymentDocumentReviewChecklist(documentId);
   const paymentSettings = usePaymentDocumentSettings(settingsTerm);
   const settingsSourceStatus = data?.metadata.settings_source_status
     ?? (paymentSettings.data?.configuration_status === "PENDING_CONFIGURATION"
@@ -415,6 +504,66 @@ export default function OfficialPaymentDocumentDraft() {
             emptyDescription={t("paymentDraft.review.emptyDescription")}
             compact
           />
+        </div>
+      </Card>
+
+      <Card
+        title={t("paymentDraft.checklist.title")}
+        subtitle={t("paymentDraft.checklist.subtitle")}
+        actions={
+          <Badge variant="gold">
+            {checklist.data?.decision_gate_status ?? "HOLD_PENDING_ADDITIONAL_REVIEW"}
+          </Badge>
+        }
+      >
+        <div className="page-stack">
+          <AlertBanner variant="warning" title={t("paymentDraft.checklist.safetyTitle")}>
+            {t("paymentDraft.checklist.safetyBody")}
+          </AlertBanner>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="summary-box">
+              <span>{t("paymentDraft.checklist.progress")}</span>
+              <strong>{t("paymentDraft.checklist.progressValue", {
+                checked: checklist.data?.checked_items ?? 0,
+                total: checklist.data?.total_items ?? 7,
+              })}</strong>
+            </div>
+            <div className="summary-box">
+              <span>{t("paymentDraft.checklist.remaining")}</span>
+              <strong>{checklist.data?.remaining_items ?? 7}</strong>
+            </div>
+            <div className="summary-box">
+              <span>{t("paymentDraft.checklist.decisionGate")}</span>
+              <strong>HOLD_PENDING_ADDITIONAL_REVIEW</strong>
+            </div>
+          </div>
+          {!canManageChecklist ? (
+            <AlertBanner variant="info" title={t("paymentDraft.checklist.readOnlyTitle")}>
+              {t("paymentDraft.checklist.readOnlyBody")}
+            </AlertBanner>
+          ) : null}
+          {checklist.isError ? (
+            <AlertBanner variant="danger" title={t("paymentDraft.checklist.errorTitle")}>
+              {t("paymentDraft.checklist.errorBody")}
+            </AlertBanner>
+          ) : null}
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {(checklist.data?.items ?? []).map((item) => (
+              <ChecklistItemEditor
+                key={item.item_key}
+                canManage={canManageChecklist}
+                item={item}
+                isSaving={checklist.savingItemKey === item.item_key}
+                onSave={(itemStatus, comment) => checklist.updateItem(item.item_key, {
+                  item_status: itemStatus,
+                  comment: comment.trim() || null,
+                })}
+              />
+            ))}
+          </div>
+          <Button type="button" variant="outline" iconLeft={<Icon name="refresh" />} loading={checklist.isLoading} onClick={() => void checklist.refresh()}>
+            {t("common.refresh")}
+          </Button>
         </div>
       </Card>
 
