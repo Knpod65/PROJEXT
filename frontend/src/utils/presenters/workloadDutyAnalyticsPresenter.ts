@@ -5,6 +5,8 @@ export interface WorkloadSummaryCard {
   label: string;
   value: string;
   hint: string;
+  icon: string;
+  tone: "accent" | "success" | "warning" | "neutral";
 }
 
 function safeNumber(value: any, fallback = 0): number {
@@ -30,32 +32,44 @@ export function presentWorkloadSummary(payload: WorkloadDutyAnalyticsPayload): W
     {
       label: translateWithFallback("workloadDashboard.summary.totalInvigilation", "Invigilation"),
       value: String(payload.summary.total_invigilation_duties),
-      hint: translateWithFallback("workloadDashboard.summary.totalPeople", "People"),
+      hint: translateWithFallback("workloadDashboard.summary.totalInvigilationHint", "All live invigilation duties"),
+      icon: "fact_check",
+      tone: "accent",
     },
     {
       label: translateWithFallback("workloadDashboard.summary.totalDistribution", "Paper distribution"),
       value: String(payload.summary.total_distribution_duties),
-      hint: translateWithFallback("workloadDashboard.summary.combined", "Combined"),
+      hint: translateWithFallback("workloadDashboard.summary.totalDistributionHint", "All paper-distribution duties"),
+      icon: "inventory_2",
+      tone: "neutral",
     },
     {
       label: translateWithFallback("workloadDashboard.summary.combined", "Combined"),
       value: String(payload.summary.total_combined_duties),
-      hint: translateWithFallback("workloadDashboard.summary.averagePerPerson", "Average per person"),
+      hint: translateWithFallback("workloadDashboard.summary.combinedHint", "Invigilation and distribution combined"),
+      icon: "work_history",
+      tone: "accent",
     },
     {
       label: translateWithFallback("workloadDashboard.summary.averagePerPerson", "Average per person"),
       value: payload.summary.average_duties_per_person.toFixed(2),
-      hint: translateWithFallback("workloadDashboard.summary.overloadedCount", "Overloaded staff"),
+      hint: translateWithFallback("workloadDashboard.summary.averageHint", "Combined duties divided by people"),
+      icon: "groups",
+      tone: "neutral",
     },
     {
       label: translateWithFallback("workloadDashboard.summary.overloadedCount", "Overloaded staff"),
       value: String(payload.fairness.overloaded_people.length),
-      hint: translateWithFallback("workloadDashboard.summary.fairnessScore", "Fairness"),
+      hint: translateWithFallback("workloadDashboard.summary.overloadedHint", "People above the current threshold"),
+      icon: "warning",
+      tone: payload.fairness.overloaded_people.length > 0 ? "warning" : "success",
     },
     {
       label: translateWithFallback("workloadDashboard.summary.fairnessScore", "Fairness score"),
       value: payload.summary.imbalance_score.toFixed(2),
-      hint: translateWithFallback("workloadDashboard.recommendations.balanceWorkload", "Rebalance duties"),
+      hint: translateWithFallback("workloadDashboard.summary.fairnessHint", "Lower imbalance indicates a fairer distribution"),
+      icon: "balance",
+      tone: payload.summary.imbalance_score > 0 ? "warning" : "success",
     },
   ];
 }

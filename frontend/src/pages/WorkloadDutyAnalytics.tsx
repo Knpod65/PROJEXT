@@ -1,334 +1,232 @@
 import { useMemo, useState } from "react";
 
 import { BarChart } from "@/components/charts/BarChart";
+import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { useAuth } from "@/store/auth.store";
-import { useI18n } from "@/i18n";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
+import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
 import { useWorkloadDutyAnalytics } from "@/hooks/domain/useWorkloadDutyAnalytics";
+import { useI18n } from "@/i18n";
+import { useAuth } from "@/store/auth.store";
+import type { DutyType, WorkloadRoleGroup } from "@/types/workloadDutyAnalytics";
 import {
   hasWorkloadAnalyticsResults,
   presentWorkloadPerson,
   presentWorkloadSummary,
 } from "@/utils/presenters/workloadDutyAnalyticsPresenter";
-import type { DutyType, WorkloadRoleGroup } from "@/types/workloadDutyAnalytics";
 
-function SummaryCard({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <Card className="p-4">
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-2 text-3xl font-bold">{value}</div>
-      <div className="mt-1 text-sm text-gray-500">{hint}</div>
-    </Card>
-  );
+interface WorkloadFilters {
+  semester: string;
+  academicYear: string;
+  periodId: string;
+  examType: string;
+  roleGroup: WorkloadRoleGroup;
+  personSearch: string;
+  dutyType: DutyType;
 }
+
+type PersonRow = ReturnType<typeof presentWorkloadPerson>;
 
 function getDefaultRoleGroup(role?: string | null): WorkloadRoleGroup {
   const value = String(role ?? "").toLowerCase();
   if (value === "teacher") return "teacher";
-  if (value === "staff" || value === "supervisor" || value === "dept_supervisor" || value === "esq_head" || value === "secretary") return "staff";
+  if (["staff", "supervisor", "dept_supervisor", "esq_head", "secretary"].includes(value)) return "staff";
   return "all";
 }
 
 function getDefaultTitle(role?: string | null): string {
   const value = String(role ?? "").toLowerCase();
   if (value === "teacher") return "workloadDashboard.pageTitle.teacher";
-  if (value === "staff" || value === "supervisor" || value === "dept_supervisor" || value === "esq_head" || value === "secretary") return "workloadDashboard.pageTitle.staff";
+  if (["staff", "supervisor", "dept_supervisor", "esq_head", "secretary"].includes(value)) return "workloadDashboard.pageTitle.staff";
   return "workloadDashboard.pageTitle.admin";
+}
+
+function createDefaultFilters(role?: string | null): WorkloadFilters {
+  return {
+    semester: "",
+    academicYear: "",
+    periodId: "",
+    examType: "",
+    roleGroup: getDefaultRoleGroup(role),
+    personSearch: "",
+    dutyType: "all",
+  };
+}
+
+function riskTone(riskBand: string): StatusTone {
+  if (riskBand === "critical") return "danger";
+  if (riskBand === "warning") return "warning";
+  if (riskBand === "good") return "success";
+  return "information";
 }
 
 export default function WorkloadDutyAnalytics() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const defaultRoleGroup = getDefaultRoleGroup(user?.role ?? null);
-  const [semester, setSemester] = useState<string>("");
-  const [academicYear, setAcademicYear] = useState<string>("");
-  const [periodId, setPeriodId] = useState<string>("");
-  const [examType, setExamType] = useState<string>("");
-  const [roleGroup, setRoleGroup] = useState<WorkloadRoleGroup>(defaultRoleGroup);
-  const [personSearch, setPersonSearch] = useState<string>("");
-  const [dutyType, setDutyType] = useState<DutyType>("all");
+  const defaults = useMemo(() => createDefaultFilters(user?.role), [user?.role]);
+  const [draftFilters, setDraftFilters] = useState<WorkloadFilters>(defaults);
+  const [appliedFilters, setAppliedFilters] = useState<WorkloadFilters>(defaults);
+  const [sortKey, setSortKey] = useState<keyof PersonRow>("combined");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const query = {
-    semester,
-    academic_year: academicYear || null,
-    period_id: periodId ? Number(periodId) : null,
-    exam_type: examType || null,
-    role_group: roleGroup,
-    person_id: personSearch.trim() || null,
+    semester: appliedFilters.semester,
+    academic_year: appliedFilters.academicYear || null,
+    period_id: appliedFilters.periodId ? Number(appliedFilters.periodId) : null,
+    exam_type: appliedFilters.examType || null,
+    role_group: appliedFilters.roleGroup,
+    person_id: appliedFilters.personSearch.trim() || null,
     include_teachers: true,
     include_staff: true,
-    duty_type: dutyType,
+    duty_type: appliedFilters.dutyType,
   };
 
   const { data, isLoading, isError } = useWorkloadDutyAnalytics(query);
-
   const presentedSummary = useMemo(() => (data ? presentWorkloadSummary(data) : []), [data]);
   const presentedPeople = useMemo(() => (data ? data.by_person.map(presentWorkloadPerson) : []), [data]);
+  const sortedPeople = useMemo(() => [...presentedPeople].sort((left, right) => {
+    const leftValue = left[sortKey];
+    const rightValue = right[sortKey];
+    const result = typeof leftValue === "number" && typeof rightValue === "number"
+      ? leftValue - rightValue
+      : String(leftValue).localeCompare(String(rightValue));
+    return sortDirection === "asc" ? result : -result;
+  }), [presentedPeople, sortDirection, sortKey]);
 
-  if (isLoading) {
-    return (
-      <div className="page-stack page-stack--spacious">
-        <div className="stitch-metric-grid">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="dashboard-skeleton" />
-          ))}
-        </div>
-        <Skeleton className="dashboard-chart-skeleton" />
-      </div>
-    );
-  }
+  const personColumns = useMemo<Array<DataTableColumn<PersonRow>>>(() => [
+    { key: "roleGroup", label: t("workloadDashboard.labels.roleGroup"), sortable: true },
+    { key: "displayName", label: t("workloadDashboard.labels.person"), sortable: true },
+    { key: "invigilation", label: t("workloadDashboard.labels.invigilationCount"), align: "right", sortable: true },
+    { key: "distribution", label: t("workloadDashboard.labels.distributionCount"), align: "right", sortable: true },
+    { key: "combined", label: t("workloadDashboard.labels.combinedCount"), align: "right", sortable: true },
+  ], [t]);
+
+  const updateDraft = <K extends keyof WorkloadFilters>(key: K, value: WorkloadFilters[K]) => {
+    setDraftFilters((current) => ({ ...current, [key]: value }));
+  };
+  const resetFilters = () => {
+    setDraftFilters(defaults);
+    setAppliedFilters(defaults);
+  };
+  const handleSort = (key: string) => {
+    const nextKey = key as keyof PersonRow;
+    if (nextKey === sortKey) setSortDirection((current) => current === "asc" ? "desc" : "asc");
+    else {
+      setSortKey(nextKey);
+      setSortDirection("asc");
+    }
+  };
+
+  if (isLoading) return <PageSkeleton cards={6} rows={5} />;
 
   if (isError || !data) {
     return (
       <div className="page-stack page-stack--spacious">
-        <EmptyState
-          icon={<Icon name="warning" />}
-          title={t("workloadDashboard.empty.noData")}
-        />
+        <PageHeader eyebrow={t("workloadDashboard.eyebrow")} title={t(getDefaultTitle(user?.role))} description={t("workloadDashboard.description")} />
+        <EmptyState icon={<Icon name="warning" />} title={t("workloadDashboard.empty.noData")} />
       </div>
     );
   }
 
-  const byPersonLabels = presentedPeople.map((person) => person.displayName);
-  const byPersonValues = presentedPeople.map((person) => person.combined);
-  const dailyLabels = data.daily_series.map((row) => row.date);
-  const dailyValues = data.daily_series.map((row) => row.cumulative_combined);
-  const slotLabels = data.time_slot_series.map((row) => row.time_slot);
-  const slotValues = data.time_slot_series.map((row) => row.combined_count);
   const hasAnyAnalyticsData = hasWorkloadAnalyticsResults(data);
-  const hasPersonData = presentedPeople.length > 0;
-  const hasDailyData = data.daily_series.length > 0;
-  const hasTimeSlotData = data.time_slot_series.length > 0;
+  const roleCounts = Object.entries(data.by_person.reduce<Record<string, number>>((counts, person) => {
+    counts[person.role_group] = (counts[person.role_group] ?? 0) + 1;
+    return counts;
+  }, {}));
+  const chartPeople = [...presentedPeople].sort((left, right) => right.combined - left.combined).slice(0, 12);
+  const dailySeries = data.daily_series.slice(-12);
+  const timeSlotSeries = data.time_slot_series.slice(0, 12);
 
   return (
-    <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{t("workloadDashboard.eyebrow")}</span>
-          <h2 className="page-hero__title">{t(getDefaultTitle(user?.role ?? null))}</h2>
-          <p className="page-hero__description">{t("workloadDashboard.description")}</p>
-        </div>
-      </section>
+    <div className="page-stack page-stack--spacious workload-dashboard">
+      <PageHeader
+        eyebrow={t("workloadDashboard.eyebrow")}
+        title={t(getDefaultTitle(user?.role))}
+        description={t("workloadDashboard.description")}
+        status={<StatusChip tone={riskTone(data.fairness.risk_band)}>{t(`workloadDashboard.fairness.band.${data.fairness.risk_band}`)}</StatusChip>}
+      />
 
-      <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("workloadDashboard.filters.semester")}</span>
-            <input
-              className="w-full rounded border px-3 py-2"
-              value={semester}
-              onChange={(event) => setSemester(event.target.value)}
-              placeholder={t("workloadDashboard.filters.semesterPlaceholder")}
-            />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("workloadDashboard.filters.academicYear")}</span>
-            <input
-              className="w-full rounded border px-3 py-2"
-              value={academicYear}
-              onChange={(event) => setAcademicYear(event.target.value)}
-              placeholder={t("workloadDashboard.filters.academicYearPlaceholder")}
-            />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("workloadDashboard.filters.period")}</span>
-            <input
-              className="w-full rounded border px-3 py-2"
-              value={periodId}
-              onChange={(event) => setPeriodId(event.target.value)}
-              placeholder={t("workloadDashboard.filters.periodPlaceholder")}
-            />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("workloadDashboard.filters.examType")}</span>
-            <input
-              className="w-full rounded border px-3 py-2"
-              value={examType}
-              onChange={(event) => setExamType(event.target.value)}
-              placeholder={t("workloadDashboard.filters.examTypePlaceholder")}
-            />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("workloadDashboard.filters.roleGroup")}</span>
-            <select className="w-full rounded border px-3 py-2" value={roleGroup} onChange={(event) => setRoleGroup(event.target.value as WorkloadRoleGroup)}>
-              <option value="all">{t("workloadDashboard.roleGroup.all")}</option>
-              <option value="admin">{t("workloadDashboard.roleGroup.admin")}</option>
-              <option value="staff">{t("workloadDashboard.roleGroup.staff")}</option>
-              <option value="supervisor">{t("workloadDashboard.roleGroup.supervisor")}</option>
-              <option value="teacher">{t("workloadDashboard.roleGroup.teacher")}</option>
-            </select>
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="block text-gray-500">{t("workloadDashboard.filters.dutyType")}</span>
-            <select className="w-full rounded border px-3 py-2" value={dutyType} onChange={(event) => setDutyType(event.target.value as DutyType)}>
-              <option value="all">{t("workloadDashboard.dutyTypes.all")}</option>
-              <option value="invigilation">{t("workloadDashboard.dutyTypes.invigilation")}</option>
-              <option value="paper_distribution">{t("workloadDashboard.dutyTypes.paperDistribution")}</option>
-              <option value="combined">{t("workloadDashboard.dutyTypes.combined")}</option>
-            </select>
-          </label>
-          <label className="space-y-1 text-sm md:col-span-2 xl:col-span-3">
-            <span className="block text-gray-500">{t("workloadDashboard.filters.personSearch")}</span>
-            <input className="w-full rounded border px-3 py-2" value={personSearch} onChange={(event) => setPersonSearch(event.target.value)} placeholder={t("common.search")} />
-          </label>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => {
-            setSemester("");
-            setAcademicYear("");
-            setPeriodId("");
-            setExamType("");
-            setRoleGroup(defaultRoleGroup);
-            setPersonSearch("");
-            setDutyType("all");
-          }}>
-            {t("common.reset")}
-          </Button>
-          <div className="text-sm text-gray-500 flex items-center">{t("workloadDashboard.recommendations.balanceWorkload")}</div>
-        </div>
-      </Card>
+      <FilterBar
+        layout="grid"
+        actions={(
+          <>
+            <Button type="button" variant="outline" onClick={resetFilters}>{t("common.reset")}</Button>
+            <Button type="button" onClick={() => setAppliedFilters(draftFilters)}>{t("common.applyFilters")}</Button>
+          </>
+        )}
+      >
+        <FormField label={t("workloadDashboard.filters.semester")}><input value={draftFilters.semester} onChange={(event) => updateDraft("semester", event.target.value)} placeholder={t("workloadDashboard.filters.semesterPlaceholder")} /></FormField>
+        <FormField label={t("workloadDashboard.filters.academicYear")}><input value={draftFilters.academicYear} onChange={(event) => updateDraft("academicYear", event.target.value)} placeholder={t("workloadDashboard.filters.academicYearPlaceholder")} /></FormField>
+        <FormField label={t("workloadDashboard.filters.period")}><input value={draftFilters.periodId} onChange={(event) => updateDraft("periodId", event.target.value)} placeholder={t("workloadDashboard.filters.periodPlaceholder")} /></FormField>
+        <FormField label={t("workloadDashboard.filters.examType")}><input value={draftFilters.examType} onChange={(event) => updateDraft("examType", event.target.value)} placeholder={t("workloadDashboard.filters.examTypePlaceholder")} /></FormField>
+        <FormField label={t("workloadDashboard.filters.roleGroup")}>
+          <select value={draftFilters.roleGroup} onChange={(event) => updateDraft("roleGroup", event.target.value as WorkloadRoleGroup)}>
+            {(["all", "admin", "staff", "supervisor", "teacher"] as WorkloadRoleGroup[]).map((value) => <option key={value} value={value}>{t(`workloadDashboard.roleGroup.${value}`)}</option>)}
+          </select>
+        </FormField>
+        <FormField label={t("workloadDashboard.filters.dutyType")}>
+          <select value={draftFilters.dutyType} onChange={(event) => updateDraft("dutyType", event.target.value as DutyType)}>
+            {(["all", "invigilation", "paper_distribution", "combined"] as DutyType[]).map((value) => <option key={value} value={value}>{t(`workloadDashboard.dutyTypes.${value}`)}</option>)}
+          </select>
+        </FormField>
+        <FormField className="filter-bar__search" label={t("workloadDashboard.filters.personSearch")}><input value={draftFilters.personSearch} onChange={(event) => updateDraft("personSearch", event.target.value)} placeholder={t("common.search")} /></FormField>
+      </FilterBar>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {presentedSummary.map((card) => (
-          <SummaryCard key={card.label} {...card} />
-        ))}
+      <section className="summary-grid" aria-label={t("workloadDashboard.summary.title")}>
+        {presentedSummary.map((card) => <DashboardMetricCard key={card.label} {...card} />)}
       </section>
 
       {!hasAnyAnalyticsData ? (
-        <Card className="p-4">
-          <EmptyState
-            icon={<Icon name="info" />}
-            title={t("workloadDashboard.empty.noFilteredResults")}
-            description={t("workloadDashboard.empty.adjustFilters")}
-          />
-        </Card>
-      ) : null}
+        <Card><EmptyState icon={<Icon name="info" />} title={t("workloadDashboard.empty.noFilteredResults")} description={t("workloadDashboard.empty.adjustFilters")} /></Card>
+      ) : (
+        <>
+          <section className="analytics-grid">
+            <Card className="analytics-grid__wide" title={t("workloadDashboard.charts.byPerson")} subtitle={t("workloadDashboard.charts.byPersonHint")}>
+              <BarChart labels={chartPeople.map((person) => person.displayName)} values={chartPeople.map((person) => person.combined)} color="var(--role-accent)" />
+            </Card>
+            <Card title={t("workloadDashboard.charts.categoryBreakdown")} subtitle={t("workloadDashboard.charts.categoryBreakdownHint")}>
+              <BarChart labels={[t("workloadDashboard.dutyTypes.invigilation"), t("workloadDashboard.dutyTypes.paperDistribution")]} values={[data.summary.total_invigilation_duties, data.summary.total_distribution_duties]} color="var(--teal, var(--role-accent))" />
+            </Card>
+            <Card title={t("workloadDashboard.charts.roleComposition")} subtitle={t("workloadDashboard.charts.roleCompositionHint")}>
+              <BarChart labels={roleCounts.map(([role]) => t(`workloadDashboard.roleGroup.${role}`))} values={roleCounts.map(([, count]) => count)} color="var(--gold)" />
+            </Card>
+            <Card title={t("workloadDashboard.charts.dailyCumulative")}>
+              {dailySeries.length > 0 ? <BarChart labels={dailySeries.map((row) => row.date)} values={dailySeries.map((row) => row.cumulative_combined)} color="var(--teal, var(--role-accent))" /> : <EmptyState title={t("workloadDashboard.empty.noDailyData")} />}
+            </Card>
+            <Card title={t("workloadDashboard.charts.timeSlot")}>
+              {timeSlotSeries.length > 0 ? <BarChart labels={timeSlotSeries.map((row) => row.time_slot)} values={timeSlotSeries.map((row) => row.combined_count)} color="var(--gold)" /> : <EmptyState title={t("workloadDashboard.empty.noTimeSlotData")} />}
+            </Card>
+            <Card title={t("workloadDashboard.fairness.title")} actions={<StatusChip tone={riskTone(data.fairness.risk_band)}>{t(`workloadDashboard.fairness.band.${data.fairness.risk_band}`)}</StatusChip>}>
+              <div className="fairness-grid">
+                <div><strong>{t("workloadDashboard.fairness.overloaded")}</strong><ul className="plain-list">{data.fairness.overloaded_people.slice(0, 5).map((person) => <li key={person.person_id}>{person.display_name} <StatusChip tone="warning">{person.combined_count}</StatusChip></li>)}{data.fairness.overloaded_people.length === 0 ? <li>{t("workloadDashboard.empty.noOverloadedPeople")}</li> : null}</ul></div>
+                <div><strong>{t("workloadDashboard.fairness.underloaded")}</strong><ul className="plain-list">{data.fairness.underloaded_people.slice(0, 5).map((person) => <li key={person.person_id}>{person.display_name} <StatusChip tone="information">{person.combined_count}</StatusChip></li>)}{data.fairness.underloaded_people.length === 0 ? <li>{t("workloadDashboard.empty.noUnderloadedPeople")}</li> : null}</ul></div>
+              </div>
+            </Card>
+          </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <Card className="p-4 xl:col-span-3">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="text-lg font-semibold">{t("workloadDashboard.charts.byPerson")}</h2>
-              <p className="text-sm text-gray-500">{t("workloadDashboard.description")}</p>
-            </div>
-            <div className="text-sm text-gray-500">
-              {t("workloadDashboard.summary.fairnessScore")}: {data.summary.imbalance_score.toFixed(2)}
-            </div>
-          </div>
-          <div className="mt-4">
-            {hasPersonData ? (
-              <BarChart labels={byPersonLabels} values={byPersonValues} color="var(--crimson)" />
-            ) : (
-              <EmptyState
-                icon={<Icon name="info" />}
-                title={t("workloadDashboard.empty.noPersonData")}
-                description={t("workloadDashboard.empty.adjustFilters")}
-              />
-            )}
-          </div>
-        </Card>
-
-        <Card className="p-4 xl:col-span-2">
-          <h2 className="text-lg font-semibold">{t("workloadDashboard.charts.dailyCumulative")}</h2>
-          <div className="mt-4">
-            {hasDailyData ? (
-              <BarChart labels={dailyLabels} values={dailyValues} color="var(--teal)" />
-            ) : (
-              <EmptyState
-                icon={<Icon name="info" />}
-                title={t("workloadDashboard.empty.noDailyData")}
-                description={t("workloadDashboard.empty.adjustFilters")}
-              />
-            )}
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <h2 className="text-lg font-semibold">{t("workloadDashboard.fairness.title")}</h2>
-          <div className="mt-3 space-y-3 text-sm">
-            <div>
-              <span className="text-gray-500">{t("workloadDashboard.summary.fairnessScore")}: </span>
-              <strong>{data.fairness.imbalance_score.toFixed(2)}</strong>
-            </div>
-            <div>
-              <span className="text-gray-500">{t("workloadDashboard.fairness.riskBand")}: </span>
-              <strong>{t(`workloadDashboard.fairness.band.${data.fairness.risk_band}`)}</strong>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700">{t("workloadDashboard.fairness.overloaded")}</div>
-              <ul className="mt-2 space-y-1 text-gray-600">
-                {data.fairness.overloaded_people.slice(0, 4).map((person) => (
-                  <li key={person.person_id}>{person.display_name} - {person.combined_count}</li>
-                ))}
-                {data.fairness.overloaded_people.length === 0 && <li>{t("workloadDashboard.empty.noOverloadedPeople")}</li>}
-              </ul>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700">{t("workloadDashboard.fairness.underloaded")}</div>
-              <ul className="mt-2 space-y-1 text-gray-600">
-                {data.fairness.underloaded_people.slice(0, 4).map((person) => (
-                  <li key={person.person_id}>{person.display_name} - {person.combined_count}</li>
-                ))}
-                {data.fairness.underloaded_people.length === 0 && <li>{t("workloadDashboard.empty.noUnderloadedPeople")}</li>}
-              </ul>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4 xl:col-span-3">
-          <h2 className="text-lg font-semibold">{t("workloadDashboard.charts.timeSlot")}</h2>
-          <div className="mt-4">
-            {hasTimeSlotData ? (
-              <BarChart labels={slotLabels} values={slotValues} color="#f59e0b" />
-            ) : (
-              <EmptyState
-                icon={<Icon name="info" />}
-                title={t("workloadDashboard.empty.noTimeSlotData")}
-                description={t("workloadDashboard.empty.adjustFilters")}
-              />
-            )}
-          </div>
-        </Card>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{t("workloadDashboard.charts.byPerson")}</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="py-2 pr-4">{t("workloadDashboard.labels.roleGroup")}</th>
-                <th className="py-2 pr-4">{t("workloadDashboard.labels.person")}</th>
-                <th className="py-2 pr-4">{t("workloadDashboard.labels.invigilationCount")}</th>
-                <th className="py-2 pr-4">{t("workloadDashboard.labels.distributionCount")}</th>
-                <th className="py-2 pr-4">{t("workloadDashboard.labels.combinedCount")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {presentedPeople.map((person) => (
-                <tr key={person.personId} className="border-b">
-                  <td className="py-2 pr-4">{person.roleGroup}</td>
-                  <td className="py-2 pr-4">{person.displayName}</td>
-                  <td className="py-2 pr-4">{person.invigilation}</td>
-                  <td className="py-2 pr-4">{person.distribution}</td>
-                  <td className="py-2 pr-4">{person.combined}</td>
-                </tr>
-              ))}
-              {!hasPersonData ? (
-                <tr>
-                  <td className="py-4 text-center text-sm text-gray-500" colSpan={5}>
-                    {t("workloadDashboard.empty.noPersonData")} {t("workloadDashboard.empty.adjustFilters")}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
+          <Card title={t("workloadDashboard.details.title")} subtitle={t("workloadDashboard.details.description")}>
+            <DataTable
+              columns={personColumns}
+              rows={sortedPeople}
+              rowKey={(person) => person.personId}
+              compact
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              maxHeight={520}
+              scrollThreshold={12}
+              emptyTitle={t("workloadDashboard.empty.noPersonData")}
+            />
+          </Card>
+        </>
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ export interface DataTableColumn<T> {
   minWidth?: string;
   headerClassName?: string;
   cellClassName?: string;
+  sortable?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -33,6 +34,9 @@ interface DataTableProps<T> {
   scrollThreshold?: number;
   tableLayout?: "auto" | "fixed";
   rowClassName?: (row: T) => string | undefined;
+  sortKey?: string;
+  sortDirection?: "asc" | "desc";
+  onSort?: (key: string) => void;
 }
 
 function getValueByPath(row: Record<string, unknown>, key: string) {
@@ -60,6 +64,9 @@ export function DataTable<T extends object>({
   rowClassName,
   rowKey,
   rows,
+  sortDirection,
+  sortKey,
+  onSort,
   scrollThreshold,
   stickyHeader = true,
   tableClassName,
@@ -131,7 +138,12 @@ export function DataTable<T extends object>({
                 )}
                 style={getColumnStyle(column)}
               >
-                {column.label}
+                {column.sortable && onSort ? (
+                  <button className="data-table__sort" type="button" onClick={() => onSort(column.key)}>
+                    <span>{column.label}</span>
+                    <span aria-hidden="true">{sortKey === column.key ? (sortDirection === "desc" ? "↓" : "↑") : "↕"}</span>
+                  </button>
+                ) : column.label}
               </th>
             ))}
           </tr>
