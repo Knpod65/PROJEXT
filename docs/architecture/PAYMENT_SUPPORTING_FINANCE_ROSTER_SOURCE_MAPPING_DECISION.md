@@ -1,7 +1,7 @@
 # Payment Supporting Finance Roster — Source Mapping Decision
 
 **Date**: 2026-06-15
-**Gate**: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
+**Gate**: `SUPPORTING_ROSTER_EXPORT_IMPLEMENTED_VALIDATED`
 **Method**: Backend model inspection (`backend/models.py`, `backend/services/staff_workloads.py`, `backend/services/invigilation_advance_batch_preview_service.py`)
 
 ---

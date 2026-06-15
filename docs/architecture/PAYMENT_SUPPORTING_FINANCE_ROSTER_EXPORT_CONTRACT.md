@@ -2,8 +2,8 @@
 
 **Date**: 2026-06-12 (updated 2026-06-15)
 **Export name**: `DRAFT_FINANCE_INVIGILATION_ROSTER_XLSX`
-**Status**: DESIGN — not yet implemented
-**Implementation gate**: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
+**Status**: IMPLEMENTED — draft/supporting-only
+**Implementation gate**: `SUPPORTING_ROSTER_EXPORT_IMPLEMENTED_VALIDATED`
 
 ---
 
@@ -30,10 +30,11 @@ These labels must appear on every sheet as a prominent banner row. They must not
 
 ---
 
-## Endpoint (Future Implementation)
+## Endpoints
 
 ```
 POST /api/invigilation-advance-batch/finance-support-roster-export
+POST /api/invigilation-advance-batch/finance-support-roster-status
 ```
 
 **Auth**: `require_view_all` — admin/esq_head/secretary pass; staff/teacher/print_shop → 403
@@ -48,13 +49,12 @@ POST /api/invigilation-advance-batch/finance-support-roster-export
   "semester": "string",
   "exam_type": "string",
   "period_id": "int | null",
-  "export_format": "XLSX_DRAFT",
-  "include_trace_detail": true,
-  "include_signature_check_sheet": true
+  "date_from": "YYYY-MM-DD | null",
+  "date_to": "YYYY-MM-DD | null"
 }
 ```
 
-`export_format` must be `XLSX_DRAFT`. No other format is permitted in this pass.
+Every successful export always contains exactly five sheets. Trace and signature sheets are not optional.
 
 ---
 

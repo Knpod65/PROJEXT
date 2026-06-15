@@ -1,8 +1,8 @@
 # Payment Supporting Finance Roster — Algorithm Specification
 
 **Date**: 2026-06-12 (updated 2026-06-15)
-**Status**: DESIGN — not yet implemented
-**Implementation gate**: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
+**Status**: IMPLEMENTED AND VALIDATED
+**Implementation gate**: `SUPPORTING_ROSTER_EXPORT_IMPLEMENTED_VALIDATED`
 
 ---
 

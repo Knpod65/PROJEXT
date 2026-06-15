@@ -1,7 +1,7 @@
 # Payment Supporting Finance Roster — Implementation Gate
 
 **Date**: 2026-06-12 (updated 2026-06-15)
-**Current gate**: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
+**Current gate**: `SUPPORTING_ROSTER_EXPORT_IMPLEMENTED_VALIDATED`
 **Context**: Draft XLSX format accepted (`DRAFT_XLSX_FORMAT_ACCEPTED`). Supporting finance roster
 export design complete. All 5 implementation blockers resolved. Implementation may proceed.
 
@@ -12,7 +12,8 @@ export design complete. All 5 implementation blockers resolved. Implementation m
 | Decision | Meaning | Current |
 |---|---|---|
 | `DOCS_ONLY_DESIGN_NOW` | Contract + algorithm docs produced; no implementation yet | APPLIED (prior pass 2026-06-12) |
-| `IMPLEMENT_SUPPORTING_ROSTER_EXPORT` | All 5 confirmations received; implementation may proceed | **CURRENT (2026-06-15)** |
+| `IMPLEMENT_SUPPORTING_ROSTER_EXPORT` | All 5 confirmations received; implementation may proceed | COMPLETED (2026-06-15) |
+| `SUPPORTING_ROSTER_EXPORT_IMPLEMENTED_VALIDATED` | Draft-only implementation and validation complete | **CURRENT (2026-06-15)** |
 | `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` | 5 open items not yet confirmed | CLOSED — all 5 resolved |
 | `HOLD_PENDING_FINANCE_FORMAT_CONFIRMATION` | Finance-preferred column order/labels not confirmed | RESOLVED — 5-sheet structure defined |
 | `HOLD_PENDING_DATA_SOURCE_MAPPING` | Which model table is authoritative is unclear | RESOLVED — Supervision + PDA confirmed |
@@ -56,9 +57,9 @@ invigilation persons and included in the payment count. The algorithm handles th
 
 ---
 
-## Implementation Path (Gate Open — Ready to Implement)
+## Implemented Path
 
-Gate is now `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`. Full implementation plan in:
+Implementation completed under `SUPPORTING_ROSTER_EXPORT_IMPLEMENTED_VALIDATED`. Original plan:
 `PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`
 
 Summary:
@@ -68,12 +69,12 @@ Summary:
    - Implements Steps A–G from `PAYMENT_SUPPORTING_FINANCE_ROSTER_ALGORITHM.md`
    - Uses `get_column_letter()` from `openpyxl.utils` (MergedCell safety)
 
-2. **Endpoint**: `POST /official-finance-support-roster-export`
+2. **Endpoint**: `POST /finance-support-roster-export`
    in `backend/routers/invigilation_advance_batch.py`
    Auth: `require_view_all` — Response: `StreamingResponse` (xlsx)
 
 3. **Tests**: `backend/tests/test_payment_supporting_finance_roster.py`
-   Minimum 43 tests per updated test matrix
+   Focused matrix plus full-suite regression validated
 
 4. **Frontend service**: `exportFinanceSupportRosterExcel()` in
    `frontend/src/services/officialPaymentDraft.service.ts`

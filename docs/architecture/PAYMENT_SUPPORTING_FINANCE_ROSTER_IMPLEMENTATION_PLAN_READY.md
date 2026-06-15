@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-15
 **Gate**: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
-**Status**: READY TO IMPLEMENT — all blockers resolved; no code written yet
+**Status**: IMPLEMENTED AND VALIDATED
 **Reviewer identity**: NOT_PROVIDED
 
 ---
@@ -89,7 +89,7 @@ Paper-dist persons (PDA source): บทบาท = กรรมการจ่�
 **Location**: After the existing `official-document-draft-export` endpoint
 
 ```
-POST /api/invigilation-advance-batch/official-finance-support-roster-export
+POST /api/invigilation-advance-batch/finance-support-roster-export
 ```
 
 **Auth**: `require_view_all` (admin/esq_head/secretary → pass; staff/teacher/print_shop → 403)
