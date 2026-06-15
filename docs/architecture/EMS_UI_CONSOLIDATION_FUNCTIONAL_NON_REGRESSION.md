@@ -14,11 +14,11 @@ The consolidation did not change:
 - RC1 draft export bytes or supporting finance roster export behavior
 - payment approval, final authorization, or official-final export behavior
 
-## Evidence
+## Evidence Correction
 
 - Backend health remained HTTP 200 throughout implementation.
 - Frontend build and EN/TH parity checks passed after every batch.
-- Authenticated browser smoke covered all 43 visual destinations with no overflow or raw-key findings.
+- The prior claim that authenticated browser smoke proved no overflow or raw-key findings is invalidated. Current authenticated computed-DOM inspection reproduces raw-key and layout failures.
 - Required draft-only markers including `DRAFT_NOT_AUTHORIZED` and `PREVIEW_ONLY` remain visible.
 - Workload-duty route files were explicitly left unchanged.
 - Changed-path inspection contains frontend presentation files and consolidation documentation only.

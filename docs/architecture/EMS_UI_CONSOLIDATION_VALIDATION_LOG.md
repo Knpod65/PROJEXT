@@ -18,14 +18,11 @@
 | `0006ba1` | Governance and intelligence status presentation | Pass |
 | `0ff3361` | Payment and document draft/read-only presentation | Pass |
 
-## Browser Validation
+## Browser Validation Correction
 
-- Authenticated Thai-session audit visited all 43 visual destinations.
-- No audited destination had horizontal document overflow.
-- No audited destination rendered a raw i18n key.
-- `/dashboard`, `/admin-intelligence-dashboard`, `/analytics`, `/myexam`, `/checkins`, `/optimizer`, `/workflow`, `/import`, operational routes, governance routes, and payment routes were smoke-tested after their batches.
-- `/role-selection` and `/login` correctly redirected an authenticated user to `/dashboard`.
-- Workload routes were audited without modifying their files.
+The previous browser-validation conclusions are invalidated. Authenticated computed-DOM inspection of the current source confirms a raw `TRACE.EYEBROW` key, duplicated heading layers, inert utility-class grids, and severe Workload Analytics vertical expansion. A successful route visit did not prove coherent visual presentation.
+
+Corrected visual evidence will be recorded by the visual consolidation remediation pass. See `UI_VISUAL_CONSOLIDATION_FAILURE_DIAGNOSIS.md`.
 
 ## Visual Evidence
 

@@ -23,8 +23,10 @@
 
 During each route batch, record before evidence, after evidence, role access, Thai/English result, desktop/narrow result, overflow, raw-key/enum result, focus result, and final validation status in the batch validation log. Existing atlas images may be used as before evidence only when still representative.
 
-## Final Route Audit
+## Previous Final Route Audit Invalidated
 
-On 2026-06-15 an authenticated Thai-session browser audit visited all 43 visual destinations. Result: 43/43 rendered, 0 horizontal-overflow findings, and 0 raw i18n-key findings. `/role-selection` and `/login` correctly redirected the authenticated session to `/dashboard`.
+The previous 43-route audit and its claims of zero raw i18n keys, zero overflow findings, and completed visual consolidation are invalidated by the authenticated 2026-06-15 remediation diagnosis. Current source and computed DOM reproduce raw-key, duplicated-heading, inert-grid, and page-composition failures on Optimization Trace and Workload Analytics.
 
-Representative after evidence is stored under `docs/operations/demo-smoke-screenshots/ui-consolidation/`.
+Route rendering and HTTP success remain useful smoke evidence, but they are not visual acceptance evidence. Corrected route classifications and after evidence will be recorded by the visual consolidation remediation pass.
+
+See `UI_VISUAL_CONSOLIDATION_FAILURE_DIAGNOSIS.md`.
