@@ -2,7 +2,7 @@
 
 ## 2026-06-15 Supporting Roster Policy Clarification + Implementation Gate Opened
 
-Business rules A–G clarified. All 5 implementation blockers resolved. Export contract updated to 5-sheet structure. Map status enum defined. Implementation gate advanced: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` → `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`. Full implementation plan ready (`PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`). No code written yet. Safety flags unchanged: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`. Final authorization remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`. Readiness scores are unchanged.
+Supporting finance roster XLSX is implemented and validated as a five-sheet draft-only export using live `Supervision` and authoritative `PaperDistributionAssignment`. It deduplicates each person per slot and maps paper staff to the two largest eligible physical rooms. Safety flags and readiness scores are unchanged; final authorization remains blocked.
 
 ## 2026-06-12 Draft XLSX Format Accepted + Supporting Roster Design Note
 

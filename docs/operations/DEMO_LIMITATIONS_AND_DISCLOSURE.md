@@ -3,7 +3,7 @@
 ## 2026-06-15 Supporting Roster Implementation Plan Ready
 
 - Business rules clarified, all 5 blockers resolved, implementation gate opened: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`.
-- Supporting finance invigilation roster export plan ready (`PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`) — not yet implemented.
+- Supporting finance invigilation roster export is implemented as a five-sheet draft/supporting-only XLSX; it does not authorize payment.
 - Safety flags unchanged: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`.
 - Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
 - Demo readiness and production readiness scores unchanged.
@@ -334,6 +334,6 @@ Any external system integration issues (con-1) are explicitly excluded from this
 - **Acceptance of the draft XLSX format is not payment authorization.**
 - Demo operators must state: the accepted format is a draft/review-only summary; final authorization, payment approval, official-final export, and payment release remain blocked.
 - A supporting finance invigilation roster export (`DRAFT_FINANCE_INVIGILATION_ROSTER_XLSX`) is required before finance can verify signatures and headcounts.
-- Supporting roster implementation gate: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` — not yet implemented.
+- Supporting roster is implemented for draft review only; final authorization and official-final export remain blocked.
 - `DRAFT_NOT_AUTHORIZED` remains the required document status; `payment_authorization_enabled=false` and `final_export_enabled=false` remain unchanged.
 - Readiness scores remain unchanged.

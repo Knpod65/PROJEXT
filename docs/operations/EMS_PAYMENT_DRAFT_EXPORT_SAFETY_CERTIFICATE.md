@@ -74,6 +74,7 @@
 - Business rules A–G ได้รับการชี้แจงและบันทึกแล้ว
 - Blocker ทั้ง 5 รายการได้รับการแก้ไขแล้ว: ใช้ `Supervision` (live), นับ 1 ครั้งต่อคนต่อช่วงเวลา, 5-sheet structure, ใช้ `PaperDistributionAssignment` เป็นแหล่งข้อมูลหลัก
 - Gate advanced: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` → `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
+- Supporting finance roster export implemented with live `Supervision`, authoritative `PaperDistributionAssignment`, five draft-warning sheets, and no payment/final authorization.
 - Plan การ implement พร้อมแล้ว: `PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`
 - ยังไม่มีการเขียน code
 - **ขอบเขตความปลอดภัยทั้งหมดยังคงเดิม**: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`

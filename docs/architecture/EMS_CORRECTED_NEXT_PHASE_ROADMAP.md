@@ -274,6 +274,7 @@
 - Export structure updated: 4 sheets → 5 sheets (new Sheet 3: `ใบลงลายมือชื่อประกอบการเบิก`, signature sheet for human use).
 - Map status enum defined with 8 states covering all mapping, dedup, online-room, and name-source scenarios.
 - Gate advanced: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` → `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`.
+- Supporting finance roster implementation and validation completed; next action is finance review against existing reimbursement forms and signatures.
 - Full implementation plan ready: `PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`.
 - Reviewer identity: `NOT_PROVIDED`. No code written yet.
 - Safety flags unchanged: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`.
