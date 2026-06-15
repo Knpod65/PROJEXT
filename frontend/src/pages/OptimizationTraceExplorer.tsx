@@ -1,56 +1,33 @@
-import { useOptimizationTraceExplorer } from "@/hooks/domain/useOptimizationTraceExplorer";
-import { translate } from "@/i18n";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { InlineError } from "@/components/ui/InlineError";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
+import { StatusChip } from "@/components/ui/StatusChip";
+import { Tabs } from "@/components/ui/Tabs";
+import { useOptimizationTraceExplorer } from "@/hooks/domain/useOptimizationTraceExplorer";
+import { useI18n } from "@/i18n";
+import type { RecheckIssueItem, TraceCandidate, TraceConstraintHit } from "@/types/optimizationTrace";
+import {
+  getTraceDisplayState,
+  getTraceGovernance,
+  traceConstraintTone,
+  traceSeverityTone,
+} from "@/utils/presenters/optimizationTracePresenter";
 
-function SeverityBadge({ severity }: { severity: string }) {
-  const cls =
-    severity === "error" || severity === "critical"
-      ? "bg-red-100 text-red-800"
-      : severity === "warning"
-        ? "bg-yellow-100 text-yellow-800"
-        : "bg-gray-100 text-gray-800";
-  const label = translate(`severity.${severity}`) || severity.toUpperCase();
-  return (
-    <span className={`px-2 py-1 rounded text-xs font-medium ${cls}`}>
-      {label}
-    </span>
-  );
-}
-
-function ScoreRing({ score }: { score: number }) {
-  const pct = Math.min(Math.max(score, 0), 100);
-  const r = 24;
-  const circumference = 2 * Math.PI * r;
-  const offset = circumference - (pct / 100) * circumference;
-
-  return (
-    <div className="flex items-center gap-3">
-      <svg width="64" height="64" className="flex-shrink-0">
-        <circle cx="32" cy="32" r={r} fill="none" stroke="#e5e7eb" strokeWidth="4" />
-        <circle
-          cx="32"
-          cy="32"
-          r={r}
-          fill="none"
-          stroke={pct >= 80 ? "#16a34a" : pct >= 50 ? "#ca8a04" : "#dc2626"}
-          strokeWidth="4"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform="rotate(-90 32 32)"
-        />
-      </svg>
-      <div>
-        <p className="text-2xl font-bold">{score}</p>
-        <p className="text-xs text-gray-400">{translate("trace.qualityOf100")}</p>
-      </div>
-    </div>
-  );
-}
+type DetailTab = "candidates" | "constraints" | "recheck";
 
 export default function OptimizationTraceExplorer() {
+  const navigate = useNavigate();
+  const { locale, t } = useI18n();
   const {
     isLoading,
     error,
@@ -58,166 +35,180 @@ export default function OptimizationTraceExplorer() {
     trace,
     traceSummary,
     timelineItems,
-    rejectedAlternatives,
     constraintItems,
     selectedSessionId,
     setSelectedSessionId,
     mockSessions,
-    hasData,
-    emptyStateKey,
   } = useOptimizationTraceExplorer();
+  const [activeTab, setActiveTab] = useState<DetailTab>("candidates");
 
-  if (isLoading) {
+  const displayState = getTraceDisplayState(trace, error);
+  const governance = trace ? getTraceGovernance(trace) : null;
+  const selectedCount = trace?.candidates.filter((candidate) => candidate.selected).length ?? 0;
+
+  const candidateColumns = useMemo<Array<DataTableColumn<TraceCandidate>>>(() => [
+    { key: "room_code", label: t("trace.room") },
+    { key: "timeslot", label: t("trace.timeslot") },
+    { key: "staff_id", label: t("trace.staff") },
+    { key: "score", label: t("trace.score"), align: "right" },
+    {
+      key: "selected",
+      label: t("trace.status"),
+      render: (row) => (
+        <StatusChip tone={row.selected ? "success" : "neutral"}>
+          {t(row.selected ? "trace.candidate.selected" : "trace.candidate.alternative")}
+        </StatusChip>
+      ),
+    },
+    {
+      key: "rejection_reasons",
+      label: t("trace.rejectionReasons"),
+      render: (row) => row.rejection_reasons.length > 0 ? row.rejection_reasons.join(", ") : t("common.none"),
+    },
+  ], [t]);
+
+  const constraintColumns = useMemo<Array<DataTableColumn<TraceConstraintHit>>>(() => [
+    {
+      key: "constraint_type",
+      label: t("trace.constraint"),
+      render: (row) => t(`trace.constraintType.${row.constraint_type}`),
+    },
+    { key: "detail", label: t("common.details") },
+    {
+      key: "severity",
+      label: t("trace.severity"),
+      render: (row) => <StatusChip tone={traceSeverityTone(row.severity)}>{t(`trace.constraintSeverity.${row.severity}`)}</StatusChip>,
+    },
+    {
+      key: "passed",
+      label: t("trace.status"),
+      render: (row) => <StatusChip tone={traceConstraintTone(row)}>{t(row.passed ? "trace.constraint.passed" : "trace.constraint.failed")}</StatusChip>,
+    },
+  ], [t]);
+
+  const recheckColumns = useMemo<Array<DataTableColumn<RecheckIssueItem>>>(() => [
+    { key: "issue", label: t("trace.recheckIssue") },
+    {
+      key: "severity",
+      label: t("trace.severity"),
+      render: (row) => <StatusChip tone={traceSeverityTone(row.severity)}>{t(`severity.${row.severity}`)}</StatusChip>,
+    },
+  ], [t]);
+
+  if (isLoading) return <PageSkeleton cards={4} rows={4} />;
+
+  const sessionControl = (
+    <FormField label={t("trace.sessionLabel")}>
+      <select value={selectedSessionId} onChange={(event) => setSelectedSessionId(Number(event.target.value))}>
+        {mockSessions.map((session) => <option key={session.id} value={session.id}>{session.label}</option>)}
+      </select>
+    </FormField>
+  );
+
+  if (displayState === "queryError" || displayState === "missingSession") {
     return (
       <div className="page-stack page-stack--spacious">
-        <div className="stitch-metric-grid">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="dashboard-skeleton" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !trace) {
-    return (
-      <div className="page-stack page-stack--spacious">
-        <EmptyState
-          icon={<Icon name="search_off" />}
-          title={translate("trace.noData")}
-          description={
-            error
-              ? translate("trace.loadError")
-              : translate("trace.selectSessionHint")
-          }
+        <PageHeader
+          eyebrow={t("trace.eyebrow")}
+          title={t("trace.pageTitle")}
+          description={t("trace.description")}
+          actions={sessionControl}
         />
+        {displayState === "queryError" ? (
+          <InlineError
+            message={t("trace.loadErrorExplanation")}
+            action={<Button type="button" variant="outline" onClick={refresh}>{t("common.retry")}</Button>}
+          />
+        ) : null}
+        <Card>
+          <EmptyState
+            icon={<Icon name="search_off" />}
+            title={t(displayState === "queryError" ? "trace.loadError" : "trace.missingSession.title")}
+            description={t(displayState === "queryError" ? "trace.loadErrorExplanation" : "trace.missingSession.description")}
+            action={(
+              <div className="inline-actions">
+                <Button type="button" variant="outline" onClick={refresh}>{t("common.retry")}</Button>
+                <Button type="button" onClick={() => navigate("/optimizer")}>{t("trace.backToOptimizer")}</Button>
+              </div>
+            )}
+          />
+        </Card>
       </div>
     );
   }
+
+  if (!trace || !governance) return null;
+
+  const detailTabs = [
+    { key: "candidates", label: t("trace.candidates"), badge: trace.candidates.length },
+    { key: "constraints", label: t("trace.constraints"), badge: constraintItems.length },
+    { key: "recheck", label: t("trace.recheckIssues"), badge: trace.recheck_issues.length },
+  ];
 
   return (
     <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{translate("trace.eyebrow")}</span>
-          <h2 className="page-hero__title">{translate("trace.pageTitle")}</h2>
-          <p className="page-hero__description">
-            {translate("trace.sessionLabel")}: {mockSessions.find((s) => s.id === selectedSessionId)?.label}
-          </p>
+      <PageHeader
+        eyebrow={t("trace.eyebrow")}
+        title={t("trace.pageTitle")}
+        description={t("trace.description")}
+        status={<StatusChip tone={governance.tone}>{t(`trace.governance.${governance.key}`)}</StatusChip>}
+        actions={sessionControl}
+      />
+
+      <Card className="context-strip">
+        <div className="context-strip__item">
+          <span>{t("trace.sessionLabel")}</span>
+          <strong>{mockSessions.find((session) => session.id === selectedSessionId)?.label}</strong>
         </div>
+        <div className="context-strip__item">
+          <span>{t("trace.generatedAt")}</span>
+          <strong>{new Date(trace.generated_at).toLocaleString(locale)}</strong>
+        </div>
+        <div className="context-strip__item">
+          <span>{t("trace.traceState")}</span>
+          <StatusChip tone={displayState === "limited" ? "warning" : "success"}>
+            {t(`trace.state.${displayState}`)}
+          </StatusChip>
+        </div>
+      </Card>
+
+      <section className="summary-grid" aria-label={t("trace.summary")}>
+        <DashboardMetricCard icon="speed" label={t("trace.completeness")} value={`${traceSummary.traceabilityCompletenessScore} / 100`} hint={t("trace.completenessHint")} tone="accent" />
+        <DashboardMetricCard icon="account_tree" label={t("trace.optionCount")} value={String(trace.candidates.length)} hint={t("trace.optionCountHint")} tone="neutral" />
+        <DashboardMetricCard icon="task_alt" label={t("trace.selectedCount")} value={String(selectedCount)} hint={t("trace.selectedCountHint")} tone={selectedCount > 0 ? "success" : "neutral"} />
+        <DashboardMetricCard icon="gavel" label={t("trace.governanceStatus")} value={t(`trace.governance.${governance.key}`)} hint={t("trace.governanceHint")} tone={governance.tone === "danger" ? "warning" : governance.tone === "success" ? "success" : "neutral"} />
       </section>
 
-      <div className="flex justify-end -mt-4 mb-4">
-        <ScoreRing score={traceSummary.overallQualityScore} />
-      </div>
-
-      {trace.quality_note ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
-          {trace.quality_note}
-        </div>
-      ) : null}
-
-      {/* Trace events timeline */}
-      {timelineItems.length > 0 ? (
-        <div className="bg-white rounded-lg shadow p-4 space-y-2">
-          <h2 className="text-lg font-semibold mb-3">{translate("trace.events")}</h2>
-          {timelineItems.map((evt) => (
-            <div key={evt.id} className="flex items-start justify-between border-b pb-2 last:border-0">
-              <div>
-                <p className="font-medium text-sm">{evt.detail}</p>
-                <p className="text-xs text-gray-400">{evt.event_type} · {evt.stage}</p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <p className="text-xs text-gray-400">
-                  {new Date(evt.timestamp).toLocaleTimeString()}
-                </p>
-                <SeverityBadge severity={evt.severity} />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {/* Candidate table */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-lg font-semibold mb-3">
-          {translate("trace.candidates")} ({trace.candidates.length})
-        </h2>
-        {trace.candidates.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-3">{translate("trace.room")}</th>
-                  <th className="text-left py-2 px-3">{translate("trace.timeslot")}</th>
-                  <th className="text-left py-2 px-3">{translate("trace.staff")}</th>
-                  <th className="text-right py-2 px-3">{translate("trace.score")}</th>
-                  <th className="text-left py-2 px-3">{translate("trace.status")}</th>
-                  <th className="text-left py-2 px-3">{translate("trace.rejectionReasons")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trace.candidates.map((c, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="py-2 px-3">{c.room_code}</td>
-                    <td className="py-2 px-3">{c.timeslot}</td>
-                    <td className="py-2 px-3">{c.staff_id}</td>
-                    <td className="py-2 px-3 text-right">{c.score}</td>
-                    <td className="py-2 px-3">
-                      <SeverityBadge severity={c.selected ? "info" : "hard"} />
-                    </td>
-                    <td className="py-2 px-3 text-xs text-gray-500">
-                      {c.rejection_reasons.join(", ") || translate("common.none")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <Card title={t("trace.events")} subtitle={t("trace.eventsDescription")}>
+        {timelineItems.length > 0 ? (
+          <div className="trace-timeline">
+            {timelineItems.map((event) => (
+              <article className="trace-timeline__item" key={event.id}>
+                <div className="trace-timeline__marker"><Icon name="timeline" /></div>
+                <div className="trace-timeline__content">
+                  <strong>{event.detail}</strong>
+                  <span>{t(`trace.eventType.${event.event_type}`)} · {t(`trace.stage.${event.stage}`)}</span>
+                </div>
+                <div className="trace-timeline__meta">
+                  <time>{new Date(event.timestamp).toLocaleString(locale)}</time>
+                  <StatusChip tone={traceSeverityTone(event.severity)}>{t(`severity.${event.severity}`)}</StatusChip>
+                </div>
+              </article>
+            ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">{translate("trace.noCandidates")}</p>
+          <EmptyState title={t("trace.noEvents")} description={t("trace.noEventsDescription")} />
         )}
-      </div>
+      </Card>
 
-      {/* Constraint hits */}
-      {constraintItems.length > 0 ? (
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold mb-3">
-            {translate("trace.constraints")} ({constraintItems.length})
-          </h2>
-          <div className="space-y-2">
-            {constraintItems.map((c, i) => (
-              <div key={i} className="flex items-start justify-between border-b pb-2 last:border-0">
-                <div>
-                  <p className="font-medium text-sm">{c.constraint_type}</p>
-                  <p className="text-xs text-gray-500">{c.detail}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <SeverityBadge severity={c.severity === "hard" ? "critical" : "warning"} />
-                  <SeverityBadge severity={c.passed ? "info" : "error"} />
-                </div>
-              </div>
-            ))}
-          </div>
+      <Card title={t("trace.detailsTitle")} subtitle={t("trace.detailsDescription")}>
+        <Tabs activeKey={activeTab} items={detailTabs} onChange={(key) => setActiveTab(key as DetailTab)} />
+        <div className="tab-panel">
+          {activeTab === "candidates" ? <DataTable columns={candidateColumns} rows={trace.candidates} rowKey={(row) => row.candidate_id} compact emptyTitle={t("trace.noCandidates")} /> : null}
+          {activeTab === "constraints" ? <DataTable columns={constraintColumns} rows={constraintItems} rowKey={(row) => `${row.constraint_type}:${row.detail}`} compact emptyTitle={t("trace.noConstraints")} /> : null}
+          {activeTab === "recheck" ? <DataTable columns={recheckColumns} rows={trace.recheck_issues} rowKey={(row) => `${row.severity}:${row.issue}`} compact emptyTitle={t("trace.noRecheckIssues")} /> : null}
         </div>
-      ) : null}
-
-      {/* Recheck issues */}
-      {trace.recheck_issues.length > 0 ? (
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold mb-3">
-            {translate("trace.recheckIssues")} ({trace.recheck_issues.length})
-          </h2>
-          <ul className="space-y-1">
-            {trace.recheck_issues.map((issue, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm">
-                <SeverityBadge severity={issue.severity} />
-                <span>{issue.issue}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      </Card>
     </div>
   );
 }
