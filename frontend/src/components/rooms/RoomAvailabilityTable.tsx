@@ -1,39 +1,8 @@
-import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
+import { StatusChip } from "@/components/ui/StatusChip";
 import type { RoomRecordV2 } from "@/hooks/useRoomsData";
 import { formatNumber } from "@/utils/format";
-
-function statusVariant(status: RoomRecordV2["status"]) {
-  if (status === "available") {
-    return "green" as const;
-  }
-
-  if (status === "occupied") {
-    return "gold" as const;
-  }
-
-  if (status === "maintenance") {
-    return "crimson" as const;
-  }
-
-  return "orange" as const;
-}
-
-function stageVariant(stage: RoomRecordV2["allocationStage"]) {
-  if (stage === "assigned") {
-    return "green" as const;
-  }
-
-  if (stage === "pending") {
-    return "gold" as const;
-  }
-
-  if (stage === "review") {
-    return "orange" as const;
-  }
-
-  return "gray" as const;
-}
+import { statusLabel, statusTone } from "@/utils/statusPresentation";
 
 interface RoomAvailabilityTableProps {
   rows: RoomRecordV2[];
@@ -65,12 +34,12 @@ export function RoomAvailabilityTable({ rows }: RoomAvailabilityTableProps) {
         {
           key: "status",
           label: "Status",
-          render: (row) => <Badge variant={statusVariant(row.status)}>{row.status}</Badge>,
+          render: (row) => <StatusChip tone={statusTone(row.status)}>{statusLabel(row.status)}</StatusChip>,
         },
         {
           key: "allocationStage",
           label: "Allocation Stage",
-          render: (row) => <Badge variant={stageVariant(row.allocationStage)}>{row.allocationStage}</Badge>,
+          render: (row) => <StatusChip tone={statusTone(row.allocationStage)}>{statusLabel(row.allocationStage)}</StatusChip>,
         },
         {
           key: "upcomingExam",

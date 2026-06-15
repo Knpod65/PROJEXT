@@ -36,6 +36,119 @@
   --role-sidebar-text: #1f2937;
   --role-sidebar-muted: #6b7280;
   --role-canvas-glow: rgba(13, 110, 253, 0.12);
+  --status-success: #047857;
+  --status-success-soft: #ecfdf5;
+  --status-information: #1d4ed8;
+  --status-information-soft: #eff6ff;
+  --status-warning: #b45309;
+  --status-warning-soft: #fffbeb;
+  --status-danger: #b91c1c;
+  --status-danger-soft: #fef2f2;
+  --status-neutral: #475569;
+  --status-neutral-soft: #f1f5f9;
+  --status-blocked: #9f1239;
+  --status-blocked-soft: #fff1f2;
+  --status-draft: #92400e;
+  --status-draft-soft: #fffbeb;
+  --status-read-only: #475569;
+  --status-read-only-soft: #f8fafc;
+  --motion-fast: 140ms;
+  --motion-state: 180ms;
+  --motion-page: 200ms;
+  --motion-overlay: 220ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--role-accent) 28%, transparent);
+}
+
+[data-role="admin"] {
+  --role-accent: #1f4d8f;
+  --role-accent-strong: #173867;
+  --role-accent-soft: rgba(31, 77, 143, 0.14);
+  --role-accent-text: #173867;
+  --role-sidebar-bg: #f4f7fb;
+  --role-sidebar-surface: #ffffff;
+  --role-sidebar-border: #d9e3f0;
+  --role-sidebar-text: #1f2937;
+  --role-sidebar-muted: #6b7280;
+  --role-canvas-glow: rgba(31, 77, 143, 0.14);
+}
+
+[data-role="esq_head"] {
+  --role-accent: #8b3a3a;
+  --role-accent-strong: #6d2d2d;
+  --role-accent-soft: rgba(139, 58, 58, 0.14);
+  --role-accent-text: #6d2d2d;
+  --role-sidebar-bg: #fbf5f5;
+  --role-sidebar-border: #ead8d8;
+  --role-sidebar-text: #4a1f1f;
+  --role-canvas-glow: rgba(139, 58, 58, 0.14);
+}
+
+[data-role="secretary"] {
+  --role-accent: #1f7a74;
+  --role-accent-strong: #185f5b;
+  --role-accent-soft: rgba(31, 122, 116, 0.14);
+  --role-accent-text: #185f5b;
+  --role-sidebar-bg: #f2fbfa;
+  --role-sidebar-border: #d5ece9;
+  --role-sidebar-text: #134e4a;
+  --role-canvas-glow: rgba(31, 122, 116, 0.12);
+}
+
+[data-role="dept_supervisor"] {
+  --role-accent: #7a4bb7;
+  --role-accent-strong: #603993;
+  --role-accent-soft: rgba(122, 75, 183, 0.14);
+  --role-accent-text: #603993;
+  --role-sidebar-bg: #f8f5ff;
+  --role-sidebar-border: #e6dbf7;
+  --role-sidebar-text: #3b0764;
+  --role-canvas-glow: rgba(122, 75, 183, 0.12);
+}
+
+[data-role="staff"] {
+  --role-accent: #c97a1c;
+  --role-accent-strong: #9e5f16;
+  --role-accent-soft: rgba(201, 122, 28, 0.16);
+  --role-accent-text: #9e5f16;
+  --role-sidebar-bg: #fcf7ef;
+  --role-sidebar-border: #efdfc7;
+  --role-sidebar-text: #422006;
+  --role-sidebar-muted: #78716c;
+  --role-canvas-glow: rgba(201, 122, 28, 0.14);
+}
+
+[data-role="teacher"] {
+  --role-accent: #2f855a;
+  --role-accent-strong: #256947;
+  --role-accent-soft: rgba(47, 133, 90, 0.14);
+  --role-accent-text: #256947;
+  --role-sidebar-bg: #f2fbf7;
+  --role-sidebar-border: #d8ede1;
+  --role-sidebar-text: #064e3b;
+  --role-canvas-glow: rgba(47, 133, 90, 0.12);
+}
+
+[data-role="student"] {
+  --role-accent: #475569;
+  --role-accent-strong: #334155;
+  --role-accent-soft: rgba(71, 85, 105, 0.14);
+  --role-accent-text: #334155;
+  --role-sidebar-bg: #f8fafc;
+  --role-sidebar-border: #e2e8f0;
+  --role-sidebar-text: #0f172a;
+  --role-canvas-glow: rgba(71, 85, 105, 0.1);
+}
+
+[data-role="print_shop"] {
+  --role-accent: #5a6b83;
+  --role-accent-strong: #455365;
+  --role-accent-soft: rgba(90, 107, 131, 0.14);
+  --role-accent-text: #455365;
+  --role-sidebar-bg: #f7f9fc;
+  --role-sidebar-border: #d9e1ea;
+  --role-sidebar-text: #0f172a;
+  --role-canvas-glow: rgba(90, 107, 131, 0.12);
 }
 
 * {
@@ -70,11 +183,28 @@ input,
 select,
 textarea,
 a {
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease,
-    transform 0.2s ease;
+  transition: border-color var(--motion-state) var(--motion-ease), background-color var(--motion-state) var(--motion-ease), color var(--motion-state) var(--motion-ease), box-shadow var(--motion-state) var(--motion-ease),
+    transform var(--motion-state) var(--motion-ease);
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--role-accent);
+  outline-offset: 3px;
+  box-shadow: var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

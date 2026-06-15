@@ -1,7 +1,8 @@
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
+import { StatusChip } from "@/components/ui/StatusChip";
 import type { SwapRequestV2, SwapsViewRole } from "@/hooks/useSwapsData";
+import { statusLabel, statusTone } from "@/utils/statusPresentation";
 
 interface SwapRequestTableProps {
   mode: SwapsViewRole;
@@ -10,30 +11,6 @@ interface SwapRequestTableProps {
   onReject: (id: number) => void;
   onEscalate: (id: number) => void;
   onWithdraw: (id: number) => void;
-}
-
-function statusVariant(status: SwapRequestV2["status"]) {
-  switch (status) {
-    case "approved":
-      return "green" as const;
-    case "rejected":
-      return "crimson" as const;
-    case "escalated":
-      return "orange" as const;
-    default:
-      return "gold" as const;
-  }
-}
-
-function priorityVariant(priority: SwapRequestV2["priority"]) {
-  switch (priority) {
-    case "high":
-      return "crimson" as const;
-    case "medium":
-      return "gold" as const;
-    default:
-      return "gray" as const;
-  }
 }
 
 export function SwapRequestTable({ mode, onApprove, onEscalate, onReject, onWithdraw, rows }: SwapRequestTableProps) {
@@ -69,14 +46,14 @@ export function SwapRequestTable({ mode, onApprove, onEscalate, onReject, onWith
         {
           key: "status",
           label: "Status",
-          render: (row) => <Badge variant={statusVariant(row.status)}>{row.status}</Badge>,
+          render: (row) => <StatusChip tone={statusTone(row.status)}>{statusLabel(row.status)}</StatusChip>,
         },
         ...(showPriority
           ? [
               {
                 key: "priority",
                 label: "Priority",
-                render: (row: SwapRequestV2) => <Badge variant={priorityVariant(row.priority)}>{row.priority}</Badge>,
+                render: (row: SwapRequestV2) => <StatusChip tone={statusTone(row.priority)}>{statusLabel(row.priority)}</StatusChip>,
               },
             ]
           : []),

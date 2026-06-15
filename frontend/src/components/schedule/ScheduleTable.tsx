@@ -1,21 +1,8 @@
-import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
+import { StatusChip } from "@/components/ui/StatusChip";
 import type { ScheduleWithSection } from "@/types/api";
 import { formatDate, formatNumber } from "@/utils/format";
-
-function getStatusVariant(status?: string) {
-  switch (status) {
-    case "confirmed":
-      return "green";
-    case "published":
-      return "blue";
-    case "cancelled":
-      return "crimson";
-    case "draft":
-    default:
-      return "gray";
-  }
-}
+import { statusLabel, statusTone } from "@/utils/statusPresentation";
 
 function getStaffLine(schedule: ScheduleWithSection) {
   if (schedule.supervisions.length === 0) {
@@ -122,7 +109,7 @@ export function ScheduleTable({ items, subtitle, title }: ScheduleTableProps) {
             minWidth: "120px",
             render: (schedule) => (
               <span className="schedule-table__status">
-                <Badge variant={getStatusVariant(schedule.status)}>{schedule.status}</Badge>
+                <StatusChip tone={statusTone(schedule.status)}>{statusLabel(schedule.status)}</StatusChip>
               </span>
             ),
           },

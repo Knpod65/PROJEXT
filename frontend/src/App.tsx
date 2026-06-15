@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { ToastViewport } from "@/components/ui/Toast";
 import { getPageConfig } from "@/config/navigation";
 import { useI18n } from "@/i18n";
@@ -92,7 +93,7 @@ function ProtectedAppLayout() {
     <PeriodProvider>
       <AppShell page={page} title={page?.title ?? t("app.shell.controlCenter")}>
         <ErrorBoundary>
-          <Suspense fallback={<div className="p-8 text-center text-sm text-gray-500">Loading dashboard...</div>}>
+          <Suspense fallback={<PageSkeleton />}>
             <Outlet />
           </Suspense>
         </ErrorBoundary>

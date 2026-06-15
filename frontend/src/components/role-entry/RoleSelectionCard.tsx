@@ -1,7 +1,3 @@
-import type { CSSProperties } from "react";
-
-import { getRoleTheme } from "@/theme/roleThemes";
-
 import { Icon } from "../ui/Icon";
 import type { RoleEntryDefinition } from "./roleEntryConfig";
 
@@ -12,19 +8,12 @@ interface RoleSelectionCardProps {
 }
 
 export function RoleSelectionCard({ entry, onSelect, selected }: RoleSelectionCardProps) {
-  const theme = getRoleTheme(entry.accentRole);
-  const style = {
-    "--entry-accent": theme.accent,
-    "--entry-accent-soft": theme.accentSoft,
-    "--entry-accent-text": theme.accentText,
-  } as CSSProperties;
-
   return (
     <button
       aria-pressed={selected}
       className={selected ? "role-selection-card role-selection-card--selected" : "role-selection-card"}
+      data-role={entry.accentRole}
       onClick={onSelect}
-      style={style}
       type="button"
     >
       <div className="role-selection-card__icon">

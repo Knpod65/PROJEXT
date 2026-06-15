@@ -2,22 +2,10 @@ import type { ReactNode } from "react";
 
 import type { ScheduleWithSection } from "@/types/api";
 import { formatDateRange, formatNumber } from "@/utils/format";
+import { statusLabel, statusTone } from "@/utils/statusPresentation";
 
-import { Badge } from "../ui/Badge";
 import { Card } from "../ui/Card";
-
-function statusVariant(status?: string) {
-  switch (status) {
-    case "published":
-      return "blue";
-    case "confirmed":
-      return "green";
-    case "cancelled":
-      return "crimson";
-    default:
-      return "gray";
-  }
-}
+import { StatusChip } from "../ui/StatusChip";
 
 interface ScheduleCardProps {
   schedule: ScheduleWithSection;
@@ -37,7 +25,7 @@ export function ScheduleCard({ actions, schedule }: ScheduleCardProps) {
       className="schedule-card"
       title={`${course?.course_id ?? "-"} ${course?.course_name_th ?? "Untitled course"}`}
       subtitle={formatDateRange(schedule.exam_date, schedule.exam_time)}
-      actions={<Badge variant={statusVariant(schedule.status)}>{schedule.status ?? "draft"}</Badge>}
+      actions={<StatusChip tone={statusTone(schedule.status ?? "draft")}>{statusLabel(schedule.status ?? "draft")}</StatusChip>}
     >
       <div className="schedule-card__grid">
         <span>Exam room: {schedule.room?.room_name ?? "Exam room not assigned yet"}</span>

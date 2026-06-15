@@ -1,31 +1,10 @@
-import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
+import { StatusChip } from "@/components/ui/StatusChip";
 import type { WorkflowRegistryRow } from "@/hooks/useWorkflowData";
+import { statusLabel, statusTone } from "@/utils/statusPresentation";
 
 interface WorkflowRegistryTableProps {
   rows: WorkflowRegistryRow[];
-}
-
-function statusVariant(status: WorkflowRegistryRow["status"]) {
-  switch (status) {
-    case "ready":
-      return "green" as const;
-    case "returned":
-      return "crimson" as const;
-    default:
-      return "gold" as const;
-  }
-}
-
-function riskVariant(risk: WorkflowRegistryRow["risk"]) {
-  switch (risk) {
-    case "high":
-      return "crimson" as const;
-    case "medium":
-      return "orange" as const;
-    default:
-      return "gray" as const;
-  }
 }
 
 export function WorkflowRegistryTable({ rows }: WorkflowRegistryTableProps) {
@@ -47,12 +26,12 @@ export function WorkflowRegistryTable({ rows }: WorkflowRegistryTableProps) {
         {
           key: "status",
           label: "Status",
-          render: (row) => <Badge variant={statusVariant(row.status)}>{row.status}</Badge>,
+          render: (row) => <StatusChip tone={statusTone(row.status)}>{statusLabel(row.status)}</StatusChip>,
         },
         {
           key: "risk",
           label: "Risk",
-          render: (row) => <Badge variant={riskVariant(row.risk)}>{row.risk}</Badge>,
+          render: (row) => <StatusChip tone={statusTone(row.risk)}>{statusLabel(row.risk)}</StatusChip>,
         },
         {
           key: "comment",
