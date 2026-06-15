@@ -4,16 +4,16 @@
 **Registered declarations**: 50  
 **Visual destinations**: 43
 
-| Batch | Routes | Baseline decision |
+| Batch | Routes | Final classification |
 |---|---|---|
-| Routing/system | `/`, `*`, redirects: `/swaps-v2`, `/workflow-v2`, `/settings-v2`, `/users-v2` | `ALREADY_CANONICAL` routing-only |
-| Auth/public | `/role-selection`, `/login`, `/student-search` | `NEEDS_COMPONENT_MIGRATION` |
-| Dashboards | `/dashboard`, `/admin-intelligence-dashboard`, `/analytics` | `NEEDS_ROLE_THEME_ALIGNMENT` |
-| Workload audit only | `/workload-duty-analytics`, `/duty-workload`, `/my-workload` | `DEFERRED_WITH_REASON`; validate, do not modify |
-| Cognitive load | `/checkins`, `/myexam`, `/optimizer`, `/workflow`, `/import` | `NEEDS_COGNITIVE_LOAD_REDUCTION` |
-| Core operations | `/schedule`, `/submissions`, `/attendance`, `/swaps`, `/sections`, `/copy`, `/print-queue`, `/coexam`, `/staff-availability`, `/printreview`, `/external`, `/period`, `/rooms-v2`, `/venues-v2`, `/students-v2`, `/users`, `/exammanager` | `NEEDS_COMPONENT_MIGRATION` or `NEEDS_I18N_CLEANUP` |
-| Governance/intelligence | `/governance`, `/audit-explorer`, `/operational-health`, `/optimizer-trace`, `/platform-config`, `/historical-schedules`, `/import-audit`, `/exports-center`, `/settings` | `NEEDS_I18N_CLEANUP` or `NEEDS_COMPONENT_MIGRATION` |
-| Payment/document | `/invigilation-advance-batch-preview`, `/invigilation-rate-rules`, `/invigilation-payment-document-draft`, `/payment-document-settings` | `NEEDS_COMPONENT_MIGRATION`; preserve all safety gates |
+| Routing/system | `/`, `*`, redirects: `/swaps-v2`, `/workflow-v2`, `/settings-v2`, `/users-v2` | `ALREADY_CANONICAL`; routing behavior unchanged |
+| Auth/public | `/role-selection`, `/login`, `/student-search` | `ALIGNED_BY_SHARED_SYSTEM_STATE`; authenticated redirects and public state audited |
+| Dashboards | `/dashboard`, `/admin-intelligence-dashboard`, `/analytics` | `RENOVATED_AND_VALIDATED` |
+| Workload audit only | `/workload-duty-analytics`, `/duty-workload`, `/my-workload` | `DEFERRED_WITH_REASON`; audited, files unchanged |
+| Cognitive load | `/checkins`, `/myexam`, `/optimizer`, `/workflow`, `/import` | `RENOVATED_OR_ALREADY_CANONICAL`; actions unchanged |
+| Core operations | `/schedule`, `/submissions`, `/attendance`, `/swaps`, `/sections`, `/copy`, `/print-queue`, `/coexam`, `/staff-availability`, `/printreview`, `/external`, `/period`, `/rooms-v2`, `/venues-v2`, `/students-v2`, `/users`, `/exammanager` | `ALIGNED_AND_VALIDATED` |
+| Governance/intelligence | `/governance`, `/audit-explorer`, `/operational-health`, `/optimizer-trace`, `/platform-config`, `/historical-schedules`, `/import-audit`, `/exports-center`, `/settings` | `ALIGNED_AND_VALIDATED`; readiness calculations unchanged |
+| Payment/document | `/invigilation-advance-batch-preview`, `/invigilation-rate-rules`, `/invigilation-payment-document-draft`, `/payment-document-settings` | `ALIGNED_AND_VALIDATED`; draft-only gates unchanged |
 
 ## Legacy Not Routed
 
@@ -23,3 +23,8 @@
 
 During each route batch, record before evidence, after evidence, role access, Thai/English result, desktop/narrow result, overflow, raw-key/enum result, focus result, and final validation status in the batch validation log. Existing atlas images may be used as before evidence only when still representative.
 
+## Final Route Audit
+
+On 2026-06-15 an authenticated Thai-session browser audit visited all 43 visual destinations. Result: 43/43 rendered, 0 horizontal-overflow findings, and 0 raw i18n-key findings. `/role-selection` and `/login` correctly redirected the authenticated session to `/dashboard`.
+
+Representative after evidence is stored under `docs/operations/demo-smoke-screenshots/ui-consolidation/`.
