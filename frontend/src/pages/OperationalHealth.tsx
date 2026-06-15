@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip } from "@/components/ui/StatusChip";
 
 function StatusDot({ ok }: { ok: boolean | null }) {
   const className = ok === true ? "status-dot status-dot--ok" : ok === false ? "status-dot status-dot--error" : "status-dot";
@@ -82,7 +83,7 @@ export default function OperationalHealth() {
       <Card
         title={translate("operationalHealth.backendHealth")}
         subtitle={translate("operationalHealth.liveness")}
-        actions={<Badge variant={backendHealthy ? "green" : "crimson"}>{livenessLabel}</Badge>}
+        actions={<StatusChip tone={backendHealthy ? "success" : "danger"}>{livenessLabel}</StatusChip>}
       >
         <StatLine
           label={translate("operationalHealth.liveness")}
@@ -104,9 +105,9 @@ export default function OperationalHealth() {
           subtitle={translate("operationalHealth.healthScore")}
           actions={
             analyticsBand ? (
-              <Badge variant={analyticsBand === "red" ? "crimson" : analyticsBand === "amber" ? "gold" : "green"}>
+              <StatusChip tone={analyticsBand === "red" ? "danger" : analyticsBand === "amber" ? "warning" : "success"}>
                 {translate(`dashboard.band.${analyticsBand}`)}
-              </Badge>
+              </StatusChip>
             ) : null
           }
         >

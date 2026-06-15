@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import type { DataTableColumn } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
 import { useI18n } from "@/i18n";
 import {
   getImportAuditSessionDetail,
@@ -22,12 +23,12 @@ import type {
 import { formatDateTime, formatNumber, formatTranslatedValue } from "@/utils/format";
 
 function statusVariant(status?: string) {
-  if (status === "completed") return "green" as const;
-  if (status === "completed_with_skips") return "orange" as const;
-  if (status === "blocked") return "crimson" as const;
-  if (status === "error") return "crimson" as const;
-  if (status === "warning") return "gold" as const;
-  return "gray" as const;
+  if (status === "completed") return "success" satisfies StatusTone;
+  if (status === "completed_with_skips") return "warning" satisfies StatusTone;
+  if (status === "blocked") return "blocked" satisfies StatusTone;
+  if (status === "error") return "danger" satisfies StatusTone;
+  if (status === "warning") return "warning" satisfies StatusTone;
+  return "neutral" satisfies StatusTone;
 }
 
 export function ImportAuditPage() {
@@ -145,7 +146,7 @@ export function ImportAuditPage() {
         minWidth: "130px",
         align: "center",
         render: (row: ImportSession) => (
-          <Badge variant={statusVariant(row.status)}>{row.status ? formatTranslatedValue("status", row.status) : t("common.unknown")}</Badge>
+          <StatusChip tone={statusVariant(row.status)}>{row.status ? formatTranslatedValue("status", row.status) : t("common.unknown")}</StatusChip>
         ),
       },
       {
@@ -220,7 +221,7 @@ export function ImportAuditPage() {
         minWidth: "120px",
         align: "center",
         render: (row: ImportAuditRowLog) => (
-          <Badge variant={statusVariant(row.status)}>{formatTranslatedValue("status", row.status)}</Badge>
+          <StatusChip tone={statusVariant(row.status)}>{formatTranslatedValue("status", row.status)}</StatusChip>
         ),
       },
       {

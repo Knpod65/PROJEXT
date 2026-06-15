@@ -7,15 +7,16 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
 
 function RiskBadge({ severity }: { severity: string }) {
-  const variant = severity === "critical" || severity === "high"
-    ? "crimson"
+  const tone: StatusTone = severity === "critical" || severity === "high"
+    ? "danger"
     : severity === "medium"
-      ? "gold"
-      : "green";
+      ? "warning"
+      : "success";
   const label = translate(`severity.${severity}`) || severity.toUpperCase();
-  return <Badge variant={variant} size="sm">{label}</Badge>;
+  return <StatusChip tone={tone}>{label}</StatusChip>;
 }
 
 function GovernanceStatCard({
@@ -35,8 +36,8 @@ function GovernanceStatCard({
 }
 
 function HealthBand({ band }: { band: string }) {
-  const variant = band === "green" ? "green" : band === "amber" ? "gold" : "crimson";
-  return <Badge variant={variant}>{translate("governance.riskBand", { band: band.toUpperCase() })}</Badge>;
+  const tone: StatusTone = band === "green" ? "success" : band === "amber" ? "warning" : "danger";
+  return <StatusChip tone={tone}>{translate("governance.riskBand", { band: band.toUpperCase() })}</StatusChip>;
 }
 
 export const GovernanceCockpitPage = function GovernanceCockpit() {
