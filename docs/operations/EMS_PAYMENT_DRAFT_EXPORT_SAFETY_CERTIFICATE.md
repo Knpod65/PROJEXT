@@ -68,3 +68,14 @@
 - **การยอมรับรูปแบบ XLSX ฉบับร่างนี้ไม่ใช่การอนุมัติเบิกจ่ายเงิน**
 - ขอบเขตความปลอดภัยทั้งหมดในใบรับรองนี้ยังคงเดิม: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`
 - Final Authorization ยังคง `FINAL_AUTHORIZATION_DESIGN_BLOCKED`
+
+## ผลการชี้แจงนโยบายและการเปิด Implementation Gate (2026-06-15)
+
+- Business rules A–G ได้รับการชี้แจงและบันทึกแล้ว
+- Blocker ทั้ง 5 รายการได้รับการแก้ไขแล้ว: ใช้ `Supervision` (live), นับ 1 ครั้งต่อคนต่อช่วงเวลา, 5-sheet structure, ใช้ `PaperDistributionAssignment` เป็นแหล่งข้อมูลหลัก
+- Gate advanced: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` → `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
+- Plan การ implement พร้อมแล้ว: `PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`
+- ยังไม่มีการเขียน code
+- **ขอบเขตความปลอดภัยทั้งหมดยังคงเดิม**: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`
+- Final Authorization ยังคง `FINAL_AUTHORIZATION_DESIGN_BLOCKED`
+- ใบรับรองนี้ยังคงมีผลโดยไม่เปลี่ยนแปลง

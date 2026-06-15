@@ -1,5 +1,9 @@
 # EMS_100_PERCENT_MASTER_SCORECARD.md
 
+## 2026-06-15 Supporting Roster Policy Clarification + Implementation Gate Opened
+
+Business rules A–G clarified. All 5 implementation blockers resolved. Export contract updated to 5-sheet structure. Map status enum defined. Implementation gate advanced: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` → `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`. Full implementation plan ready (`PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`). No code written yet. Safety flags unchanged: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`. Final authorization remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`. Readiness scores are unchanged.
+
 ## 2026-06-12 Draft XLSX Format Accepted + Supporting Roster Design Note
 
 Human decision `ACCEPT_DRAFT_XLSX_FORMAT` recorded. Draft XLSX format gate: `DRAFT_XLSX_FORMAT_ACCEPTED`. Reviewer identity: `NOT_PROVIDED`. Acceptance is not payment authorization. Supporting finance invigilation roster export design opened (`SUPPORTING_FINANCE_INVIGILATION_ROSTER_REQUIRED`); implementation gate at `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`. Final authorization remains blocked. Readiness scores are unchanged.

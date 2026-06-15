@@ -47,3 +47,15 @@ The selected branch remains `HOLD_PENDING_ADDITIONAL_REVIEW`. The rerun must use
 - Supporting roster implementation gate: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`
 - Final authorization: `FINAL_AUTHORIZATION_DESIGN_BLOCKED` (unchanged)
 - No payment approval, no final authorization, no official-final export added.
+
+## Supporting Roster Policy Clarification + Gate Opened (2026-06-15)
+
+- Business rules A–G clarified; all 5 implementation blockers resolved by clarification + backend source inspection.
+- Gate advanced: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` → `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`.
+- Export contract updated to 5-sheet structure (new signature sheet `ใบลงลายมือชื่อประกอบการเบิก`).
+- Full implementation plan ready: `PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`.
+- Reviewer identity: `NOT_PROVIDED`. No code written yet.
+- Safety flags unchanged: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`.
+- Final authorization: `FINAL_AUTHORIZATION_DESIGN_BLOCKED` (unchanged).
+- Payment approval, final authorization, official-final export, payment release: still blocked.
+- Production readiness: unchanged.

@@ -1,5 +1,9 @@
 # FINAL_DEMO_READINESS_CERTIFICATE.md
 
+## 2026-06-15 Supporting Roster Implementation Gate Opened
+
+Business rules clarified, all 5 implementation blockers resolved, implementation gate opened: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`. Full implementation plan ready (`PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`) — not yet implemented. Safety flags unchanged: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`. Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`. Demo readiness and production readiness scores unchanged.
+
 ## 2026-06-11 UI Alignment Record
 
 The authoritative EMS design source and all registered route declarations were reviewed. Targeted display-only fixes preserve all payment, settings, review, role, and draft-export gates. Draft XLSX remains review-only; approval, official/final export, and final authorization remain absent. Readiness scores are unchanged.

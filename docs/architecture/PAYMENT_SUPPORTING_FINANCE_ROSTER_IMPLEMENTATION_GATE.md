@@ -1,9 +1,9 @@
 # Payment Supporting Finance Roster — Implementation Gate
 
-**Date**: 2026-06-12
-**Current gate**: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION`
+**Date**: 2026-06-12 (updated 2026-06-15)
+**Current gate**: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
 **Context**: Draft XLSX format accepted (`DRAFT_XLSX_FORMAT_ACCEPTED`). Supporting finance roster
-export design is open. Implementation is blocked pending 5 confirmations from admin/finance.
+export design complete. All 5 implementation blockers resolved. Implementation may proceed.
 
 ---
 
@@ -11,11 +11,11 @@ export design is open. Implementation is blocked pending 5 confirmations from ad
 
 | Decision | Meaning | Current |
 |---|---|---|
-| `DOCS_ONLY_DESIGN_NOW` | Contract + algorithm docs produced; no implementation yet | APPLIED (this pass) |
-| `IMPLEMENT_SUPPORTING_ROSTER_EXPORT` | All 5 confirmations received; implementation may proceed | BLOCKED |
-| `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` | 5 open items not yet confirmed | **CURRENT** |
-| `HOLD_PENDING_FINANCE_FORMAT_CONFIRMATION` | Finance-preferred column order/labels not confirmed | Subsumed by #3 below |
-| `HOLD_PENDING_DATA_SOURCE_MAPPING` | Which model table is authoritative is unclear | Partially resolved |
+| `DOCS_ONLY_DESIGN_NOW` | Contract + algorithm docs produced; no implementation yet | APPLIED (prior pass 2026-06-12) |
+| `IMPLEMENT_SUPPORTING_ROSTER_EXPORT` | All 5 confirmations received; implementation may proceed | **CURRENT (2026-06-15)** |
+| `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` | 5 open items not yet confirmed | CLOSED — all 5 resolved |
+| `HOLD_PENDING_FINANCE_FORMAT_CONFIRMATION` | Finance-preferred column order/labels not confirmed | RESOLVED — 5-sheet structure defined |
+| `HOLD_PENDING_DATA_SOURCE_MAPPING` | Which model table is authoritative is unclear | RESOLVED — Supervision + PDA confirmed |
 
 ---
 
@@ -33,45 +33,55 @@ The following were confirmed by direct inspection of `backend/models.py` and rel
 
 ---
 
-## Confirmations Still Required From Finance/Admin
+## Confirmations — ALL 5 RESOLVED (2026-06-15)
 
-All 5 must be answered before gate updates to `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`:
+| # | Question | Resolution | Evidence |
+|---|----------|-----------|---------|
+| 1 | Live `Supervision` vs `SupervisionBaseline`? | **Use live `Supervision`** | `SupervisionBaseline` is immutable historical stats; not updated by swaps; created by `_save_baseline_stats()` in `optimize_workflow.py` |
+| 2 | Same person, 2 rooms, same slot = 1 or 2 paid sessions? | **1 per person per slot** | Confirmed business rule B/C; flag `DUPLICATE_PERSON_COLLAPSED_TO_ONE_PAYMENT_COUNT` |
+| 3 | Finance-preferred column order / Thai labels? | **Resolved** by 5-sheet structure | See `PAYMENT_SUPPORTING_FINANCE_ROSTER_EXPORT_CONTRACT.md` (updated 2026-06-15) |
+| 4 | `PaperDistributionAssignment` rows active in DB? | **YES — PDA is authoritative** | `staff_workloads.py:assign_paper_distribution_for_period()` creates rows; `ExamSchedule.paper_distributor` string is legacy, NOT used |
+| 5 | `SupervisionBaseline` preferred for payment? | **No — use live `Supervision`** | Same as item 1 |
 
-| # | Question | Default assumption in design | Who must confirm |
-|---|----------|------------------------------|-----------------|
-| 1 | Which rows to use for payment roster: live `Supervision` rows (post-optimize, may change until admin confirms) OR immutable `SupervisionBaseline` rows (snapshot after 4-signature admin confirm)? | Use live `Supervision` | Admin |
-| 2 | If the same person is assigned to 2 rooms in the same date/time slot, do they count as 1 paid session or 2? | 1 paid session per person per slot | Finance |
-| 3 | What is the finance-preferred column order and Thai heading text for the person roster (Sheet 2)? | As defined in PAYMENT_SUPPORTING_FINANCE_ROSTER_EXPORT_CONTRACT.md | Finance |
-| 4 | Are `PaperDistributionAssignment` rows populated in the live database, or do paper-dist persons come only from the `ExamSchedule.paper_distributor` string field? | Use `PaperDistributionAssignment` where rows exist; fall back to `paper_distributor` string field | Admin |
-| 5 | Should `SupervisionBaseline` be preferred over live `Supervision` for generating the payment roster? | No — use `Supervision` | Admin |
+**Gate update**: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` → `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`
 
 ---
 
-## Implementation Path (After Gate Opens)
+## Minor Non-Blocking Item
 
-Once all 5 confirmations are received and gate updates to `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`:
+`role_in_exam = "distributor"` exists in the `SupervisionRole` enum (`backend/models.py`) but no
+code path was found that creates `Supervision` rows with this role during optimization. If such
+rows exist in production data (possible from manual or legacy imports), they should be treated as
+invigilation persons and included in the payment count. The algorithm handles this gracefully.
 
-1. Create `backend/services/payment_supporting_finance_roster_service.py`
-   - Implement Steps A–G from `PAYMENT_SUPPORTING_FINANCE_ROSTER_ALGORITHM.md`
-   - Use `openpyxl` + `get_column_letter()` (same pattern as `payment_document_draft_export_service.py`)
+---
 
-2. Add endpoint to `backend/routers/invigilation_advance_batch.py`
-   ```
-   POST /official-finance-support-roster-export
-   ```
-   Auth: `require_view_all`
-   Response: `StreamingResponse` (xlsx)
+## Implementation Path (Gate Open — Ready to Implement)
 
-3. Create `backend/tests/test_payment_supporting_finance_roster.py`
-   - Minimum 33 tests per test matrix in `PAYMENT_SUPPORTING_FINANCE_ROSTER_ALGORITHM.md`
+Gate is now `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`. Full implementation plan in:
+`PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`
 
-4. Add frontend service function `exportFinanceSupportRosterExcel()` to
+Summary:
+
+1. **Backend service**: `backend/services/payment_supporting_finance_roster_service.py`
+   - Pattern: same as `payment_document_draft_export_service.py`
+   - Implements Steps A–G from `PAYMENT_SUPPORTING_FINANCE_ROSTER_ALGORITHM.md`
+   - Uses `get_column_letter()` from `openpyxl.utils` (MergedCell safety)
+
+2. **Endpoint**: `POST /official-finance-support-roster-export`
+   in `backend/routers/invigilation_advance_batch.py`
+   Auth: `require_view_all` — Response: `StreamingResponse` (xlsx)
+
+3. **Tests**: `backend/tests/test_payment_supporting_finance_roster.py`
+   Minimum 43 tests per updated test matrix
+
+4. **Frontend service**: `exportFinanceSupportRosterExcel()` in
    `frontend/src/services/officialPaymentDraft.service.ts`
 
-5. Add export button to `frontend/src/pages/OfficialPaymentDocumentDraft.tsx`
-   (gated by `ACCEPTED_FOR_DRAFT_EXPORT` status, same as existing export button)
+5. **Frontend page**: second export button in `OfficialPaymentDocumentDraft.tsx`
+   (gated by `ACCEPTED_FOR_DRAFT_EXPORT`, after existing export button)
 
-6. Add i18n keys to `frontend/src/i18n/en.ts` and `th.ts`
+6. **i18n**: 4 keys per language in `frontend/src/i18n/en.ts` and `th.ts`
 
 7. Run full backend test suite, frontend build, i18n parity check
 

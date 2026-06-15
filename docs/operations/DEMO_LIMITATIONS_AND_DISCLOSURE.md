@@ -1,5 +1,13 @@
 # DEMO_LIMITATIONS_AND_DISCLOSURE.md
 
+## 2026-06-15 Supporting Roster Implementation Plan Ready
+
+- Business rules clarified, all 5 blockers resolved, implementation gate opened: `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`.
+- Supporting finance invigilation roster export plan ready (`PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`) — not yet implemented.
+- Safety flags unchanged: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`.
+- Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- Demo readiness and production readiness scores unchanged.
+
 ## 2026-06-11 UI Alignment Disclosure
 
 - The payment document remains `DRAFT_NOT_AUTHORIZED`.

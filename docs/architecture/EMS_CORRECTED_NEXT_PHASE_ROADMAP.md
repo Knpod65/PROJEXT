@@ -265,3 +265,18 @@
 - Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
 - Payment approval, final authorization, official-final export, payment release: still blocked.
 - Production readiness: unchanged.
+
+## Supporting Roster Policy Clarification + Gate Opened (2026-06-15)
+
+- Business rules A–G clarified: grouping unit, dedup counting, actual-name rule, paper-distribution/room mapping, tie-breaker, online-room exclusion, finance output expectation.
+- All 5 implementation blockers resolved via clarification + backend source inspection (`models.py`, `staff_workloads.py`, `invigilation_advance_batch_preview_service.py`).
+- Source mapping decisions: `Supervision` (live) for invigilation; `PaperDistributionAssignment` for paper-dist; `Room.e_room_code IS NULL` for physical rooms.
+- Export structure updated: 4 sheets → 5 sheets (new Sheet 3: `ใบลงลายมือชื่อประกอบการเบิก`, signature sheet for human use).
+- Map status enum defined with 8 states covering all mapping, dedup, online-room, and name-source scenarios.
+- Gate advanced: `HOLD_PENDING_OPTIMIZE_ROSTER_SOURCE_CONFIRMATION` → `IMPLEMENT_SUPPORTING_ROSTER_EXPORT`.
+- Full implementation plan ready: `PAYMENT_SUPPORTING_FINANCE_ROSTER_IMPLEMENTATION_PLAN_READY.md`.
+- Reviewer identity: `NOT_PROVIDED`. No code written yet.
+- Safety flags unchanged: `payment_authorization_enabled=false`, `final_export_enabled=false`, `DRAFT_NOT_AUTHORIZED`.
+- Final authorization design remains `FINAL_AUTHORIZATION_DESIGN_BLOCKED`.
+- Payment approval, final authorization, official-final export, payment release: still blocked.
+- Production readiness: unchanged.
