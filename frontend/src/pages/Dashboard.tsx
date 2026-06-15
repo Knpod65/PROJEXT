@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import { useI18n } from "@/i18n";
 import { getDashboardAnalytics, getDashboardStats } from "@/services/dashboard.service";
@@ -62,16 +62,7 @@ export function DashboardPage() {
   const analyticsState = useAsyncData(analyticsLoader, [analyticsLoader]);
 
   if (statsState.loading) {
-    return (
-      <div className="page-stack">
-        <div className="stitch-metric-grid">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="dashboard-skeleton" />
-          ))}
-        </div>
-        <Skeleton className="dashboard-chart-skeleton" />
-      </div>
-    );
+    return <PageSkeleton cards={4} rows={3} />;
   }
 
   if (statsState.error || !statsState.data) {
@@ -189,7 +180,7 @@ export function DashboardPage() {
           <section className="dashboard-shell-grid">
             <Card subtitle={t("dashboard.submissionStatusSubtitle")} title={t("dashboard.submissionStatus")}>
               <DonutChart
-                centerLabel="Total"
+                centerLabel={t("dashboard.total")}
                 colors={["#6c757d", "#f59e0b", "#059669", "#dc2626", "#0d6efd"]}
                 labels={Object.keys(analytics.submission_status)}
                 values={Object.values(analytics.submission_status)}
@@ -206,7 +197,7 @@ export function DashboardPage() {
 
             <Card subtitle={t("dashboard.swapMixSubtitle")} title={t("dashboard.swapMix")}>
               <DonutChart
-                centerLabel="Swaps"
+                centerLabel={t("dashboard.swaps")}
                 colors={["#f59e0b", "#059669", "#dc2626", "#6b7280"]}
                 labels={Object.keys(analytics.swap_status)}
                 values={Object.values(analytics.swap_status)}

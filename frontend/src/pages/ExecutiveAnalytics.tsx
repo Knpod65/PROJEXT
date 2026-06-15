@@ -1,95 +1,86 @@
-import { useExecutiveAnalyticsPage } from '@/hooks/domain/useExecutiveAnalyticsPage';
+import { AlertBanner } from "@/components/ui/AlertBanner";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageSkeleton } from "@/components/ui/PageSkeleton";
+import { StatusChip } from "@/components/ui/StatusChip";
+import { useExecutiveAnalyticsPage } from "@/hooks/domain/useExecutiveAnalyticsPage";
+import { useI18n } from "@/i18n";
+import { formatNumber } from "@/utils/format";
+import { statusLabel, statusTone } from "@/utils/statusPresentation";
 
-const ExecutiveAnalytics: React.FC = () => {
-  const {
-    isLoading,
-    error,
-    data,
-    healthBandColor,
-    severityBandColor,
-    priorityBandColor,
-    kpiGrid,
-    topRisks,
-    recommendedActions,
-    scoreSuffix,
-  } = useExecutiveAnalyticsPage();
+export default function ExecutiveAnalytics() {
+  const { t } = useI18n();
+  const { data, error, isLoading, kpiGrid, recommendedActions, scoreSuffix, topRisks } = useExecutiveAnalyticsPage();
 
-  if (isLoading) return <div>Loading executive analytics...</div>;
-  if (error) return <div>Error loading executive analytics: {(error as Error).message}</div>;
-  if (!data) return <div>No data available</div>;
+  if (isLoading) return <PageSkeleton cards={4} rows={4} />;
+  if (error || !data) {
+    return <EmptyState icon={<Icon name="warning" />} title={t("analytics.loadError")} description={error instanceof Error ? error.message : t("analytics.noData")} />;
+  }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Executive Analytics</h1>
-      
-      {/* Health Score Card */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <h2 className="text-lg font-semibold mb-2">Overall Health Score</h2>
-        <div className="flex items-baseline">
-          <span className="text-4xl font-bold">{data.overall_health_score}</span>
-          <span className="ml-2 text-sm text-gray-500">{scoreSuffix}</span>
-        </div>
-        <div className="mt-2">
-          <span className={`px-3 py-1 rounded text-sm font-medium ${healthBandColor}`}>
-            Risk Band: {data.risk_band.toUpperCase()}
-          </span>
-        </div>
-      </div>
+    <div className="page-stack page-stack--spacious">
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={t("analytics.eyebrow")}
+        title={t("analytics.title")}
+        description={t("analytics.description")}
+        status={<StatusChip tone={statusTone(data.risk_band)}>{statusLabel(data.risk_band)}</StatusChip>}
+      />
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        {kpiGrid.map((kpi) => (
-          <div key={kpi.key} className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">{kpi.label}</h3>
-            <p className="text-2xl font-bold">{kpi.value}</p>
+      <section className="executive-summary">
+        <Card title={t("analytics.overallHealthScore")} subtitle={t("analytics.healthExplanation")}>
+          <div className="executive-health-score">
+            <strong>{formatNumber(data.overall_health_score)}</strong>
+            <span>{scoreSuffix}</span>
           </div>
-        ))}
-      </div>
+        </Card>
+        <div className="stitch-metric-grid executive-kpi-grid">
+          {kpiGrid.filter((kpi) => kpi.key !== "health").map((kpi) => (
+            <article className="executive-kpi" key={kpi.key}>
+              <span>{kpi.label}</span>
+              <strong>{formatNumber(kpi.value)}</strong>
+            </article>
+          ))}
+        </div>
+      </section>
 
-      {/* Top Risks */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Top Risks</h2>
-        {topRisks.length === 0 ? (
-          <p className="text-gray-500">No risks identified</p>
-        ) : (
-          <ul className="space-y-2">
-            {topRisks.map((risk, index) => (
-              <li key={index} className="flex justify-between items-start">
-                <span className="flex-1">{risk.risk}</span>
-                <span className={`px-2 py-1 rounded-text-xs ${risk.severityColor}`}>
-                  {risk.severity.toUpperCase()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {topRisks.length > 0 ? (
+        <AlertBanner variant="warning" title={t("analytics.risksTitle")}>
+          {t("analytics.risksDescription", { count: topRisks.length })}
+        </AlertBanner>
+      ) : (
+        <AlertBanner variant="success" title={t("analytics.noRisks")}>{t("analytics.noRisksDescription")}</AlertBanner>
+      )}
 
-      {/* Recommended Actions */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-lg font-semibold mb-4">Recommended Actions</h2>
-        {recommendedActions.length === 0 ? (
-          <p className="text-gray-500">No actions recommended</p>
-        ) : (
-          <ul className="space-y-2">
-            {recommendedActions.map((action, index) => (
-              <li key={index} className="flex justify-between items-start">
-                <span className="flex-1">{action.action}</span>
-                <span className="flex-none">
-                  <span className={`px-2 py-1 rounded-text-xs ${action.priorityColor}`}>
-                    {action.priority.toUpperCase()}
-                  </span>
-                  <span className="ml-2 text-xs text-gray-500">
-                    by {action.owner}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <section className="executive-detail-grid">
+        <Card title={t("analytics.risksTitle")} subtitle={t("analytics.risksSubtitle")}>
+          {topRisks.length ? (
+            <div className="executive-list">
+              {topRisks.map((risk, index) => (
+                <article className="executive-list__item" key={`${risk.risk}-${index}`}>
+                  <div><strong>{risk.risk}</strong><span>{risk.category}</span></div>
+                  <StatusChip tone={statusTone(risk.severity)}>{statusLabel(risk.severity)}</StatusChip>
+                </article>
+              ))}
+            </div>
+          ) : <EmptyState title={t("analytics.noRisks")} />}
+        </Card>
+
+        <Card title={t("analytics.actionsTitle")} subtitle={t("analytics.actionsSubtitle")}>
+          {recommendedActions.length ? (
+            <div className="executive-list">
+              {recommendedActions.map((action, index) => (
+                <article className="executive-list__item" key={`${action.action}-${index}`}>
+                  <div><strong>{action.action}</strong><span>{t("analytics.owner", { owner: action.owner })}</span></div>
+                  <StatusChip tone={statusTone(action.priority)}>{statusLabel(action.priority)}</StatusChip>
+                </article>
+              ))}
+            </div>
+          ) : <EmptyState title={t("analytics.noActions")} />}
+        </Card>
+      </section>
     </div>
   );
-};
-
-export default ExecutiveAnalytics;
+}
