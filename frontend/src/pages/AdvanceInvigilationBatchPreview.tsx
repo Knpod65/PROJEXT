@@ -10,6 +10,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { useI18n } from "@/i18n";
 import { useAdvanceBatchPreview } from "@/hooks/domain/useAdvanceBatchPreview";
 import type { AdvanceBatchRosterRow } from "@/types/invigilationAdvanceBatch";
@@ -182,13 +183,13 @@ export default function AdvanceInvigilationBatchPreview() {
         eyebrow={t("advanceBatch.eyebrow")}
         title={t("advanceBatch.title")}
         description={t("advanceBatch.description")}
-        status={<Badge variant="gold">{t("advanceBatch.eyebrow")}</Badge>}
+        status={<StatusChip tone="draft">{t("advanceBatch.eyebrow")}</StatusChip>}
       />
 
       <AlertBanner
         variant="warning"
         title={t("advanceBatch.warning.title")}
-        action={<Badge variant="gold">PREVIEW_ONLY</Badge>}
+        action={<StatusChip tone="readOnly">PREVIEW_ONLY</StatusChip>}
       >
         {t("advanceBatch.warning.body")}
       </AlertBanner>

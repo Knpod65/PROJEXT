@@ -9,6 +9,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { usePaymentDocumentSettings } from "@/hooks/domain/usePaymentDocumentSettings";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/store/auth.store";
@@ -181,7 +182,7 @@ export default function PaymentDocumentSettings() {
         status={
           <>
             <Badge variant={statusVariant(form.status, configured)}>{statusLabel(displayStatus)}</Badge>
-            {readOnly ? <Badge variant="blue">{t("paymentSettings.readOnly")}</Badge> : null}
+            {readOnly ? <StatusChip tone="readOnly">{t("paymentSettings.readOnly")}</StatusChip> : null}
           </>
         }
       />
@@ -189,7 +190,7 @@ export default function PaymentDocumentSettings() {
       <AlertBanner
         variant="warning"
         title={t("paymentSettings.warning.title")}
-        action={<Badge variant="gold">{t("paymentSettings.noAuthorization")}</Badge>}
+        action={<StatusChip tone="blocked">{t("paymentSettings.noAuthorization")}</StatusChip>}
       >
         {t("paymentSettings.warning.body")}
       </AlertBanner>
@@ -300,7 +301,7 @@ export default function PaymentDocumentSettings() {
       <Card
         title={t("paymentSettings.audit.title")}
         subtitle={settings.data?.updated_at ? formatDateTime(settings.data.updated_at) : t("paymentSettings.audit.notSaved")}
-        actions={<Badge variant="gold">{t("paymentSettings.audit.draftOnly")}</Badge>}
+        actions={<StatusChip tone="draft">{t("paymentSettings.audit.draftOnly")}</StatusChip>}
       >
         <div className="summary-box">
           <span>{t("paymentSettings.audit.updatedBy")}</span>

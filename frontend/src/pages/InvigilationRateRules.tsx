@@ -10,6 +10,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip } from "@/components/ui/StatusChip";
 import {
   invigilationSimpleRatesQueryKey,
   useInvigilationSimpleRates,
@@ -152,8 +153,8 @@ export default function InvigilationRateRules() {
         description={t("rateRules.simple.description")}
         status={
           <>
-            <Badge variant="gold">{t("rateRules.simple.previewOnly")}</Badge>
-            {!isAdmin ? <Badge variant="blue">{t("rateRules.simple.readOnly")}</Badge> : null}
+            <StatusChip tone="draft">{t("rateRules.simple.previewOnly")}</StatusChip>
+            {!isAdmin ? <StatusChip tone="readOnly">{t("rateRules.simple.readOnly")}</StatusChip> : null}
           </>
         }
       />
@@ -161,7 +162,7 @@ export default function InvigilationRateRules() {
       <AlertBanner
         variant="warning"
         title={t("rateRules.simple.warningTitle")}
-        action={<Badge variant="blue">{t("rateRules.simple.noAuthorization")}</Badge>}
+        action={<StatusChip tone="blocked">{t("rateRules.simple.noAuthorization")}</StatusChip>}
       >
         {t("rateRules.simple.warningBody")}
       </AlertBanner>

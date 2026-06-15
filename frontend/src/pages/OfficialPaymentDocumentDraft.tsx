@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FormField } from "@/components/ui/FormField";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { useOfficialPaymentDraftPreview } from "@/hooks/domain/useOfficialPaymentDraftPreview";
 import { usePaymentDocumentSettings } from "@/hooks/domain/usePaymentDocumentSettings";
 import { usePaymentDocumentReviewChecklist } from "@/hooks/domain/usePaymentDocumentReviewChecklist";
@@ -427,13 +428,13 @@ export default function OfficialPaymentDocumentDraft() {
         eyebrow={t("paymentDraft.eyebrow")}
         title={t("paymentDraft.title")}
         description={t("paymentDraft.description")}
-        status={<Badge variant="gold">DRAFT_NOT_AUTHORIZED</Badge>}
+        status={<StatusChip tone="blocked">DRAFT_NOT_AUTHORIZED</StatusChip>}
       />
 
       <AlertBanner
         variant="warning"
         title={t("paymentDraft.warning.title")}
-        action={<Badge variant="gold">DRAFT_NOT_AUTHORIZED</Badge>}
+        action={<StatusChip tone="blocked">DRAFT_NOT_AUTHORIZED</StatusChip>}
       >
         {t("paymentDraft.warning.body")}
       </AlertBanner>
@@ -772,7 +773,7 @@ export default function OfficialPaymentDocumentDraft() {
               <p className="metric-value">{formatCurrency(data.totals.grand_total_amount)}</p>
             </Card>
             <Card title={t("paymentDraft.summary.review")} subtitle={data.metadata.term_label}>
-              <Badge variant="gold">DRAFT_NOT_AUTHORIZED</Badge>
+              <StatusChip tone="blocked">DRAFT_NOT_AUTHORIZED</StatusChip>
             </Card>
           </section>
 
