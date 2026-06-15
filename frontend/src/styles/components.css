@@ -2419,6 +2419,195 @@
   flex-wrap: wrap;
 }
 
+/* Admin intelligence command center */
+.admin-command__header-status {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  color: var(--text-mid);
+  font-size: 0.82rem;
+}
+
+.admin-command-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-command-summary {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.admin-command-summary__top,
+.admin-command-metric__heading,
+.admin-command-priority {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-command-summary__icon,
+.admin-command-priority__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  color: var(--role-accent-text);
+  background: var(--role-accent-soft);
+}
+
+.admin-command-summary--critical { border-color: #fecaca; }
+.admin-command-summary--warning { border-color: #fde68a; }
+.admin-command-summary--healthy { border-color: #bbf7d0; }
+
+.admin-command-summary__label {
+  color: var(--text-mid);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-command-summary__value {
+  overflow-wrap: anywhere;
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.admin-command-summary__progress,
+.admin-command-metric__progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #ece8df;
+}
+
+.admin-command-summary__progress span,
+.admin-command-metric__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--role-accent), var(--role-accent-strong));
+}
+
+.admin-command-analysis {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 16px;
+}
+
+.admin-command-priorities,
+.admin-command-detail-groups,
+.admin-command-detail-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-command-priority {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface2);
+}
+
+.admin-command-priority__icon--critical { background: #fee2e2; color: #991b1b; }
+.admin-command-priority__icon--warning { background: #fef3c7; color: #92400e; }
+.admin-command-priority__icon--unavailable { background: #ffedd5; color: #9a3412; }
+
+.admin-command-priority__copy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.admin-command-priority__copy > div,
+.admin-command-metric__heading > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-command-priority p,
+.admin-command-detail-group header p,
+.admin-command-metric p {
+  margin: 0;
+  color: var(--text-mid);
+  line-height: 1.55;
+}
+
+.admin-command-detail-groups {
+  margin-top: 18px;
+}
+
+.admin-command-detail-group {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-command-detail-group header h3 {
+  margin: 0 0 4px;
+}
+
+.admin-command-detail-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-command-metric {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface2);
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.admin-command-metric__value {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.admin-command-metric__value strong {
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+
+.admin-command-metric__value span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 1200px) {
+  .admin-command-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .admin-command-summary-grid,
+  .admin-command-analysis,
+  .admin-command-detail-list {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-command__header-status { justify-items: start; }
+  .admin-command-priority { display: grid; }
+}
+
 /* ── Responsive Phase 3 ──────────────────────────────────── */
 @media (max-width: 767px) {
   .wf-stage-timeline    { gap: 4px; }

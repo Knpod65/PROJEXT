@@ -1,198 +1,236 @@
-/** AdminIntelligenceDashboard — OPS-DASH: Admin 10-group significant metrics dashboard. */
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { Link } from "react-router-dom";
-import type { AdminIntelligenceDashboard } from "@/types/dashboardMetrics";
-import { useAdminIntelligenceDashboard } from "@/hooks/domain/useAdminIntelligenceDashboard";
-import { usePermission } from "@/hooks/usePermission";
-import { translate, translateWithFallback } from "@/i18n";
+import { BarChart } from "@/components/charts/BarChart";
+import { DonutChart } from "@/components/charts/DonutChart";
+import { PermissionDeniedState } from "@/components/system/PermissionDeniedState";
+import { AlertBanner } from "@/components/ui/AlertBanner";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { PermissionDeniedState } from "@/components/system/PermissionDeniedState";
-import { presentMetricCard, presentMetricGroup } from "@/utils/presenters/dashboardMetricPresenter";
+import { Tabs } from "@/components/ui/Tabs";
+import { useAdminIntelligenceDashboard } from "@/hooks/domain/useAdminIntelligenceDashboard";
+import { usePermission } from "@/hooks/usePermission";
+import { useI18n } from "@/i18n";
+import { usePeriod } from "@/store/period.store";
+import {
+  metricByCode,
+  presentAdminDashboard,
+  type AdminDetailTab,
+  type AdminDisplayState,
+  type AdminMetricDisplay,
+} from "@/utils/presenters/adminDashboardPresenter";
 
-const GROUP_ORDER = [
-  "examOperations",
-  "optimizationQuality",
-  "governanceApproval",
-  "staffWorkload",
-  "roomCapacity",
-  "teacherSubmission",
-  "printExport",
-  "qrPickup",
-  "pdpaSecurity",
-  "systemOperations",
-];
+const DETAIL_TABS: AdminDetailTab[] = ["scheduling", "governance", "people", "delivery", "system"];
 
-function riskChipClass(band: string | null | undefined): string {
-  if (band === "red") return "bg-red-100 text-red-800";
-  if (band === "amber") return "bg-amber-100 text-amber-800";
-  return "bg-green-100 text-green-800";
+const STATE_BADGE: Record<AdminDisplayState, "green" | "blue" | "gold" | "crimson" | "gray" | "orange"> = {
+  healthy: "green",
+  informational: "blue",
+  warning: "gold",
+  critical: "crimson",
+  notMeasured: "gray",
+  unavailable: "orange",
+};
+
+const STATE_ICON: Record<AdminDisplayState, string> = {
+  healthy: "check_circle",
+  informational: "info",
+  warning: "warning",
+  critical: "error",
+  notMeasured: "pending",
+  unavailable: "cloud_off",
+};
+
+function MetricValue({ metric }: { metric: AdminMetricDisplay }) {
+  return (
+    <div className="admin-command-metric__value">
+      <strong>{metric.value}</strong>
+      {metric.unit ? <span>{metric.unit}</span> : null}
+    </div>
+  );
 }
 
-function scoreToBand(score: number): string {
-  if (score >= 75) return "green";
-  if (score >= 50) return "amber";
-  return "red";
+function SummaryCard({
+  action,
+  actionLabel,
+  icon,
+  label,
+  metric,
+  progress,
+  state,
+  stateLabel,
+  value,
+}: {
+  action?: () => void;
+  actionLabel?: string;
+  icon: string;
+  label: string;
+  metric?: AdminMetricDisplay;
+  progress?: number | null;
+  state: AdminDisplayState;
+  stateLabel?: string;
+  value: string;
+}) {
+  return (
+    <article className={`admin-command-summary admin-command-summary--${state}`}>
+      <div className="admin-command-summary__top">
+        <div className="admin-command-summary__icon"><Icon name={icon} /></div>
+        <Badge size="sm" variant={STATE_BADGE[state]}>{stateLabel ?? metric?.stateLabel}</Badge>
+      </div>
+      <span className="admin-command-summary__label">{label}</span>
+      <strong className="admin-command-summary__value">{value}</strong>
+      {progress !== null && progress !== undefined ? (
+        <div className="admin-command-summary__progress" aria-hidden="true">
+          <span style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
+        </div>
+      ) : null}
+      {action ? (
+        <Button size="sm" type="button" variant="ghost" onClick={action} iconRight={<Icon name="arrow_forward" />}>
+          {actionLabel ?? metric?.actionLabel}
+        </Button>
+      ) : null}
+    </article>
+  );
 }
 
 export default function AdminIntelligenceDashboard() {
+  const navigate = useNavigate();
+  const { locale, t } = useI18n();
+  const { activePeriod } = usePeriod();
   const { canManageUsers } = usePermission();
   const { data, isLoading, isError } = useAdminIntelligenceDashboard();
+  const [activeTab, setActiveTab] = useState<AdminDetailTab>("scheduling");
 
-  if (!canManageUsers) {
-    return <PermissionDeniedState />;
-  }
+  const display = useMemo(() => (data ? presentAdminDashboard(data, t) : null), [data, t]);
 
+  if (!canManageUsers) return <PermissionDeniedState />;
   if (isLoading) {
     return (
       <div className="page-stack page-stack--spacious">
-        <div className="stitch-metric-grid">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="dashboard-skeleton" />
-          ))}
-        </div>
+        <Skeleton className="page-loading__hero" />
+        <div className="admin-command-summary-grid">{Array.from({ length: 5 }).map((_, index) => <Skeleton key={index} className="dashboard-skeleton" />)}</div>
         <Skeleton className="dashboard-chart-skeleton" />
       </div>
     );
   }
-
-  if (isError || !data) {
-    return (
-      <div className="page-stack page-stack--spacious">
-        <EmptyState
-          icon={<Icon name="warning" />}
-          title={translate("dashboard.admin.loadErrorTitle")}
-        />
-      </div>
-    );
+  if (isError || !data || !display) {
+    return <EmptyState icon={<Icon name="warning" />} title={t("dashboard.admin.loadErrorTitle")} />;
   }
 
-  const score = data.overall_health_score ?? 0;
-  const band = data.overall_risk_band ?? scoreToBand(score);
-
-  // Collect critical alerts across all groups
-  const criticalAlerts = data.groups.flatMap((g) =>
-    g.metrics
-      .filter((m) => m.severity === "critical")
-      .map((m) => ({
-        code: m.metric_code,
-        titleKey: m.title_i18n_key,
-        whyKey: m.why_it_matters_i18n_key,
-      })),
-  );
-
-  // Sort groups by defined order
-  const orderedGroups = [...data.groups].sort(
-    (a, b) => GROUP_ORDER.indexOf(a.group_code) - GROUP_ORDER.indexOf(b.group_code),
+  const scheduled = metricByCode(display, "scheduled_sections");
+  const unscheduled = metricByCode(display, "unscheduled_sections");
+  const blockers = metricByCode(display, "blocker_count");
+  const api = metricByCode(display, "api_uptime_pct");
+  const database = metricByCode(display, "db_ok");
+  const storage = metricByCode(display, "storage_usage_pct");
+  const totalSections = (scheduled?.numericValue ?? 0) + (unscheduled?.numericValue ?? 0);
+  const scheduledPercent = totalSections > 0 ? ((scheduled?.numericValue ?? 0) / totalSections) * 100 : null;
+  const scheduledState: AdminDisplayState = scheduledPercent === null ? "notMeasured" : scheduledPercent >= 95 ? "healthy" : scheduledPercent >= 80 ? "warning" : "critical";
+  const systemStates = [api, database, storage].filter(Boolean) as AdminMetricDisplay[];
+  const systemState = systemStates.some((metric) => metric.state === "critical")
+    ? "critical"
+    : systemStates.some((metric) => metric.state === "warning")
+      ? "warning"
+      : systemStates.some((metric) => metric.state === "unavailable")
+        ? "unavailable"
+        : "healthy";
+  const visibleGroups = display.detailGroups.filter((group) => group.tab === activeTab);
+  const percentageMetrics = display.metrics.filter(
+    (metric) => metric.progress !== null && ["optimization_quality_avg", "room_utilization_score", "submission_rate", "api_uptime_pct", "storage_usage_pct"].includes(metric.metricCode),
   );
 
   return (
-    <div className="page-stack page-stack--spacious">
-      <section className="page-hero page-hero--dashboard">
-        <div>
-          <span className="page-hero__eyebrow">{translate("dashboard.admin.eyebrow")}</span>
-          <h2 className="page-hero__title">{translate("dashboard.admin.title")}</h2>
-          <p className="page-hero__description">
-            {translate("dashboard.admin.lastUpdated")}:{" "}
-            {data.last_computed_at ? new Date(data.last_computed_at).toLocaleString() : "—"}
-          </p>
-        </div>
+    <div className="page-stack page-stack--spacious admin-command">
+      <PageHeader
+        className="page-hero--dashboard"
+        eyebrow={t("dashboard.admin.eyebrow")}
+        title={t("dashboard.admin.title")}
+        description={t("dashboard.admin.description")}
+        status={
+          <div className="admin-command__header-status">
+            <Badge variant={STATE_BADGE[display.scoreState]}>{t(`dashboard.admin.status.${display.scoreState}`)}</Badge>
+            <span>{activePeriod?.label ?? t("common.noActiveExamPeriod")}</span>
+            <span>{t("dashboard.admin.lastUpdated")}: {data.last_computed_at ? new Date(data.last_computed_at).toLocaleString(locale) : t("dashboard.admin.status.unavailable")}</span>
+          </div>
+        }
+      />
+
+      <section className="admin-command-summary-grid" aria-label={t("dashboard.admin.primarySummary")}>
+        <SummaryCard icon="speed" label={t("dashboard.admin.summary.readiness")} state={display.scoreState} stateLabel={t(`dashboard.admin.status.${display.scoreState}`)} value={display.score === null ? t("dashboard.admin.status.notMeasured") : `${display.score.toFixed(1)} / 100`} progress={display.score} />
+        <SummaryCard icon="event_available" label={t("dashboard.admin.summary.scheduled")} state={scheduledState} stateLabel={t(`dashboard.admin.status.${scheduledState}`)} value={totalSections > 0 ? t("dashboard.admin.summary.scheduledValue", { scheduled: scheduled?.numericValue ?? 0, total: totalSections }) : t("dashboard.admin.status.notMeasured")} progress={scheduledPercent} />
+        <SummaryCard icon="event_busy" label={t("dashboard.admin.summary.unscheduled")} state={unscheduled?.state ?? "unavailable"} value={unscheduled ? `${unscheduled.value}${unscheduled.unit ? ` ${unscheduled.unit}` : ""}` : t("dashboard.admin.status.unavailable")} metric={unscheduled} action={unscheduled?.actionHref ? () => navigate(unscheduled.actionHref!) : undefined} />
+        <SummaryCard icon="gavel" label={t("dashboard.admin.summary.blockers")} state={blockers?.state ?? "unavailable"} value={blockers ? `${blockers.value}${blockers.unit ? ` ${blockers.unit}` : ""}` : t("dashboard.admin.status.unavailable")} metric={blockers} action={blockers?.actionHref ? () => navigate(blockers.actionHref!) : undefined} />
+        <SummaryCard icon="dns" label={t("dashboard.admin.summary.availability")} state={systemState} stateLabel={t(`dashboard.admin.status.${systemState}`)} value={t(`dashboard.admin.status.${systemState}`)} actionLabel={t("dashboard.admin.action.review")} action={systemState === "healthy" ? undefined : () => navigate("/operational-health")} />
       </section>
 
-      {/* Health Banner */}
-      <Card className="p-4 flex flex-wrap items-center gap-4">
-        <div className={`px-3 py-1 rounded-full text-sm font-semibold ${riskChipClass(band)}`}>
-          {translate("dashboard.admin.riskBand")}: {translate(`dashboard.band.${band}`)}
-        </div>
-        <span className="text-sm">
-          {translate("dashboard.admin.overallHealth")}:{" "}
-          <strong>{score.toFixed(1)}</strong>
-          <span className="text-gray-400"> / 100</span>
-        </span>
-      </Card>
-
-      {/* Critical Alerts */}
-      {criticalAlerts.length > 0 && (
-        <Card className="p-4 border-2 border-red-200 bg-red-50">
-          <h2 className="text-base font-semibold text-red-800 mb-3">
-            {translate("dashboard.admin.criticalAlerts")}
-          </h2>
-          <ul className="space-y-1">
-            {criticalAlerts.slice(0, 5).map((a) => (
-              <li key={a.code} className="text-sm text-red-700">
-                {translate(a.titleKey)}
-              </li>
-            ))}
-          </ul>
-        </Card>
+      {display.priorities.length > 0 ? (
+        <AlertBanner variant={display.priorities.some((metric) => metric.state === "critical") ? "danger" : "warning"} title={t("dashboard.admin.priority.title")}>
+          {t("dashboard.admin.priority.description", { count: display.priorities.length })}
+        </AlertBanner>
+      ) : (
+        <AlertBanner variant="success" title={t("dashboard.admin.priority.clearTitle")}>{t("dashboard.admin.priority.clearDescription")}</AlertBanner>
       )}
 
-      {/* Metric Groups */}
-      {orderedGroups.map((group) => {
-        const presented = presentMetricGroup(group);
-        return (
-          <Card key={group.group_code} className="p-4 space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold">{presented.title}</h2>
-              {presented.description && (
-                <p className="text-sm text-gray-500">{presented.description}</p>
-              )}
-            </div>
+      <section className="admin-command-analysis">
+        <Card title={t("dashboard.admin.analysis.scheduleTitle")} subtitle={t("dashboard.admin.analysis.scheduleDescription")}>
+          <DonutChart
+            centerLabel={t("dashboard.admin.units.sections")}
+            colors={["#059669", "#dc2626"]}
+            labels={[t("dashboard.admin.summary.scheduled"), t("dashboard.admin.summary.unscheduled")]}
+            values={[scheduled?.numericValue ?? 0, unscheduled?.numericValue ?? 0]}
+          />
+        </Card>
+        <Card title={t("dashboard.admin.analysis.indicatorsTitle")} subtitle={t("dashboard.admin.analysis.indicatorsDescription")}>
+          <BarChart color="var(--role-accent)" labels={percentageMetrics.map((metric) => metric.title)} values={percentageMetrics.map((metric) => metric.progress ?? 0)} />
+        </Card>
+      </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {presented.metricCards.map((m) => (
-                <div
-                  key={m.drilldownHref || m.title}
-                  className="border rounded-lg p-3 space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400 uppercase tracking-wide">
-                      {m.title}
-                    </span>
-                    {m.pdpaBadge && (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
-                        {m.pdpaBadge}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <span className="text-2xl font-bold">{m.value}</span>
-                    {m.unit && (
-                      <span className="text-xs text-gray-400 pb-0.5">{m.unit}</span>
-                    )}
-                  </div>
-                  <div
-                    className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${m.severityColorClass}`}
-                  >
-                    {translateWithFallback(`severity.${m.severity}`, m.severity)}
-                  </div>
-                  {m.whyItMatters && (
-                    <p className="text-xs text-gray-500 line-clamp-2">{m.whyItMatters}</p>
-                  )}
-                  {m.recommendedAction && (
-                    <p className="text-xs text-blue-600">{m.recommendedAction}</p>
-                  )}
+      <Card title={t("dashboard.admin.priority.title")} subtitle={t("dashboard.admin.priority.listDescription")}>
+        {display.priorities.length > 0 ? (
+          <div className="admin-command-priorities">
+            {display.priorities.map((metric) => (
+              <article className="admin-command-priority" key={metric.metricCode}>
+                <div className={`admin-command-priority__icon admin-command-priority__icon--${metric.state}`}><Icon name={STATE_ICON[metric.state]} /></div>
+                <div className="admin-command-priority__copy">
+                  <div><Badge size="sm" variant={STATE_BADGE[metric.state]}>{metric.stateLabel}</Badge>{metric.restricted ? <Badge size="sm" variant="navy">{t("dashboard.admin.restricted")}</Badge> : null}</div>
+                  <strong>{metric.title}</strong>
+                  <p>{metric.whyItMatters}</p>
                 </div>
-              ))}
-            </div>
+                {metric.actionHref ? <Button size="sm" variant="outline" type="button" onClick={() => navigate(metric.actionHref!)}>{metric.actionLabel}</Button> : null}
+              </article>
+            ))}
+          </div>
+        ) : <EmptyState icon={<Icon name="check_circle" />} title={t("dashboard.admin.priority.clearTitle")} description={t("dashboard.admin.priority.clearDescription")} />}
+      </Card>
 
-            {presented.actions.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {presented.actions.map((action, idx) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 bg-gray-100 rounded text-sm text-gray-700"
-                  >
-                    {action}
-                  </span>
+      <Card title={t("dashboard.admin.details.title")} subtitle={t("dashboard.admin.details.description")}>
+        <Tabs activeKey={activeTab} onChange={(key) => setActiveTab(key as AdminDetailTab)} items={DETAIL_TABS.map((key) => ({ key, label: t(`dashboard.admin.tabs.${key}`), badge: display.detailGroups.filter((group) => group.tab === key).reduce((sum, group) => sum + group.metrics.length, 0) }))} />
+        <div className="admin-command-detail-groups">
+          {visibleGroups.map((group) => (
+            <section className="admin-command-detail-group" key={group.groupCode}>
+              <header><h3>{group.title}</h3><p>{group.description}</p></header>
+              <div className="admin-command-detail-list">
+                {group.metrics.map((metric) => (
+                  <article className="admin-command-metric" key={metric.metricCode}>
+                    <div className="admin-command-metric__heading">
+                      <div><strong>{metric.title}</strong>{metric.restricted ? <Badge size="sm" variant="navy">{t("dashboard.admin.restricted")}</Badge> : null}</div>
+                      <Badge size="sm" variant={STATE_BADGE[metric.state]}>{metric.stateLabel}</Badge>
+                    </div>
+                    <MetricValue metric={metric} />
+                    {metric.progress !== null ? <div className="admin-command-metric__progress"><span style={{ width: `${metric.progress}%` }} /></div> : null}
+                    <p>{metric.description}</p>
+                    {metric.actionHref ? <Button size="sm" variant="ghost" type="button" onClick={() => navigate(metric.actionHref!)} iconRight={<Icon name="arrow_forward" />}>{metric.actionLabel}</Button> : null}
+                  </article>
                 ))}
               </div>
-            )}
-          </Card>
-        );
-      })}
+            </section>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
