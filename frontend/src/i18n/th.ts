@@ -2406,4 +2406,8 @@ export const th = {
   "legacy.period.toast.createFailed": "ไม่สามารถสร้างรอบสอบได้",
   "legacy.period.toast.activated": "เปลี่ยนรอบสอบที่ใช้งานแล้ว",
   "legacy.period.toast.activateFailed": "ไม่สามารถเปิดใช้รอบสอบได้",
+  "layout.navigation.primary": "เมนูนำทางหลัก",
+  "layout.navigation.mobile": "เมนูนำทางบนมือถือ",
+  "layout.viewAs.current": "กำลังดูในบทบาท: {role}",
+  "layout.viewAs.return": "กลับสู่บทบาทของฉัน",
 } as const;

@@ -8,7 +8,7 @@ import { hasRole } from "@/utils/roles";
 import { Icon } from "../ui/Icon";
 
 export function MobileBottomNav() {
-  useI18n();
+  const { t } = useI18n();
   const { user } = useAuth();
   const pages = appPages.filter(
     (page) =>
@@ -17,7 +17,7 @@ export function MobileBottomNav() {
   );
 
   return (
-    <nav className="mobile-nav" aria-label="Mobile navigation">
+    <nav className="mobile-nav" aria-label={t("layout.navigation.mobile")}>
       {pages.map((page) => (
         <NavLink
           key={page.key}

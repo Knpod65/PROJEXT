@@ -139,6 +139,7 @@
   color: var(--role-sidebar-text);
   background: transparent;
   cursor: pointer;
+  transition: background-color var(--motion-state) var(--motion-ease), border-color var(--motion-state) var(--motion-ease), box-shadow var(--motion-state) var(--motion-ease), transform var(--motion-fast) var(--motion-ease);
 }
 
 .sidebar__link:hover,
@@ -250,7 +251,7 @@
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
 }
 
 .language-toggle__button:hover {

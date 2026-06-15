@@ -53,7 +53,7 @@ export function Sidebar() {
         <p>{user?.full_name ?? user?.username ?? t("common.operator")}</p>
       </section>
 
-      <nav className="sidebar__nav" aria-label="Primary navigation">
+      <nav className="sidebar__nav" aria-label={t("layout.navigation.primary")}>
         {groupedPages.map(({ group, pages }) => (
           <div key={group} className="sidebar__group">
             <p className="sidebar__group-title">{getNavGroupLabel(group)}</p>

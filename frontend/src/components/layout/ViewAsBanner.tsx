@@ -1,4 +1,5 @@
 import type { UserRole } from "@/types/api";
+import { useI18n } from "@/i18n";
 import { formatRole } from "@/utils/format";
 
 import { Button } from "../ui/Button";
@@ -9,11 +10,12 @@ interface ViewAsBannerProps {
 }
 
 export function ViewAsBanner({ onReset, role }: ViewAsBannerProps) {
+  const { t } = useI18n();
   return (
     <div className="view-as-banner">
-      <span>Viewing as: {formatRole(role)}</span>
+      <span>{t("layout.viewAs.current", { role: formatRole(role) })}</span>
       <Button size="sm" type="button" variant="ghost" onClick={onReset}>
-        Return to my role
+        {t("layout.viewAs.return")}
       </Button>
     </div>
   );

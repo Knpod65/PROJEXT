@@ -2415,4 +2415,8 @@ export const en = {
   "legacy.period.toast.createFailed": "Unable to create the exam period.",
   "legacy.period.toast.activated": "Active exam period changed.",
   "legacy.period.toast.activateFailed": "Unable to activate the exam period.",
+  "layout.navigation.primary": "Primary navigation",
+  "layout.navigation.mobile": "Mobile navigation",
+  "layout.viewAs.current": "Viewing as: {role}",
+  "layout.viewAs.return": "Return to my role",
 } as const;
