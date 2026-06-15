@@ -668,6 +668,15 @@ class OfficialPaymentDocumentDraftRequest(BaseModel):
     paper_distribution_rows: list[OfficialPaymentDocumentDraftManualPaperRow] = Field(default_factory=list)
 
 
+class FinanceSupportingRosterExportRequest(BaseModel):
+    period_id: Optional[int] = None
+    academic_year: Optional[str] = "2568"
+    semester: Optional[str] = "2"
+    exam_type: Optional[str] = "final"
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None
+
+
 class OfficialPaymentDocumentDraftExportRequest(BaseModel):
     preview_request: OfficialPaymentDocumentDraftRequest
     export_format: Literal["XLSX_DRAFT", "HTML_DRAFT", "JSON_DRAFT"] = "XLSX_DRAFT"

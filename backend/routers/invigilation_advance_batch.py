@@ -13,6 +13,10 @@ from database import get_db
 from services.invigilation_advance_batch_preview_service import build_advance_batch_preview
 from services.official_payment_document_draft_service import build_official_payment_document_draft_preview
 from services.payment_document_draft_export_service import build_payment_document_draft_export
+from services.payment_supporting_finance_roster_service import (
+    build_finance_support_roster_export,
+    get_finance_support_roster_status,
+)
 
 router = APIRouter()
 
@@ -54,6 +58,32 @@ def export_official_payment_document_draft(
     _current_user=Depends(require_view_all),
 ):
     wb, filename = build_payment_document_draft_export(db, payload.model_dump())
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/finance-support-roster-status")
+def finance_support_roster_status(
+    payload: schemas.FinanceSupportingRosterExportRequest,
+    db: Session = Depends(get_db),
+    _current_user=Depends(require_view_all),
+):
+    return get_finance_support_roster_status(db, payload.model_dump())
+
+
+@router.post("/finance-support-roster-export")
+def export_finance_support_roster(
+    payload: schemas.FinanceSupportingRosterExportRequest,
+    db: Session = Depends(get_db),
+    _current_user=Depends(require_view_all),
+):
+    wb, filename = build_finance_support_roster_export(db, payload.model_dump())
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
