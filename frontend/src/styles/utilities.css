@@ -1,6 +1,11 @@
 .page-stack {
   display: grid;
   gap: 16px;
+  min-width: 0;
+}
+
+.page-stack > * {
+  min-width: 0;
 }
 
 .page-stack--spacious {
@@ -163,6 +168,9 @@
     grid-template-columns: 1fr;
   }
 
+}
+
+@media (max-width: 1399px) {
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

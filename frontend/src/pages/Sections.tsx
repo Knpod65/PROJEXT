@@ -2,6 +2,7 @@ import { useCallback } from "react";
 
 import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import { useI18n } from "@/i18n";
 import { listSections } from "@/services/sections.service";
@@ -24,8 +25,14 @@ export function SectionsPage() {
   const { data, loading } = useAsyncData(loader, [loader]);
 
   return (
-    <Card title={t("sections.title")} subtitle={t("sections.subtitle")}>
-      <DataTable<SectionOut>
+    <div className="page-stack page-stack--spacious">
+      <PageHeader
+        eyebrow={t("navigation.groups.examManagement")}
+        title={t("navigation.pages.sections.title")}
+        description={t("navigation.pages.sections.description")}
+      />
+      <Card title={t("sections.title")} subtitle={t("sections.subtitle")}>
+        <DataTable<SectionOut>
         columns={[
           {
             key: "course.course_id",
@@ -75,7 +82,8 @@ export function SectionsPage() {
         rows={data ?? []}
         scrollThreshold={5}
         tableLayout="fixed"
-      />
-    </Card>
+        />
+      </Card>
+    </div>
   );
 }

@@ -344,6 +344,7 @@ export const th = {
   "dashboard.noActivity": "ยังไม่มีกิจกรรมการปฏิบัติงานสอบล่าสุด",
 
   "workloadDashboard.pageTitle.admin": "การวิเคราะห์ภาระงาน",
+  "workloadDashboard.eyebrow": "ธรรมาภิบาลภาระงาน",
   "workloadDashboard.pageTitle.staff": "ภาระงานปฏิบัติหน้าที่",
   "workloadDashboard.pageTitle.teacher": "ภาระงานของฉัน",
   "workloadDashboard.title": "การวิเคราะห์ภาระงานคุมสอบ",

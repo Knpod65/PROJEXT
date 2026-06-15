@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useAsyncData } from "@/hooks/useAsyncData";
+import { useI18n } from "@/i18n";
 import { autoDetectCoExam, createCoExamGroup, listCoExamGroups } from "@/services/coexam.service";
 import { useUi } from "@/store/ui.store";
 import type { CoExamGroup, CoExamSuggestion } from "@/types/api";
@@ -52,6 +54,7 @@ function renderPersistedMembers(group: CoExamGroup) {
 }
 
 export function CoExamPage() {
+  const { t } = useI18n();
   const { toast } = useUi();
   const loader = useCallback(() => listCoExamGroups(), []);
   const state = useAsyncData(loader, [loader]);
@@ -97,6 +100,11 @@ export function CoExamPage() {
 
   return (
     <div className="page-stack page-stack--spacious">
+      <PageHeader
+        eyebrow={t("navigation.groups.operations")}
+        title={t("navigation.pages.coexam.title")}
+        description={t("navigation.pages.coexam.description")}
+      />
       <Card
         title="Co-exam review"
         subtitle="Detect likely shared-exam groups, review the underlying sections, then persist the groups you actually want to use."

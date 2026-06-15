@@ -24,6 +24,12 @@ The previous browser-validation conclusions are invalidated. Authenticated compu
 
 Corrected visual evidence will be recorded by the visual consolidation remediation pass. See `UI_VISUAL_CONSOLIDATION_FAILURE_DIAGNOSIS.md`.
 
+## Visual Consolidation Remediation
+
+Optimization Trace and Workload Analytics now pass fixed-viewport authenticated validation at `1600x900`, `1366x768`, and `1024x768`. Each target has one primary heading, zero horizontal overflow, and no rendered raw i18n key or backend missing-session string.
+
+See `UI_VISUAL_CONSOLIDATION_REMEDIATION_VALIDATION_LOG.md` for measurements and evidence.
+
 ## Visual Evidence
 
 - `docs/operations/demo-smoke-screenshots/ui-consolidation/dashboard-th.jpg`

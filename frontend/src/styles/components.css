@@ -20,6 +20,7 @@
 }
 
 .ui-card {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid rgba(231, 226, 218, 0.9);
   border-radius: 24px;

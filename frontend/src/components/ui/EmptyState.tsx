@@ -7,13 +7,15 @@ interface EmptyStateProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  headingLevel?: 1 | 2 | 3;
 }
 
-export function EmptyState({ action, description, icon, title }: EmptyStateProps) {
+export function EmptyState({ action, description, headingLevel = 3, icon, title }: EmptyStateProps) {
+  const Heading = `h${headingLevel}` as const;
   return (
     <div className="empty-state">
       <div className="empty-state__icon">{icon ?? <Icon name="info" />}</div>
-      <h3 className="empty-state__title">{title}</h3>
+      <Heading className="empty-state__title">{title}</Heading>
       {description ? <p className="empty-state__description">{description}</p> : null}
       {action ? <div className="empty-state__action">{action}</div> : null}
     </div>

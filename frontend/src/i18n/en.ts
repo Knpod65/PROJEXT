@@ -364,6 +364,7 @@ export const en = {
   "dashboard.noActivity": "No recent exam operations activity yet.",
 
   "workloadDashboard.pageTitle.admin": "Workload Analytics",
+  "workloadDashboard.eyebrow": "Workload governance",
   "workloadDashboard.pageTitle.staff": "Duty Workload",
   "workloadDashboard.pageTitle.teacher": "My Workload",
   "workloadDashboard.title": "Workload Duty Analytics",

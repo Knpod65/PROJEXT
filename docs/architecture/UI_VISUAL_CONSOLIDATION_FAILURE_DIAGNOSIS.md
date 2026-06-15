@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-15  
 **Baseline:** `main` at `c36e906`  
-**Status:** Confirmed visual consolidation failure; prior completion claims are invalidated pending remediation validation.
+**Status:** Confirmed failures remediated for the diagnosed shared causes and target routes; see `UI_VISUAL_CONSOLIDATION_REMEDIATION_VALIDATION_LOG.md`.
 
 ## Preflight
 
@@ -110,3 +110,4 @@ The remediation is accepted only after authenticated after screenshots and compu
 - no clipped sidebar navigation or horizontal document overflow
 - coherent loading, empty, missing-session, and valid-data states
 
+These acceptance checks passed for Optimization Trace and Workload Analytics at `1600x900`, `1366x768`, and `1024x768`. The previous broad 43-route visual-completion claim remains superseded by the narrower evidence-backed remediation result.

@@ -75,6 +75,7 @@ function GuardedPage({ children, roles, allowBaseAdminPreview }: GuardedPageProp
     return (
       <EmptyState
         icon={<Icon name="shield" />}
+        headingLevel={1}
         title={t("app.unauthorized.title")}
         description={t("app.unauthorized.description")}
       />
@@ -146,6 +147,7 @@ function NotFoundPage() {
       <AppShell title={t("app.notFound.title")}>
         <EmptyState
           icon={<Icon name="search_off" />}
+          headingLevel={1}
           title={t("app.notFound.heading")}
           description={t("app.notFound.description")}
         />

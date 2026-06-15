@@ -2,6 +2,7 @@ import { useCallback } from "react";
 
 import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import { useI18n } from "@/i18n";
 import { getCopyCount } from "@/services/schedule.service";
@@ -39,6 +40,11 @@ export function CopyPage() {
 
   return (
     <div className="page-stack">
+      <PageHeader
+        eyebrow={t("navigation.groups.operations")}
+        title={t("navigation.pages.copy.title")}
+        description={t("navigation.pages.copy.description")}
+      />
       <Card title={t("copy.title")} subtitle={t("copy.subtitle")}>
         <div className="summary-grid">
           <div className="summary-box">
