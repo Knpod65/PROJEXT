@@ -1,5 +1,20 @@
 # UI System Alignment Validation Log
 
+## 2026-06-15 Admin Dashboard Visual Hierarchy Redesign
+
+- Redesigned `/admin-intelligence-dashboard` into four visual levels using existing data and shared components.
+- Added a dedicated frontend-only presenter to normalize display state without changing shared role-dashboard behavior.
+- Documented the shared backend severity contradiction: its higher-is-worse classifier can label healthy higher-is-better metrics such as `100%` API uptime as critical.
+- Live authenticated browser validation confirmed API availability displays healthy and a connected database has no recovery action.
+- Header, five primary summaries, schedule donut, measured-indicator bars, capped priorities, and five detail tabs validated.
+- Desktop first-viewport hierarchy and horizontal-overflow check: PASS.
+- EN/TH localization, separated values/units, placeholder not-measured states, and restricted-data display policy validated.
+- Frontend build: `PASS`.
+- EN/TH i18n parity: `PASS`, `2352/2352`.
+- Raw-string scan: `PASS` in existing warning-only mode.
+- Backend/API, workload routes, payment/export/review/settings logic, permissions, and readiness scores changed: `NO`.
+- Screenshot: `docs/operations/demo-smoke-screenshots/admin-dashboard-visual-redesign.png`.
+
 ## 2026-06-11 Full Route Alignment Pass
 
 - Recovered the Claude design handoff and confirmed the Quiet Institutional Command Center direction.
