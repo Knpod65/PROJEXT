@@ -14,9 +14,17 @@ import { usePaymentDocumentSettings } from "@/hooks/domain/usePaymentDocumentSet
 import { usePaymentDocumentReviewChecklist } from "@/hooks/domain/usePaymentDocumentReviewChecklist";
 import { usePaymentDocumentReviews } from "@/hooks/domain/usePaymentDocumentReviews";
 import { useI18n } from "@/i18n";
-import { exportOfficialPaymentDraftExcel } from "@/services/officialPaymentDraft.service";
+import {
+  exportFinanceSupportingRosterExcel,
+  exportOfficialPaymentDraftExcel,
+  getFinanceSupportingRosterStatus,
+} from "@/services/officialPaymentDraft.service";
 import { useAuth } from "@/store/auth.store";
-import type { OfficialPaymentDraftManualPaperRow, OfficialPaymentDraftRow } from "@/types/officialPaymentDraft";
+import type {
+  FinanceSupportingRosterStatus,
+  OfficialPaymentDraftManualPaperRow,
+  OfficialPaymentDraftRow,
+} from "@/types/officialPaymentDraft";
 import type { PaymentDocumentReviewRecord, PaymentDocumentReviewStatus } from "@/types/paymentDocumentReview";
 import type {
   PaymentDocumentReviewChecklistItem,
@@ -171,6 +179,9 @@ export default function OfficialPaymentDocumentDraft() {
   const [paperRows, setPaperRows] = useState<EditablePaperRow[]>([newPaperRow()]);
   const { data, isError, isLoading, preview } = useOfficialPaymentDraftPreview();
   const [isExporting, setIsExporting] = useState(false);
+  const [isRosterExporting, setIsRosterExporting] = useState(false);
+  const [rosterStatus, setRosterStatus] = useState<FinanceSupportingRosterStatus | null>(null);
+  const [rosterStatusError, setRosterStatusError] = useState(false);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewDecision, setReviewDecision] = useState("");
   const [reviewStatus, setReviewStatus] = useState<PaymentDocumentReviewStatus>("DRAFT_READY_FOR_REVIEW");
@@ -184,6 +195,7 @@ export default function OfficialPaymentDocumentDraft() {
   const settingsTerm = useMemo(() => `${semester || "2"}/${academicYear || "2568"}`, [academicYear, semester]);
   const reviewTerm = useMemo(() => `${semester || "-"} / ${academicYear || "-"}`, [academicYear, semester]);
   const reviewRecords = usePaymentDocumentReviews(documentId);
+  const latestReviewStatus = reviewRecords.latestRecord?.review_status ?? "DRAFT_NOT_AUTHORIZED";
   const checklist = usePaymentDocumentReviewChecklist(documentId);
   const paymentSettings = usePaymentDocumentSettings(settingsTerm);
   const settingsSourceStatus = data?.metadata.settings_source_status
@@ -351,6 +363,45 @@ export default function OfficialPaymentDocumentDraft() {
     }
   };
 
+  const supportingRosterPayload = () => ({
+    period_id: periodId ? Number(periodId) : null,
+    academic_year: academicYear || null,
+    semester: semester || null,
+    exam_type: examType || null,
+  });
+
+  const refreshRosterStatus = async () => {
+    if (!canManageReview) return;
+    setRosterStatusError(false);
+    try {
+      setRosterStatus(await getFinanceSupportingRosterStatus(supportingRosterPayload()));
+    } catch {
+      setRosterStatus(null);
+      setRosterStatusError(true);
+    }
+  };
+
+  const submitRosterExport = async () => {
+    if (!rosterStatus?.available) return;
+    setIsRosterExporting(true);
+    try {
+      const blob = await exportFinanceSupportingRosterExcel(supportingRosterPayload());
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `EMS_DRAFT_FINANCE_ROSTER_${semester}-${academicYear}_draft.xlsx`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsRosterExporting(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshRosterStatus();
+  // Refresh when the requested finance-roster scope or accepted review changes.
+  }, [academicYear, canManageReview, examType, latestReviewStatus, periodId, semester]);
+
   const submitReview = async () => {
     if (!canCommentReview) return;
     const requestedStatus = canManageReview ? reviewStatus : "DRAFT_READY_FOR_REVIEW";
@@ -368,8 +419,6 @@ export default function OfficialPaymentDocumentDraft() {
     setReviewComment("");
     setReviewDecision("");
   };
-
-  const latestReviewStatus = reviewRecords.latestRecord?.review_status ?? "DRAFT_NOT_AUTHORIZED";
 
   return (
     <div className="page-stack page-stack--spacious">
@@ -622,21 +671,34 @@ export default function OfficialPaymentDocumentDraft() {
             {t("common.reset")}
           </Button>
           {canManageReview && (
-            <Button
-              type="button"
-              variant="outline"
-              iconLeft={<Icon name="download" />}
-              loading={isExporting}
-              disabled={latestReviewStatus !== "ACCEPTED_FOR_DRAFT_EXPORT" || !data}
-              title={
-                latestReviewStatus !== "ACCEPTED_FOR_DRAFT_EXPORT"
-                  ? t("paymentDraft.actions.exportGated")
-                  : undefined
-              }
-              onClick={submitExport}
-            >
-              {t("paymentDraft.actions.exportDraft")}
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                iconLeft={<Icon name="download" />}
+                loading={isExporting}
+                disabled={latestReviewStatus !== "ACCEPTED_FOR_DRAFT_EXPORT" || !data}
+                title={
+                  latestReviewStatus !== "ACCEPTED_FOR_DRAFT_EXPORT"
+                    ? t("paymentDraft.actions.exportGated")
+                    : undefined
+                }
+                onClick={submitExport}
+              >
+                {t("paymentDraft.actions.exportDraft")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                iconLeft={<Icon name="download" />}
+                loading={isRosterExporting}
+                disabled={!rosterStatus?.available}
+                title={!rosterStatus?.available ? rosterStatus?.blocked_reasons.join("; ") : undefined}
+                onClick={submitRosterExport}
+              >
+                {t("paymentDraft.financeRoster.button")}
+              </Button>
+            </>
           )}
         </div>
         <AlertBanner
@@ -648,6 +710,47 @@ export default function OfficialPaymentDocumentDraft() {
             ? t("paymentDraft.actions.exportSafetyReady")
             : t("paymentDraft.actions.exportSafetyBlocked")}
         </AlertBanner>
+        {canManageReview ? (
+          <div className="mt-4 page-stack">
+            <AlertBanner
+              variant={rosterStatus?.available ? "info" : "warning"}
+              title={t("paymentDraft.financeRoster.title")}
+              action={<Badge variant={rosterStatus?.available ? "green" : "gold"}>
+                {rosterStatus?.available ? t("paymentDraft.financeRoster.ready") : t("paymentDraft.financeRoster.blocked")}
+              </Badge>}
+            >
+              {t("paymentDraft.financeRoster.explanation")}
+            </AlertBanner>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="summary-box">
+                <span>{t("paymentDraft.financeRoster.reviewStatus")}</span>
+                <strong>{rosterStatus?.review_status ?? "-"}</strong>
+              </div>
+              <div className="summary-box">
+                <span>{t("paymentDraft.financeRoster.settingsStatus")}</span>
+                <strong>{rosterStatus?.settings_source_status ?? "-"}</strong>
+              </div>
+              <div className="summary-box">
+                <span>{t("paymentDraft.financeRoster.rosterStatus")}</span>
+                <strong>{rosterStatus?.post_optimize_roster_status ?? "-"}</strong>
+              </div>
+              <div className="summary-box">
+                <span>{t("paymentDraft.financeRoster.mappingStatus")}</span>
+                <strong>{rosterStatus?.paper_distribution_mapping_status ?? "-"}</strong>
+              </div>
+            </div>
+            {rosterStatusError || (rosterStatus?.blocked_reasons.length ?? 0) > 0 ? (
+              <AlertBanner variant="warning" title={t("paymentDraft.financeRoster.blockedReasons")}>
+                {rosterStatusError
+                  ? t("paymentDraft.financeRoster.statusError")
+                  : rosterStatus?.blocked_reasons.join("; ")}
+              </AlertBanner>
+            ) : null}
+            <Button type="button" size="sm" variant="ghost" onClick={() => void refreshRosterStatus()}>
+              {t("common.refresh")}
+            </Button>
+          </div>
+        ) : null}
       </Card>
 
       {isError ? (

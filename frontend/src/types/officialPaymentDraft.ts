@@ -15,6 +15,30 @@ export interface OfficialPaymentDraftRequest {
   paper_distribution_rows: OfficialPaymentDraftManualPaperRow[];
 }
 
+export interface FinanceSupportingRosterRequest {
+  period_id?: number | null;
+  academic_year?: string | null;
+  semester?: string | null;
+  exam_type?: string | null;
+  date_from?: string | null;
+  date_to?: string | null;
+}
+
+export interface FinanceSupportingRosterStatus {
+  available: boolean;
+  review_status: string;
+  settings_status: string | null;
+  settings_source_status: string;
+  post_optimize_roster_status: string;
+  live_supervision_count: number;
+  paper_distribution_assignment_count: number;
+  paper_distribution_mapping_status: string;
+  blocked_reasons: string[];
+  payment_authorization_enabled: false;
+  final_export_enabled: false;
+  export_status: "DRAFT_SUPPORTING_EXPORT_ONLY";
+}
+
 export interface OfficialPaymentDraftMetadata {
   academic_year: string | null;
   semester: string | null;
