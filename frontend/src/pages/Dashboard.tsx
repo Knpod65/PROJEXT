@@ -16,8 +16,8 @@ import { useAsyncData } from "@/hooks/useAsyncData";
 import { useI18n } from "@/i18n";
 import { getDashboardAnalytics, getDashboardStats } from "@/services/dashboard.service";
 import { useAuth } from "@/store/auth.store";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { formatCurrency, formatNumber, formatPercent, formatRole } from "@/utils/format";
-import { getEffectiveRole } from "@/utils/roles";
 import { canManageUsers } from "@/utils/permissions";
 
 function buildOverviewHighlights(
@@ -53,7 +53,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
 
   const statsLoader = useCallback(() => getDashboardStats(), []);
   const analyticsLoader = useCallback(() => (canManageUsers(user) ? getDashboardAnalytics() : Promise.resolve(null)), [user]);

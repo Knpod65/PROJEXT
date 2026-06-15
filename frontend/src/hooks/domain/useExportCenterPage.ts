@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useAsyncData } from "@/hooks/useAsyncData";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { translate } from "@/i18n";
 import {
   getPaperDistributionAssignments,
@@ -7,8 +8,6 @@ import {
   type PaperDistributionAssignmentRow,
   type WorkloadSummaryRow,
 } from "@/services/optimizer.service";
-import { useAuth } from "@/store/auth.store";
-import { getEffectiveRole } from "@/utils/roles";
 import { formatNumber } from "@/utils/format";
 import { buildDocumentExportUrl } from "@/services/documents.service";
 import { buildApiUrl } from "@/services/api";
@@ -49,8 +48,7 @@ function openExport(url: string) {
 }
 
 export function useExportCenterPage(): UseExportCenterPageReturn {
-  const { user } = useAuth();
-  const effectiveRole = getEffectiveRole(user);
+  const effectiveRole = useEffectiveRole();
   const isAdmin = effectiveRole === "admin";
 
   const workloadLoader = () => getStaffWorkloadReport();

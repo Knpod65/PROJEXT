@@ -8,7 +8,7 @@ interface PermissionDeniedStateProps {
 
 export function PermissionDeniedState({ message }: PermissionDeniedStateProps) {
   return (
-    <div className="flex items-center justify-center p-8">
+    <div className="system-state">
       <EmptyState
         icon={<Icon name="shield" />}
         title={message || translate("app.unauthorized.title")}

@@ -16,11 +16,11 @@ import {
   signWorkflow,
 } from "@/services/workflow.service";
 import { useAuth } from "@/store/auth.store";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { usePeriod } from "@/store/period.store";
 import { useUi } from "@/store/ui.store";
 import type { ScheduleWithSection, WorkflowIssueItem, WorkflowIssueType, WorkflowSession } from "@/types/api";
 import { canManageExamPeriods, canSignWorkflow } from "@/utils/permissions";
-import { getEffectiveRole } from "@/utils/roles";
 
 const ISSUE_TYPES: WorkflowIssueType[] = [
   "no_invigilator_assigned",
@@ -261,7 +261,7 @@ export function WorkflowV2Page() {
   const { toast } = useUi();
   const { user } = useAuth();
   const { activePeriod } = usePeriod();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
   const isAdmin = canManageExamPeriods(user);
   const canSign = canSignWorkflow(user);
 

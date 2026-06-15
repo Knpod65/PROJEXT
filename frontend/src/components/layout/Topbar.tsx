@@ -5,7 +5,6 @@ import { useAuth } from "@/store/auth.store";
 import { usePeriod } from "@/store/period.store";
 import { getRoleTheme } from "@/theme/roleThemes";
 import { formatRole } from "@/utils/format";
-import { getEffectiveRole } from "@/utils/roles";
 import { LanguageToggle } from "../ui/LanguageToggle";
 import { Icon } from "../ui/Icon";
 
@@ -18,7 +17,7 @@ export function Topbar({ description, title }: TopbarProps) {
   const { locale, t } = useI18n();
   const { activePeriod } = usePeriod();
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
   const theme = getRoleTheme(role);
   const [currentTime, setCurrentTime] = useState(() => new Date());
 
@@ -59,3 +58,4 @@ export function Topbar({ description, title }: TopbarProps) {
     </header>
   );
 }
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";

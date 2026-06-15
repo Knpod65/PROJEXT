@@ -17,9 +17,9 @@ import {
   updateExternalExam,
 } from "@/services/external.service";
 import { useAuth } from "@/store/auth.store";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useUi } from "@/store/ui.store";
 import type { ExternalExam, ExternalExamAssignmentPreview } from "@/types/api";
-import { getEffectiveRole } from "@/utils/roles";
 import { canManageExamPeriods, canAccessExternalExams } from "@/utils/permissions";
 
 interface ExamFormData {
@@ -376,7 +376,7 @@ export function ExternalPage() {
   const { t } = useI18n();
   const { toast } = useUi();
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
   const canManage = canManageExamPeriods(user);
   const canOptimize = canAccessExternalExams(user);
 

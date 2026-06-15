@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 
 import { appPages, getNavGroupLabel, getPageDescription, getPageTitle, navGroupOrder } from "@/config/navigation";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/store/auth.store";
 import { usePeriod } from "@/store/period.store";
@@ -30,7 +31,7 @@ export function Sidebar() {
   const { t } = useI18n();
   const { signOut, user } = useAuth();
   const { activePeriod } = usePeriod();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
   const theme = getRoleTheme(role);
   const groupedPages = getGroupedPages(role, user);
 

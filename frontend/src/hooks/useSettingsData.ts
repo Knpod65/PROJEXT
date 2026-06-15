@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { type AppLanguage, useI18n } from "@/i18n";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useAuth } from "@/store/auth.store";
 import type { RoleTheme } from "@/theme/roleThemes";
 import { getRoleTheme } from "@/theme/roleThemes";
 import type { UserRole } from "@/types/api";
-import { getEffectiveRole } from "@/utils/roles";
 
 interface GeneralSettingsDraft {
   systemName: string;
@@ -50,7 +50,7 @@ const initialAccessSettings: AccessSettingsDraft = {
 export function useSettingsData() {
   const { language, setLanguage, t } = useI18n();
   const { switchViewAs, user } = useAuth();
-  const activeRole = getEffectiveRole(user);
+  const activeRole = useEffectiveRole();
   const activeTheme = getRoleTheme(activeRole);
   const [generalSettings, setGeneralSettings] = useState(initialGeneralSettings);
   const [localizationSettings, setLocalizationSettings] = useState<LocalizationSettingsDraft>({

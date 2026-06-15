@@ -12,11 +12,11 @@ import { useI18n } from "@/i18n";
 import { useSwapsLive, type SwapsTab } from "@/hooks/useSwapsLive";
 import type { MySupervisionSlot } from "@/services/swap.service";
 import { useAuth } from "@/store/auth.store";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useUi } from "@/store/ui.store";
 import type { SwapItem } from "@/types/api";
 import { formatDateTime } from "@/utils/format";
 import { canManageExamPeriods } from "@/utils/permissions";
-import { getEffectiveRole } from "@/utils/roles";
 
 function SwapStatusBadge({ status }: { status: string }) {
   const { t } = useI18n();
@@ -149,7 +149,7 @@ export function SwapsV2Page() {
   const { t } = useI18n();
   const { toast } = useUi();
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
   const isAdmin = canManageExamPeriods(user);
 
   const {

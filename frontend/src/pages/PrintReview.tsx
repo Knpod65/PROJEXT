@@ -15,10 +15,10 @@ import {
   sendMessage,
 } from "@/services/submission.service";
 import { useAuth } from "@/store/auth.store";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { usePeriod } from "@/store/period.store";
 import { useUi } from "@/store/ui.store";
 import type { SubmissionDetail, SubmissionListItem } from "@/types/api";
-import { getEffectiveRole } from "@/utils/roles";
 import { canApproveSubmission } from "@/utils/permissions";
 
 // ── Status badge ───────────────────────────────────────────────
@@ -273,7 +273,7 @@ export function PrintReviewPage() {
   const { toast } = useUi();
   const { user } = useAuth();
   const { activePeriod } = usePeriod();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
   const isAdmin = canApproveSubmission(user);
 
   const [items, setItems] = useState<SubmissionListItem[]>([]);

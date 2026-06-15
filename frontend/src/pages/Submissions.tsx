@@ -14,18 +14,18 @@ import { Tabs } from "@/components/ui/Tabs";
 import { useI18n } from "@/i18n";
 import { listMessages, listSubmissions, sendMessage } from "@/services/submission.service";
 import { useAuth } from "@/store/auth.store";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useUi } from "@/store/ui.store";
 import type { SubmissionListItem, SubmissionMessage } from "@/types/api";
 import { formatDateTime } from "@/utils/format";
 import { canViewOwnExamWork } from "@/utils/permissions";
-import { getEffectiveRole } from "@/utils/roles";
 
 type SubmissionTab = "all" | "pending" | "approved" | "rejected";
 
 export function SubmissionsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
   const { toast } = useUi();
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<SubmissionTab>("all");

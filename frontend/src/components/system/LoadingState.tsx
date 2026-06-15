@@ -8,7 +8,7 @@ interface LoadingStateProps {
 
 export function LoadingState({ message }: LoadingStateProps) {
   return (
-    <div className="flex items-center justify-center p-8">
+    <div className="system-state">
       <EmptyState
         icon={<Icon name="progress_activity" className="animate-spin" />}
         title={message || translate("common.loading")}

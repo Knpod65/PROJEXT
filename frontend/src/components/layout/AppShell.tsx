@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 
 import { getPageDescription, getPageTitle, type AppPageConfig } from "@/config/navigation";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useI18n } from "@/i18n";
-import { useAuth } from "@/store/auth.store";
-import { getEffectiveRole } from "@/utils/roles";
 
 import { MobileBottomNav } from "./MobileBottomNav";
 import { Sidebar } from "./Sidebar";
@@ -17,8 +16,7 @@ interface AppShellProps {
 
 export function AppShell({ children, page, title }: AppShellProps) {
   const { t } = useI18n();
-  const { user } = useAuth();
-  const role = getEffectiveRole(user);
+  const role = useEffectiveRole();
   const resolvedTitle = page ? getPageTitle(page) : title;
   const resolvedDescription = page ? getPageDescription(page) : undefined;
 
