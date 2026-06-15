@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
 import { Tabs } from "@/components/ui/Tabs";
 import { useI18n } from "@/i18n";
 import {
@@ -171,12 +172,19 @@ function SessionPanel({
 
   const r1 = session.round1;
   const r2 = session.round2;
+  const statusTones: Record<string, StatusTone> = {
+    draft: "draft",
+    confirming: "warning",
+    confirmed: "success",
+    swap_open: "information",
+    locked: "blocked",
+  };
 
   return (
     <div className="optimizer-section">
       <div className="optimizer-session-status">
-        <span className={`session-badge session-badge--${session.status}`}>{t(`optimizer.session.status.${session.status}`)}</span>
-        {session.baseline_saved ? <span className="session-badge session-badge--success">{t("optimizer.session.baselineSaved")}</span> : null}
+        <StatusChip tone={statusTones[session.status] ?? "neutral"}>{t(`optimizer.session.status.${session.status}`)}</StatusChip>
+        {session.baseline_saved ? <StatusChip tone="success">{t("optimizer.session.baselineSaved")}</StatusChip> : null}
       </div>
 
       {r1 ? (

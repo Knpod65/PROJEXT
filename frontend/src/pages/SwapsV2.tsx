@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
 import { Tabs } from "@/components/ui/Tabs";
 import { useI18n } from "@/i18n";
 import { useSwapsLive, type SwapsTab } from "@/hooks/useSwapsLive";
@@ -20,8 +21,14 @@ import { canManageExamPeriods } from "@/utils/permissions";
 
 function SwapStatusBadge({ status }: { status: string }) {
   const { t } = useI18n();
-  const cls = `swap-badge swap-badge--${status}`;
-  return <span className={cls}>{t(`legacy.swaps.status.${status}`)}</span>;
+  const tones: Record<string, StatusTone> = {
+    pending: "warning",
+    approved: "success",
+    rejected: "danger",
+    cancelled: "neutral",
+    applied: "information",
+  };
+  return <StatusChip tone={tones[status] ?? "neutral"}>{t(`legacy.swaps.status.${status}`)}</StatusChip>;
 }
 
 function ShiftCell({ shift }: { shift: SwapItem["my_shift"] }) {

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { useI18n } from "@/i18n";
 import {
   addRoomUnavailability,
@@ -27,11 +28,7 @@ type SlotDefinition = {
 
 function RoomStatusBadge({ active }: { active: boolean }) {
   const { t } = useI18n();
-  return (
-    <span className={`room-badge ${active ? "room-badge--active" : "room-badge--inactive"}`}>
-      {active ? t("status.active") : t("status.inactive")}
-    </span>
-  );
+  return <StatusChip tone={active ? "success" : "neutral"}>{active ? t("status.active") : t("status.inactive")}</StatusChip>;
 }
 
 function toMinutes(value: string) {

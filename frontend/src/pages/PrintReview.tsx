@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
 import { Tabs } from "@/components/ui/Tabs";
 import { useI18n } from "@/i18n";
 import {
@@ -25,15 +26,14 @@ import { canApproveSubmission } from "@/utils/permissions";
 
 function StatusBadge({ status }: { status: string }) {
   const { t } = useI18n();
-  const map: Record<string, { labelKey: string; cls: string }> = {
-    draft:     { labelKey: "legacy.printReview.status.draft",     cls: "pr-badge pr-badge--draft" },
-    submitted: { labelKey: "legacy.printReview.status.submitted", cls: "pr-badge pr-badge--submitted" },
-    approved:  { labelKey: "legacy.printReview.status.approved",  cls: "pr-badge pr-badge--approved" },
-    rejected:  { labelKey: "legacy.printReview.status.rejected",  cls: "pr-badge pr-badge--rejected" },
-    released:  { labelKey: "legacy.printReview.status.released",  cls: "pr-badge pr-badge--released" },
+  const tones: Record<string, StatusTone> = {
+    draft: "draft",
+    submitted: "warning",
+    approved: "success",
+    rejected: "danger",
+    released: "information",
   };
-  const entry = map[status];
-  return <span className={entry?.cls ?? "pr-badge"}>{entry ? t(entry.labelKey) : status}</span>;
+  return <StatusChip tone={tones[status] ?? "neutral"}>{t(`legacy.printReview.status.${status}`)}</StatusChip>;
 }
 
 function PrintSpecBadge({ duplex, staple }: { duplex?: boolean; staple?: string }) {

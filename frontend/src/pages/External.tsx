@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
 import { useI18n } from "@/i18n";
 import {
   applyExternalExamAssignment,
@@ -49,13 +50,13 @@ function emptyForm(): ExamFormData {
 function ExamStatusBadge({ status }: { status: string | undefined }) {
   const { t } = useI18n();
   const normalized = status ?? "draft";
-  const classMap: Record<string, string> = {
-    draft: "ext-badge ext-badge--draft",
-    confirmed: "ext-badge ext-badge--confirmed",
-    completed: "ext-badge ext-badge--completed",
-    cancelled: "ext-badge ext-badge--cancelled",
+  const tones: Record<string, StatusTone> = {
+    draft: "draft",
+    confirmed: "information",
+    completed: "success",
+    cancelled: "neutral",
   };
-  return <span className={classMap[normalized] ?? "ext-badge"}>{t(`legacy.external.status.${normalized}`)}</span>;
+  return <StatusChip tone={tones[normalized] ?? "neutral"}>{t(`legacy.external.status.${normalized}`)}</StatusChip>;
 }
 
 function ExamFormModal({
