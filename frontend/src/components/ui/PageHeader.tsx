@@ -16,7 +16,7 @@ export function PageHeader({ actions, className, description, eyebrow, status, t
     <section className={cx("page-hero", className)}>
       <div>
         <span className="page-hero__eyebrow">{eyebrow}</span>
-        <h2 className="page-hero__title">{title}</h2>
+        <h1 className="page-hero__title">{title}</h1>
         {description ? <p className="page-hero__description">{description}</p> : null}
       </div>
       {actions || status ? (

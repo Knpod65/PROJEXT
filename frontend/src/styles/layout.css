@@ -22,6 +22,8 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   padding: 20px;
   background: color-mix(in srgb, var(--role-sidebar-bg) 88%, white 12%);
   border-right: 1px solid var(--role-sidebar-border);
@@ -98,6 +100,7 @@
 .sidebar__nav {
   min-height: 0;
   overflow: auto;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -190,8 +193,8 @@
 }
 
 .topbar {
-  min-height: 84px;
-  padding: 18px 28px;
+  min-height: 72px;
+  padding: 12px 28px;
   display: flex;
   justify-content: space-between;
   gap: 24px;
@@ -210,10 +213,9 @@
   gap: 6px;
 }
 
-.topbar__title {
-  margin: 0;
-  font-size: clamp(1.45rem, 2vw, 1.8rem);
-  letter-spacing: -0.03em;
+.topbar__context {
+  font-size: 1rem;
+  letter-spacing: -0.01em;
 }
 
 .topbar__description {
@@ -452,6 +454,48 @@
 }
 
 @media (max-width: 1199px) {
+  .app-shell {
+    grid-template-columns: 232px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .sidebar__brand,
+  .sidebar__summary,
+  .sidebar__footer-card {
+    border-radius: 18px;
+  }
+
+  .sidebar__brand {
+    padding: 12px;
+  }
+
+  .sidebar__brand-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .sidebar__brand-copy p,
+  .sidebar__summary p,
+  .sidebar__footer-card p {
+    display: none;
+  }
+
+  .sidebar__summary,
+  .sidebar__footer-card {
+    padding: 12px;
+  }
+
+  .sidebar__link,
+  .sidebar__logout {
+    padding: 11px 12px;
+    border-radius: 14px;
+  }
+
   .sidebar__link-copy small {
     display: none;
   }

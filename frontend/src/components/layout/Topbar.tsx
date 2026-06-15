@@ -8,12 +8,7 @@ import { formatRole } from "@/utils/format";
 import { LanguageToggle } from "../ui/LanguageToggle";
 import { Icon } from "../ui/Icon";
 
-interface TopbarProps {
-  title: string;
-  description?: string;
-}
-
-export function Topbar({ description, title }: TopbarProps) {
+export function Topbar() {
   const { locale, t } = useI18n();
   const { activePeriod } = usePeriod();
   const { user } = useAuth();
@@ -33,8 +28,8 @@ export function Topbar({ description, title }: TopbarProps) {
     <header className="topbar">
       <div className="topbar__heading">
         <span className="topbar__eyebrow">{theme.badgeLabel}</span>
-        <h1 className="topbar__title">{title}</h1>
-        <p className="topbar__description">{description ?? activePeriod?.label ?? t("app.shell.workspaceDescription")}</p>
+        <strong className="topbar__context">{activePeriod?.label ?? t("common.noActiveExamPeriod")}</strong>
+        <p className="topbar__description">{t("app.shell.workspaceDescription")}</p>
       </div>
 
       <div className="topbar__actions">

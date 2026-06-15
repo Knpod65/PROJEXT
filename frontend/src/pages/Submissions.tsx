@@ -118,7 +118,7 @@ export function SubmissionsPage() {
       <section className="page-hero page-hero--submissions">
         <div>
           <span className="page-hero__eyebrow">{t("legacy.submissions.eyebrow")}</span>
-          <h2 className="page-hero__title">{t("legacy.submissions.title")}</h2>
+          <h1 className="page-hero__title">{t("legacy.submissions.title")}</h1>
           <p className="page-hero__description">{t("legacy.submissions.description")}</p>
         </div>
         <div className="page-hero__actions">

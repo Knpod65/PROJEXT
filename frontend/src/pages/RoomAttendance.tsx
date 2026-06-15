@@ -58,7 +58,7 @@ export function RoomAttendancePage() {
       <section className="page-hero page-hero--attendance">
         <div>
           <span className="page-hero__eyebrow">{t("attendance.heroEyebrow")}</span>
-          <h2 className="page-hero__title">{t("attendance.heroTitle")}</h2>
+          <h1 className="page-hero__title">{t("attendance.heroTitle")}</h1>
           <p className="page-hero__description">{t("attendance.heroDescription")}</p>
         </div>
         <div className="page-hero__actions">

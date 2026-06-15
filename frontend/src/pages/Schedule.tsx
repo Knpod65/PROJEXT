@@ -96,7 +96,7 @@ export function SchedulePage() {
       <section className="page-hero">
         <div>
           <span className="page-hero__eyebrow">Master schedule oversight</span>
-          <h2 className="page-hero__title">Reusable schedule board</h2>
+          <h1 className="page-hero__title">Reusable schedule board</h1>
           <p className="page-hero__description">
             This page adapts the chosen admin master schedule Stitch export into a reusable EMS board with real filtering, grouped tables, and the working export endpoints.
           </p>

@@ -112,7 +112,7 @@ export function HistoricalSchedulesPage() {
       <section className="page-hero page-hero--dashboard">
         <div>
           <span className="page-hero__eyebrow">{translateWithFallback("historical.eyebrow", "History")}</span>
-          <h2 className="page-hero__title">Historical Schedules</h2>
+          <h1 className="page-hero__title">Historical Schedules</h1>
           <p className="page-hero__description">Compare optimized baseline vs final adjusted imports.</p>
         </div>
       </section>

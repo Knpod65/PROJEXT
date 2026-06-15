@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 
-import { getPageDescription, getPageTitle, type AppPageConfig } from "@/config/navigation";
+import type { AppPageConfig } from "@/config/navigation";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
-import { useI18n } from "@/i18n";
 
 import { MobileBottomNav } from "./MobileBottomNav";
 import { Sidebar } from "./Sidebar";
@@ -14,11 +13,8 @@ interface AppShellProps {
   children: ReactNode;
 }
 
-export function AppShell({ children, page, title }: AppShellProps) {
-  const { t } = useI18n();
+export function AppShell({ children }: AppShellProps) {
   const role = useEffectiveRole();
-  const resolvedTitle = page ? getPageTitle(page) : title;
-  const resolvedDescription = page ? getPageDescription(page) : undefined;
 
   return (
     <div
@@ -28,7 +24,7 @@ export function AppShell({ children, page, title }: AppShellProps) {
     >
       <Sidebar />
       <div className="app-shell__main">
-        <Topbar description={resolvedDescription} title={resolvedTitle || t("app.shell.controlCenter")} />
+        <Topbar />
         <main className="app-shell__content">{children}</main>
       </div>
       <MobileBottomNav />

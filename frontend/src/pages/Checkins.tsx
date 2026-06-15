@@ -371,7 +371,7 @@ export function CheckinsPage() {
       <section className="page-hero page-hero--attendance">
         <div>
           <span className="page-hero__eyebrow">{t("checkins.heroEyebrow")}</span>
-          <h2 className="page-hero__title">{t("checkins.heroTitle")}</h2>
+          <h1 className="page-hero__title">{t("checkins.heroTitle")}</h1>
           <p className="page-hero__description">{t("checkins.heroDescription")}</p>
         </div>
         <div className="page-hero__actions">

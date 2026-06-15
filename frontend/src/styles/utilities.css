@@ -12,8 +12,8 @@
   align-items: end;
   justify-content: space-between;
   gap: 24px;
-  padding: 28px;
-  border-radius: 30px;
+  padding: 22px 24px;
+  border-radius: 24px;
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--role-accent-soft) 88%, white 12%), transparent 34%),
     rgba(255, 255, 255, 0.86);
@@ -23,7 +23,7 @@
 
 .page-hero__eyebrow {
   display: inline-block;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: var(--role-accent-text);
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -33,14 +33,14 @@
 
 .page-hero__title {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 2.9rem);
-  line-height: 1.02;
-  letter-spacing: -0.05em;
+  font-size: clamp(1.65rem, 3vw, 2.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
 }
 
 .page-hero__description {
   max-width: 760px;
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   color: var(--text-mid);
   font-size: 1rem;
   line-height: 1.7;
@@ -82,7 +82,7 @@
 }
 
 .summary-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .summary-box {
@@ -162,9 +162,16 @@
   .attendance-detail-grid {
     grid-template-columns: 1fr;
   }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 767px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
   .alert-banner,
   .alert-banner__action,
   .form-grid--paper {
