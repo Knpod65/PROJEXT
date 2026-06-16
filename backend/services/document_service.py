@@ -15,7 +15,6 @@ import zipfile
 from typing import Optional
 
 from fastapi import HTTPException, Request
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
@@ -59,6 +58,7 @@ from serializers.document_serializer import (
     serialize_pickup_qr_bundle,
     serialize_schedule_summary,
 )
+from services.thai_export_service import binary_streaming_response
 
 
 QR_IMAGE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "qr_regulation.png")
@@ -147,13 +147,13 @@ class DocumentService:
 
         if doc_type == "cover_page":
             filename = f"ใบปะหน้า_{prefix}.docx"
-            return StreamingResponse(io.BytesIO(docs["cover_page"]), media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+            return binary_streaming_response(docs["cover_page"], media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", filename=filename)
         if doc_type == "envelope":
             filename = f"ปกซอง_{prefix}.docx"
-            return StreamingResponse(io.BytesIO(docs["envelope"]), media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+            return binary_streaming_response(docs["envelope"], media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", filename=filename)
         if doc_type == "attendance":
             filename = f"ใบลงมือชื่อ_{prefix}.docx"
-            return StreamingResponse(io.BytesIO(docs["attendance"]), media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+            return binary_streaming_response(docs["attendance"], media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", filename=filename)
 
         zip_buf = io.BytesIO()
         with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -161,7 +161,7 @@ class DocumentService:
             zf.writestr(f"ปกซอง_{prefix}.docx", docs["envelope"])
             zf.writestr(f"ใบลงมือชื่อ_{prefix}.docx", docs["attendance"])
         zip_buf.seek(0)
-        return StreamingResponse(zip_buf, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="เอกสารสอบ_{prefix}.zip"'})
+        return binary_streaming_response(zip_buf, media_type="application/zip", filename=f"เอกสารสอบ_{prefix}.zip")
 
     def generate_batch_documents(self, request: Request, current_user: models.User, *, semester: str, academic_year: str, exam_type: str, doc_type: str = "all"):
         exam_type_enum = models.ExamType.final if exam_type == "final" else models.ExamType.midterm
@@ -191,7 +191,7 @@ class DocumentService:
         zip_buf.seek(0)
         exam_type_th = "ปลายภาค" if exam_type == "final" else "กลางภาค"
         fname = f"เอกสารสอบ_{exam_type_th}_{academic_year}_ภาค{semester}.zip"
-        return StreamingResponse(zip_buf, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{fname}"'})
+        return binary_streaming_response(zip_buf, media_type="application/zip", filename=fname)
 
     def preview_document_info(self, schedule_id: int) -> dict[str, object]:
         schedule = load_schedule(self.db, schedule_id)
@@ -336,7 +336,12 @@ class DocumentService:
         preview_pdf = merge_exam_with_cover(stamped, cover_bytes) if cover_bytes else stamped
         course_id = course.course_id if course else "exam"
         section_no = section.section_no
-        return StreamingResponse(io.BytesIO(preview_pdf), media_type="application/pdf", headers={"Content-Disposition": f'inline; filename="preview_{course_id}_sec{section_no}.pdf"'})
+        return binary_streaming_response(
+            preview_pdf,
+            media_type="application/pdf",
+            filename=f"preview_{course_id}_sec{section_no}.pdf",
+            disposition="inline",
+        )
 
     def get_pickup_qr_status(self, schedule_id: int):
         schedule = load_schedule(self.db, schedule_id)
@@ -423,7 +428,7 @@ class DocumentService:
 
         if len(outputs) == 1:
             file_name, pdf_bytes = outputs[0]
-            return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{file_name}"'})
+            return binary_streaming_response(pdf_bytes, media_type="application/pdf", filename=file_name)
 
         scope_bits = [course_id or "all-courses", section_no or "all-sections", str(room_id) if room_id is not None else "all-rooms"]
         scope_label = "_".join(scope_bits)
@@ -432,7 +437,7 @@ class DocumentService:
             for file_name, pdf_bytes in outputs:
                 archive.writestr(file_name, pdf_bytes)
         zip_buffer.seek(0)
-        return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{build_bundle_filename(scope_label, normalized_type)}"'})
+        return binary_streaming_response(zip_buffer, media_type="application/zip", filename=build_bundle_filename(scope_label, normalized_type))
 
     def _get_buffer_pct(self) -> float:
         from routers.settings import get_setting

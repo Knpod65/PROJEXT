@@ -1,10 +1,7 @@
 """Preview-only advance invigilation batch roster routes."""
 from __future__ import annotations
 
-import io
-
 from fastapi import APIRouter, Depends, Query
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 import schemas
@@ -17,6 +14,7 @@ from services.payment_supporting_finance_roster_service import (
     build_finance_support_roster_export,
     get_finance_support_roster_status,
 )
+from services.thai_export_service import workbook_streaming_response
 
 router = APIRouter()
 
@@ -58,14 +56,7 @@ def export_official_payment_document_draft(
     _current_user=Depends(require_view_all),
 ):
     wb, filename = build_payment_document_draft_export(db, payload.model_dump())
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    return StreamingResponse(
-        buf,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    return workbook_streaming_response(wb, filename)
 
 
 @router.post("/finance-support-roster-status")
@@ -84,11 +75,4 @@ def export_finance_support_roster(
     _current_user=Depends(require_view_all),
 ):
     wb, filename = build_finance_support_roster_export(db, payload.model_dump())
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    return StreamingResponse(
-        buf,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    return workbook_streaming_response(wb, filename)

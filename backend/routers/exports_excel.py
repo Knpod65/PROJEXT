@@ -7,10 +7,8 @@ Thin router that delegates to:
 - ExportValidator for validation
 - ExportPolicy for permissions
 """
-import io
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from database import get_db
 import models
@@ -26,6 +24,7 @@ from config.audit_actions import (
 from config.periods import resolve_export_period
 from services.export_service import ExportService
 from services.export_excel_service import ExportExcelService
+from services.thai_export_service import workbook_streaming_response
 from validators.export_validator import ExportValidator
 from validators.export_excel_validator import ExportExcelValidator
 from policies.export_policy import ExportPolicy
@@ -33,15 +32,8 @@ from policies.export_policy import ExportPolicy
 router = APIRouter()
 
 
-def _workbook_response(wb, filename: str) -> StreamingResponse:
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    return StreamingResponse(
-        buf,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+def _workbook_response(wb, filename: str):
+    return workbook_streaming_response(wb, filename)
 
 
 def _style_header(ws, row: int, cols: int, fill_color="0F1B35", font_color="FFFFFF"):

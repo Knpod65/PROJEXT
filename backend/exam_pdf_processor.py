@@ -24,29 +24,19 @@ import io, math
 from typing import List, Optional
 from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas as rl_canvas
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-import os
+
+from services.thai_export_service import register_reportlab_thai_fonts
 
 # ── Font setup ────────────────────────────────────────────────
 _FONT_REGISTERED = False
+_FONT_NAME = "Helvetica"
 
 def _ensure_font():
-    global _FONT_REGISTERED
+    global _FONT_REGISTERED, _FONT_NAME
     if _FONT_REGISTERED:
         return
-    font_candidates = [
-        "/usr/share/fonts/truetype/freefont/FreeSerif.ttf",
-        # เพิ่ม TH Sarabun ถ้า deploy บน server ที่มี
-        "/usr/share/fonts/truetype/thaifonts/THSarabunNew.ttf",
-        "/usr/share/fonts/truetype/tlwg/THSarabunNew.ttf",
-    ]
-    for path in font_candidates:
-        if os.path.exists(path):
-            pdfmetrics.registerFont(TTFont("ExamFont", path))
-            _FONT_REGISTERED = True
-            return
-    # fallback: Helvetica (ภาษาไทยจะไม่แสดง แต่ไม่ crash)
+    registration = register_reportlab_thai_fonts("EMS-Exam-Thai")
+    _FONT_NAME = registration.normal_name
     _FONT_REGISTERED = True
 
 
@@ -77,8 +67,7 @@ def _make_header_overlay(
 
     # ข้อความ
     c.setFillColorRGB(0, 0, 0)
-    font_name = "ExamFont" if _FONT_REGISTERED else "Helvetica"
-    c.setFont(font_name, 9)
+    c.setFont(_FONT_NAME, 9)
 
     text = (
         f"ชื่อ.......................................  "

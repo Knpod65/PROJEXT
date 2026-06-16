@@ -3,7 +3,6 @@ PDF Export Router
 สร้างตารางสอบ PDF ตามรูปแบบไฟล์จริง (ตารางสอบปลายภาค)
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from database import get_db
 import models
@@ -17,6 +16,7 @@ from config.audit_actions import (
 from config.periods import resolve_export_period
 from staff_workloads import get_period_workload_snapshot
 from services.export_service import ExportService
+from services.thai_export_service import binary_streaming_response, register_reportlab_thai_fonts
 from validators.export_validator import ExportValidator
 from policies.export_policy import ExportPolicy
 import io
@@ -66,13 +66,8 @@ def get_distributor_str(supervisions) -> str:
     return ""
 
 
-def _build_pdf_response(buf, filename: str) -> StreamingResponse:
-    buf.seek(0)
-    return StreamingResponse(
-        buf,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
-    )
+def _build_pdf_response(buf, filename: str):
+    return binary_streaming_response(buf, media_type="application/pdf", filename=filename)
 
 
 @router.get("/audit-logs")
@@ -141,24 +136,10 @@ def export_schedule_pdf(
         from reportlab.lib.units import cm, mm
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
         from reportlab.lib.enums import TA_CENTER, TA_LEFT
-        import os
 
-        font_name = "Helvetica"
-        thai_font_paths = [
-            "/usr/share/fonts/truetype/tlwg/THSarabunNew.ttf",
-            "/usr/share/fonts/truetype/noto/NotoSansThai-Regular.ttf",
-        ]
-        for fp in thai_font_paths:
-            if os.path.exists(fp):
-                try:
-                    pdfmetrics.registerFont(TTFont("ThaiFont", fp))
-                    font_name = "ThaiFont"
-                    break
-                except Exception:
-                    pass
+        font_registration = register_reportlab_thai_fonts("EMS-Schedule-Thai")
+        font_name = font_registration.normal_name
 
         schedules = ExportService.get_schedule_export_data(db, semester, academic_year, exam_type)
         if not schedules:
@@ -255,24 +236,32 @@ def export_workload_summary_pdf(
         from reportlab.lib.pagesizes import A4, landscape
         from reportlab.lib.units import cm
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     except ImportError:
         raise HTTPException(500, "กรุณาติดตั้ง reportlab: pip install reportlab")
 
     period = resolve_export_period(db, semester, academic_year, exam_type)
     snapshot = ExportService.get_workload_export_data(db, period)
+    font_registration = register_reportlab_thai_fonts("EMS-Workload-Thai")
+    font_name = font_registration.normal_name
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), leftMargin=1.4 * cm, rightMargin=1.4 * cm, topMargin=1.2 * cm, bottomMargin=1.2 * cm)
     styles = getSampleStyleSheet()
+    title_style = ParagraphStyle("ThaiTitle", parent=styles["Title"], fontName=font_name)
+    normal_style = ParagraphStyle("ThaiNormal", parent=styles["Normal"], fontName=font_name)
     rows = [["Staff", "Department", "Invigilation", "Paper Distribution", "External Exam", "Current Total", "Historical Total"]]
     for row in snapshot["summary"]:
         rows.append([row["staff_name"], row["department"], str(row["invigilation_count"]), str(row["paper_distribution_count"]), str(row["external_exam_count"]), str(row["total_workload"]), str(row["historical_total_workload"])])
     table = Table(rows, repeatRows=1)
-    table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a2d52")), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white), ("FONTNAME", (0, 0), (-1, -1), "Helvetica"), ("FONTSIZE", (0, 0), (-1, -1), 9), ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")), ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")])]))
-    doc.build([Paragraph(f"EMS Staff Workload Summary - {period.label}", styles["Title"]), Paragraph(f"Generated for {current_user.full_name or current_user.username}", styles["Normal"]), Spacer(1, 12), table])
+    table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a2d52")), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white), ("FONTNAME", (0, 0), (-1, -1), font_name), ("FONTSIZE", (0, 0), (-1, -1), 9), ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")), ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")])]))
+    doc.build([Paragraph(f"EMS Staff Workload Summary - {period.label}", title_style), Paragraph(f"Generated for {current_user.full_name or current_user.username}", normal_style), Spacer(1, 12), table])
     buffer.seek(0)
     try:
         log_action(db, current_user, EXPORT_WORKLOAD_SUMMARY_PDF, table_name="staffworkloads", new_values={"file_type": "pdf", "export_scope": "period", "row_count": len(snapshot["summary"]), "semester": period.semester, "academic_year": period.academic_year, "exam_type": period.exam_type}, http_status=200, request=request)
     except Exception:
         pass
-    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="EMS_workload_summary_{period.semester}_{period.academic_year}_{period.exam_type}.pdf"'})
+    return binary_streaming_response(
+        buffer,
+        media_type="application/pdf",
+        filename=f"EMS_workload_summary_{period.semester}_{period.academic_year}_{period.exam_type}.pdf",
+    )

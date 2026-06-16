@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 import math
-import os
 import re
 from datetime import date
 from typing import Iterable
@@ -14,8 +13,9 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+
+from services.thai_export_service import register_reportlab_thai_fonts
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
 FACULTY_NAME = "คณะรัฐศาสตร์และรัฐประศาสนศาสตร์ มหาวิทยาลัยเชียงใหม่"
@@ -41,38 +41,14 @@ _THAI_MONTHS_SHORT = [
 ]
 
 
-def _font_candidates() -> list[tuple[str, str]]:
-    return [
-        ("EMS-Thai", r"C:\Windows\Fonts\THSarabunNew.ttf"),
-        ("EMS-Thai-Bold", r"C:\Windows\Fonts\THSarabunNew Bold.ttf"),
-        ("EMS-Thai", "/usr/share/fonts/truetype/thaifonts/THSarabunNew.ttf"),
-        ("EMS-Thai-Bold", "/usr/share/fonts/truetype/thaifonts/THSarabunNew Bold.ttf"),
-        ("EMS-Thai", "/usr/share/fonts/truetype/tlwg/THSarabunNew.ttf"),
-        ("EMS-Thai-Bold", "/usr/share/fonts/truetype/tlwg/THSarabunNew-Bold.ttf"),
-    ]
-
-
 def ensure_document_fonts() -> tuple[str, str]:
     global _FONT_READY, _FONT_NAME, _FONT_BOLD_NAME
     if _FONT_READY:
         return _FONT_NAME, _FONT_BOLD_NAME
 
-    registered: set[str] = set()
-    for alias, path in _font_candidates():
-        if not os.path.exists(path):
-            continue
-        try:
-            pdfmetrics.registerFont(TTFont(alias, path))
-            registered.add(alias)
-        except Exception:
-            continue
-
-    if "EMS-Thai" in registered:
-        _FONT_NAME = "EMS-Thai"
-    if "EMS-Thai-Bold" in registered:
-        _FONT_BOLD_NAME = "EMS-Thai-Bold"
-    else:
-        _FONT_BOLD_NAME = _FONT_NAME
+    registration = register_reportlab_thai_fonts("EMS-Operational-Thai")
+    _FONT_NAME = registration.normal_name
+    _FONT_BOLD_NAME = registration.bold_name
 
     _FONT_READY = True
     return _FONT_NAME, _FONT_BOLD_NAME

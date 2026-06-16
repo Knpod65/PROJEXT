@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import csv
-import io
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 
 from auth_utils import get_current_user, log_action, require_admin
@@ -23,6 +20,7 @@ from historical_schedule_import import (
     set_room_opening_start_username,
 )
 import models
+from services.thai_export_service import csv_streaming_response
 
 
 router = APIRouter()
@@ -180,17 +178,8 @@ def update_room_opening_start(
     return {"username": saved}
 
 
-def _csv_response(filename: str, header: list[str], rows: list[list[object]]) -> StreamingResponse:
-    buffer = io.StringIO()
-    writer = csv.writer(buffer)
-    writer.writerow(header)
-    writer.writerows(rows)
-    byte_buffer = io.BytesIO(buffer.getvalue().encode("utf-8-sig"))
-    return StreamingResponse(
-        byte_buffer,
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+def _csv_response(filename: str, header: list[str], rows: list[list[object]]):
+    return csv_streaming_response(filename, header, rows)
 
 
 @router.get("/export/comparison-csv")
