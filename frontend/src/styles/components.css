@@ -49,6 +49,7 @@
 }
 
 .ui-card__body {
+  min-width: 0;
   padding: 22px;
 }
 
@@ -789,6 +790,7 @@
 }
 
 .filter-bar {
+  min-width: 0;
   padding: 16px;
   border: 1px solid rgba(231, 226, 218, 0.95);
   border-radius: 22px;
@@ -802,6 +804,7 @@
 
 .filter-bar__fields,
 .filter-bar__actions {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -826,6 +829,7 @@
 
 .form-field,
 .filter-field {
+  min-width: 0;
   display: grid;
   gap: 6px;
 }
@@ -906,6 +910,10 @@
 }
 
 .table-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: visible;
   background: rgba(255, 255, 255, 0.92);
