@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 import models
 from repositories.export_repository import ExportRepository
 from serializers.export_serializer import serialize_export_metadata
+from services.thai_export_service import apply_workbook_thai_style
 
 
 class ExportExcelService:
@@ -106,6 +107,7 @@ class ExportExcelService:
                 ws3.cell(r, 2).number_format = '#,##0.00'
                 ws3.cell(r, 2).font = Font(bold=True, color="C41230", size=13)
 
+        apply_workbook_thai_style(wb, title_rows=(1,), header_rows=(1,))
         filename = f"EMS_compensation_{data.get('semester', '')}_{data.get('academic_year', '')}_{exam_type}.xlsx"
         return wb, filename
 
@@ -137,6 +139,7 @@ class ExportExcelService:
                 for c in range(1, len(headers)+1):
                     ws.cell(i+1, c).fill = PatternFill("solid", fgColor="F8FAFC")
 
+        apply_workbook_thai_style(wb, title_rows=(1,), header_rows=(1,))
         filename = f"EMS_schedule_{data.get('semester', '')}_{data.get('academic_year', '')}_{data.get('exam_type', '')}.xlsx"
         return wb, filename
 
@@ -192,6 +195,7 @@ class ExportExcelService:
             ws.cell(i+1, 8).fill = PatternFill("solid", fgColor=color)
             ws.cell(i+1, 8).font = Font(bold=True)
 
+        apply_workbook_thai_style(wb, title_rows=(1,), header_rows=(1,))
         filename = f"EMS_submissions_{data.get('semester', '')}_{data.get('academic_year', '')}.xlsx"
         return wb, filename
 
@@ -220,6 +224,7 @@ class ExportExcelService:
             ])
 
         period = data.get("period", {})
+        apply_workbook_thai_style(wb, title_rows=(1,), header_rows=(1,))
         filename = f"EMS_workload_summary_{period.get('semester', '')}_{period.get('academic_year', '')}_{period.get('exam_type', '')}.xlsx"
         return wb, filename
 
@@ -247,6 +252,7 @@ class ExportExcelService:
             ])
 
         period = data.get("period", {})
+        apply_workbook_thai_style(wb, title_rows=(1,), header_rows=(1,))
         filename = f"EMS_workload_detail_{period.get('semester', '')}_{period.get('academic_year', '')}_{period.get('exam_type', '')}.xlsx"
         return wb, filename
 
@@ -281,5 +287,6 @@ class ExportExcelService:
             ])
 
         period = data.get("period", {})
+        apply_workbook_thai_style(wb, title_rows=(1,), header_rows=(1,))
         filename = f"EMS_paper_distribution_{period.get('semester', '')}_{period.get('academic_year', '')}_{period.get('exam_type', '')}.xlsx"
         return wb, filename

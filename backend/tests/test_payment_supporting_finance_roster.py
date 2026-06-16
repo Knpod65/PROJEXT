@@ -28,6 +28,7 @@ from services.payment_supporting_finance_roster_service import (
     build_finance_support_roster_export,
     load_supporting_roster_sources,
 )
+from services.thai_export_service import XLSX_THAI_FONT, has_mojibake_marker
 
 EXPORT_URL = "/api/invigilation-advance-batch/finance-support-roster-export"
 STATUS_URL = "/api/invigilation-advance-batch/finance-support-roster-status"
@@ -178,11 +179,20 @@ def test_export_has_exact_five_sheets_warnings_and_safety_metadata(app_and_db):
     _seed(session, same_supervisor=True)
     response = _client(app).post(EXPORT_URL, json=REQUEST)
     assert response.status_code == 200
+    assert "filename*=UTF-8''" in response.headers.get("content-disposition", "")
     workbook = _workbook(response)
     assert workbook.sheetnames == SHEET_NAMES
+    assert workbook.sheetnames[0] == "สรุปตามวันและช่วงเวลา"
+    assert workbook.sheetnames[2] == "ใบลงลายมือชื่อประกอบการเบิก"
     for sheet in workbook.worksheets:
         assert sheet["A2"].value == DRAFT_LABEL_EN
         assert sheet["A3"].value == "DRAFT_NOT_AUTHORIZED"
+        assert sheet["A1"].font.name == XLSX_THAI_FONT
+        assert sheet["A5"].font.name == XLSX_THAI_FONT
+        assert not has_mojibake_marker(sheet.title)
+        for row in sheet.iter_rows():
+            for cell in row:
+                assert not has_mojibake_marker(cell.value)
     roster = workbook[SHEET_NAMES[1]]
     values = [roster.cell(row, 2).value for row in range(1, roster.max_row + 1)]
     assert EXPORT_STATUS in values

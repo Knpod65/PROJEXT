@@ -28,6 +28,7 @@ from services.payment_document_settings_service import (
     SETTINGS_CONFIGURED,
     resolve_payment_document_settings_for_draft,
 )
+from services.thai_export_service import apply_workbook_thai_style
 
 try:
     import openpyxl
@@ -452,6 +453,7 @@ def _build_workbook(source: dict[str, Any], data: dict[str, Any]) -> "openpyxl.W
     for offset, (key, value) in enumerate(metadata):
         ws.cell(start + offset, 1, key)
         ws.cell(start + offset, 2, value)
+    apply_workbook_thai_style(wb, title_rows=(1,), header_rows=(2, 3, 5))
     return wb
 
 

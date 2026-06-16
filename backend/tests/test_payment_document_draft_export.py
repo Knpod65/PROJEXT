@@ -8,12 +8,14 @@ Categories covered:
 from __future__ import annotations
 
 import copy
+import io
 import os
 import sys
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+import openpyxl
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -26,6 +28,7 @@ import models
 from auth_utils import get_current_user
 from database import Base, get_db
 from routers.invigilation_advance_batch import router
+from services.thai_export_service import XLSX_THAI_FONT, has_mojibake_marker
 
 EXPORT_URL = "/api/invigilation-advance-batch/official-document-draft-export"
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -357,6 +360,7 @@ def test_mut_003_content_disposition_header(app_and_db):
     assert "attachment" in cd
     assert "EMS_DRAFT_PAYMENT_DOCUMENT" in cd
     assert ".xlsx" in cd
+    assert "filename*=UTF-8''" in cd
 
 
 def test_mut_004_response_is_binary(app_and_db):
@@ -365,6 +369,28 @@ def test_mut_004_response_is_binary(app_and_db):
     resp = _patched_good(app, session)
     assert resp.status_code == 200
     assert resp.content[:4] == b"PK\x03\x04"
+
+
+def test_mut_004b_workbook_preserves_thai_values_and_fonts(app_and_db):
+    """Reopened workbook keeps exact Thai values and Thai-capable font names."""
+    app, session = app_and_db
+    resp = _patched_good(app, session)
+    workbook = openpyxl.load_workbook(io.BytesIO(resp.content), data_only=False)
+    draft = workbook["ร่างเอกสาร"]
+    review = workbook["การตรวจร่าง"]
+
+    assert draft["A1"].value == "ร่างเอกสารเพื่อการตรวจทานเท่านั้น ยังไม่ใช่เอกสารอนุมัติเบิกจ่าย"
+    assert draft["A6"].value == "ภาคการศึกษา: 2/2568"
+    assert draft["A9"].value == "วันที่สอบ"
+    assert review["A11"].value == "สถานะเอกสาร (Document Status)"
+    assert draft["A1"].font.name == XLSX_THAI_FONT
+    assert draft["A9"].font.name == XLSX_THAI_FONT
+    assert review["A1"].font.name == XLSX_THAI_FONT
+    for sheet in workbook.worksheets:
+        assert not has_mojibake_marker(sheet.title)
+        for row in sheet.iter_rows():
+            for cell in row:
+                assert not has_mojibake_marker(cell.value)
 
 
 def test_mut_005_filename_contains_draft(app_and_db):

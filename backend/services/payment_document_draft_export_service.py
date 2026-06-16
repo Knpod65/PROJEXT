@@ -18,6 +18,7 @@ from services.official_payment_document_draft_service import (
     build_official_payment_document_draft_preview,
 )
 from services.payment_document_settings_service import SETTINGS_CONFIGURED
+from services.thai_export_service import apply_workbook_thai_style
 
 try:
     import openpyxl
@@ -255,6 +256,7 @@ def _build_workbook(
     ws2.column_dimensions[get_column_letter(1)].width = 42
     ws2.column_dimensions[get_column_letter(2)].width = 60
 
+    apply_workbook_thai_style(wb, title_rows=(1, 5), header_rows=(2, 3, 9))
     return wb
 
 
