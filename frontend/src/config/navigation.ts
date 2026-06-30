@@ -31,6 +31,16 @@ export const appPages: AppPageConfig[] = [
     navGroup: "dashboard",
     mobile: true,
    },
+  {
+    key: "schedule",
+    title: "Schedule",
+    description: "Master exam timetable, room assignment, and invigilation coverage.",
+    path: "/schedule",
+    icon: "calendar_view_week",
+    roles: ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
+    navGroup: "examManagement",
+    mobile: true,
+  },
    {
      key: "admin-intelligence-dashboard",
      title: "Admin Intelligence",
@@ -40,6 +50,7 @@ export const appPages: AppPageConfig[] = [
      roles: ["admin"],
      navGroup: "dashboard",
      mobile: true,
+     hidden: true,
    },
   {
     key: "workload-duty-analytics-admin",
@@ -76,6 +87,7 @@ export const appPages: AppPageConfig[] = [
     icon: "insights",
     roles: ["admin", "esq_head", "secretary"],
     navGroup: "dashboard",
+    hidden: true,
   },
   {
     key: "governance-cockpit",
@@ -85,6 +97,7 @@ export const appPages: AppPageConfig[] = [
     icon: "admin_panel_settings",
     roles: ["admin", "esq_head", "secretary"],
     navGroup: "dashboard",
+    hidden: true,
   },
 
   // ── Operations group ──────────────────────────────────────────
@@ -95,6 +108,45 @@ export const appPages: AppPageConfig[] = [
     path: "/workflow",
     icon: "approval",
     roles: ["admin", "esq_head", "secretary"],
+    navGroup: "operations",
+  },
+  {
+    key: "submissions",
+    title: "Submissions",
+    description: "Exam paper submissions, review status, and message threads.",
+    path: "/submissions",
+    icon: "upload_file",
+    roles: ["admin", "esq_head", "secretary", "dept_supervisor", "teacher"],
+    navGroup: "operations",
+    mobile: true,
+  },
+  {
+    key: "attendance",
+    title: "Room Attendance",
+    description: "Room usage, attendance summaries, and live exam-room activity.",
+    path: "/attendance",
+    icon: "how_to_reg",
+    roles: ["admin", "esq_head", "secretary", "dept_supervisor", "staff", "teacher"],
+    navGroup: "operations",
+    mobile: true,
+  },
+  {
+    key: "checkins",
+    title: "Check-ins",
+    description: "Duty check-ins, QR pickup confirmation, and room readiness workflow.",
+    path: "/checkins",
+    icon: "qr_code_scanner",
+    roles: ["admin", "dept_supervisor", "staff", "teacher"],
+    navGroup: "operations",
+    mobile: true,
+  },
+  {
+    key: "swaps",
+    title: "Swap Requests",
+    description: "Invigilation swaps, duty coordination, and conflict handling.",
+    path: "/swaps",
+    icon: "swap_horiz",
+    roles: ["admin", "dept_supervisor", "staff", "teacher"],
     navGroup: "operations",
   },
   {
@@ -150,6 +202,7 @@ export const appPages: AppPageConfig[] = [
     icon: "hub",
     roles: ["admin"],
     navGroup: "operations",
+    hidden: true,
   },
   {
     key: "staff-availability",
@@ -269,6 +322,7 @@ export const appPages: AppPageConfig[] = [
     icon: "manage_search",
     roles: ["admin"],
     navGroup: "examManagement",
+    hidden: true,
   },
 
   // ── People group ──────────────────────────────────────────────
@@ -312,6 +366,7 @@ export const appPages: AppPageConfig[] = [
     icon: "tune",
     roles: ["admin"],
     navGroup: "system",
+    hidden: true,
   },
   {
     key: "exammanager",
@@ -330,6 +385,7 @@ export const appPages: AppPageConfig[] = [
     icon: "health_and_safety",
     roles: ["admin", "esq_head"],
     navGroup: "system",
+    hidden: true,
   },
   {
     key: "audit-explorer",
@@ -339,6 +395,7 @@ export const appPages: AppPageConfig[] = [
     icon: "history",
     roles: ["admin", "esq_head"],
     navGroup: "system",
+    hidden: true,
   },
 
   // ── Hidden utility pages (routes still registered, not in nav) ─
