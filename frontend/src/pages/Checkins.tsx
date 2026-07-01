@@ -95,6 +95,8 @@ export function CheckinsPage() {
   const [pickupDetail, setPickupDetail] = useState<PickupQrStatusResponse | null>(null);
   const [pickupDetailLoading, setPickupDetailLoading] = useState(false);
   const [pickupActionBusy, setPickupActionBusy] = useState<"regenerate" | "confirm" | null>(null);
+  const [confirmedPickupIds, setConfirmedPickupIds] = useState<Set<number>>(new Set());
+  const [confirmingPickupId, setConfirmingPickupId] = useState<number | null>(null);
 
   const { error, events, loading, refresh, schedules } = useRoomOperationsData(selectedDate);
 
@@ -250,6 +252,19 @@ export function CheckinsPage() {
       toast(err instanceof Error ? err.message : t("checkins.toast.qrRegenerateFailed"), "error");
     } finally {
       setPickupActionBusy(null);
+    }
+  };
+
+  const handleSimplePickupConfirm = async (scheduleId: number) => {
+    setConfirmingPickupId(scheduleId);
+    try {
+      await createCheckin({ schedule_id: scheduleId, checkin_type: "receive_papers" });
+      setConfirmedPickupIds((prev) => new Set([...prev, scheduleId]));
+      toast(t("checkins.pickup.simpleConfirmButton"), "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : t("checkins.toast.checkinFailed"), "error");
+    } finally {
+      setConfirmingPickupId(null);
     }
   };
 
@@ -522,11 +537,44 @@ export function CheckinsPage() {
           ) : null}
 
           {!canManagePickup ? (
-            <EmptyState
-              icon={<Icon name="qr_code_scanner" />}
-              title={t("checkins.publicPickupTitle")}
-              description={t("checkins.publicPickupDescription")}
-            />
+            rows.length === 0 ? (
+              <EmptyState
+                icon={<Icon name="qr_code_scanner" />}
+                title={t("checkins.publicPickupTitle")}
+                description={t("checkins.publicPickupDescription")}
+              />
+            ) : (
+              <section className="pickup-simple-confirm ui-card">
+                <div className="ui-card__body page-stack">
+                  <p className="pickup-simple-confirm__note">{t("checkins.pickup.simpleConfirmNote")}</p>
+                  <div className="pickup-simple-confirm__list">
+                    {rows.map(({ schedule }) => {
+                      const alreadyConfirmed = confirmedPickupIds.has(schedule.id);
+                      return (
+                        <div key={schedule.id} className="pickup-simple-confirm__item">
+                          <div className="pickup-simple-confirm__info">
+                            <strong>{schedule.section?.course?.course_id ?? String(schedule.id)}</strong>
+                            <span>{schedule.exam_time} · {schedule.room?.room_name ?? t("checkins.modal.assignedRoom")}</span>
+                          </div>
+                          {alreadyConfirmed ? (
+                            <Badge variant="green">{t("checkins.pickup.alreadyConfirmed")}</Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              type="button"
+                              loading={confirmingPickupId === schedule.id}
+                              onClick={() => void handleSimplePickupConfirm(schedule.id)}
+                            >
+                              {t("checkins.pickup.simpleConfirmButton")}
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+            )
           ) : pickupLoading ? (
             <div className="page-stack">
               {Array.from({ length: 2 }).map((_, index) => (
