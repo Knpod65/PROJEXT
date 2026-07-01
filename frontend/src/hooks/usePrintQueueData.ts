@@ -11,6 +11,7 @@ import {
 } from "@/services/printing.service";
 
 import { useAsyncData } from "./useAsyncData";
+import { useEffectiveRole } from "./useEffectiveRole";
 
 const supplyAlerts = [
   {
@@ -46,14 +47,19 @@ export function getPrintJobActionLabel(status: PrintQueueJob["status"]) {
 }
 
 export function usePrintQueueData() {
+  const effectiveRole = useEffectiveRole();
+
   const loader = useCallback(async () => {
+    const copyCountPromise =
+      effectiveRole === "print_shop" ? Promise.resolve(null) : getCopyCount().catch(() => null);
+
     const [jobs, copyCount] = await Promise.all([
       listPrintQueue(),
-      getCopyCount().catch(() => null),
+      copyCountPromise,
     ]);
 
     return { jobs, copyCount };
-  }, []);
+  }, [effectiveRole]);
 
   const state = useAsyncData(loader, [loader]);
   const jobs = state.data?.jobs ?? [];

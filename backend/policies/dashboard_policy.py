@@ -16,6 +16,7 @@ class DashboardPolicy:
     def can_view_dashboard(user: models.User) -> bool:
         return user.role in (
             models.UserRole.admin,
+            models.UserRole.dept_supervisor,
             models.UserRole.staff,
             models.UserRole.teacher,
             models.UserRole.esq_head,

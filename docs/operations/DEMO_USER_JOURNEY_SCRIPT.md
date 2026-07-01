@@ -52,7 +52,7 @@
 
 **What to click**:
 1. Observe top summary cards (submissions, schedules, workload, rooms)
-2. Note the role selector at top-right (can switch view-as roles)
+2. Note the role-aware header and sidebar for the signed-in admin account
 3. Observe sidebar navigation — all 5 nav groups visible
 
 **What to say**:
@@ -64,24 +64,25 @@
 
 ---
 
-## Stage 3 — Role Dashboard / Role Switching (1–2 min)
+## Stage 3 — Role Dashboards With Demo Accounts (1-2 min)
 
-**Route**: `/dashboard` (same) using view-as
+**Route**: `/dashboard` after direct role login
 
-**Role**: Admin (view-as teacher/staff)
+**Role**: Direct demo account for each role
 
 **What to click**:
-1. Click the role selector (top-right) → switch to "Teacher" view
-2. Observe sidebar reorders for teacher role
-3. Switch to "Staff" — observe different sidebar
-4. Switch to "Dept Supervisor" — observe dept-scoped view
+1. Log out from admin
+2. Log in as `pailin.phu` / `teacher123`
+3. Observe the teacher sidebar and dashboard
+4. Log out, then log in as `araya.fa` / `staff123`
+5. Observe the staff sidebar and operational workspace
 
 **What to say**:
 > "Every role sees a different navigation layout and different operational signals. An admin sees governance and system pages. A teacher sees only their own exam submissions and schedule. A staff member sees duty assignments and room operations. A departmental supervisor is scoped to their own department's data."
 
-**Expected screen**: Sidebar reorders after role switch; dashboard content adapts.
+**Expected screen**: Sidebar and dashboard content adapt after each direct role login.
 
-**Fallback if broken**: Log in as a different role directly (e.g., `pailin.phu` / `teacher123` for teacher).
+**Fallback if broken**: Use another confirmed demo account for the same role. Do not use Admin View As for permission or role UI review.
 
 ---
 
@@ -176,7 +177,7 @@
 **Role**: Teacher (`pailin.phu` / `teacher123`)
 
 **What to click**:
-1. Log out; or use view-as → Teacher
+1. Log out, then log in as `pailin.phu` / `teacher123`
 2. Sidebar → **Exam Management** → **My Exam Work**
 3. Observe assigned sections and submission state
 4. Click a section → submission draft
@@ -219,7 +220,7 @@
 | Admin | `mathawee.m` | `admin123` | Dev only — rotate before pilot |
 | ESQ Head | `napaporn.ph` | `esq123` | Dev only |
 | Dept Supervisor | `phusanisa.sai` | `staff123` | Dev only |
-| Staff | `ketsinee.s` | `staff123` | Dev only |
+| Staff | `araya.fa` | `staff123` | Dev only; confirmed staff account for manual role review |
 | Teacher | `pailin.phu` | `teacher123` | Dev only |
 | Print Shop | `printshop.ops` | `print123` | Dev only |
 

@@ -1,20 +1,41 @@
-"""
-dashboard_service.py — orchestration for dashboard operations.
+"""Dashboard orchestration and aggregate shaping."""
+from typing import Any
 
-Owns:
-- dashboard summary shaping
-- operational KPI shaping
-- role/faculty visibility filtering
-- aggregate-safe response shaping
-"""
-from typing import Any, Optional
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+
 import models
+from academic_groups import build_course_group_clause
+from auth_utils import get_dept_filter, get_effective_role
 
 
 class DashboardService:
     """Orchestration for dashboard operations."""
+
+    @staticmethod
+    def _scoped_section_query(
+        db: Session,
+        semester: str,
+        academic_year: str,
+        current_user: models.User,
+    ):
+        query = db.query(models.Section).filter(
+            models.Section.semester == semester,
+            models.Section.academic_year == academic_year,
+        )
+
+        if get_effective_role(current_user) != models.UserRole.dept_supervisor:
+            return query
+
+        dept_filter = get_dept_filter(current_user)
+        group_clause = build_course_group_clause(models.Course.course_id, dept_filter)
+        if group_clause is None:
+            return query.filter(models.Section.id.in_([-1]))
+
+        return query.join(
+            models.Course,
+            models.Section.course_id == models.Course.id,
+        ).filter(group_clause)
 
     @staticmethod
     def get_dashboard_stats(
@@ -23,34 +44,57 @@ class DashboardService:
         academic_year: str,
         current_user: models.User,
     ) -> dict[str, Any]:
-        sections = db.query(models.Section).filter(
-            models.Section.semester == semester,
-            models.Section.academic_year == academic_year,
+        effective_role = get_effective_role(current_user)
+        sections = DashboardService._scoped_section_query(
+            db,
+            semester,
+            academic_year,
+            current_user,
         ).all()
+        section_ids = [section.id for section in sections]
 
-        scheduled_ids = db.query(models.ExamSchedule.section_id).subquery()
-        scheduled_count = db.query(models.Section).filter(
-            models.Section.id.in_(scheduled_ids),
-            models.Section.semester == semester,
-            models.Section.academic_year == academic_year,
-        ).count()
+        if section_ids:
+            scheduled_ids = select(models.ExamSchedule.section_id)
+            scheduled_count = db.query(models.Section).filter(
+                models.Section.id.in_(section_ids),
+                models.Section.id.in_(scheduled_ids),
+            ).count()
+        else:
+            scheduled_count = 0
 
-        total_students = sum(s.num_students for s in sections)
-        total_sheets = db.query(func.sum(models.ExamSchedule.total_sheets)).scalar() or 0
-        total_sheets += 150  # แบบฟอร์มทุจริต
+        total_students = sum(section.num_students for section in sections)
 
-        teachers_count = db.query(models.User).filter(
-            models.User.role == models.UserRole.teacher,
-            models.User.is_active == True,
-        ).count()
+        if effective_role == models.UserRole.dept_supervisor:
+            total_sheets = 0
+            rooms_in_use = 0
+            teachers_count = db.query(models.User).filter(
+                models.User.role == models.UserRole.teacher,
+                models.User.is_active == True,
+                models.User.dept_code == get_dept_filter(current_user),
+            ).count()
+            if section_ids:
+                total_sheets = db.query(func.sum(models.ExamSchedule.total_sheets)).filter(
+                    models.ExamSchedule.section_id.in_(section_ids),
+                ).scalar() or 0
+                rooms_in_use = db.query(
+                    func.count(func.distinct(models.ExamSchedule.room_id))
+                ).filter(
+                    models.ExamSchedule.section_id.in_(section_ids),
+                ).scalar() or 0
+        else:
+            total_sheets = db.query(func.sum(models.ExamSchedule.total_sheets)).scalar() or 0
+            teachers_count = db.query(models.User).filter(
+                models.User.role == models.UserRole.teacher,
+                models.User.is_active == True,
+            ).count()
+            rooms_in_use = db.query(
+                func.count(func.distinct(models.ExamSchedule.room_id))
+            ).scalar() or 0
 
-        rooms_in_use = db.query(
-            func.count(func.distinct(models.ExamSchedule.room_id))
-        ).scalar() or 0
+        total_sheets += 150
 
         recent_logs = []
-        from auth_utils import get_effective_role
-        if get_effective_role(current_user) == models.UserRole.admin:
+        if effective_role == models.UserRole.admin:
             logs = db.query(models.AuditLog).order_by(
                 models.AuditLog.timestamp.desc()
             ).limit(20).all()

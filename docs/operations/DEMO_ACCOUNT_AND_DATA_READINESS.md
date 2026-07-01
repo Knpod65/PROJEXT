@@ -51,7 +51,7 @@ Seed defined in `backend/seed.py`. Key details:
 
 | Role | Key capability | Demo flow |
 |------|---------------|-----------|
-| `admin` | Full access, view-as, settings | Admin dashboard, workload analytics, governance cockpit |
+| `admin` | Full access, settings | Admin dashboard, workload analytics, governance cockpit |
 | `esq_head` | ESQ governance, quality | Governance cockpit, audit explorer |
 | `secretary` | Staff-level + workflow | Workflow page, staff workload |
 | `dept_supervisor` | Department-scoped data | Department workload, staff availability |
@@ -88,8 +88,10 @@ Seed defined in `backend/seed.py`. Key details:
 | ExecutiveAnalytics route error | `/analytics` may show error | Verify / fix before demo |
 | Governance cockpit untranslated keys | Raw i18n keys visible to user | Yes — add missing keys |
 | Workload analytics likely empty | Bar chart may show no bars | OK — empty-state UX should handle this |
-| Staff workspace `workspace_not_assigned` | Some staff accounts may not access staff pages | Log in as admin + view-as |
+| Staff workspace `workspace_not_assigned` | Some staff accounts may not access staff pages | Use confirmed staff account `araya.fa` / `staff123`; do not use Admin View As for permission or role UI review |
 | No real exam submission records | Submission flow looks empty | OK — empty-state is still useful |
+
+Manual role UI review note: the local database used during the 2026-07-01 review reported `ketsinee.s` as `esq_head`, so it is not a valid local staff credential for that review pass. Use `araya.fa` / `staff123` for staff role checks unless a fresh seed/database reset confirms otherwise.
 
 ---
 
