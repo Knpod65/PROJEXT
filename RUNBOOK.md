@@ -31,8 +31,9 @@ Default login credentials (dev seed only — rotate before production):
 | Admin | `atikant.s` | `admin123` |
 | ESQ Head | `napaporn.ph` | `esq123` |
 | Dept Supervisor | `phusanisa.sai` | `staff123` |
-| Staff | `ketsinee.s` | `staff123` |
+| Staff | `araya.fa` | `staff123` |
 | Teacher | `pailin.phu` | `teacher123` |
+| Print Shop | `printshop.ops` | `print123` |
 
 ---
 
